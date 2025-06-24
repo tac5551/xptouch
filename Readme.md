@@ -1,446 +1,447 @@
+## XPToutch は 本家XTouchから派生した日本語コミュニティバージョンです。
+本家には問い合わせしないようご注意ください
+
 # ![image](readme-assets/xtouch.png)
 
-[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/I3I8PSAYU)
 
-[Discord Server](https://discord.gg/RytEDEgfR3)
 
-## NEW 5 inch Screen
-
-![image](readme-assets/xtouch_5.png)
-
-- The new 5-inch version is now available for purchase on AliExpress.
-- We're currently in the final stages of development.
-- You can find it at the following link:
-
-[BUY New 5inch Screen](https://s.click.aliexpress.com/e/_DBdoa6n)
 
 ## Table of Contents
 
-1. [Introduction](#introduction)
-   - [Required Hardware](#required-hardware)
-   - [Optional Hardware](#optional-hardware)
-   - [Powering the xtouch Screen](#powering-the-xtouch-screen)
-2. [Features](#features)
-3. [Installation](#installation)
-4. [Screens](#screens)
-   - [Main](#main-screen)
-   - [Temperature / Fan](#temperature--fan-screen)
-   - [Control](#control-screen)
-   - [Filament](#filament-screen)
-   - [Settings](#settings-screen)
-5. [OTA Update Procedure](#ota-update-procedure)
-6. [Standard Firmware Update](#standard-firmware-update)
-7. [Troubleshooting](#troubleshooting)
+1. [はじめに](#はじめに)
+   - [必要なハードウェア](#必要なハードウェア)
+   - [オプションハードウェア](#オプションハードウェア)
+   - [xtouchスクリーンの電源供給](#xtouchスクリーンの電源供給)
+2. [機能](#機能)
+3. [インストール](#インストール)
+4. [スクリーン](#スクリーン)
+   - [メイン](#メインスクリーン)
+   - [温度/ファン](#温度--ファンスクリーン)
+   - [制御](#制御スクリーン)
+   - [フィラメント](#フィラメントスクリーン)
+   - [設定](#設定スクリーン)
+5. [OTAアップデート手順](#otaアップデート手順)
+6. [標準ファームウェアアップデート](#標準ファームウェアアップデート)
+7. [トラブルシューティング](#トラブルシューティング)
 
 ## Introduction
 
-The xtouch screen is a revolutionary addition to your BambuLab Printer, enhancing the user experience and providing advanced control and monitoring capabilities. This detailed README.md guide will walk you through the product's features, installation process, and the functionality of different screens.
+xtouchスクリーンは、BambuLabプリンターに革命的な機能を追加し、ユーザーエクスペリエンスを向上させ、高度な制御とモニタリング機能を提供します。この詳細なREADME.mdガイドでは、製品の機能、インストールプロセス、および各スクリーンの機能について説明します。
 
-### Required Hardware
+### 必要なハードウェア
 
-![image](readme-assets/screen-2-8.png)
-![image](readme-assets/screen-2-8-back.png)
+![image](readme-assets/screen-2.8.png)
+![image](readme-assets/screen-2.8-back.png)
 
-Currently, it has only been tested on the affordable 2.8-inch ESP32-2432S028R board, which is available for purchase here:
+現在、手頃な価格の2.8インチESP32-2432S028Rボードでのみテストされており、以下のリンクで購入できます：
 
 - [ESP32-2432S028R](https://s.click.aliexpress.com/e/_DmcFFVz)
 - [ESP32-2432S028R](https://s.click.aliexpress.com/e/_EwiGjNZ)
 
-### Optional Hardware
+将来的に5インチバージョンのJW-8048W550バージョンもリリース予定です。
 
-- **[DS18B20 Temperature Sensor](docs/temperature-sensor.md)**: For printers that do not have an integrated chamber temperature sensor, you have the option to add an external DS18B20 temperature sensor. This sensor will provide accurate chamber temperature readings and enhance the functionality of your xtouch screen. Connector on the screen is 1.25 MZ JST 4P.
-- **DS18B20 P1P/P1S Chamber Temp Enclosure**: Additionally, we have created a 3D model that allows you to easily integrate the DS18B20 Temperature Sensor inside your P1P/P1S printer.
+### オプションハードウェア
 
-You can buy the Temperature Sensor here:
+- **[DS18B20温度センサー](docs/temperature-sensor.md)**: P1P/P1Sの場合チャンバー温度センサーが内蔵されていないため、外部DS18B20温度センサーを追加することができます。このセンサーは正確なチャンバー温度を測することができます。スクリーンのコネクターは1.25 MZ JST 4Pです。
 
-- [Temp Sensor A](https://s.click.aliexpress.com/e/_ol1shM9)
-- [Temp Sensor B](https://s.click.aliexpress.com/e/_EvOTULH)
 
-You can find the 3D models
+温度センサーは以下のリンクで購入できます：
+
+- [温度センサーA](https://s.click.aliexpress.com/e/_ol1shM9)
+- [温度センサーB](https://s.click.aliexpress.com/e/_EvOTULH)
+
+- **DS18B20 P1P/P1Sチャンバー温度エンクロージャー**: さらに、DS18B20温度センサーをP1P/P1Sプリンター内に簡単に統合できる3Dモデルを作成しました。
+3Dモデルは以下のリンクで見つけることができます：
 
 <img src="https://github.com/xperiments-in/xtouch/assets/417709/a8d14564-09e9-4d36-9ad9-10fd8f295c86" width="200">
 <img src="https://github.com/xperiments-in/xtouch/assets/417709/22871bdf-ba37-44f0-a4b3-33c6352f7f86" width="300">
 
-- [Model A](https://makerworld.com/en/models/19658)
-- [Model B](https://makerworld.com/en/models/42533)
+- [モデルA](https://makerworld.com/en/models/19658)
+- [モデルB](https://makerworld.com/en/models/42533)
 
-### Powering the xtouch Screen
+### xtouchスクリーンの電源供給
 
-The xtouch screen can be powered in two different ways: through a USB port or via a JST 1.25 4-pin connector. Below are the details on how to power the screen using each method:
+xtouchスクリーンは、USBポートまたはJST 1.25 4ピンコネクターの2つの方法で電源供給できます。以下に各方法での電源供給の詳細を示します：
 
-#### Powering via USB
+#### USBによる電源供給
 
-1. Connect a suitable USB cable to an available USB port on your computer or a USB power source.
+1. 適切なUSBケーブルをコンピューターまたはUSB電源の利用可能なUSBポートに接続します。
 
-2. At the opposite end of the USB cable, connect the USB connector to the xtouch screen.
+2. USBケーブルの反対側で、USBコネクターをxtouchスクリーンに接続します。
 
-3. Ensure that the xtouch screen is turned on and that power is being supplied properly through the USB cable. The screen should light up and display the startup information.
+3. xtouchスクリーンがオンになっており、USBケーブルを通じて適切に電源が供給されていることを確認します。スクリーンが点灯し、起動情報が表示されるはずです。
 
-#### Powering via the JST 1.25 4-Pin Connector
+#### JST 1.25 4ピンコネクターによる電源供給
 
-The JST 1.25 4-pin connector is an alternative method for powering the xtouch screen. Here is a pinout diagram of this connector:
+JST 1.25 4ピンコネクターは、xtouchスクリーンに電源を供給する代替方法です。以下にこのコネクターのピン配置図を示します：
 
 <img src="readme-assets/power-pinout.png" width="300" style="padding-bottom:16px">
 
-To power the screen using this connector, follow these steps:
+このコネクターを使用してスクリーンに電源を供給するには、以下の手順に従ってください：
 
-1. Locate the JST 1.25 4-pin connector on the xtouch screen.
+1. xtouchスクリーン上のJST 1.25 4ピンコネクターを探します。
 
-2. Align the pins of the JST 1.25 connector with the corresponding pins on the xtouch screen.
+2. JST 1.25コネクターのピンをxtouchスクリーン上の対応するピンに合わせます。
 
-3. Connect the JST 1.25 connector to the xtouch screen, ensuring that the pins are properly aligned.
+3. ピンが適切に配置されていることを確認して、JST 1.25コネクターをxtouchスクリーンに接続します。
 
-4. Provide the proper power through the JST 1.25 connector using a compatible power source. Make sure the polarity is correct to prevent damage to the screen.
+4. 互換性のある電源を使用してJST 1.25コネクターを通じて適切な電源を供給します。スクリーンに損傷を与えないよう、極性が正しいことを確認してください。
 
-5. Turn on the xtouch screen and verify that it is receiving power properly.
+5. xtouchスクリーンをオンにして、適切に電源を受信していることを確認します。
 
-The choice between USB and the JST 1.25 4-pin connector depends on your preference and resource availability. Make sure the xtouch screen receives the necessary power for optimal operation.
+USBとJST 1.25 4ピンコネクターの選択は、お好みとリソースの可用性によって異なります。xtouchスクリーンが最適な動作に必要な電源を受信していることを確認してください。
 
-## Features
+## 機能
 
-- **Advanced Touch Screen**: A touch screen interface for intuitive printer control.
-- **Status Indicators**: Top bar indicating WiFi connectivity, camera status, timelapse recording, and AMS status.
-- **Temperature Monitoring**: Real-time display of nozzle, bed, and chamber temperatures.
-- **Printing Control**: Full control over your print job, including the ability to change print speed during printing.
-- **Precise Control**: Control your printer's XYZ position with adjustable head movement steps (1mm and 10mm).
-- **Filament Handling**: Load, unload, extrude, and retract filament (Note: Filament handling available only for printers without AMS initially).
-- **Switch Between Printers**: With a single xtouch screen, you can seamlessly switch between different printers. The access code for linked printers is saved for future use, making it convenient to switch printer connections.
-- **Customizable Settings**: Access a wide range of LCD and printer-related settings.
-- **OTA Updates**: Enable over-the-air updates for firmware enhancements.
+- **高度なタッチスクリーン**: 直感的なプリンター制御のためのタッチスクリーンインターフェース。
+- **ステータスインジケーター**: WiFi接続、カメラステータス、タイムラプス録画、AMSステータスを示すトップバー。
+- **温度モニタリング**: ノズル、ベッド、チャンバー温度のリアルタイム表示。
+- **印刷制御**: 印刷中の印刷速度変更を含む、印刷ジョブの完全制御。
+- **精密制御**: 調整可能なヘッド移動ステップ（1mmと10mm）でプリンターのXYZ位置を制御。
+- **フィラメント処理**: フィラメントのロード、アンロード、押し出し、引き込み（注：フィラメント処理は当初AMSのないプリンターでのみ利用可能）。
+- **プリンター間の切り替え**: 単一のxtouchスクリーンで、異なるプリンター間をシームレスに切り替えることができます。リンクされたプリンターのアクセスコードは将来の使用のために保存され、プリンター接続の切り替えが便利になります。
+- **カスタマイズ可能な設定**: 幅広いLCDおよびプリンター関連設定にアクセス。
+- **OTAアップデート**: ファームウェア強化のためのオーバー・ザ・エアアップデートを有効化。
 
-## Installation
+## インストール
 
-# xtouch Screen Setup and Installation Guide
+# xtouchスクリーンセットアップとインストールガイド
 
-This guide will walk you through the steps required to initialize and configure your xtouch screen for use with your 3D printer. **Google Chrome is required** for this process, as it supports the necessary tools and extensions.
+このガイドでは、3Dプリンターで使用するためのxtouchスクリーンを初期化および設定するために必要な手順について説明します。**このプロセスにはGoogle Chromeが必要**です。これは必要なツールと拡張機能をサポートしているためです。
 
 ---
 
-## Required Tools and Preparation
+## 必要なツールと準備
 
-Before beginning, ensure you have the following:
+開始前に、以下を確保してください：
 
-1. **Computer with Google Chrome Installed**
+1. **Google Chromeがインストールされたコンピューター**
 
-   - A laptop or desktop computer with Google Chrome installed is necessary for this process.  
-     Download Chrome from [https://www.google.com/chrome/](https://www.google.com/chrome/) if you don’t already have it.
+   - このプロセスには、Google Chromeがインストールされたラップトップまたはデスクトップコンピューターが必要です。  
+     まだインストールしていない場合は、[https://www.google.com/chrome/](https://www.google.com/chrome/)からChromeをダウンロードしてください。
 
-2. **USB Cable**
+2. **USBケーブル**
 
-   - A USB cable compatible with your xtouch screen for connecting it to your computer.
+   - コンピューターにxtouchスクリーンを接続するための互換性のあるUSBケーブル。
 
-3. **Formatted FAT32 SD Card (≤ 32GB Recommended)**
+3. **FAT32フォーマットされたSDカード（32GB以下推奨）**
 
-   - A microSD card with a capacity of **32GB or less**, formatted with the FAT32 file system.
-   - This is required for transferring the provisioning file during the first-time setup. Use a reliable SD card and ensure it is properly formatted to avoid issues.
+   - **32GB以下**の容量で、FAT32ファイルシステムでフォーマットされたmicroSDカード。
+   - 初回セットアップ時にプロビジョニングファイルを転送するために必要です。信頼性の高いSDカードを使用し、問題を避けるために適切にフォーマットされていることを確認してください。
 
-4. **Install Drivers**  
-   If your computer does not recognize the xtouch screen, you may need to install the required CH340 drivers:
+4. **ドライバーのインストール**  
+   コンピューターがxtouchスクリーンを認識しない場合、必要なCH340ドライバーをインストールする必要がある場合があります：
 
-   - [Download CH340 Drivers](https://www.wch.cn/download/CH341SER_ZIP.html)
-   - [CH340 Drivers Installation Tutorial](https://learn.sparkfun.com/tutorials/how-to-install-ch340-drivers/all)
+   - [CH340ドライバーのダウンロード](https://www.wch.cn/download/CH341SER_ZIP.html)
+   - [CH340ドライバーインストールチュートリアル](https://learn.sparkfun.com/tutorials/how-to-install-ch340-drivers/all)
 
-5. **Chrome Browser Extension**
+5. **Chromeブラウザ拡張機能**
 
-   - **Download the extension** from this link:  
-     **[Download Chrome Extension](https://xperiments.in/xtouch-bin/extensions/xtouch28.zip)**
-   - This extension is required for generating the initial configuration file and managing the xtouch screen remotely.
-   - Save the downloaded file in a secure location, such as a dedicated "xtouch" folder in your Documents or on a backup drive.
+   - このリンクから**拡張機能をダウンロード**してください：  
+     **[Chrome拡張機能のダウンロード](https://xperiments.in/xtouch-bin/extensions/xtouch28.zip)**
+   - この拡張機能は、初期設定ファイルの生成とxtouchスクリーンのリモート管理に必要です。
+   - ダウンロードしたファイルを、ドキュメント内の専用「xtouch」フォルダーやバックアップドライブなどの安全な場所に保存してください。
 
-6. **xtouch Online Installer**
+6. **xtouchオンラインインストーラー**
 
-   - Access the installer page via this URL:  
+   - このURLでインストーラーページにアクセスしてください：  
      **[https://xperiments.in/xtouch-bin](https://xperiments.in/xtouch-bin)**
 
-7. **Stable Power Supply**
-   - Ensure your xtouch screen is connected to a reliable power source during the setup process.
+7. **安定した電源供給**
+   - セットアッププロセス中にxtouchスクリーンが信頼性の高い電源に接続されていることを確認してください。
 
 ---
 
-## Step 3: Install the Chrome Extension
+## ステップ3: Chrome拡張機能のインストール
 
-The Chrome extension is an essential tool for generating the initial configuration file and managing the xtouch screen remotely, especially since the BambuLab token expires every three months. **It must be installed before proceeding with the online installer, as the installer will redirect you to BambuLab upon completion.**
+Chrome拡張機能は、初期設定ファイルの生成とxtouchスクリーンのリモート管理に不可欠なツールです。特にBambuLabトークンは3ヶ月ごとに期限切れになるためです。**オンラインインストーラーを続行する前にインストールする必要があります。インストーラーは完了時にBambuLabにリダイレクトするためです。**
 
-### Download and Install the Extension
+### 拡張機能のダウンロードとインストール
 
-1. **Download the Extension**  
-   Click this link to download the Chrome extension:  
-   **[Download Chrome Extension](https://xperiments.in/xtouch-bin/extensions/xtouch28.zip)**
+1. **拡張機能のダウンロード**  
+   このリンクをクリックしてChrome拡張機能をダウンロードしてください：  
+   **[Chrome拡張機能のダウンロード](https://xperiments.in/xtouch-bin/extensions/xtouch28.zip)**
 
-2. **Save the Extension Securely**
+2. **拡張機能の安全な保存**
 
-   - Save the downloaded `.zip` file in a safe location, such as a dedicated "xtouch" folder in your Documents or a backup drive.
-   - This ensures the files are not accidentally deleted.
+   - ダウンロードした`.zip`ファイルを、ドキュメント内の専用「xtouch」フォルダーやバックアップドライブなどの安全な場所に保存してください。
+   - これにより、ファイルが誤って削除されることを防ぎます。
 
-3. **Unzip the Extension**
+3. **拡張機能の解凍**
 
-   - Extract the `.zip` file contents into the secure location.
+   - `.zip`ファイルの内容を安全な場所に展開してください。
 
-4. **Add the Extension to Chrome**
+4. **Chromeに拡張機能を追加**
 
-   - Open **Google Chrome** and go to **chrome://extensions/**.
-   - Enable **Developer Mode** by toggling the switch in the top-right corner.
-   - Click **Load unpacked** and select the folder where you extracted the extension files.
-   - The extension will now be installed and visible in Chrome.
+   - **Google Chrome**を開き、**chrome://extensions/**に移動してください。
+   - 右上隅のスイッチを切り替えて**開発者モード**を有効にしてください。
+   - **パッケージ化されていない拡張機能を読み込む**をクリックし、拡張機能ファイルを展開したフォルダーを選択してください。
+   - 拡張機能がインストールされ、Chromeで表示されるようになります。
 
-5. **Pin the Extension for Easy Access**
-   - Click the **Extensions** icon (puzzle piece) in the top-right corner of Chrome.
-   - Find the xtouch extension in the list and click the **pin icon** next to it.
-   - The extension will now appear in the Chrome toolbar for quick and easy access.
+5. **簡単なアクセスのための拡張機能のピン留め**
+   - Chromeの右上隅にある**拡張機能**アイコン（パズルピース）をクリックしてください。
+   - リスト内のxtouch拡張機能を見つけ、その横にある**ピンアイコン**をクリックしてください。
+   - 拡張機能がChromeツールバーに表示され、簡単で迅速なアクセスが可能になります。
 
 ---
 
-## Installation Process
+## インストールプロセス
 
-### Step 1: Open the Online Installer in Google Chrome
+### ステップ1: Google Chromeでオンラインインストーラーを開く
 
-1. Open **Google Chrome** on your computer.
-   > **Note:** Other browsers are not supported for this process.
-2. Navigate to the installer page by entering the following URL:  
+1. コンピューターで**Google Chrome**を開いてください。
+   > **注意:** このプロセスでは他のブラウザーはサポートされていません。
+2. 以下のURLを入力してインストーラーページに移動してください：  
    **[https://xperiments.in/xtouch-bin](https://xperiments.in/xtouch-bin)**
 
-### Step 2: Use the Online Installer
+### ステップ2: オンラインインストーラーの使用
 
-1. On the web page, click the **"Connect"** button to establish a connection between your computer and the xtouch screen.
-2. From the list of available ports displayed, select the serial port assigned to your xtouch screen.
-3. Once connected, click the **"Install xtouch"** button to start the installation process.
-4. Upon completion, you will be redirected to [bambulab.com](https://www.bambulab.com) or [bambulab.cn](https://www.bambulab.cn).
-   > **Note:** Ensure you are logged into your account before proceeding with provisioning.
-
----
-
-## First-Time and Other Provisioning Using the Chrome Extension
-
-To manage the xtouch screen, you will need to provision it for both first-time setup and ongoing token updates every three months. **For the Chrome extension to work, users MUST be logged into [bambulab.com](https://www.bambulab.com) or [bambulab.cn](https://www.bambulab.cn) using their account.**
+1. ウェブページで**「接続」**ボタンをクリックして、コンピューターとxtouchスクリーン間の接続を確立してください。
+2. 表示された利用可能なポートのリストから、xtouchスクリーンに割り当てられたシリアルポートを選択してください。
+3. 接続後、**「xtouchをインストール」**ボタンをクリックしてインストールプロセスを開始してください。
+4. 完了すると、[bambulab.com](https://www.bambulab.com)または[bambulab.cn](https://www.bambulab.cn)にリダイレクトされます。
+   > **注意:** プロビジョニングを続行する前に、アカウントにログインしていることを確認してください。
 
 ---
 
-### First-Time Provisioning
+## Chrome拡張機能を使用した初回およびその他のプロビジョニング
 
-When you first open the Chrome extension, follow these steps:
-
-1. **Fill in the Required Information**
-
-   - The extension will prompt you to enter the following details:
-     - **SSID**: Your Wi-Fi network name.
-     - **SSID Password**: Your Wi-Fi password.
-     - **IP**: This is pre-configured as `0.0.0.0` by default, which is correct for the first-time provisioning. Do not change this.
-
-2. **Provision the xtouch Screen**
-
-   - After filling in the SSID and password, leave the IP as `0.0.0.0` and click the **"Provision xtouch"** button.
-
-3. **Download the Provisioning File**
-
-   - After clicking the button, a **"Download provisioning file"** button will appear.
-   - You may also see an error indicating that remote provisioning failed. **This is normal for first-time provisioning.**
-   - Click **"Download provisioning file"** to download the `provisioning.json` file.
-
-4. **Save and Insert the Provisioning File**
-
-   - Save the downloaded `provisioning.json` file to the root directory of your SD card.
-   - Insert the SD card into the xtouch screen and reboot it.
-
-5. **Verify Connection**
-   - Upon reboot, if everything is set up correctly, the xtouch screen will connect to your Wi-Fi network and BambuLab servers.
+xtouchスクリーンを管理するには、初回セットアップと3ヶ月ごとのトークン更新の両方でプロビジョニングする必要があります。**Chrome拡張機能が動作するには、ユーザーが[bambulab.com](https://www.bambulab.com)または[bambulab.cn](https://www.bambulab.cn)にアカウントでログインしている必要があります。**
 
 ---
 
-### Token Renewal (Other Provisioning)
+### 初回プロビジョニング
 
-Every three months, when the BambuLab token expires, the xtouch screen will clear its token data. You’ll see a message displayed on the screen with the following instructions:  
-**"Provision at xxx.xxx.xxx.xxx"**  
-This indicates the screen needs to be reprovisioned.
+Chrome拡張機能を初めて開く際は、以下の手順に従ってください：
 
-#### Steps for Reprovisioning:
+1. **必要な情報の入力**
 
-1. **Login to BambuLab**
+   - 拡張機能は以下の詳細の入力を求めます：
+     - **SSID**: Wi-Fiネットワーク名。
+     - **SSIDパスワード**: Wi-Fiパスワード。
+     - **IP**: これは初回プロビジョニングでデフォルトで`0.0.0.0`に事前設定されており、正しい設定です。これを変更しないでください。
 
-   - Open [bambulab.com](https://www.bambulab.com) or [bambulab.cn](https://www.bambulab.cn) and log in to your account if you’re not already logged in.
+2. **xtouchスクリーンのプロビジョニング**
 
-2. **Open the Chrome Extension**
+   - SSIDとパスワードを入力した後、IPを`0.0.0.0`のままにして**「xtouchをプロビジョニング」**ボタンをクリックしてください。
 
-   - Launch the Chrome extension.
+3. **プロビジョニングファイルのダウンロード**
 
-3. **Enter the Screen’s IP Address**
+   - ボタンをクリックした後、**「プロビジョニングファイルをダウンロード」**ボタンが表示されます。
+   - リモートプロビジョニングが失敗したことを示すエラーも表示される場合があります。**これは初回プロビジョニングでは正常です。**
+   - **「プロビジョニングファイルをダウンロード」**をクリックして`provisioning.json`ファイルをダウンロードしてください。
 
-   - Enter the IP address displayed on the xtouch screen into the **IP** field of the extension.
+4. **プロビジョニングファイルの保存と挿入**
 
-4. **Provision the xtouch Screen**
+   - ダウンロードした`provisioning.json`ファイルをSDカードのルートディレクトリに保存してください。
+   - SDカードをxtouchスクリーンに挿入して再起動してください。
 
-   - Click the **"Provision xtouch"** button.
-   - The extension will send the required tokens to the xtouch screen.
+5. **接続の確認**
+   - 再起動後、すべてが正しく設定されている場合、xtouchスクリーンはWi-FiネットワークとBambuLabサーバーに接続されます。
 
-5. **Automatic Reboot**
-   - Within seconds, the xtouch screen will reboot automatically to apply the new configuration.
+---
 
-### Linking Printer
+### トークン更新（その他のプロビジョニング）
 
-During the installation process, you will need to link your xtouch screen with your 3D printer. Follow these steps to successfully establish the connection:
+3ヶ月ごとに、BambuLabトークンが期限切れになると、xtouchスクリーンはトークンデータをクリアします。画面に以下の指示を含むメッセージが表示されます：  
+**「xxx.xxx.xxx.xxxでプロビジョニング」**  
+これは、スクリーンが再プロビジョニングを必要としていることを示しています。
 
-1. **Searching for Printers**:
+#### 再プロビジョニングの手順：
 
-   - After powering on the touch screen, you will be greeted with a "Searching for printers" screen. The touch screen will scan for available printers.
+1. **BambuLabにログイン**
 
-2. **Select a Printer to Link**:
+   - [bambulab.com](https://www.bambulab.com)または[bambulab.cn](https://www.bambulab.cn)を開き、まだログインしていない場合はアカウントにログインしてください。
 
-   - Once the scanning process is complete, you will be presented with a listing of the printers that were found. Select the printer you wish to link.
+2. **Chrome拡張機能を開く**
 
-3. **Click the Checkmark Button**:
+   - Chrome拡張機能を起動してください。
 
-   - After selecting the desired printer, click the green checkmark button to initiate the linking process.
+3. **スクリーンのIPアドレスを入力**
 
-4. **Success and Main Screen**:
+   - xtouchスクリーンに表示されているIPアドレスを拡張機能の**IP**フィールドに入力してください。
 
-   - Upon successfully linking the touch screen with the printer, you will be redirected to the Main Screen. Your printer and touch screen are now connected and ready for use.
+4. **xtouchスクリーンのプロビジョニング**
 
-By following these steps, you will be able to link your xtouch screen with your 3D printer seamlessly, ensuring a smooth user experience and easy access to all the features of the touch screen.
+   - **「xtouchをプロビジョニング」**ボタンをクリックしてください。
+   - 拡張機能は必要なトークンをxtouchスクリーンに送信します。
+
+5. **自動再起動**
+   - 数秒以内に、xtouchスクリーンは新しい設定を適用するために自動的に再起動します。
+
+### プリンターのリンク
+
+インストールプロセス中に、xtouchスクリーンを3Dプリンターとリンクする必要があります。接続を正常に確立するには、以下の手順に従ってください：
+
+1. **プリンターの検索**:
+
+   - タッチスクリーンの電源を入れた後、「プリンターを検索中」画面が表示されます。タッチスクリーンは利用可能なプリンターをスキャンします。
+
+2. **リンクするプリンターの選択**:
+
+   - スキャンプロセスが完了すると、見つかったプリンターのリストが表示されます。リンクしたいプリンターを選択してください。
+
+3. **チェックマークボタンをクリック**:
+
+   - 希望するプリンターを選択した後、緑のチェックマークボタンをクリックしてリンクプロセスを開始してください。
+
+4. **成功とメインスクリーン**:
+
+   - タッチスクリーンとプリンターのリンクが正常に完了すると、メインスクリーンにリダイレクトされます。プリンターとタッチスクリーンが接続され、使用準備が整います。
+
+これらの手順に従うことで、xtouchスクリーンを3Dプリンターとシームレスにリンクし、スムーズなユーザーエクスペリエンスとタッチスクリーンのすべての機能への簡単なアクセスを確保できます。
 
 ## Screens
 
 ### Main Screen
 
-- **Top Bar**: Displays WiFi, camera, timelapse, and AMS status.
-- **Light Control**: Toggle the printer's light on/off.
-- **Temperature Indicators**: Real-time nozzle, bed, and chamber temperature indicators.
-- **Status Area**: The Status Area on the touch screen serves two main purposes:
+- **トップバー**: WiFi、カメラ、タイムラプス、AMSステータスを表示。
+- **ライト制御**: プリンターのライトのオン/オフ切り替え。
+- **温度インジケーター**: リアルタイムのノズル、ベッド、チャンバー温度インジケーター。
+- **ステータスエリア**: タッチスクリーンのステータスエリアは2つの主要な目的を果たします：
 
-  - **Idle State**: When the printer is not in use, it displays a "Ready" message with the main logo.
-  - **Printing State**: During printing, it provides pause/stop buttons, a progress bar, layer info, and a print speed selector for real-time control and monitoring.
+  - **アイドル状態**: プリンターが使用されていない場合、「準備完了」メッセージとメインロゴを表示します。
+  - **印刷状態**: 印刷中は、一時停止/停止ボタン、プログレスバー、レイヤー情報、リアルタイム制御とモニタリングのための印刷速度セレクターを提供します。
 
 ### Temperature / Fan Screen
 
-On this screen, you'll find four buttons, each representing the temperature or fan speed of a specific sensor. Tapping any of these buttons will direct you to a numeric keyboard screen where you can easily adjust the corresponding temperature or speed value. After making your changes, you can return to the initial screen with a simple tap.
+このスクリーンでは、各ボタンが特定のセンサーの温度またはファン速度を表す4つのボタンがあります。これらのボタンのいずれかをタップすると、対応する温度または速度値を簡単に調整できる数値キーボード画面に移動します。変更後、簡単なタップで初期画面に戻ることができます。
 
 ### Control Screen
 
-This screen provides essential controls for managing your printer:
+このスクリーンは、プリンターを管理するための重要な制御機能を提供します：
 
-- **Homing**: Initiates printer homing procedure.
-- **XYZ Position Control**: Enables precise control of the print head's XYZ position.
-- **Step Size**: Allows you to toggle between 1mm and 10mm head movement increments for finer or quicker adjustments.
+- **ホーミング**: プリンターホーミング手順を開始。
+- **XYZ位置制御**: プリントヘッドのXYZ位置の精密制御を有効化。
+- **ステップサイズ**: より細かいまたは迅速な調整のために、1mmと10mmのヘッド移動増分の間で切り替えることができます。
 
 ### Filament Screen
 
-- **Filament Handling**: Load, unload, extrude, and retract filament (Note: Filament handling available only for printers without AMS initially).
+- **フィラメント処理**: フィラメントのロード、アンロード、押し出し、引き込み（注：フィラメント処理は当初AMSのないプリンターでのみ利用可能）。
 
 ### Settings Screen
 
 #### LCD
 
-- **Change Backlight**: In the "Change Backlight" settings, you can adjust the screen backlight to your preferred brightness level.
-- **Set Screen Sleep Time**: Set Screen Sleep Time: Adjusts the screen's inactivity timer. When the screen is idle for the specified time (in minutes), it enters sleep mode to save power. Set to 0 to keep the screen always active. During an active print job, the screen stays on for real-time monitoring.
-- **Invert Screen Colors**: Toggle to reverse screen colors. Useful for addressing compatibility issues with certain devices.
-- **Flip Screen**: Flip the screen orientation.
+- **バックライトの変更**: 「バックライトの変更」設定では、お好みの明るさレベルにスクリーンバックライトを調整できます。
+- **スクリーンスリープ時間の設定**: スクリーンの非アクティブタイマーを調整します。スクリーンが指定された時間（分）アイドル状態になると、省電力のためにスリープモードに入ります。0に設定すると、スクリーンは常にアクティブな状態を保ちます。アクティブな印刷ジョブ中は、リアルタイムモニタリングのためにスクリーンは点灯したままになります。
+- **スクリーン色の反転**: スクリーン色を反転する切り替え。特定のデバイスとの互換性の問題に対処するのに役立ちます。
+- **スクリーンの反転**: スクリーンの向きを反転。
 
-#### PRINTERS
+#### プリンター
 
-- **Unlink Printer**: Disconnect the current printer from the touch screen. This allows you to switch between different printers seamlessly.
+- **プリンターのリンク解除**: タッチスクリーンから現在のプリンターを切断。これにより、異なるプリンター間をシームレスに切り替えることができます。
 
 #### XTOUCH
 
-- **AUX FAN**: Enable the auxiliary fan for printers that initially lack it.
-- **CHAMBER Temp**: Enable chamber temperature monitoring for printers without it.
-- **OTA Update**: Enable OTA upgrades for firmware updates.
+- **AUX FAN**: 当初AUXファンがないプリンターで補助ファンを有効化。
+- **CHAMBER Temp**: チャンバー温度がないプリンターでチャンバー温度モニタリングを有効化。
+- **OTAアップデート**: ファームウェアアップデートのためのOTAアップグレードを有効化。
 
-## OTA Update Procedure
+## OTAアップデート手順
 
-The xtouch screen supports Over-The-Air (OTA) firmware updates, making it easy to keep your device up to date with the latest features and improvements. To enable and utilize OTA updates, follow these steps:
+xtouchスクリーンはオーバー・ザ・エア（OTA）ファームウェアアップデートをサポートしており、最新の機能と改善でデバイスを最新の状態に保つことが簡単になります。OTAアップデートを有効にして利用するには、以下の手順に従ってください：
 
-1. **Access the Settings Screen**:
+1. **設定スクリーンにアクセス**:
 
-   - Navigate to the Settings Screen on your xtouch screen.
+   - xtouchスクリーンで設定スクリーンに移動してください。
 
-2. **Enable OTA Updates**:
+2. **OTAアップデートを有効化**:
 
-   - In the Settings Screen, locate the OTA Update section. You will find an option to enable OTA updates. Toggle this option to "ON" to enable automatic firmware update checks.
+   - 設定スクリーンで、OTAアップデートセクションを見つけてください。OTAアップデートを有効にするオプションがあります。このオプションを「ON」に切り替えて、自動ファームウェアアップデートチェックを有効にしてください。
 
-3. **Automatic Update Check on Boot**:
+3. **起動時の自動アップデートチェック**:
 
-   - With OTA updates enabled, your touch screen will automatically check for firmware updates every time it boots up.
+   - OTAアップデートが有効になっていると、タッチスクリーンは起動するたびに自動的にファームウェアアップデートをチェックします。
 
-4. **Download and Apply Updates**:
+4. **アップデートのダウンロードと適用**:
 
-   - If an update is available, the touch screen will automatically download the latest firmware and apply the upgrade. This process is seamless and requires no manual intervention.
+   - アップデートが利用可能な場合、タッチスクリーンは最新のファームウェアを自動的にダウンロードしてアップグレードを適用します。このプロセスはシームレスで、手動介入は必要ありません。
 
-By enabling OTA updates in the Settings Screen, you ensure that your xtouch screen stays current with the latest software enhancements and bug fixes without the need for manual updates. This convenient feature ensures that you always have access to the best performance and functionality that the device can offer.
+設定スクリーンでOTAアップデートを有効にすることで、手動アップデートの必要なく、xtouchスクリーンが最新のソフトウェア強化とバグ修正で最新の状態に保たれることを確保します。この便利な機能により、デバイスが提供できる最高のパフォーマンスと機能に常にアクセスできるようになります。
 
-## Standard Firmware Update
+## 標準ファームウェアアップデート
 
-If you prefer to manually update the firmware of your xtouch screen or if OTA updates are not enabled, you can follow this procedure:
+xtouchスクリーンのファームウェアを手動でアップデートしたい場合、またはOTAアップデートが有効になっていない場合は、この手順に従ってください：
 
-1. **Download the Update Firmware File**:
+1. **アップデートファームウェアファイルのダウンロード**:
 
-   - Visit the official xtouch sebsite or the designated firmware update source to download the latest firmware update file. Ensure that you download this file with the [firmware.bin](https://xperiments.in/xtouch-bin/fw/firmware.bin) name.
+   - 公式xtouchサイトまたは指定されたファームウェアアップデートソースにアクセスして、最新のファームウェアアップデートファイルをダウンロードしてください。[firmware.bin](https://xperiments.in/xtouch-bin/fw/firmware.bin)という名前でこのファイルをダウンロードしてください。
 
-2. **Copy the Firmware File to the Root of the SD Card**:
+2. **ファームウェアファイルをSDカードのルートにコピー**:
 
-   - Insert the SD card into your computer's card reader.
-   - Copy the downloaded firmware update file [firmware.bin](https://xperiments.in/xtouch-bin/fw/firmware.bin) to the root directory of the SD card. Do not place it in any subdirectories.
+   - SDカードをコンピューターのカードリーダーに挿入してください。
+   - ダウンロードしたファームウェアアップデートファイル[firmware.bin](https://xperiments.in/xtouch-bin/fw/firmware.bin)をSDカードのルートディレクトリにコピーしてください。サブディレクトリには配置しないでください。
 
-3. **Reboot the xtouch screen**:
+3. **xtouchスクリーンの再起動**:
 
-   - Insert the SD card containing the firmware update file into the xtouch screen if it's not already inserted.
+   - ファームウェアアップデートファイルを含むSDカードを、まだ挿入されていない場合はxtouchスクリーンに挿入してください。
 
-   - Reboot the touch screen. You can do this by turning it off and then turning it back on.
+   - タッチスクリーンを再起動してください。電源を切ってから再度電源を入れることで実行できます。
 
-4. **Apply the Firmware Update**:
+4. **ファームウェアアップデートの適用**:
 
-   - Once the touch screen has booted up, it will detect the presence of the firmware update file on the SD card.
+   - タッチスクリーンが起動すると、SDカード上のファームウェアアップデートファイルの存在を検出します。
 
-   - The touch screen will apply the firmware update.
+   - タッチスクリーンはファームウェアアップデートを適用します。
 
-   - The update process may take a few minutes to complete. Do not turn off the touch screen or remove the SD card during this time.
+   - アップデートプロセスは完了まで数分かかる場合があります。この間はタッチスクリーンの電源を切ったり、SDカードを削除したりしないでください。
 
-5. **Completion and Verification**:
+5. **完了と確認**:
 
-   - After the firmware update is successfully applied, the touch screen will notify you that the update is complete.
+   - ファームウェアアップデートが正常に適用された後、タッチスクリーンはアップデートが完了したことを通知します。
 
-   - You can verify the firmware version in the touch screen's settings section to ensure that it matches the latest version.
+   - タッチスクリーンの設定セクションでファームウェアバージョンを確認し、最新バージョンと一致していることを確認できます。
 
-By following these steps, you can manually update the firmware of your xtouch screen to the latest version, ensuring that you have access to all the latest features and improvements.
+これらの手順に従うことで、xtouchスクリーンのファームウェアを最新バージョンに手動でアップデートし、最新の機能と改善にアクセスできるようになります。
 
-## Troubleshooting
+## トラブルシューティング
 
-If you encounter issues during the installation or operation of your BambuLab Printers Touch Screen, you can refer to the following troubleshooting steps to resolve common problems:
+BambuLabプリンタータッチスクリーンのインストールまたは操作中に問題が発生した場合、以下のトラブルシューティング手順を参照して、一般的な問題を解決できます：
 
-1. **Use a Data Cable**:
+1. **データケーブルの使用**:
 
-   - Ensure that you are using a data cable (not just a charging cable) to connect your touch screen to your computer during the installation process. A data cable is required for proper communication.
+   - インストールプロセス中にタッチスクリーンをコンピューターに接続する際は、データケーブル（充電ケーブルだけでなく）を使用していることを確認してください。適切な通信にはデータケーブルが必要です。
 
-2. **SD Card Compatibility**:
+2. **SDカードの互換性**:
 
-   - Keep in mind that SD cards from different manufacturers may behave differently. While many SD cards work seamlessly, some may not be fully compatible with the touch screen. If you experience issues with an SD card, consider trying a different brand or model to see if it resolves the problem.
+   - 異なるメーカーのSDカードは動作が異なる場合があることに注意してください。多くのSDカードはシームレスに動作しますが、一部はタッチスクリーンと完全に互換性がない場合があります。SDカードで問題が発生した場合は、問題が解決するかどうかを確認するために、異なるブランドやモデルを試してみることを検討してください。
 
-3. **WiFi Connection Loop**:
+3. **WiFi接続ループ**:
 
-   - In some cases, users have reported that after confirming their WiFi credentials are correct, the device enters into a continuous loop without establishing a connection. This issue can sometimes be resolved by adjusting the WiFi connection timeout.
+   - 場合によっては、WiFi認証情報が正しいことを確認した後、デバイスが接続を確立せずに連続ループに入ることを報告するユーザーがいます。この問題は、WiFi接続タイムアウトを調整することで解決できる場合があります。
 
-   - To do this, modify the `config.json` file and include a numerical parameter for the timeout. Increasing the timeout value can help address this issue.
+   - これを行うには、`config.json`ファイルを修正し、タイムアウトの数値パラメーターを含めてください。タイムアウト値を増やすことで、この問題に対処できます。
 
-   - Use the [Online config.json Form](https://xperiments.in/xtouch-bin/config.html) for step-by-step instructions.
+   - ステップバイステップの手順については、[オンラインconfig.jsonフォーム](https://xperiments.in/xtouch-bin/config.html)を使用してください。
 
-4. **Endless Reboots in Printer Startup**:
+4. **プリンター起動時の無限再起動**:
 
-   - Sometimes, users may encounter an issue where the printer and xtouch screen go through an endless reboot cycle during the device's power-on process, preventing xtouch from becoming ready. This problem can often be resolved by adjusting the "coldboot" value within the `config.json` configuration file.
+   - 場合によっては、プリンターとxtouchスクリーンがデバイスの電源投入プロセス中に無限再起動サイクルを経験し、xtouchが準備完了状態にならない問題が発生する場合があります。この問題は、`config.json`設定ファイル内の「coldboot」値を調整することで解決できる場合がよくあります。
 
-   - To address this issue, open the `config.json` file and include a numerical parameter for the "coldboot" parameter. This parameter specifies the duration in milliseconds the system should wait for initialization after a cold boot. By increasing the "coldboot" value, you provide the system with more time to complete the startup process successfully.
+   - この問題に対処するには、`config.json`ファイルを開き、「coldboot」パラメーターの数値パラメーターを含めてください。このパラメーターは、コールドブート後の初期化のためにシステムが待機する時間をミリ秒で指定します。「coldboot」値を増やすことで、システムに起動プロセスを正常に完了するためのより多くの時間を提供します。
 
-   - Use the [Online config.json Form](https://xperiments.in/xtouch-bin/config.html) for step-by-step instructions.
+   - ステップバイステップの手順については、[オンラインconfig.jsonフォーム](https://xperiments.in/xtouch-bin/config.html)を使用してください。
 
-5. **Recalibrating the Screen**:
+5. **スクリーンの再キャリブレーション**:
 
-   If you encounter touch screen calibration issues or misalignment, you can recalibrate the screen by removing the `touch.json` file located in the `xtouch` directory on the SD card. Follow these steps:
+   タッチスクリーンのキャリブレーション問題や位置ずれが発生した場合、SDカードの`xtouch`ディレクトリにある`touch.json`ファイルを削除することでスクリーンを再キャリブレーションできます。以下の手順に従ってください：
 
-   - Power off the xtouch screen.
-   - Remove the SD card from the touch screen.
-   - Insert the SD card into your computer.
-   - Navigate to the `xtouch` directory on the SD card.
-   - Delete the `touch.json` file.
-   - Safely eject the SD card from your computer.
-   - Reinsert the SD card into the touch screen.
-   - Power on the touch screen.
+   - xtouchスクリーンの電源を切ってください。
+   - タッチスクリーンからSDカードを削除してください。
+   - SDカードをコンピューターに挿入してください。
+   - SDカード上の`xtouch`ディレクトリに移動してください。
+   - `touch.json`ファイルを削除してください。
+   - コンピューターからSDカードを安全に取り出してください。
+   - SDカードをタッチスクリーンに再挿入してください。
+   - タッチスクリーンの電源を入れてください。
 
-   The touch screen will automatically perform a recalibration process upon startup.
+   タッチスクリーンは起動時に自動的に再キャリブレーションプロセスを実行します。
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/I3I8PSAYU)
+
+
+## オリジナルバージョン
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/I3I8PSAYU)
+[Discord Server](https://discord.gg/RytEDEgfR3)
+
