@@ -8,12 +8,13 @@
 
 ![image](readme-assets/xtouch_5.png)
 
-### xtouch-pro **NEW WEBSITE**
+- The new 5-inch version is now available for purchase on AliExpress.
+- We're currently in the final stages of development.
+- You can find it at the following link:
 
-- [https://xperiments.in/xtouch-pro/](https://xperiments.in/xtouch-pro/)
-- [BUY New 5inch Screen](https://s.click.aliexpress.com/e/_DBdoa6n)
+[BUY New 5inch Screen](https://s.click.aliexpress.com/e/_DBdoa6n)
 
-## 2.8 - Table of Contents
+## Table of Contents
 
 1. [Introduction](#introduction)
    - [Required Hardware](#required-hardware)
@@ -142,7 +143,7 @@ Before beginning, ensure you have the following:
 5. **Chrome Browser Extension**
 
    - **Download the extension** from this link:  
-     **[Download Chrome Extension](https://github.com/xperiments/xtouch-bin/raw/refs/heads/main/extensions/xtouch28.zip)**
+     **[Download Chrome Extension](https://xperiments.in/xtouch-bin/extensions/xtouch28.zip)**
    - This extension is required for generating the initial configuration file and managing the xtouch screen remotely.
    - Save the downloaded file in a secure location, such as a dedicated "xtouch" folder in your Documents or on a backup drive.
 
@@ -203,7 +204,7 @@ The Chrome extension is an essential tool for generating the initial configurati
 1. On the web page, click the **"Connect"** button to establish a connection between your computer and the xtouch screen.
 2. From the list of available ports displayed, select the serial port assigned to your xtouch screen.
 3. Once connected, click the **"Install xtouch"** button to start the installation process.
-
+4. Upon completion, you will be redirected to [bambulab.com](https://www.bambulab.com) or [bambulab.cn](https://www.bambulab.cn).
    > **Note:** Ensure you are logged into your account before proceeding with provisioning.
 
 ---
@@ -227,14 +228,20 @@ When you first open the Chrome extension, follow these steps:
 
 2. **Provision the xtouch Screen**
 
-   - After filling in the SSID and password, click the **"Download provisioning file"** button.
+   - After filling in the SSID and password, leave the IP as `0.0.0.0` and click the **"Provision xtouch"** button.
 
-3. **Save and Insert the Provisioning File**
+3. **Download the Provisioning File**
+
+   - After clicking the button, a **"Download provisioning file"** button will appear.
+   - You may also see an error indicating that remote provisioning failed. **This is normal for first-time provisioning.**
+   - Click **"Download provisioning file"** to download the `provisioning.json` file.
+
+4. **Save and Insert the Provisioning File**
 
    - Save the downloaded `provisioning.json` file to the root directory of your SD card.
    - Insert the SD card into the xtouch screen and reboot it.
 
-4. **Verify Connection**
+5. **Verify Connection**
    - Upon reboot, if everything is set up correctly, the xtouch screen will connect to your Wi-Fi network and BambuLab servers.
 
 ---
@@ -364,12 +371,12 @@ If you prefer to manually update the firmware of your xtouch screen or if OTA up
 
 1. **Download the Update Firmware File**:
 
-   - Visit the official xtouch sebsite or the designated firmware update source to download the latest firmware update file. Ensure that you download this file with the [firmware.bin](https://github.com/xperiments/xtouch-bin/raw/refs/heads/main/fw/firmware.bin) name.
+   - Visit the official xtouch sebsite or the designated firmware update source to download the latest firmware update file. Ensure that you download this file with the [firmware.bin](https://xperiments.in/xtouch-bin/fw/firmware.bin) name.
 
 2. **Copy the Firmware File to the Root of the SD Card**:
 
    - Insert the SD card into your computer's card reader.
-   - Copy the downloaded firmware update file [firmware.bin](https://github.com/xperiments/xtouch-bin/raw/refs/heads/main/fw/firmware.bin) to the root directory of the SD card. Do not place it in any subdirectories.
+   - Copy the downloaded firmware update file [firmware.bin](https://xperiments.in/xtouch-bin/fw/firmware.bin) to the root directory of the SD card. Do not place it in any subdirectories.
 
 3. **Reboot the xtouch screen**:
 
@@ -405,7 +412,23 @@ If you encounter issues during the installation or operation of your BambuLab Pr
 
    - Keep in mind that SD cards from different manufacturers may behave differently. While many SD cards work seamlessly, some may not be fully compatible with the touch screen. If you experience issues with an SD card, consider trying a different brand or model to see if it resolves the problem.
 
-3. **Recalibrating the Screen**:
+3. **WiFi Connection Loop**:
+
+   - In some cases, users have reported that after confirming their WiFi credentials are correct, the device enters into a continuous loop without establishing a connection. This issue can sometimes be resolved by adjusting the WiFi connection timeout.
+
+   - To do this, modify the `config.json` file and include a numerical parameter for the timeout. Increasing the timeout value can help address this issue.
+
+   - Use the [Online config.json Form](https://xperiments.in/xtouch-bin/config.html) for step-by-step instructions.
+
+4. **Endless Reboots in Printer Startup**:
+
+   - Sometimes, users may encounter an issue where the printer and xtouch screen go through an endless reboot cycle during the device's power-on process, preventing xtouch from becoming ready. This problem can often be resolved by adjusting the "coldboot" value within the `config.json` configuration file.
+
+   - To address this issue, open the `config.json` file and include a numerical parameter for the "coldboot" parameter. This parameter specifies the duration in milliseconds the system should wait for initialization after a cold boot. By increasing the "coldboot" value, you provide the system with more time to complete the startup process successfully.
+
+   - Use the [Online config.json Form](https://xperiments.in/xtouch-bin/config.html) for step-by-step instructions.
+
+5. **Recalibrating the Screen**:
 
    If you encounter touch screen calibration issues or misalignment, you can recalibrate the screen by removing the `touch.json` file located in the `xtouch` directory on the SD card. Follow these steps:
 

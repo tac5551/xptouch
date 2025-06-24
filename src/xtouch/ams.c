@@ -17,11 +17,12 @@ void xtouch_ams_parse_tray_now(const char *tray_now)
         }
         else if (tray_now_int == 255)
         {
-            bambuStatus.m_ams_id = 0;
-            bambuStatus.m_tray_id = 0;
+            bambuStatus.m_ams_id = -1;
+            bambuStatus.m_tray_id = -1;
         }
     }
 }
+
 
 void xtouch_ams_parse_status(int ams_status)
 {
@@ -69,7 +70,7 @@ bool xtouch_can_load_filament()
     if (!xtouch_has_ams())
         return true;
 
-    if (bambuStatus.ams_status_main == AMS_STATUS_MAIN_IDLE && bambuStatus.hw_switch_state == 1 && bambuStatus.m_tray_now == 255)
+    if (bambuStatus.ams_status_main == AMS_STATUS_MAIN_IDLE && bambuStatus.hw_switch_state == 1 && (bambuStatus.m_tray_now == 255 || bambuStatus.m_tray_now == 254))
     {
         return true;
     }

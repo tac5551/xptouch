@@ -3,7 +3,7 @@
 
 void xtouch_globals_init()
 {
-    controlMode.inc = 1;
+    controlMode.inc = 10;
     controlMode.axis = ControlAxisXY;
 }
 

@@ -2,6 +2,7 @@
 
 void ui_controlScreen_screen_init(void)
 {
+    controlMode.axis = 0;
     ui_controlScreen = lv_obj_create(NULL);
     lv_obj_clear_flag(ui_controlScreen, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM); /// Flags
     lv_obj_set_scrollbar_mode(ui_controlScreen, LV_SCROLLBAR_MODE_OFF);

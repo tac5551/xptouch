@@ -1,8 +1,18 @@
 #include <Arduino.h>
 #include <stdio.h>
 #include "../ui.h"
+#include "../ui_msgs.h"
+#include "../../xtouch/trays.h"
 #include "xtouch/globals.h"
+#include <time.h>
 
+#define SLOT_COUNT 5
+#define AMS_BORDER 3
+
+extern int time12hFormat;
+char last_gcode_file[128];
+char bed_target[10];
+char nozzle_target[10];
 const char *xtouch_device_get_print_state()
 {
     switch (bambuStatus.print_status)
@@ -124,6 +134,57 @@ void onXTouchLightMessage(lv_event_t *e)
     else
     {
         lv_obj_clear_state(target, LV_STATE_CHECKED);
+    }
+}
+
+void onXTouchAMSUpdate(lv_event_t *e)
+{
+
+    lv_obj_t *target = lv_event_get_target(e);
+    lv_msg_t *m = lv_event_get_msg(e);
+    uint16_t user_data = (uint16_t)lv_event_get_user_data(e);
+
+    struct XTOUCH_MESSAGE_DATA *message = (struct XTOUCH_MESSAGE_DATA *)m->payload;
+
+    uint32_t tray_status = get_tray_status(user_data);
+    uint16_t tray_id = ((tray_status >> 4) & 0x0F);
+    uint16_t loaded = ((tray_status) & 0x01);
+
+    if (user_data == tray_id)
+    {
+        lv_color_t color = lv_color_hex(tray_status >> 8);
+        lv_color_t color_inv = lv_color_hex((0xFFFFFF - (tray_status >> 8)) & 0xFFFFFF);
+
+        printf(" tray_now: %d, tray_tar: %d, slot: %d, color: %06llX \n", bambuStatus.m_tray_now, bambuStatus.m_tray_tar, tray_id, message->data >> 8);
+
+        lv_obj_set_style_bg_color(target, color, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_text_color(target, color_inv, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+        if (tray_id == 0)
+            tray_id = 254 + 1;
+
+        lv_obj_set_style_border_color(target, color, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_border_width(target, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_label_set_text(target, "");
+
+        if (bambuStatus.m_tray_now + 1 == tray_id)
+        {
+            lv_label_set_text(target, "");
+            lv_obj_set_style_border_color(target, color_inv, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_border_width(target, AMS_BORDER, LV_PART_MAIN | LV_STATE_DEFAULT);
+        }
+        else if (bambuStatus.m_tray_pre + 1 == tray_id && bambuStatus.m_tray_pre != bambuStatus.m_tray_tar)
+        {
+            lv_label_set_text(target, "");
+        }
+        else if (!loaded)
+        {
+            lv_label_set_text(target, "");
+        }
+        else
+        {
+            lv_label_set_text(target, "");
+        }
     }
 }
 
@@ -411,7 +472,7 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
     lv_obj_add_flag(cui_mainScreenAMS, LV_OBJ_FLAG_HIDDEN);
 
     lv_obj_t *cui_mainScreenAMSColor0;
-    cui_mainScreenAMSColor0 = lv_obj_create(cui_mainScreenAMS);
+    cui_mainScreenAMSColor0 = lv_label_create(cui_mainScreenAMS);
     lv_obj_set_height(cui_mainScreenAMSColor0, lv_pct(100));
     lv_obj_set_flex_grow(cui_mainScreenAMSColor0, 1);
     lv_obj_set_x(cui_mainScreenAMSColor0, 386);
@@ -423,7 +484,7 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_radius(cui_mainScreenAMSColor0, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(cui_mainScreenAMSColor0, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(cui_mainScreenAMSColor0, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_border_width(cui_mainScreenAMSColor0, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(cui_mainScreenAMSColor0, AMS_BORDER, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_left(cui_mainScreenAMSColor0, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_right(cui_mainScreenAMSColor0, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_top(cui_mainScreenAMSColor0, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -432,9 +493,12 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_pad_column(cui_mainScreenAMSColor0, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_color(cui_mainScreenAMSColor0, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(cui_mainScreenAMSColor0, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_align(cui_mainScreenAMSColor0, LV_ALIGN_CENTER);
+    lv_obj_set_style_text_align(cui_mainScreenAMSColor0, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(cui_mainScreenAMSColor0, &lv_font_montserrat_28, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     lv_obj_t *cui_mainScreenAMSColor1;
-    cui_mainScreenAMSColor1 = lv_obj_create(cui_mainScreenAMS);
+    cui_mainScreenAMSColor1 = lv_label_create(cui_mainScreenAMS);
     lv_obj_set_height(cui_mainScreenAMSColor1, lv_pct(100));
     lv_obj_set_flex_grow(cui_mainScreenAMSColor1, 1);
     lv_obj_set_x(cui_mainScreenAMSColor1, 386);
@@ -446,7 +510,7 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_radius(cui_mainScreenAMSColor1, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(cui_mainScreenAMSColor1, lv_color_hex(0xFF0000), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(cui_mainScreenAMSColor1, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_border_width(cui_mainScreenAMSColor1, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(cui_mainScreenAMSColor1, AMS_BORDER, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_left(cui_mainScreenAMSColor1, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_right(cui_mainScreenAMSColor1, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_top(cui_mainScreenAMSColor1, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -455,9 +519,13 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_pad_column(cui_mainScreenAMSColor1, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_color(cui_mainScreenAMSColor1, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(cui_mainScreenAMSColor1, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_align(cui_mainScreenAMSColor1, LV_ALIGN_CENTER);
+    lv_obj_set_style_text_align(cui_mainScreenAMSColor1, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(cui_mainScreenAMSColor1, &lv_font_montserrat_28, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_label_set_text(cui_mainScreenAMSColor1, "");
 
     lv_obj_t *cui_mainScreenAMSColor2;
-    cui_mainScreenAMSColor2 = lv_obj_create(cui_mainScreenAMS);
+    cui_mainScreenAMSColor2 = lv_label_create(cui_mainScreenAMS);
     lv_obj_set_height(cui_mainScreenAMSColor2, lv_pct(100));
     lv_obj_set_flex_grow(cui_mainScreenAMSColor2, 1);
     lv_obj_set_x(cui_mainScreenAMSColor2, 386);
@@ -469,7 +537,7 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_radius(cui_mainScreenAMSColor2, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(cui_mainScreenAMSColor2, lv_color_hex(0x00FF00), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(cui_mainScreenAMSColor2, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_border_width(cui_mainScreenAMSColor2, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(cui_mainScreenAMSColor2, AMS_BORDER, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_left(cui_mainScreenAMSColor2, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_right(cui_mainScreenAMSColor2, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_top(cui_mainScreenAMSColor2, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -478,9 +546,13 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_pad_column(cui_mainScreenAMSColor2, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_color(cui_mainScreenAMSColor2, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(cui_mainScreenAMSColor2, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_align(cui_mainScreenAMSColor2, LV_ALIGN_CENTER);
+    lv_obj_set_style_text_align(cui_mainScreenAMSColor2, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(cui_mainScreenAMSColor2, &lv_font_montserrat_28, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_label_set_text(cui_mainScreenAMSColor2, "");
 
     lv_obj_t *cui_mainScreenAMSColor3;
-    cui_mainScreenAMSColor3 = lv_obj_create(cui_mainScreenAMS);
+    cui_mainScreenAMSColor3 = lv_label_create(cui_mainScreenAMS);
     lv_obj_set_height(cui_mainScreenAMSColor3, lv_pct(100));
     lv_obj_set_flex_grow(cui_mainScreenAMSColor3, 1);
     lv_obj_set_x(cui_mainScreenAMSColor3, 386);
@@ -492,7 +564,7 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_radius(cui_mainScreenAMSColor3, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(cui_mainScreenAMSColor3, lv_color_hex(0x0000FF), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(cui_mainScreenAMSColor3, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_border_width(cui_mainScreenAMSColor3, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(cui_mainScreenAMSColor3, AMS_BORDER, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_left(cui_mainScreenAMSColor3, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_right(cui_mainScreenAMSColor3, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_top(cui_mainScreenAMSColor3, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -501,6 +573,37 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_pad_column(cui_mainScreenAMSColor3, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_color(cui_mainScreenAMSColor3, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(cui_mainScreenAMSColor3, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_align(cui_mainScreenAMSColor3, LV_ALIGN_CENTER);
+    lv_obj_set_style_text_align(cui_mainScreenAMSColor3, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(cui_mainScreenAMSColor3, &lv_font_montserrat_28, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_label_set_text(cui_mainScreenAMSColor3, "");
+
+    lv_obj_t *cui_mainScreenAMSColor4;
+    cui_mainScreenAMSColor4 = lv_label_create(cui_mainScreenAMS);
+    lv_obj_set_height(cui_mainScreenAMSColor4, lv_pct(100));
+    lv_obj_set_flex_grow(cui_mainScreenAMSColor4, 1);
+    lv_obj_set_x(cui_mainScreenAMSColor4, 386);
+    lv_obj_set_y(cui_mainScreenAMSColor4, 178);
+    lv_obj_set_flex_flow(cui_mainScreenAMSColor4, LV_FLEX_FLOW_ROW);
+    lv_obj_set_flex_align(cui_mainScreenAMSColor4, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
+    lv_obj_clear_flag(cui_mainScreenAMSColor4, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN); /// Flags
+    lv_obj_set_scrollbar_mode(cui_mainScreenAMSColor4, LV_SCROLLBAR_MODE_OFF);
+    lv_obj_set_style_radius(cui_mainScreenAMSColor4, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(cui_mainScreenAMSColor4, lv_color_hex(0x00FFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(cui_mainScreenAMSColor4, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(cui_mainScreenAMSColor4, AMS_BORDER, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_left(cui_mainScreenAMSColor4, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(cui_mainScreenAMSColor4, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_top(cui_mainScreenAMSColor4, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_bottom(cui_mainScreenAMSColor4, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_row(cui_mainScreenAMSColor4, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_column(cui_mainScreenAMSColor4, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_color(cui_mainScreenAMSColor4, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_opa(cui_mainScreenAMSColor4, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_align(cui_mainScreenAMSColor4, LV_ALIGN_CENTER);
+    lv_obj_set_style_text_align(cui_mainScreenAMSColor4, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(cui_mainScreenAMSColor4, &lv_font_montserrat_28, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_label_set_text(cui_mainScreenAMSColor4, "");
 
     ui_mainStatusComponent = ui_mainScreenStatus_create(cui_mainScreenLeft);
 
@@ -1002,6 +1105,7 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
     children[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENSTATUSBAR_MAINSCREENAMS_MAINSCREENAMSCOLOR1] = cui_mainScreenAMSColor1;
     children[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENSTATUSBAR_MAINSCREENAMS_MAINSCREENAMSCOLOR2] = cui_mainScreenAMSColor2;
     children[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENSTATUSBAR_MAINSCREENAMS_MAINSCREENAMSCOLOR3] = cui_mainScreenAMSColor3;
+    children[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENSTATUSBAR_MAINSCREENAMS_MAINSCREENAMSCOLOR4] = cui_mainScreenAMSColor4;
     children[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENIDLE] = ui_mainStatusComponent;
     children[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPLAYER] = cui_mainScreenPlayer;
     children[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPLAYER_MAINSCREENCONTROLLER] = cui_mainScreenController;
@@ -1031,6 +1135,7 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
     children[UI_COMP_HOMECOMPONENT_MAINSCREENRIGHT_MAINSCREENTEMPS_MAINSCREENCHAMBERTEMP] = cui_mainScreenChamberTemp;
     children[UI_COMP_HOMECOMPONENT_MAINSCREENRIGHT_MAINSCREENTEMPS_MAINSCREENCHAMBERTEMP_MAINSCREENCHAMBERTEMPICON] = cui_mainScreenChamberTempIcon;
     children[UI_COMP_HOMECOMPONENT_MAINSCREENRIGHT_MAINSCREENTEMPS_MAINSCREENCHAMBERTEMP_MAINSCREENCHAMBERTEMPVALUE] = cui_mainScreenChamberTempValue;
+
     lv_obj_add_event_cb(cui_homeComponent, get_component_child_event_cb, LV_EVENT_GET_COMP_CHILD, children);
     lv_obj_add_event_cb(cui_homeComponent, del_component_child_event_cb, LV_EVENT_DELETE, children);
     lv_obj_add_event_cb(cui_mainScreenPlayPauseButton, ui_event_comp_homeComponent_mainScreenPlayPauseButton, LV_EVENT_ALL, children);
@@ -1040,6 +1145,21 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
     lv_obj_add_event_cb(cui_mainScreenBedTemp, ui_event_comp_homeComponent_mainScreenBedTemp, LV_EVENT_ALL, children);
     lv_obj_add_event_cb(cui_mainScreenNozzleTemp, ui_event_comp_homeComponent_mainScreenNozzleTemp, LV_EVENT_ALL, children);
     lv_obj_add_event_cb(cui_mainScreenSpeedDropDown, ui_event_comp_homeComponent_mainScreenSpeedChange, LV_EVENT_ALL, children);
+
+    lv_obj_add_event_cb(cui_mainScreenAMSColor0, onXTouchAMSUpdate, LV_EVENT_MSG_RECEIVED, (void *)0);
+    lv_msg_subsribe_obj(XTOUCH_ON_AMS_SLOT_UPDATE, cui_mainScreenAMSColor0, (void *)0);
+
+    lv_obj_add_event_cb(cui_mainScreenAMSColor1, onXTouchAMSUpdate, LV_EVENT_MSG_RECEIVED, (void *)1);
+    lv_msg_subsribe_obj(XTOUCH_ON_AMS_SLOT_UPDATE, cui_mainScreenAMSColor1, (void *)1);
+
+    lv_obj_add_event_cb(cui_mainScreenAMSColor2, onXTouchAMSUpdate, LV_EVENT_MSG_RECEIVED, (void *)2);
+    lv_msg_subsribe_obj(XTOUCH_ON_AMS_SLOT_UPDATE, cui_mainScreenAMSColor2, (void *)2);
+
+    lv_obj_add_event_cb(cui_mainScreenAMSColor3, onXTouchAMSUpdate, LV_EVENT_MSG_RECEIVED, (void *)3);
+    lv_msg_subsribe_obj(XTOUCH_ON_AMS_SLOT_UPDATE, cui_mainScreenAMSColor3, (void *)3);
+
+    lv_obj_add_event_cb(cui_mainScreenAMSColor4, onXTouchAMSUpdate, LV_EVENT_MSG_RECEIVED, (void *)4);
+    lv_msg_subsribe_obj(XTOUCH_ON_AMS_SLOT_UPDATE, cui_mainScreenAMSColor4, (void *)4);
 
     lv_obj_add_event_cb(cui_mainScreenLightButton, onXTouchLightMessage, LV_EVENT_MSG_RECEIVED, NULL);
     lv_msg_subsribe_obj(XTOUCH_ON_LIGHT_REPORT, cui_mainScreenLightButton, NULL);
@@ -1072,5 +1192,11 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
     lv_msg_subsribe_obj(XTOUCH_ON_PRINT_STATUS, cui_mainScreenTimeLeft, NULL);
 
     ui_comp_homeComponent_create_hook(cui_homeComponent);
+
+    struct XTOUCH_MESSAGE_DATA eventData;
+    eventData.data = 0;
+    lv_msg_send(XTOUCH_ON_AMS_SLOT_UPDATE, &eventData);
+    lv_msg_send(XTOUCH_ON_WIFI_SIGNAL, &eventData);
+    
     return cui_homeComponent;
 }

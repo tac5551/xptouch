@@ -36,7 +36,6 @@ void xtouch_intro_show(void)
 
 void setup()
 {
-
 #if XTOUCH_USE_SERIAL == true || XTOUCH_DEBUG_ERROR == true || XTOUCH_DEBUG_DEBUG == true || XTOUCH_DEBUG_INFO == true
   Serial.begin(115200);
 #endif
@@ -52,14 +51,10 @@ void setup()
 
   xtouch_settings_loadSettings();
 
-  xtouch_firmware_checkFirmwareUpdate();
-
   xtouch_touch_setup();
 
   while (!xtouch_wifi_setup())
     ;
-
-  xtouch_firmware_checkOnlineFirmwareUpdate();
 
   xtouch_screen_setupScreenTimer();
   xtouch_setupGlobalEvents();
@@ -75,7 +70,6 @@ void setup()
   else
   {
     cloud.loadAuthTokens();
-
     if (!cloud.isPaired())
     {
       cloud.selectPrinter();
@@ -84,8 +78,10 @@ void setup()
     {
       cloud.loadPair();
     }
+    Serial.println("xtouch_mqtt_setup ...");
     xtouch_mqtt_setup();
   }
+  Serial.println("xtouch_chamber_timer_init ...");
   xtouch_chamber_timer_init();
 }
 
@@ -95,4 +91,5 @@ void loop()
   lv_task_handler();
   if (cloud.loggedIn)
     xtouch_mqtt_loop();
+  delay(10);
 }

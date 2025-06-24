@@ -52,6 +52,15 @@ lv_obj_t *ui_mainScreenChamberTempValue;
 void ui_event____initial_actions0(lv_event_t *e);
 lv_obj_t *ui____initial_actions0;
 
+
+
+const lv_font_t *lv_font_small = &lv_font_montserrat_14;
+const lv_font_t *lv_font_big = &lv_font_montserrat_28;
+const lv_font_t *lv_icon_font_small = &ui_font_xlcd;
+const lv_font_t *lv_icon_font_big = &ui_font_xperiments;
+
+
+
 ///////////////////// TEST LVGL SETTINGS ////////////////////
 #if LV_COLOR_DEPTH != 16
 #error "LV_COLOR_DEPTH should be 16bit to match lvgl settings"

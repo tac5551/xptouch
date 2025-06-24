@@ -105,6 +105,7 @@ extern "C"
         bool ams_support_use_ams;
         int ams_rfid_status;
         int ams_humidity;
+        float ams_temperature;
         int ams_user_setting_hold_count;
         bool ams_insert_flag;
         bool ams_power_on_flag;
@@ -118,6 +119,8 @@ extern "C"
         int m_ams_id;   // local ams  : "0" ~ "3"
         int m_tray_id;  // local tray id : "0" ~ "3"
         int m_tray_now; // tray_now : "0" ~ "15" or "254", "255"
+        int m_tray_pre; // tray_now : "0" ~ "15" or "254", "255"
+        int m_humidity; // humidity : "1" ~ "5"
         int m_tray_tar; // tray_tar : "0" ~ "15" or "255"
 
     } XTouchBambuStatus;

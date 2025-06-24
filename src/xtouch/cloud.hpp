@@ -10,6 +10,7 @@
 #include "bbl-certs.h"
 
 bool xtouch_cloud_pair_loop_exit = false;
+#include <WiFiClientSecure.h>
 
 class BambuCloud
 {
@@ -22,32 +23,63 @@ public:
   String _email;
   bool loggedIn = false;
 
-  JsonArray getDeviceList()
+  bool getDeviceList(DynamicJsonDocument *&doc)
   {
     Serial.println(_region);
     Serial.println("Getting device list from Bambu Cloud");
     String url = _region == "China" ? "https://api.bambulab.cn/v1/iot-service/api/user/bind" : "https://api.bambulab.com/v1/iot-service/api/user/bind";
+    String host = _region == "China" ? "api.bambulab.cn" : "api.bambulab.com";
 
-    HTTPClient http;
-    http.begin(url);
-    http.addHeader("Authorization", "Bearer " + _auth_token);
-    http.addHeader("Content-Type", "application/json");
-
-    int httpResponseCode = http.GET();
-    if (httpResponseCode != 200)
+    WiFiClientSecure client;
+    client.setTimeout(500);
+    client.setInsecure();
+    String response = "";
+    if (!client.connect(host.c_str(), 443))
+      Serial1.println("Connection failed!");
+    else
     {
-      Serial.printf("Received error: %d\n", httpResponseCode);
-      http.end();
-      DynamicJsonDocument emptyDoc(1024);
-      return emptyDoc.to<JsonArray>();
+      Serial1.println("Connected to server!");
+
+      String request = "GET " + url + " HTTP/1.1\r\n";
+      request += "Host: " + String(host) + "\r\n";
+      request += "Authorization: Bearer " + _auth_token + "\r\n";
+      request += "Connection: close\r\n";
+      request += "\r\n";
+
+      Serial.println("Sending request:");
+      Serial.print(request);
+      client.print(request);
+
+      while (client.connected())
+      {
+        String line = client.readStringUntil('\n');
+        if (line == "\r")
+        {
+          Serial1.println("headers received");
+          break;
+        }
+      }
+
+      while (client.available())
+      {
+        char c = client.read();
+        // Serial1.write(c);
+        response += c;
+      }
+      Serial1.println("\ndata received");
+
+      client.stop();
     }
+    Serial1.println("Connection closed");
 
-    String response = http.getString();
-    http.end();
-
-    DynamicJsonDocument doc(2048);
-    deserializeJson(doc, response);
-    return doc["devices"].as<JsonArray>();
+    doc = new DynamicJsonDocument(2048);
+    DeserializationError error = deserializeJson(*doc, response);
+    if (error)
+    {
+      Serial.print(F("deserializeJson() failed: "));
+      return false;
+    }
+    return true;
   }
 
   JsonArray getPrivateFilaments()
@@ -79,11 +111,30 @@ public:
 
   void selectPrinter()
   {
-    JsonArray devices = getDeviceList();
+
     DynamicJsonDocument printers = xtouch_filesystem_readJson(SD, xtouch_paths_printers, false);
+    DynamicJsonDocument *deviceListDocument = nullptr;
+    JsonArray devices;
+    if (getDeviceList(deviceListDocument))
+    {
+      if (deviceListDocument != nullptr)
+      {
+        devices = (*deviceListDocument)["devices"].as<JsonArray>();
+      }
+      else
+      {
+        return;
+      }
+    }
+    else
+    {
+      return;
+    }
 
     for (JsonVariant v : devices)
     {
+      Serial.println("\n===========================================");
+      serializeJsonPretty(v, Serial);
       if (!printers.containsKey(v["dev_id"].as<String>()))
       {
         printers[v["dev_id"].as<String>()] = v;
@@ -127,7 +178,9 @@ public:
     String output = "";
     for (JsonVariant v : devices)
     {
-      output = output + LV_SYMBOL_CHARGE + " " + v["dev_id"].as<String>() + "\n";
+      Serial.println("\n===========================================");
+      serializeJsonPretty(v, Serial);
+      output = output + LV_SYMBOL_CHARGE + " " + v["dev_id"].as<String>() + " (" + v["name"].as<String>() + ")\n";
     }
 
     if (!output.isEmpty())
@@ -153,7 +206,8 @@ public:
 
       savePrinterPair(devices[currentIndex]["dev_id"].as<String>(), devices[currentIndex]["dev_model_name"].as<String>(), devices[currentIndex]["name"].as<String>());
     }
-
+    delete deviceListDocument; // 使い終わったら必ず解放する
+    deviceListDocument = nullptr;
     loadScreen(-1);
   }
 

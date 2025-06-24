@@ -27,7 +27,7 @@ void xtouch_coldboot_check()
     {
         DynamicJsonDocument config = xtouch_filesystem_readJson(SD, xtouch_paths_config);
         int coldbootTimeout = config.containsKey("coldboot") ? config["coldboot"].as<int>() : 5000;
-        lv_label_set_text(introScreenCaption, LV_SYMBOL_POWER);
+        lv_label_set_text(introScreenCaption, LV_SYMBOL_POWER "  xPTouch");
         lv_obj_set_style_text_color(introScreenCaption, lv_color_hex(0x555555), LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_timer_handler();
         delay(coldbootTimeout);

@@ -38,6 +38,8 @@ extern "C"
     void onControlUp(lv_event_t *e);
     void onControlHome(lv_event_t *e);
     void onControlDown(lv_event_t *e);
+    void onControlBedUp(lv_event_t *e);
+    void onControlBedDown(lv_event_t *e);
     void onControlAxis(lv_event_t *e);
     void onControlRight(lv_event_t *e);
 
@@ -50,7 +52,6 @@ extern "C"
     void onSettingsChamberFan(lv_event_t *e);
     void onSettingsChamberSensor(lv_event_t *e);
     void onSettingsTFTFlip(lv_event_t *e);
-    void onSettingsOTA(lv_event_t *e);
     void onSettingsWOP(lv_event_t *e);
 
     /* -----------Confirm-------------- */
@@ -63,6 +64,7 @@ extern "C"
     void onFilamentLoad(lv_event_t *e);
     void onFilamentUnload(lv_event_t *e);
 
+    void onAmsSlotLoad(lv_event_t *e, int slot);
 #ifdef __cplusplus
 } /*extern "C"*/
 #endif
