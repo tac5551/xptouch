@@ -22,7 +22,7 @@ bool xtouch_wifi_setup()
 
     WiFi.mode(WIFI_STA);
     WiFi.begin(ssidB64String.c_str(), ssidPWDString.c_str());
-    ConsoleInfo.println(F("[XTOUCH][CONNECTION] Connecting to WiFi .."));
+    ConsoleInfo.println(F("[xPTouch][CONNECTION] Connecting to WiFi .."));
 
     lv_label_set_text(introScreenCaption, LV_SYMBOL_WIFI " Connecting");
     lv_obj_set_style_text_color(introScreenCaption, lv_color_hex(0x555555), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -93,7 +93,7 @@ bool xtouch_wifi_setup()
     lv_timer_handler();
     lv_task_handler();
     delay(1000);
-    ConsoleInfo.print(F("[XTOUCH][CONNECTION] Connected to the WiFi network with IP: "));
+    ConsoleInfo.print(F("[xPTouch][CONNECTION] Connected to the WiFi network with IP: "));
     ConsoleInfo.println(WiFi.localIP());
 
     return true;

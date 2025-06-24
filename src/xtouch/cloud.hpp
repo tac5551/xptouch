@@ -280,7 +280,7 @@ public:
 
   void unpair()
   {
-    ConsoleInfo.println("[XTOUCH][SSDP] Unpairing device");
+    ConsoleInfo.println("[xPTouch][SSDP] Unpairing device");
     DynamicJsonDocument pairFile = xtouch_filesystem_readJson(SD, xtouch_paths_pair, false);
     pairFile["paired"] = "";
     xtouch_filesystem_writeJson(SD, xtouch_paths_pair, pairFile);

@@ -173,7 +173,7 @@ void ui_event_comp_filamentComponent_onAmsState(lv_event_t *e)
 void ui_event_comp_filamentComponent_onAmsHumidity(lv_event_t *e)
 {
 
-    printf("onAmsHumidity %d\n", bambuStatus.ams_humidity);
+    //printf("onAmsHumidity %d\n", bambuStatus.ams_humidity);
     lv_obj_t *target = lv_event_get_target(e);
     char buffer[100];
     memset(buffer, 0, 100);
@@ -188,7 +188,7 @@ void ui_event_comp_filamentComponent_onAmsUpdate(lv_event_t *e)
     lv_msg_t *m = lv_event_get_msg(e);
     uintptr_t temp_user_data = (uintptr_t)lv_event_get_user_data(e);
     uint8_t user_data = (uint8_t)temp_user_data;
-    printf("onAmsUpdate %d\n", user_data);
+    //printf("onAmsUpdate %d\n", user_data);
 
     if (!(bambuStatus.ams_status_main == AMS_STATUS_MAIN_IDLE || bambuStatus.ams_status_main == AMS_STATUS_MAIN_ASSIST) || bambuStatus.print_status == XTOUCH_PRINT_STATUS_RUNNING)
     {

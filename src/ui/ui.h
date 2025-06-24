@@ -40,6 +40,7 @@ extern "C"
   void ui_filamentScreen_screen_init(void);
   void ui_accessCodeScreen_screen_init(void);
   void ui_printerPairScreen_screen_init(void);
+  void ui_amsViewScreen_screen_init(void);
 
   lv_obj_t *introScreen;
   lv_obj_t *introScreenIcon;
@@ -76,6 +77,8 @@ extern "C"
   lv_obj_t *ui_printerPairScreenRoller;
   lv_obj_t *ui_printerPairScreenSubmitButton;
   lv_obj_t *ui_mainScreenChamberTempValue;
+  lv_obj_t *ui_amsViewScreen;
+  lv_obj_t *ui_amsViewComponent;
   void ui_event____initial_actions0(lv_event_t *e);
   lv_obj_t *ui____initial_actions0;
 

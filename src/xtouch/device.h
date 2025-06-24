@@ -139,7 +139,7 @@ void xtouch_device_set_print_state(String state)
 
 void xtouch_device_publish(String request)
 {
-    Serial.println(request);
+    //Serial.println(request);
     xtouch_pubSubClient.publish(xtouch_mqtt_request_topic.c_str(), request.c_str());
     delay(10);
 }

@@ -22,7 +22,7 @@ String xtouch_mqtt_report_topic;
 #include "device.h"
 #include "trays.h"
 #define XTOUCH_MQTT_SERVER_TIMEOUT 20
-#define XTOUCH_MQTT_SERVER_PUSH_STATUS_TIMEOUT 15
+#define XTOUCH_MQTT_SERVER_PUSH_STATUS_TIMEOUT 120
 #define XTOUCH_MQTT_SERVER_JSON_PARSE_SIZE 8192
 
 /* ---------------------------------------------- */
@@ -89,7 +89,7 @@ void xtouch_mqtt_update_slice_info(const char *project_id, const char *profile_i
 void xtouch_mqtt_processPushStatus(JsonDocument &incomingJson)
 {
     xtouch_mqtt_lastPushStatus = millis();
-    ConsoleDebug.println(F("[XTouch][MQTT] ProcessPushStatus"));
+    ConsoleDebug.println(F("[xPTouch][MQTT] ProcessPushStatus"));
 
     if (incomingJson != NULL && incomingJson.containsKey("print"))
     {
@@ -514,14 +514,14 @@ void xtouch_mqtt_processPushStatus(JsonDocument &incomingJson)
                 if (ams_list[0].containsKey("humidity"))
                 {
                     bambuStatus.ams_humidity = 6 - ams_list[0]["humidity"].as<int>();
-                    printf("AMS humidity: %d\n", bambuStatus.ams_humidity);
+                    //printf("AMS humidity: %d\n", bambuStatus.ams_humidity);
                     xtouch_mqtt_sendMsg(XTOUCH_ON_AMS_HUMIDITY_UPDATE, 0);
                 }
 
                 if (ams_list[0].containsKey("temp"))
                 {
                     bambuStatus.ams_temperature = ams_list[0]["temp"].as<float>();
-                    printf("AMS temp: %f\n", bambuStatus.ams_temperature);
+                    //printf("AMS temp: %f\n", bambuStatus.ams_temperature);
                     xtouch_mqtt_sendMsg(XTOUCH_ON_AMS_TEMPERATURE_UPDATE, 0);
                 }
 
@@ -622,13 +622,13 @@ void xtouch_mqtt_processPushStatus(JsonDocument &incomingJson)
             }
 
             xtouch_mqtt_sendMsg(XTOUCH_ON_AMS_BITS, 0);
-            printf("send onAmsState\n");
+            //printf("send onAmsState\n");
             xtouch_mqtt_sendMsg(XTOUCH_ON_AMS_STATE_UPDATE, 0);
-            printf("send onAmsUpdate\n");
+            //printf("send onAmsUpdate\n");
             xtouch_mqtt_sendMsg(XTOUCH_ON_AMS_SLOT_UPDATE, 0);
-            printf("AMS status main %d\n", bambuStatus.ams_status_main);
-            printf("AMS status sub  %d\n", bambuStatus.ams_status_sub);
-            printf("AMS tray now  %d\n", bambuStatus.m_tray_now);
+            //printf("AMS status main %d\n", bambuStatus.ams_status_main);
+            //printf("AMS status sub  %d\n", bambuStatus.ams_status_sub);
+            //printf("AMS tray now  %d\n", bambuStatus.m_tray_now);
         }
 
         // vt_tray
@@ -669,7 +669,7 @@ void xtouch_mqtt_processPushStatus(JsonDocument &incomingJson)
 void xtouch_mqtt_parseMessage(char *topic, byte *payload, unsigned int length, byte type = 0)
 {
 
-    ConsoleDebug.println(F("[XTouch][MQTT] ParseMessage"));
+    //ConsoleDebug.println(F("[xPTouch][MQTT] ParseMessage"));
     DynamicJsonDocument incomingJson(XTOUCH_MQTT_SERVER_JSON_PARSE_SIZE);
 
     DynamicJsonDocument amsFilter(128);
@@ -678,15 +678,15 @@ void xtouch_mqtt_parseMessage(char *topic, byte *payload, unsigned int length, b
     amsFilter["print"]["ams"] = true;
 
     auto deserializeError = deserializeJson(incomingJson, payload, length, DeserializationOption::Filter(amsFilter));
-    //auto deserializeError = deserializeJson(incomingJson, payload, length);
 
     xtouch_debug_json(incomingJson);
+
     if (!deserializeError)
     {
 
         if ((millis() - xtouch_mqtt_lastPushStatus) > (XTOUCH_MQTT_SERVER_PUSH_STATUS_TIMEOUT * 1000))
         {
-            Serial.println(F("[XTouch][MQTT] Force Reconnect after no Push Status for 30s"));
+            Serial.println("[xPTouch][MQTT] Force Reconnect after no Push Status for " + String(XTOUCH_MQTT_SERVER_PUSH_STATUS_TIMEOUT) + "s");
             xtouch_pubSubClient.disconnect();
         }
 
@@ -713,7 +713,7 @@ void xtouch_mqtt_parseMessage(char *topic, byte *payload, unsigned int length, b
             }
             else if (command == "gcode_line")
             {
-                ConsoleDebug.println(F("[XTouch][MQTT] gcode_line ack"));
+                ConsoleDebug.println(F("[xPTouch][MQTT] gcode_line ack"));
                 ConsoleDebug.println(String((char *)payload));
             }
 
@@ -752,7 +752,7 @@ void xtouch_mqtt_parseMessage(char *topic, byte *payload, unsigned int length, b
     }
     else
     {
-        ConsoleError.println(F("[XTouch][MQTT] ParseMessage deserializeJson failed"));
+        ConsoleError.println(F("[xPTouch][MQTT] ParseMessage deserializeJson failed"));
     }
 
     // if (firstParseMessage)
@@ -803,7 +803,7 @@ void xtouch_mqtt_onMqttReady()
 void xtouch_mqtt_connect()
 {
 
-    ConsoleInfo.println(F("[XTouch][MQTT] Connecting"));
+    ConsoleInfo.println(F("[xPTouch][MQTT] Connecting"));
 
     if (!xtouch_mqtt_firstConnectionDone)
     {
@@ -820,7 +820,7 @@ void xtouch_mqtt_connect()
         String clientId = "XTouch-CLIENT-" + String(xtouch_mqtt_generateRandomKey(16));
         if (xtouch_pubSubClient.connect(clientId.c_str(), cloud.getUsername().c_str(), cloud.getAuthToken().c_str()))
         {
-            ConsoleInfo.println(F("[XTouch][MQTT] ---- CONNECTED ----"));
+            ConsoleInfo.println(F("[xPTouch][MQTT] ---- CONNECTED ----"));
 
             xtouch_pubSubClient.subscribe(xtouch_mqtt_report_topic.c_str());
             xtouch_device_pushall();
@@ -831,7 +831,7 @@ void xtouch_mqtt_connect()
         }
         else
         {
-            ConsoleError.printf("[XTouch][MQTT] ---- CONNECTION FAIL ----: %d\n", xtouch_pubSubClient.state());
+            ConsoleError.printf("[xPTouch][MQTT] ---- CONNECTION FAIL ----: %d\n", xtouch_pubSubClient.state());
 
             switch (xtouch_pubSubClient.state())
             {

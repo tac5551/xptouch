@@ -5,14 +5,11 @@
 void initialActions(lv_event_t *e) {}
 
 /* -----------Sidebar-------------- */
-void onSidebarHome(lv_event_t *e)
-{
-    lv_msg_send(XTOUCH_SIDEBAR_HOME, NULL);
-    loadScreen(0);
-}
+void onSidebarHome(lv_event_t *e) { loadScreen(0); }
 void onSidebarTemp(lv_event_t *e) { loadScreen(1); }
 void onSidebarControl(lv_event_t *e) { loadScreen(2); }
 void onSidebarNozzle(lv_event_t *e) { loadScreen(3); }
+void onSidebarAmsView(lv_event_t *e) { loadScreen(7); }
 void onSidebarSettings(lv_event_t *e) { loadScreen(4); }
 
 /* -----------Home-------------- */
