@@ -28,23 +28,23 @@ bool xtouch_sdcard_setup()
         return false;
     }
 
-    ConsoleInfo.print("XTouch][SD] SD Card Type: ");
+    ConsoleInfo.print("[xPTouch][SD] SD Card Type: ");
 
     if (cardType == CARD_MMC)
     {
-        ConsoleInfo.println("[xPTouch][SD] MMC");
+        ConsoleInfo.println("MMC");
     }
     else if (cardType == CARD_SD)
     {
-        ConsoleInfo.println("[xPTouch][SD] SDSC");
+        ConsoleInfo.println("SDSC");
     }
     else if (cardType == CARD_SDHC)
     {
-        ConsoleInfo.println("[xPTouch][SD] SDHC");
+        ConsoleInfo.println("SDHC");
     }
     else
     {
-        ConsoleInfo.println("[xPTouch][SD] UNKNOWN");
+        ConsoleInfo.println("UNKNOWN");
     }
 
     uint64_t cardSize = SD.cardSize() / (1024 * 1024);

@@ -48,7 +48,7 @@ void ui_event_comp_settingsComponent_onTFTOFF(lv_event_t *e)
     if (event_code == LV_EVENT_VALUE_CHANGED)
     {
         uint32_t value = lv_slider_get_value(ui_settingsTFTOFFSlider);
-        lv_label_set_text_fmt(ui_settingsTFTOFFValue, "%dm", value);
+        //lv_label_set_text_fmt(ui_settingsTFTOFFValue, "%dm", value);
         if (value < XTOUCH_LCD_MIN_SLEEP_TIME)
         {
             lv_label_set_text(ui_settingsTFTOFFValue, LV_SYMBOL_POWER);
@@ -61,6 +61,29 @@ void ui_event_comp_settingsComponent_onTFTOFF(lv_event_t *e)
     if (event_code == LV_EVENT_RELEASED)
     {
         lv_msg_send(XTOUCH_SETTINGS_TFTOFF_SET, NULL);
+    }
+}
+
+void ui_event_comp_settingsComponent_onLEDOFF(lv_event_t *e)
+{
+    lv_event_code_t event_code = lv_event_get_code(e);
+    if (event_code == LV_EVENT_VALUE_CHANGED)
+    {
+        uint32_t value = lv_slider_get_value(ui_settingsLEDOFFSlider);
+        //lv_label_set_text_fmt(ui_settingsLEDOFFValue, "%dm", value);
+        if (value < XTOUCH_LIGHT_MIN_SLEEP_TIME)
+        {
+            printf("onLEDOFF OFFSIMBOLE");
+            lv_label_set_text(ui_settingsLEDOFFValue, LV_SYMBOL_POWER);
+        }
+        else
+        {
+            lv_label_set_text_fmt(ui_settingsLEDOFFValue, "%dm", value);
+        }
+    }
+    if (event_code == LV_EVENT_RELEASED)
+    {
+        lv_msg_send(XTOUCH_SETTINGS_LEDOFF_SET, NULL);
     }
 }
 
@@ -81,8 +104,6 @@ void ui_event_comp_settingsComponent_onTFTFlip(lv_event_t *e)
         onSettingsTFTFlip(e);
     }
 }
-
-
 
 void ui_event_comp_settingsComponent_onAuxFan(lv_event_t *e)
 {
@@ -271,6 +292,60 @@ lv_obj_t *ui_settingsComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_pad_right(ui_settingsTFTOFFValue, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_top(ui_settingsTFTOFFValue, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_bottom(ui_settingsTFTOFFValue, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    lv_obj_t *cui_settingsLEDOFFPanel;
+    cui_settingsLEDOFFPanel = lv_obj_create(cui_settingsComponent);
+    lv_obj_set_width(cui_settingsLEDOFFPanel, lv_pct(100));
+    lv_obj_set_height(cui_settingsLEDOFFPanel, 70);
+    lv_obj_set_flex_flow(cui_settingsLEDOFFPanel, LV_FLEX_FLOW_ROW);
+    lv_obj_set_flex_align(cui_settingsLEDOFFPanel, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_set_style_radius(cui_settingsLEDOFFPanel, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(cui_settingsLEDOFFPanel, lv_color_hex(0x222222), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(cui_settingsLEDOFFPanel, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(cui_settingsLEDOFFPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_left(cui_settingsLEDOFFPanel, 16, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(cui_settingsLEDOFFPanel, 16, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_top(cui_settingsLEDOFFPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_bottom(cui_settingsLEDOFFPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    lv_obj_t *cui_settingsLEDOFFPanelLabel;
+    cui_settingsLEDOFFPanelLabel = lv_label_create(cui_settingsLEDOFFPanel);
+    lv_obj_set_width(cui_settingsLEDOFFPanelLabel, LV_SIZE_CONTENT);  /// 1
+    lv_obj_set_height(cui_settingsLEDOFFPanelLabel, LV_SIZE_CONTENT); /// 1
+    lv_label_set_text(cui_settingsLEDOFFPanelLabel, "LED off");
+    lv_obj_set_style_text_font(cui_settingsLEDOFFPanelLabel, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_left(cui_settingsLEDOFFPanelLabel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(cui_settingsLEDOFFPanelLabel, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_top(cui_settingsLEDOFFPanelLabel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_bottom(cui_settingsLEDOFFPanelLabel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    ui_settingsLEDOFFSlider = lv_slider_create(cui_settingsLEDOFFPanel);
+    lv_slider_set_range(ui_settingsLEDOFFSlider, 14, 60);
+    lv_slider_set_value(ui_settingsLEDOFFSlider, xTouchConfig.xTouchLEDOffValue, LV_ANIM_OFF);
+    lv_obj_set_height(ui_settingsLEDOFFSlider, 10);
+    lv_obj_set_flex_grow(ui_settingsLEDOFFSlider, 1);
+    lv_obj_set_x(ui_settingsLEDOFFSlider, 9);
+    lv_obj_set_y(ui_settingsLEDOFFSlider, 28);
+    lv_obj_set_style_bg_color(ui_settingsLEDOFFSlider, lv_color_hex(0x333333), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(ui_settingsLEDOFFSlider, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    lv_obj_set_style_bg_color(ui_settingsLEDOFFSlider, lv_color_hex(0x00FF00), LV_PART_INDICATOR | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(ui_settingsLEDOFFSlider, 255, LV_PART_INDICATOR | LV_STATE_DEFAULT);
+
+    lv_obj_set_style_bg_color(ui_settingsLEDOFFSlider, lv_color_hex(0xFFFFFF), LV_PART_KNOB | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(ui_settingsLEDOFFSlider, 255, LV_PART_KNOB | LV_STATE_DEFAULT);
+
+    ui_settingsLEDOFFValue = lv_label_create(cui_settingsLEDOFFPanel);
+    lv_obj_set_width(ui_settingsLEDOFFValue, LV_SIZE_CONTENT);  /// 1
+    lv_obj_set_height(ui_settingsLEDOFFValue, LV_SIZE_CONTENT); /// 1
+
+    int32_t value2 = lv_slider_get_value(ui_settingsLEDOFFSlider);
+    lv_label_set_text_fmt(ui_settingsLEDOFFValue, value2 < XTOUCH_LIGHT_MIN_SLEEP_TIME ? LV_SYMBOL_POWER : "%dm", value2);
+    lv_obj_set_style_text_font(ui_settingsLEDOFFValue, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_left(ui_settingsLEDOFFValue, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(ui_settingsLEDOFFValue, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_top(ui_settingsLEDOFFValue, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_bottom(ui_settingsLEDOFFValue, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     lv_obj_t *cui_screenWOPSetting;
     cui_screenWOPSetting = lv_obj_create(cui_settingsComponent);
@@ -685,6 +760,8 @@ lv_obj_t *ui_settingsComponent_create(lv_obj_t *comp_parent)
     lv_obj_add_event_cb(cui_reseDeviceButton, ui_event_comp_settingsComponent_resetDeviceButton, LV_EVENT_CLICKED, NULL);
 
     lv_obj_add_event_cb(ui_settingsTFTOFFSlider, ui_event_comp_settingsComponent_onTFTOFF, LV_EVENT_ALL, NULL);
+    lv_obj_add_event_cb(ui_settingsLEDOFFSlider, ui_event_comp_settingsComponent_onLEDOFF, LV_EVENT_ALL, NULL);
+
     lv_obj_add_event_cb(ui_settingsBackLightPanelSlider, ui_event_comp_settingsComponent_onBackLight, LV_EVENT_ALL, NULL);
     lv_obj_add_event_cb(ui_settingsWOPSwitch, ui_event_comp_settingsComponent_onWOP, LV_EVENT_VALUE_CHANGED, NULL);
     lv_obj_add_event_cb(ui_settingsTFTInvertSwitch, ui_event_comp_settingsComponent_tftInvertInput, LV_EVENT_VALUE_CHANGED, NULL);
@@ -693,7 +770,7 @@ lv_obj_t *ui_settingsComponent_create(lv_obj_t *comp_parent)
     lv_obj_add_event_cb(ui_settings_chamberFanSwitch, ui_event_comp_settingsComponent_onChamberFan, LV_EVENT_VALUE_CHANGED, NULL);
     lv_obj_add_event_cb(ui_settings_chamberSensorSwitch, ui_event_comp_settingsComponent_onChamberTemp, LV_EVENT_VALUE_CHANGED, NULL);
     lv_obj_add_event_cb(ui_settingsTFTFlipSwitch, ui_event_comp_settingsComponent_onTFTFlip, LV_EVENT_VALUE_CHANGED, NULL);
-   
+
     ui_comp_settingsComponent_create_hook(cui_settingsComponent);
     return cui_settingsComponent;
 }

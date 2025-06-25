@@ -57,6 +57,7 @@ void setup()
     ;
 
   xtouch_screen_setupScreenTimer();
+  xtouch_screen_setupLEDOffTimer();
   xtouch_setupGlobalEvents();
   xtouch_webserver_begin();
 

@@ -11,16 +11,13 @@ static lv_disp_draw_buf_t draw_buf;
 static lv_color_t buf[4096];
 LGFX tft;
 
-
-//TFT_eSPI tft = TFT_eSPI(screenWidth, screenHeight); /* TFT instance */
+// TFT_eSPI tft = TFT_eSPI(screenWidth, screenHeight); /* TFT instance */
 
 #include "ui/ui.h"
 #include "touch.h"
 #include "xtouch/globals.h"
 
 bool xtouch_screen_touchFromPowerOff = false;
-
-
 
 void xtouch_screen_setBrightness(byte brightness)
 {
@@ -50,7 +47,7 @@ void xtouch_screen_wakeUp()
 
 void xtouch_screen_onScreenOff(lv_timer_t *timer)
 {
-    if (bambuStatus.print_status == XTOUCH_PRINT_STATUS_RUNNING)
+    if (bambuStatus.print_status == XTOUCH_PRINT_STATUS_RUNNING && xTouchConfig.xTouchWakeOnPrint == true)
     {
         return;
     }
@@ -63,6 +60,26 @@ void xtouch_screen_onScreenOff(lv_timer_t *timer)
     ConsoleInfo.println("[xPTouch][SCREEN] Screen Off");
     xtouch_screen_setBrightness(0);
     xtouch_screen_touchFromPowerOff = true;
+}
+
+void xtouch_screen_onLEDOff(lv_timer_t *timer)
+{
+    if (bambuStatus.print_status == XTOUCH_PRINT_STATUS_RUNNING)
+    {
+        return;
+    }
+
+    if (xTouchConfig.xTouchTFTOFFValue < XTOUCH_LIGHT_MIN_SLEEP_TIME || xTouchConfig.xTouchTFTOFFValue == 0)
+    {
+        return;
+    }
+
+    // if led On
+    if (bambuStatus.chamberLed == true)
+    {
+        ConsoleInfo.println("[xPTouch][LED] LED Off");
+        lv_msg_send(XTOUCH_COMMAND_LIGHT_TOGGLE, NULL);
+    }
 }
 
 void xtouch_screen_setupScreenTimer()
@@ -85,6 +102,26 @@ void xtouch_screen_setScreenTimer(uint32_t period)
     lv_timer_reset(xtouch_screen_onScreenOffTimer);
 }
 
+void xtouch_screen_setupLEDOffTimer()
+{
+    xtouch_screen_onLEDOffTimer = lv_timer_create(xtouch_screen_onLEDOff, xTouchConfig.xTouchLEDOffValue * 1000 * 60, NULL);
+    lv_timer_pause(xtouch_screen_onLEDOffTimer);
+}
+
+void xtouch_screen_startLEDOffTimer()
+{
+    ConsoleInfo.println("[xPTouch][SCREEN] LED off Resume");
+    lv_timer_resume(xtouch_screen_onLEDOffTimer);
+    lv_timer_reset(xtouch_screen_onLEDOffTimer);
+}
+
+void xtouch_screen_setLEDOffTimer(uint32_t period)
+{
+    ConsoleInfo.println("[xPTouch][LED] LED off SetPeriod");
+    lv_timer_set_period(xtouch_screen_onLEDOffTimer, period);
+    lv_timer_reset(xtouch_screen_onLEDOffTimer);
+}
+
 void xtouch_screen_invertColors()
 {
     tft.invertDisplay(xTouchConfig.xTouchTFTInvert);
@@ -101,7 +138,7 @@ byte xtouch_screen_getTFTFlip()
 void xtouch_screen_setTFTFlip(byte mode)
 {
     xTouchConfig.xTouchTFTFlip = mode;
-    ConsoleInfo.println("[xPTouch][SCREEN FLIP] " + String(mode));
+    ConsoleInfo.println("[xPTouch][SCREEN FLIP] Set : " + String(mode));
     xtouch_eeprom_write(XTOUCH_EEPROM_POS_TFTFLIP, mode);
 }
 
@@ -126,8 +163,8 @@ void xtouch_screen_dispFlush(lv_disp_drv_t *disp, const lv_area_t *area, lv_colo
         tft.startWrite();
     }
     tft.setAddrWindow(area->x1, area->y1, w, h);
-    
-    //tft.pushColors((uint16_t *)&color_p->full, w * h, true);
+
+    // tft.pushColors((uint16_t *)&color_p->full, w * h, true);
     tft.pushImage(area->x1, area->y1, area->x2 - area->x1 + 1, area->y2 - area->y1 + 1, (lgfx::rgb565_t *)&color_p->full);
     tft.endWrite();
 

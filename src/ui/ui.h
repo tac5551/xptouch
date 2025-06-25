@@ -30,6 +30,7 @@ extern "C"
 #include "ui_events.h"
 
   lv_timer_t *xtouch_screen_onScreenOffTimer;
+  lv_timer_t *xtouch_screen_onLEDOffTimer;
   lv_timer_t *xtouch_ssdp_onButtonTimerTimer;
   // SCREEN: ui_controlScreen
   void ui_introScreen_screen_init(void);
@@ -62,6 +63,8 @@ extern "C"
   lv_obj_t *ui_settingsBackLightPanelSlider;
   lv_obj_t *ui_settingsTFTOFFSlider;
   lv_obj_t *ui_settingsTFTOFFValue;
+  lv_obj_t *ui_settingsLEDOFFSlider;
+  lv_obj_t *ui_settingsLEDOFFValue;
   lv_obj_t *ui_settingsTFTInvertSwitch;
   lv_obj_t *ui_settingsWOPSwitch;
   lv_obj_t *ui_settingsTFTFlipSwitch;
@@ -85,7 +88,7 @@ extern "C"
   LV_FONT_DECLARE(ui_font_xlcd);
   LV_FONT_DECLARE(ui_font_xlcdmin);
   LV_FONT_DECLARE(ui_font_xperiments);
-  
+
   extern const lv_font_t *lv_font_small;
   extern const lv_font_t *lv_font_big;
   extern const lv_font_t *lv_icon_font_small;

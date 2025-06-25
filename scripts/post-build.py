@@ -2,7 +2,8 @@ import json
 import subprocess
 import os
 import hashlib
-
+import shutil
+import sys
 Import("env")
 
 env = DefaultEnvironment()
@@ -120,18 +121,23 @@ def post_build_manifest(version_value):
 
 
 def post_build_copy_ota_fw(version):
-    ota_bin_source = ".pio/build/esp32dev/firmware.bin"
+    ota_bin_source = "./.pio/build/esp32dev/firmware.bin"
     ota_bin_target = f"../xptouch-bin/ota/xptouch.{version}.bin"
-    subprocess.run(['cp', ota_bin_source, ota_bin_target])
-    fw_bin_source = ".pio/build/esp32dev/firmware.bin"
+    print(f"copy to ota : cp {ota_bin_source} {ota_bin_target}")
+    shutil.copy(ota_bin_source,ota_bin_target)
+    #subprocess.run(['cp', ota_bin_source, ota_bin_target])
+
+    fw_bin_source = "./.pio/build/esp32dev/firmware.bin"
     fw_bin_target = f"../xptouch-bin/fw/firmware.bin"
-    subprocess.run(['cp', fw_bin_source, fw_bin_target])
+    print(f"copy to fw : cp {ota_bin_source} {ota_bin_target}")
+    shutil.copy(fw_bin_source,fw_bin_target)
+    #subprocess.run(['cp', fw_bin_source, fw_bin_target])
 
 def post_build_merge_bin(version):
 
     web_usb_fw = f"../../../../xptouch-bin/webusb/xptouch.web.{version}.bin"
     esptool_cmd = [
-        'esptool.py',
+        'esptool',
         '--chip', 'ESP32',
         'merge_bin',
         '-o', web_usb_fw,
@@ -141,7 +147,7 @@ def post_build_merge_bin(version):
         '0x8000', 'partitions.bin',
         '0x10000', 'firmware.bin'
     ]
-
+    print(f"command {esptool_cmd}" )
     subprocess.run(esptool_cmd, cwd="./.pio/build/esp32dev")
 
 
@@ -150,16 +156,26 @@ def post_build_action(source, target, env):
     with open("version.json", "r") as version_file:
         version_data = json.load(version_file)
         version_value = version_data.get("version", "UNKNOWN")
-
+    print(version_value)
+    print(f"xptouch delete_bin_files ../xptouch-bin/ota")
     delete_bin_files("../xptouch-bin/ota")
+    print(f"xptouch delete_bin_files ../xptouch-bin/webusb")
     delete_bin_files("../xptouch-bin/webusb")
+    print(f"xptouch post_build_manifest")
     post_build_manifest(version_value)
+    print(f"xptouch post_build_copy_ota_fw")
     post_build_copy_ota_fw(version_value)
+    print(f"xptouch post_build_create_ota_json")
     post_build_create_ota_json(version_value)
+    print(f"xptouch post_build_merge_bin")
     post_build_merge_bin(version_value)
 
+    print(f"xptouch post_build_increment_semver")
     post_build_increment_semver("version.json", bump_type="patch")
     print(f"xptouch POSTBUILD")
 
 
 env.AddPostAction("buildprog", post_build_action)
+
+
+

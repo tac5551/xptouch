@@ -2,6 +2,7 @@
 #define _XLCD_TYPES
 
 #define XTOUCH_LCD_MIN_SLEEP_TIME 5
+#define XTOUCH_LIGHT_MIN_SLEEP_TIME 15
 
 #ifdef __cplusplus
 extern "C"
@@ -158,6 +159,7 @@ extern "C"
         char xTouchPrinterName[32];
         int xTouchBacklightLevel;
         int xTouchTFTOFFValue;
+        int xTouchLEDOffValue;
         bool xTouchWakeOnPrint;
         int currentScreenIndex;
     } XTouchConfig;

@@ -797,6 +797,7 @@ void xtouch_mqtt_onMqttReady()
     {
         loadScreen(0);
         xtouch_screen_startScreenTimer();
+        xtouch_screen_startLEDOffTimer();
     }
     xtouch_mqtt_firstConnectionDone = true;
 }
