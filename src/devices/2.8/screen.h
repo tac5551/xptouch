@@ -11,8 +11,6 @@ static lv_disp_draw_buf_t draw_buf;
 static lv_color_t buf[4096];
 LGFX tft;
 
-// TFT_eSPI tft = TFT_eSPI(screenWidth, screenHeight); /* TFT instance */
-
 #include "ui/ui.h"
 #include "touch.h"
 #include "xtouch/globals.h"
