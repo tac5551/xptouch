@@ -437,8 +437,12 @@ void xtouch_device_command_ams_load(void *s, lv_msg_t *m)
     {
         return;
     }
-    uint16_t slot_id = slot + 1;
-    if (strcmp(get_tray_type(slot_id), "null") == 0)
+
+    uint8_t tmp_ams_id = slot / 100;
+    uint8_t tmp_slot_id = slot % 100;
+
+    uint16_t slot_id = tmp_slot_id + 1;
+    if (strcmp(get_tray_type(tmp_ams_id, slot_id), "null") == 0)
     {
         xtouch_device_pushall();
         return;
@@ -455,7 +459,7 @@ void xtouch_device_command_ams_load(void *s, lv_msg_t *m)
         xtouch_device_gcode_line(ams_unload_gcode);
     }
     memset(ams_gcode_buffer, 0, 700);
-    sprintf(ams_gcode_buffer, ams_load_gcode, slot, slot, get_tray_temp(slot), slot);
+    sprintf(ams_gcode_buffer, ams_load_gcode, tmp_ams_id, tmp_slot_id, get_tray_temp(tmp_ams_id, tmp_slot_id), tmp_slot_id);
     xtouch_device_gcode_line(ams_gcode_buffer);
 }
 

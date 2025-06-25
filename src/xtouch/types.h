@@ -104,8 +104,8 @@ extern "C"
         long int ams_version;
         bool ams_support_use_ams;
         int ams_rfid_status;
-        int ams_humidity;
-        float ams_temperature;
+        int ams_humidity[4];
+        float ams_temperature[4];
         int ams_user_setting_hold_count;
         bool ams_insert_flag;
         bool ams_power_on_flag;

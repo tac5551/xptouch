@@ -132,7 +132,9 @@ void ui_filamentComponent_onAMSBitsSlot(lv_event_t *e)
         check_bit = 0b00000100;
     if (ams_id == 3)
         check_bit = 0b00001000;
-    printf("onAMSBitsSlot user_data:%d ams_id:%d   ams_exist_bits:%08b = checkbit:%08b => %d\n", user_data, ams_id, bambuStatus.ams_exist_bits, check_bit, bambuStatus.ams_exist_bits & check_bit);
+    
+    //printf("onAMSBitsSlot user_data:%d ams_id:%d   ams_exist_bits:%08b = checkbit:%08b => %d\n", user_data, ams_id, bambuStatus.ams_exist_bits, check_bit, bambuStatus.ams_exist_bits & check_bit);
+    
     if ((bambuStatus.ams_exist_bits & check_bit) == 0)
     {
         lv_obj_add_flag(target, LV_OBJ_FLAG_HIDDEN);

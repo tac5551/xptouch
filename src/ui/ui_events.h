@@ -14,7 +14,7 @@ extern "C"
     void onSidebarControl(lv_event_t *e);
     void onSidebarNozzle(lv_event_t *e);
     void onSidebarSettings(lv_event_t *e);
-
+    void onSidebarAmsView(lv_event_t *e);
     /* home */
 
     void onHomeControllerPlayPause(lv_event_t *e);
