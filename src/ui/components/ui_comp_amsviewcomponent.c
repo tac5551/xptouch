@@ -6,17 +6,34 @@
 #define SLOT_COUNT 5
 #define AMS_BORDER 8
 
-
-
 void ui_event_comp_amsViewComponent_onAmsHumidity(lv_event_t *e)
 {
 
-    //printf("onAmsHumidity %d\n", bambuStatus.ams_humidity);
     lv_obj_t *target = lv_event_get_target(e);
+    uintptr_t temp_user_data = (uintptr_t)lv_event_get_user_data(e);
+    uint8_t user_data = (uint8_t)temp_user_data;
+
+    uint8_t ams_id = user_data - 1;
     char buffer[100];
     memset(buffer, 0, 100);
-    sprintf(buffer, "H\n%d", bambuStatus.ams_humidity);
+    sprintf(buffer, "H\n%d", bambuStatus.ams_humidity[ams_id]);
+    // printf("onAmsHumidity %d %d\n", ams_id, bambuStatus.ams_humidity[ams_id]);
+
     lv_label_set_text(target, buffer);
+}
+
+void ui_amsViewComponent_onAMSBitsSlot(lv_event_t *e)
+{
+    lv_obj_t *target = lv_event_get_target(e);
+
+    if (bambuStatus.ams_exist_bits == 0)
+    {
+        lv_obj_add_flag(target, LV_OBJ_FLAG_HIDDEN);
+    }
+    else
+    {
+        lv_obj_clear_flag(target, LV_OBJ_FLAG_HIDDEN);
+    }
 }
 
 void ui_event_comp_amsViewComponent_onAmsUpdate(lv_event_t *e)
@@ -26,7 +43,6 @@ void ui_event_comp_amsViewComponent_onAmsUpdate(lv_event_t *e)
     lv_msg_t *m = lv_event_get_msg(e);
     uintptr_t temp_user_data = (uintptr_t)lv_event_get_user_data(e);
     uint8_t user_data = (uint8_t)temp_user_data;
-    //printf("onAmsUpdate %d\n", user_data);
 
     if (!(bambuStatus.ams_status_main == AMS_STATUS_MAIN_IDLE || bambuStatus.ams_status_main == AMS_STATUS_MAIN_ASSIST) || bambuStatus.print_status == XTOUCH_PRINT_STATUS_RUNNING)
     {
@@ -39,20 +55,39 @@ void ui_event_comp_amsViewComponent_onAmsUpdate(lv_event_t *e)
 
     struct XTOUCH_MESSAGE_DATA *message = (struct XTOUCH_MESSAGE_DATA *)m->payload;
 
-    uint32_t tray_status = get_tray_status(user_data);
+    uint8_t tmp_ams_id = user_data / 100;
+    uint8_t tmp_tray_id = user_data % 100;
+
+    uint32_t tray_status = get_tray_status(tmp_ams_id, tmp_tray_id);
     uint16_t tray_id = ((tray_status >> 4) & 0x0F);
     uint16_t loaded = ((tray_status) & 0x01);
 
+    // printf("onAmsUpdate %d %d %d %d\n", tmp_ams_id, tmp_tray_id, tray_id, loaded);
+
+    // for (int i = 0; i < 4; i++)
+    // {
+    //     printf("--------------------------------\n");
+    //     for (int j = 0; j < 5; j++)
+    //     {
+    //         uint32_t tray_status = get_tray_status(i, j);
+    //         uint16_t tray_id = ((tray_status >> 4) & 0x0F);
+    //         uint16_t loaded = ((tray_status) & 0x01);
+
+    //         printf("tray dump %d %d %d %d %d %f\n", i, j, tray_id, loaded, bambuStatus.ams_humidity[i], bambuStatus.ams_temperature[i]);
+    //     }
+    // }
+    // printf("--------------------------------\n");
+
     // lv_obj_t *unload = ui_comp_get_child(target, UI_COMP_amsViewComponent_FILAMENTSCREENFILAMENT_FILAMENTSCREENUNLOAD);
 
-    if (user_data == tray_id)
+    if (tmp_tray_id == tray_id)
     {
         lv_color_t color = lv_color_hex(tray_status >> 8);
         lv_color_t color_inv = lv_color_hex((0xFFFFFF - (tray_status >> 8)) & 0xFFFFFF);
 
         char buffer[100];
         memset(buffer, 0, 100);
-        sprintf(buffer, "Slot %d\n%s", tray_id, get_tray_type(tray_id));
+        sprintf(buffer, "Slot %d\n%s", tray_id, get_tray_type(tmp_ams_id, tmp_tray_id));
         lv_label_set_text(target, buffer);
 
         // printf(" tray_now: %d, tray_tar: %d, slot: %d, color: %06llX \n", bambuStatus.m_tray_now, bambuStatus.m_tray_tar, tray_id, message->data >> 8);
@@ -89,7 +124,7 @@ void ui_event_comp_amsViewComponent_onAmsUpdate(lv_event_t *e)
 
 lv_obj_t *ui_amsViewComponent_create(lv_obj_t *comp_parent)
 {
-  lv_obj_t *cui_amsViewComponent;
+    lv_obj_t *cui_amsViewComponent;
     cui_amsViewComponent = lv_obj_create(comp_parent);
     lv_obj_set_height(cui_amsViewComponent, lv_pct(100));
     lv_obj_set_flex_grow(cui_amsViewComponent, 1);
@@ -204,8 +239,6 @@ lv_obj_t *ui_amsViewComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_text_color(cui_AmsControl4, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(cui_AmsControl4, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-
-
     lv_obj_t *cui_AmsHumid1;
     cui_AmsHumid1 = lv_label_create(cui_AmsControl1);
     lv_obj_set_width(cui_AmsHumid1, lv_pct(100));
@@ -231,11 +264,6 @@ lv_obj_t *ui_amsViewComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_bg_color(cui_AmsHumid1, lv_color_hex(0x777777), LV_PART_MAIN | LV_STATE_PRESSED);
     lv_obj_set_style_bg_opa(cui_AmsHumid1, 255, LV_PART_MAIN | LV_STATE_PRESSED);
     lv_obj_set_style_border_width(cui_AmsHumid1, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-
-    char buffer[100];
-    memset(buffer, 0, 100);
-    sprintf(buffer, "H\n%d", bambuStatus.ams_humidity);
-    lv_label_set_text(cui_AmsHumid1, buffer);
 
     lv_obj_t *cui_AmsSlot1_1;
     cui_AmsSlot1_1 = lv_label_create(cui_AmsControl1);
@@ -336,7 +364,6 @@ lv_obj_t *ui_amsViewComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_bg_color(cui_AmsSlot1_4, lv_color_hex(0x777777), LV_PART_MAIN | LV_STATE_PRESSED);
     lv_obj_set_style_bg_opa(cui_AmsSlot1_4, 255, LV_PART_MAIN | LV_STATE_PRESSED);
     lv_obj_set_style_border_width(cui_AmsSlot1_4, AMS_BORDER, LV_PART_MAIN | LV_STATE_DEFAULT);
-
 
     lv_obj_t *cui_AmsHumid2;
     cui_AmsHumid2 = lv_label_create(cui_AmsControl2);
@@ -464,10 +491,14 @@ lv_obj_t *ui_amsViewComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_bg_opa(cui_AmsSlot2_4, 255, LV_PART_MAIN | LV_STATE_PRESSED);
     lv_obj_set_style_border_width(cui_AmsSlot2_4, AMS_BORDER, LV_PART_MAIN | LV_STATE_DEFAULT);
 
+    // Humidity
+    lv_obj_add_event_cb(cui_AmsHumid1, ui_event_comp_amsViewComponent_onAmsHumidity, LV_EVENT_MSG_RECEIVED, (void *)1);
+    lv_msg_subsribe_obj(XTOUCH_ON_AMS_HUMIDITY_UPDATE, cui_AmsHumid1, (void *)1);
 
-    lv_obj_add_event_cb(cui_AmsHumid1, ui_event_comp_amsViewComponent_onAmsHumidity, LV_EVENT_MSG_RECEIVED, (void *)NULL);
-    lv_msg_subsribe_obj(XTOUCH_ON_AMS_HUMIDITY_UPDATE, cui_AmsHumid1, (void *)NULL);
+    lv_obj_add_event_cb(cui_AmsHumid2, ui_event_comp_amsViewComponent_onAmsHumidity, LV_EVENT_MSG_RECEIVED, (void *)2);
+    lv_msg_subsribe_obj(XTOUCH_ON_AMS_HUMIDITY_UPDATE, cui_AmsHumid2, (void *)2);
 
+    // Slot
     lv_obj_add_event_cb(cui_AmsSlot1_1, ui_event_comp_amsViewComponent_onAmsUpdate, LV_EVENT_MSG_RECEIVED, (void *)1);
     lv_msg_subsribe_obj(XTOUCH_ON_AMS_SLOT_UPDATE, cui_AmsSlot1_1, (void *)1);
 
@@ -480,28 +511,55 @@ lv_obj_t *ui_amsViewComponent_create(lv_obj_t *comp_parent)
     lv_obj_add_event_cb(cui_AmsSlot1_4, ui_event_comp_amsViewComponent_onAmsUpdate, LV_EVENT_MSG_RECEIVED, (void *)4);
     lv_msg_subsribe_obj(XTOUCH_ON_AMS_SLOT_UPDATE, cui_AmsSlot1_4, (void *)4);
 
-    lv_obj_add_event_cb(cui_AmsHumid2, ui_event_comp_amsViewComponent_onAmsHumidity, LV_EVENT_MSG_RECEIVED, (void *)NULL);
-    lv_msg_subsribe_obj(XTOUCH_ON_AMS_HUMIDITY_UPDATE, cui_AmsHumid2, (void *)NULL);
+    lv_obj_add_event_cb(cui_AmsSlot2_1, ui_event_comp_amsViewComponent_onAmsUpdate, LV_EVENT_MSG_RECEIVED, (void *)101);
+    lv_msg_subsribe_obj(XTOUCH_ON_AMS_SLOT_UPDATE, cui_AmsSlot2_1, (void *)101);
 
-    lv_obj_add_event_cb(cui_AmsSlot2_1, ui_event_comp_amsViewComponent_onAmsUpdate, LV_EVENT_MSG_RECEIVED, (void *)5);
-    lv_msg_subsribe_obj(XTOUCH_ON_AMS_SLOT_UPDATE, cui_AmsSlot2_1, (void *)5);
+    lv_obj_add_event_cb(cui_AmsSlot2_2, ui_event_comp_amsViewComponent_onAmsUpdate, LV_EVENT_MSG_RECEIVED, (void *)102);
+    lv_msg_subsribe_obj(XTOUCH_ON_AMS_SLOT_UPDATE, cui_AmsSlot2_2, (void *)102);
 
-    lv_obj_add_event_cb(cui_AmsSlot2_2, ui_event_comp_amsViewComponent_onAmsUpdate, LV_EVENT_MSG_RECEIVED, (void *)6);
-    lv_msg_subsribe_obj(XTOUCH_ON_AMS_SLOT_UPDATE, cui_AmsSlot2_2, (void *)6);
+    lv_obj_add_event_cb(cui_AmsSlot2_3, ui_event_comp_amsViewComponent_onAmsUpdate, LV_EVENT_MSG_RECEIVED, (void *)103);
+    lv_msg_subsribe_obj(XTOUCH_ON_AMS_SLOT_UPDATE, cui_AmsSlot2_3, (void *)103);
 
-    lv_obj_add_event_cb(cui_AmsSlot2_3, ui_event_comp_amsViewComponent_onAmsUpdate, LV_EVENT_MSG_RECEIVED, (void *)7);
-    lv_msg_subsribe_obj(XTOUCH_ON_AMS_SLOT_UPDATE, cui_AmsSlot2_3, (void *)7);
+    lv_obj_add_event_cb(cui_AmsSlot2_4, ui_event_comp_amsViewComponent_onAmsUpdate, LV_EVENT_MSG_RECEIVED, (void *)104);
+    lv_msg_subsribe_obj(XTOUCH_ON_AMS_SLOT_UPDATE, cui_AmsSlot2_4, (void *)104);
 
-    lv_obj_add_event_cb(cui_AmsSlot2_4, ui_event_comp_amsViewComponent_onAmsUpdate, LV_EVENT_MSG_RECEIVED, (void *)8);
-    lv_msg_subsribe_obj(XTOUCH_ON_AMS_SLOT_UPDATE, cui_AmsSlot2_4, (void *)8);
+    // Bits
+    lv_obj_add_event_cb(cui_AmsControl1, ui_amsViewComponent_onAMSBitsSlot, LV_EVENT_MSG_RECEIVED, (void *)1);
+    lv_msg_subsribe_obj(XTOUCH_ON_AMS_BITS, cui_AmsControl1, (void *)1);
 
+    lv_obj_add_event_cb(cui_AmsSlot1_1, ui_amsViewComponent_onAMSBitsSlot, LV_EVENT_MSG_RECEIVED, (void *)1);
+    lv_msg_subsribe_obj(XTOUCH_ON_AMS_BITS, cui_AmsSlot1_1, (void *)1);
 
+    lv_obj_add_event_cb(cui_AmsSlot1_2, ui_amsViewComponent_onAMSBitsSlot, LV_EVENT_MSG_RECEIVED, (void *)2);
+    lv_msg_subsribe_obj(XTOUCH_ON_AMS_BITS, cui_AmsSlot1_2, (void *)2);
+
+    lv_obj_add_event_cb(cui_AmsSlot1_3, ui_amsViewComponent_onAMSBitsSlot, LV_EVENT_MSG_RECEIVED, (void *)3);
+    lv_msg_subsribe_obj(XTOUCH_ON_AMS_BITS, cui_AmsSlot1_3, (void *)3);
+
+    lv_obj_add_event_cb(cui_AmsSlot1_4, ui_amsViewComponent_onAMSBitsSlot, LV_EVENT_MSG_RECEIVED, (void *)4);
+    lv_msg_subsribe_obj(XTOUCH_ON_AMS_BITS, cui_AmsSlot1_4, (void *)4);
+
+    lv_obj_add_event_cb(cui_AmsControl2, ui_amsViewComponent_onAMSBitsSlot, LV_EVENT_MSG_RECEIVED, (void *)2);
+    lv_msg_subsribe_obj(XTOUCH_ON_AMS_BITS, cui_AmsControl2, (void *)2);
+
+    lv_obj_add_event_cb(cui_AmsSlot2_1, ui_amsViewComponent_onAMSBitsSlot, LV_EVENT_MSG_RECEIVED, (void *)101);
+    lv_msg_subsribe_obj(XTOUCH_ON_AMS_BITS, cui_AmsSlot2_1, (void *)101);
+
+    lv_obj_add_event_cb(cui_AmsSlot2_2, ui_amsViewComponent_onAMSBitsSlot, LV_EVENT_MSG_RECEIVED, (void *)102);
+    lv_msg_subsribe_obj(XTOUCH_ON_AMS_BITS, cui_AmsSlot2_2, (void *)102);
+
+    lv_obj_add_event_cb(cui_AmsSlot2_3, ui_amsViewComponent_onAMSBitsSlot, LV_EVENT_MSG_RECEIVED, (void *)103);
+    lv_msg_subsribe_obj(XTOUCH_ON_AMS_BITS, cui_AmsSlot2_3, (void *)103);
+
+    lv_obj_add_event_cb(cui_AmsSlot2_4, ui_amsViewComponent_onAMSBitsSlot, LV_EVENT_MSG_RECEIVED, (void *)104);
+    lv_msg_subsribe_obj(XTOUCH_ON_AMS_BITS, cui_AmsSlot2_4, (void *)104);
 
     ui_comp_amsViewComponent_create_hook(cui_amsViewComponent);
 
     struct XTOUCH_MESSAGE_DATA eventData;
     eventData.data = 0;
     lv_msg_send(XTOUCH_ON_AMS_SLOT_UPDATE, &eventData);
+    lv_msg_send(XTOUCH_ON_AMS_HUMIDITY_UPDATE, &eventData);
 
     return cui_amsViewComponent;
 }

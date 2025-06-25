@@ -142,11 +142,16 @@ void onXTouchAMSUpdate(lv_event_t *e)
 
     lv_obj_t *target = lv_event_get_target(e);
     lv_msg_t *m = lv_event_get_msg(e);
-    uint16_t user_data = (uint16_t)lv_event_get_user_data(e);
+    uint16_t user_data = (uint16_t)(uintptr_t)lv_event_get_user_data(e);
 
     struct XTOUCH_MESSAGE_DATA *message = (struct XTOUCH_MESSAGE_DATA *)m->payload;
 
-    uint32_t tray_status = get_tray_status(user_data);
+    uint8_t tmp_ams_id = user_data / 100;
+    uint8_t tmp_tray_id = user_data % 100;
+
+    //printf("onXTouchAMSUpdate %d %d\n", tmp_ams_id, tmp_tray_id);
+
+    uint32_t tray_status = get_tray_status(tmp_ams_id, tmp_tray_id);
     uint16_t tray_id = ((tray_status >> 4) & 0x0F);
     uint16_t loaded = ((tray_status) & 0x01);
 

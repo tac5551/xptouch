@@ -118,8 +118,22 @@ void ui_event_comp_filamentComponent_amsLoad(lv_event_t *e)
 void ui_filamentComponent_onAMSBitsSlot(lv_event_t *e)
 {
     lv_obj_t *target = lv_event_get_target(e);
+    uintptr_t temp_user_data = (uintptr_t)lv_event_get_user_data(e);
+    uint8_t user_data = (uint8_t)temp_user_data;
 
-    if (bambuStatus.ams_exist_bits == 0)
+    uint8_t ams_id = user_data - 1;
+
+    uint8_t check_bit = 0;
+    if (ams_id == 0)
+        check_bit = 0b00000001;
+    if (ams_id == 1)
+        check_bit = 0b00000010;
+    if (ams_id == 2)
+        check_bit = 0b00000100;
+    if (ams_id == 3)
+        check_bit = 0b00001000;
+    printf("onAMSBitsSlot user_data:%d ams_id:%d   ams_exist_bits:%08b = checkbit:%08b => %d\n", user_data, ams_id, bambuStatus.ams_exist_bits, check_bit, bambuStatus.ams_exist_bits & check_bit);
+    if ((bambuStatus.ams_exist_bits & check_bit) == 0)
     {
         lv_obj_add_flag(target, LV_OBJ_FLAG_HIDDEN);
     }
@@ -173,11 +187,16 @@ void ui_event_comp_filamentComponent_onAmsState(lv_event_t *e)
 void ui_event_comp_filamentComponent_onAmsHumidity(lv_event_t *e)
 {
 
-    //printf("onAmsHumidity %d\n", bambuStatus.ams_humidity);
+    // printf("onAmsHumidity %d\n", bambuStatus.ams_humidity);
     lv_obj_t *target = lv_event_get_target(e);
+    uintptr_t temp_user_data = (uintptr_t)lv_event_get_user_data(e);
+    uint8_t user_data = (uint8_t)temp_user_data;
+    uint8_t ams_id = user_data - 1;
     char buffer[100];
     memset(buffer, 0, 100);
-    sprintf(buffer, "H\n%d", bambuStatus.ams_humidity);
+    sprintf(buffer, "H\n%d", bambuStatus.ams_humidity[ams_id]);
+    // printf("onAmsHumidity %d %d\n", ams_id, bambuStatus.ams_humidity[ams_id]);
+
     lv_label_set_text(target, buffer);
 }
 
@@ -188,7 +207,6 @@ void ui_event_comp_filamentComponent_onAmsUpdate(lv_event_t *e)
     lv_msg_t *m = lv_event_get_msg(e);
     uintptr_t temp_user_data = (uintptr_t)lv_event_get_user_data(e);
     uint8_t user_data = (uint8_t)temp_user_data;
-    //printf("onAmsUpdate %d\n", user_data);
 
     if (!(bambuStatus.ams_status_main == AMS_STATUS_MAIN_IDLE || bambuStatus.ams_status_main == AMS_STATUS_MAIN_ASSIST) || bambuStatus.print_status == XTOUCH_PRINT_STATUS_RUNNING)
     {
@@ -201,20 +219,25 @@ void ui_event_comp_filamentComponent_onAmsUpdate(lv_event_t *e)
 
     struct XTOUCH_MESSAGE_DATA *message = (struct XTOUCH_MESSAGE_DATA *)m->payload;
 
-    uint32_t tray_status = get_tray_status(user_data);
+    uint8_t tmp_ams_id = user_data / 100;
+    uint8_t tmp_tray_id = user_data % 100;
+
+    // printf("onAmsUpdate %d %d %d\n", tmp_ams_id, tmp_tray_id, user_data);
+
+    uint32_t tray_status = get_tray_status(tmp_ams_id, tmp_tray_id);
     uint16_t tray_id = ((tray_status >> 4) & 0x0F);
     uint16_t loaded = ((tray_status) & 0x01);
 
     // lv_obj_t *unload = ui_comp_get_child(target, UI_COMP_FILAMENTCOMPONENT_FILAMENTSCREENFILAMENT_FILAMENTSCREENUNLOAD);
 
-    if (user_data == tray_id)
+    if (tmp_tray_id == tray_id)
     {
         lv_color_t color = lv_color_hex(tray_status >> 8);
         lv_color_t color_inv = lv_color_hex((0xFFFFFF - (tray_status >> 8)) & 0xFFFFFF);
 
         char buffer[100];
         memset(buffer, 0, 100);
-        sprintf(buffer, "Slot %d\n%s", tray_id, get_tray_type(tray_id));
+        sprintf(buffer, "Slot %d\n%s", tray_id, get_tray_type(tmp_ams_id, tmp_tray_id));
         lv_label_set_text(target, buffer);
 
         // printf(" tray_now: %d, tray_tar: %d, slot: %d, color: %06llX \n", bambuStatus.m_tray_now, bambuStatus.m_tray_tar, tray_id, message->data >> 8);
@@ -349,11 +372,6 @@ lv_obj_t *ui_filamentComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_bg_color(cui_AmsHumid, lv_color_hex(0x777777), LV_PART_MAIN | LV_STATE_PRESSED);
     lv_obj_set_style_bg_opa(cui_AmsHumid, 255, LV_PART_MAIN | LV_STATE_PRESSED);
     lv_obj_set_style_border_width(cui_AmsHumid, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-
-    char buffer[100];
-    memset(buffer, 0, 100);
-    sprintf(buffer, "H\n%d", bambuStatus.ams_humidity);
-    lv_label_set_text(cui_AmsHumid, buffer);
 
     lv_obj_t *cui_AmsSlot1;
     cui_AmsSlot1 = lv_label_create(cui_AmsControl);
@@ -673,9 +691,14 @@ lv_obj_t *ui_filamentComponent_create(lv_obj_t *comp_parent)
     lv_obj_add_event_cb(cui_AmsSlot3, ui_event_comp_filamentComponent_onAMSSlot3Click, LV_EVENT_ALL, children);
     lv_obj_add_event_cb(cui_AmsSlot4, ui_event_comp_filamentComponent_onAMSSlot4Click, LV_EVENT_ALL, children);
 
-    lv_obj_add_event_cb(cui_AmsHumid, ui_event_comp_filamentComponent_onAmsHumidity, LV_EVENT_MSG_RECEIVED, (void *)NULL);
-    lv_msg_subsribe_obj(XTOUCH_ON_AMS_HUMIDITY_UPDATE, cui_AmsHumid, (void *)NULL);
+    // ams
+    lv_obj_add_event_cb(cui_AmsControl, ui_filamentComponent_onAMSBitsSlot, LV_EVENT_MSG_RECEIVED, (void *)1);
+    lv_msg_subsribe_obj(XTOUCH_ON_AMS_BITS, cui_AmsControl, (void *)1);
 
+    lv_obj_add_event_cb(cui_AmsHumid, ui_event_comp_filamentComponent_onAmsHumidity, LV_EVENT_MSG_RECEIVED, (void *)1);
+    lv_msg_subsribe_obj(XTOUCH_ON_AMS_HUMIDITY_UPDATE, cui_AmsHumid, (void *)1);
+
+    // slot
     lv_obj_add_event_cb(cui_AmsSlot1, ui_event_comp_filamentComponent_onAmsUpdate, LV_EVENT_MSG_RECEIVED, (void *)1);
     lv_msg_subsribe_obj(XTOUCH_ON_AMS_SLOT_UPDATE, cui_AmsSlot1, (void *)1);
 
@@ -688,44 +711,12 @@ lv_obj_t *ui_filamentComponent_create(lv_obj_t *comp_parent)
     lv_obj_add_event_cb(cui_AmsSlot4, ui_event_comp_filamentComponent_onAmsUpdate, LV_EVENT_MSG_RECEIVED, (void *)4);
     lv_msg_subsribe_obj(XTOUCH_ON_AMS_SLOT_UPDATE, cui_AmsSlot4, (void *)4);
 
+    // Contraler
     lv_obj_add_event_cb(cui_filamentScreenUnload, ui_event_comp_filamentComponent_onAmsState, LV_EVENT_MSG_RECEIVED, (void *)NULL);
     lv_msg_subsribe_obj(XTOUCH_ON_AMS_STATE_UPDATE, cui_filamentScreenUnload, (void *)NULL);
 
     lv_obj_add_event_cb(cui_filamentScreenLoad, ui_event_comp_filamentComponent_onAmsState, LV_EVENT_MSG_RECEIVED, (void *)NULL);
     lv_msg_subsribe_obj(XTOUCH_ON_AMS_STATE_UPDATE, cui_filamentScreenLoad, (void *)NULL);
-
-    lv_obj_add_event_cb(cui_AmsControl, ui_filamentComponent_onAMSBitsSlot, LV_EVENT_MSG_RECEIVED, (void *)NULL);
-    lv_msg_subsribe_obj(XTOUCH_ON_AMS_BITS, cui_AmsControl, (void *)NULL);
-
-    lv_obj_add_event_cb(cui_AmsSlot1, ui_filamentComponent_onAMSBitsSlot, LV_EVENT_MSG_RECEIVED, (void *)NULL);
-    lv_msg_subsribe_obj(XTOUCH_ON_AMS_BITS, cui_AmsSlot1, (void *)NULL);
-
-    lv_obj_add_event_cb(cui_AmsSlot2, ui_filamentComponent_onAMSBitsSlot, LV_EVENT_MSG_RECEIVED, (void *)NULL);
-    lv_msg_subsribe_obj(XTOUCH_ON_AMS_BITS, cui_AmsSlot2, (void *)NULL);
-
-    lv_obj_add_event_cb(cui_AmsSlot3, ui_filamentComponent_onAMSBitsSlot, LV_EVENT_MSG_RECEIVED, (void *)NULL);
-    lv_msg_subsribe_obj(XTOUCH_ON_AMS_BITS, cui_AmsSlot3, (void *)NULL);
-
-    lv_obj_add_event_cb(cui_AmsSlot4, ui_filamentComponent_onAMSBitsSlot, LV_EVENT_MSG_RECEIVED, (void *)NULL);
-    lv_msg_subsribe_obj(XTOUCH_ON_AMS_BITS, cui_AmsSlot4, (void *)NULL);
-
-    lv_obj_add_event_cb(cui_AmsControl, ui_event_comp_filamentComponent_onAmsUpdate, LV_EVENT_MSG_RECEIVED, children);
-    lv_msg_subsribe_obj(XTOUCH_ON_PRINT_STATUS, cui_AmsControl, (void *)NULL);
-
-    lv_obj_add_event_cb(cui_AmsSlot1, ui_event_comp_filamentComponent_onAmsUpdate, LV_EVENT_MSG_RECEIVED, children);
-    lv_msg_subsribe_obj(XTOUCH_ON_PRINT_STATUS, cui_AmsSlot1, (void *)NULL);
-
-    lv_obj_add_event_cb(cui_AmsSlot2, ui_event_comp_filamentComponent_onAmsUpdate, LV_EVENT_MSG_RECEIVED, children);
-    lv_msg_subsribe_obj(XTOUCH_ON_PRINT_STATUS, cui_AmsSlot2, (void *)NULL);
-
-    lv_obj_add_event_cb(cui_AmsSlot3, ui_event_comp_filamentComponent_onAmsUpdate, LV_EVENT_MSG_RECEIVED, children);
-    lv_msg_subsribe_obj(XTOUCH_ON_PRINT_STATUS, cui_AmsSlot3, (void *)NULL);
-
-    lv_obj_add_event_cb(cui_AmsSlot4, ui_filamentComponent_onAMSBitsSlot, LV_EVENT_MSG_RECEIVED, children);
-    lv_msg_subsribe_obj(XTOUCH_ON_PRINT_STATUS, cui_AmsSlot4, (void *)NULL);
-
-    lv_obj_add_event_cb(cui_filamentControlComponent, ui_filamentComponent_onAMSBits, LV_EVENT_MSG_RECEIVED, (void *)NULL);
-    lv_msg_subsribe_obj(XTOUCH_ON_AMS_BITS, cui_filamentControlComponent, (void *)NULL);
 
     lv_obj_add_event_cb(cui_filamentScreenNozzleTemp, ui_event_comp_filamentComponent_onNozzleTemp, LV_EVENT_MSG_RECEIVED, (void *)NULL);
     lv_msg_subsribe_obj(XTOUCH_ON_NOZZLE_TEMP, cui_filamentScreenNozzleTemp, (void *)NULL);
@@ -734,7 +725,10 @@ lv_obj_t *ui_filamentComponent_create(lv_obj_t *comp_parent)
 
     struct XTOUCH_MESSAGE_DATA eventData;
     eventData.data = 0;
+
+    lv_msg_send(XTOUCH_ON_AMS_BITS, &eventData);
     lv_msg_send(XTOUCH_ON_AMS_SLOT_UPDATE, &eventData);
+    lv_msg_send(XTOUCH_ON_AMS_HUMIDITY_UPDATE, &eventData);
 
     return cui_filamentControlComponent;
 }
