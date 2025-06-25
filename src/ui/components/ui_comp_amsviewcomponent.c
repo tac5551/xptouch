@@ -401,7 +401,7 @@ lv_obj_t *ui_amsViewComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_border_width(cui_AmsHumid2, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     lv_obj_t *cui_AmsHumid3;
-    cui_AmsHumid3 = lv_label_create(cui_AmsControl2);
+    cui_AmsHumid3 = lv_label_create(cui_AmsControl3);
     lv_obj_set_width(cui_AmsHumid3, lv_pct(100));
     lv_obj_set_height(cui_AmsHumid3, lv_pct(100));
     lv_obj_set_flex_grow(cui_AmsHumid3, 1);
@@ -427,7 +427,7 @@ lv_obj_t *ui_amsViewComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_border_width(cui_AmsHumid3, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     lv_obj_t *cui_AmsHumid4;
-    cui_AmsHumid4 = lv_label_create(cui_AmsControl2);
+    cui_AmsHumid4 = lv_label_create(cui_AmsControl4);
     lv_obj_set_width(cui_AmsHumid4, lv_pct(100));
     lv_obj_set_height(cui_AmsHumid4, lv_pct(100));
     lv_obj_set_flex_grow(cui_AmsHumid4, 1);
