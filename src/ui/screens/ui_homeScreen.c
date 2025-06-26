@@ -21,4 +21,5 @@ void ui_homeScreen_screen_init(void)
     ui_homeComponent = ui_homeComponent_create(ui_homeScreen);
     lv_obj_set_x(ui_homeComponent, 386);
     lv_obj_set_y(ui_homeComponent, 178);
+
 }

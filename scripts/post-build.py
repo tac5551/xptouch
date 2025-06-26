@@ -84,7 +84,7 @@ def post_build_create_ota_json(version_value):
         f"../xptouch-bin/2.8/ota/xptouch.{version_value}.bin")
     ota = {
         "version": version_value,
-        "url": f"http://xperiments.in/xptouch-bin/2.8/ota/xptouch.{version_value}.bin",
+        "url": f"http://192.168.0.5/xptouch-bin/2.8/ota/xptouch.{version_value}.bin",
         "md5": md5,
     }
 

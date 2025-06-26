@@ -54,11 +54,17 @@ void ui_event____initial_actions0(lv_event_t *e);
 lv_obj_t *ui____initial_actions0;
 
 
-
+#ifdef __XTOUCH_SCREEN_50__
+const lv_font_t *lv_font_small = &lv_font_montserrat_28;
+const lv_font_t *lv_font_big = &lv_font_montserrat_48;
+const lv_font_t *lv_icon_font_small = &ui_font_xlcd48;
+const lv_font_t *lv_icon_font_big = &ui_font_xperiments;
+#else
 const lv_font_t *lv_font_small = &lv_font_montserrat_14;
 const lv_font_t *lv_font_big = &lv_font_montserrat_28;
 const lv_font_t *lv_icon_font_small = &ui_font_xlcd;
 const lv_font_t *lv_icon_font_big = &ui_font_xperiments;
+#endif
 
 
 

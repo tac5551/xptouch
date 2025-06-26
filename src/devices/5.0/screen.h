@@ -4,9 +4,7 @@
 #include "LGFX_ESP32_JC8048W550.h"
 #include <LovyanGFX.h>
 
-#define screenWidth 800
-#define screenHeight 480
-
+#include "setting.h"
 
 static lv_disp_draw_buf_t draw_buf;
 static lv_color_t *disp_draw_buf1;
@@ -16,6 +14,7 @@ LGFX tft;
 #include "ui/ui.h"
 #include "touch.h"
 #include "xtouch/globals.h"
+#include "xtouch/debug.h" 
 
 bool xtouch_screen_touchFromPowerOff = false;
 
@@ -151,7 +150,7 @@ void xtouch_screen_toggleTFTFlip()
 void xtouch_screen_setupTFTFlip()
 {
     byte eepromTFTFlip = xtouch_screen_getTFTFlip();
-    tft.setRotation(eepromTFTFlip == 1 ? 3 : 1);
+    tft.setRotation(eepromTFTFlip == 1 ? 2 : 0);
 }
 
 void xtouch_screen_dispFlush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p)

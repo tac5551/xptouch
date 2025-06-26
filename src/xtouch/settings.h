@@ -68,10 +68,8 @@ void xtouch_settings_loadSettings()
         xTouchConfig.xTouchChamberFanEnabled = false;
     }
 
-    bool isTFTFlipped = xtouch_screen_getTFTFlip();
-    tft.setRotation(isTFTFlipped ? 3 : 1);
+    xtouch_screen_setupTFTFlip();
     xtouch_screen_setBrightness(xTouchConfig.xTouchBacklightLevel);
-
     xtouch_screen_invertColors();
 }
 

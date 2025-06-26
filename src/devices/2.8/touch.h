@@ -1,6 +1,8 @@
 #ifndef _XLCD_TOUCH
 #define _XLCD_TOUCH
 
+#include "setting.h"
+
 XTouchPanelConfig x_touch_touchConfig;
 
 class ScreenPoint
@@ -117,8 +119,8 @@ void xtouch_touch_setup()
 
         while (tft.getTouch(&touchX, &touchY))
             ;
-        tft.drawFastHLine(300, 230, 20, 0xFFFFFFU);
-        tft.drawFastVLine(310, 220, 20, 0xFFFFFFU);
+        tft.drawFastHLine(screenWidth - 20, screenHeight - 10, 20, 0xFFFFFFU);
+        tft.drawFastVLine(screenWidth - 10, screenHeight - 20, 20, 0xFFFFFFU);
 
         while (!tft.getTouch(&touchX, &touchY))
             ;
@@ -126,11 +128,11 @@ void xtouch_touch_setup()
 
         x2 = touchX;
         y2 = touchY;
-        tft.drawFastHLine(300, 230, 20, 0x000000U);
-        tft.drawFastVLine(310, 220, 20, 0x000000U);
+        tft.drawFastHLine(screenWidth - 20, screenHeight - 10, 20, 0x000000U);
+        tft.drawFastVLine(screenWidth - 10, screenHeight - 20, 20, 0x000000U);
 
-        int16_t xDist = 320 - 40;
-        int16_t yDist = 240 - 40;
+        int16_t xDist = screenWidth - 40;
+        int16_t yDist = screenHeight - 40;
 
         x_touch_touchConfig.xCalM = (float)xDist / (float)(x2 - x1);
         x_touch_touchConfig.xCalC = 20.0 - ((float)x1 * x_touch_touchConfig.xCalM);

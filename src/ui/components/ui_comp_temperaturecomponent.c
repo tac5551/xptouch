@@ -50,12 +50,12 @@ void ui_temperatureComponent_hide_keypad()
     lv_obj_clear_state(chamber, LV_STATE_DISABLED);
     ui_temperatureComponent_input_target = NULL;
 
-    if(ui_temperatureComponent_backToScreen != -1){
+    if (ui_temperatureComponent_backToScreen != -1)
+    {
         loadScreen(ui_temperatureComponent_backToScreen);
         ui_temperatureComponent_backToScreen = -1;
     }
 }
-
 
 void ui_temperatureComponent_show_keypad(int type, int index)
 {
@@ -419,7 +419,7 @@ lv_obj_t *ui_temperatureComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_scrollbar_mode(cui_mainScreenNozzleTempIcon, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_style_text_color(cui_mainScreenNozzleTempIcon, lv_color_hex(0xCCCCCC), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(cui_mainScreenNozzleTempIcon, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(cui_mainScreenNozzleTempIcon, &ui_font_xlcd, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(cui_mainScreenNozzleTempIcon, lv_icon_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     lv_obj_t *cui_mainScreenNozzleTempValue;
     cui_mainScreenNozzleTempValue = lv_label_create(cui_temperatureComponentNozzle);
@@ -429,7 +429,7 @@ lv_obj_t *ui_temperatureComponent_create(lv_obj_t *comp_parent)
     lv_label_set_text(cui_mainScreenNozzleTempValue, "35");
     lv_obj_clear_flag(cui_mainScreenNozzleTempValue, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN); /// Flags
     lv_obj_set_scrollbar_mode(cui_mainScreenNozzleTempValue, LV_SCROLLBAR_MODE_OFF);
-    lv_obj_set_style_text_font(cui_mainScreenNozzleTempValue, &lv_font_montserrat_28, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(cui_mainScreenNozzleTempValue, lv_font_big, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     lv_obj_t *cui_mainScreenNozzleTempInput;
     cui_mainScreenNozzleTempInput = lv_textarea_create(cui_temperatureComponentNozzle);
@@ -443,7 +443,7 @@ lv_obj_t *ui_temperatureComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_text_color(cui_mainScreenNozzleTempInput, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(cui_mainScreenNozzleTempInput, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_align(cui_mainScreenNozzleTempInput, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(cui_mainScreenNozzleTempInput, &lv_font_montserrat_28, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(cui_mainScreenNozzleTempInput, lv_font_big, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(cui_mainScreenNozzleTempInput, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(cui_mainScreenNozzleTempInput, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_width(cui_mainScreenNozzleTempInput, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -492,7 +492,7 @@ lv_obj_t *ui_temperatureComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_scrollbar_mode(cui_mainScreenBedTempIcon, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_style_text_color(cui_mainScreenBedTempIcon, lv_color_hex(0xCCCCCC), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(cui_mainScreenBedTempIcon, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(cui_mainScreenBedTempIcon, &ui_font_xlcd, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(cui_mainScreenBedTempIcon, lv_icon_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     lv_obj_t *cui_mainScreenBedTempValue;
     cui_mainScreenBedTempValue = lv_label_create(cui_temperatureComponentBed);
@@ -502,7 +502,7 @@ lv_obj_t *ui_temperatureComponent_create(lv_obj_t *comp_parent)
     lv_label_set_text(cui_mainScreenBedTempValue, "35");
     lv_obj_clear_flag(cui_mainScreenBedTempValue, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN); /// Flags
     lv_obj_set_scrollbar_mode(cui_mainScreenBedTempValue, LV_SCROLLBAR_MODE_OFF);
-    lv_obj_set_style_text_font(cui_mainScreenBedTempValue, &lv_font_montserrat_28, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(cui_mainScreenBedTempValue, lv_font_big, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     lv_obj_t *cui_mainScreenBedTempInput;
     cui_mainScreenBedTempInput = lv_textarea_create(cui_temperatureComponentBed);
@@ -516,7 +516,7 @@ lv_obj_t *ui_temperatureComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_text_color(cui_mainScreenBedTempInput, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(cui_mainScreenBedTempInput, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_align(cui_mainScreenBedTempInput, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(cui_mainScreenBedTempInput, &lv_font_montserrat_28, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(cui_mainScreenBedTempInput, lv_font_big, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(cui_mainScreenBedTempInput, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(cui_mainScreenBedTempInput, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_width(cui_mainScreenBedTempInput, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -586,7 +586,7 @@ lv_obj_t *ui_temperatureComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_text_color(cui_temperatureComponentPartFanIcon, lv_color_hex(0xCCCCCC), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(cui_temperatureComponentPartFanIcon, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_align(cui_temperatureComponentPartFanIcon, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(cui_temperatureComponentPartFanIcon, &ui_font_xlcd, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(cui_temperatureComponentPartFanIcon, lv_icon_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     lv_obj_t *cui_temperatureComponentPartFanLabel;
     cui_temperatureComponentPartFanLabel = lv_label_create(cui_temperatureComponentPartFan);
@@ -597,7 +597,7 @@ lv_obj_t *ui_temperatureComponent_create(lv_obj_t *comp_parent)
     lv_obj_clear_flag(cui_temperatureComponentPartFanLabel, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN); /// Flags
     lv_obj_set_scrollbar_mode(cui_temperatureComponentPartFanLabel, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_style_text_align(cui_temperatureComponentPartFanLabel, LV_TEXT_ALIGN_RIGHT, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(cui_temperatureComponentPartFanLabel, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(cui_temperatureComponentPartFanLabel, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     lv_obj_t *cui_temperatureComponentPartFanValue;
     cui_temperatureComponentPartFanValue = lv_label_create(cui_temperatureComponentPartFan);
@@ -609,7 +609,7 @@ lv_obj_t *ui_temperatureComponent_create(lv_obj_t *comp_parent)
     lv_obj_clear_flag(cui_temperatureComponentPartFanValue, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN); /// Flags
     lv_obj_set_scrollbar_mode(cui_temperatureComponentPartFanValue, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_style_text_align(cui_temperatureComponentPartFanValue, LV_TEXT_ALIGN_RIGHT, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(cui_temperatureComponentPartFanValue, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(cui_temperatureComponentPartFanValue, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     lv_obj_t *cui_temperatureComponentPartFanInput;
     cui_temperatureComponentPartFanInput = lv_textarea_create(cui_temperatureComponentPartFan);
@@ -624,7 +624,7 @@ lv_obj_t *ui_temperatureComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_text_color(cui_temperatureComponentPartFanInput, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(cui_temperatureComponentPartFanInput, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_align(cui_temperatureComponentPartFanInput, LV_TEXT_ALIGN_RIGHT, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(cui_temperatureComponentPartFanInput, &lv_font_montserrat_28, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(cui_temperatureComponentPartFanInput, lv_font_big, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(cui_temperatureComponentPartFanInput, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(cui_temperatureComponentPartFanInput, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_width(cui_temperatureComponentPartFanInput, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -677,7 +677,7 @@ lv_obj_t *ui_temperatureComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_text_color(cui_temperatureComponentAuxFanIcon, lv_color_hex(0xCCCCCC), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(cui_temperatureComponentAuxFanIcon, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_align(cui_temperatureComponentAuxFanIcon, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(cui_temperatureComponentAuxFanIcon, &ui_font_xlcd, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(cui_temperatureComponentAuxFanIcon, lv_icon_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     lv_obj_t *cui_temperatureComponentAuxFanLabel;
     cui_temperatureComponentAuxFanLabel = lv_label_create(cui_temperatureComponentAuxFan);
@@ -688,7 +688,7 @@ lv_obj_t *ui_temperatureComponent_create(lv_obj_t *comp_parent)
     lv_obj_clear_flag(cui_temperatureComponentAuxFanLabel, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN); /// Flags
     lv_obj_set_scrollbar_mode(cui_temperatureComponentAuxFanLabel, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_style_text_align(cui_temperatureComponentAuxFanLabel, LV_TEXT_ALIGN_RIGHT, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(cui_temperatureComponentAuxFanLabel, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(cui_temperatureComponentAuxFanLabel, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     lv_obj_t *cui_temperatureComponentAuxFanValue;
     cui_temperatureComponentAuxFanValue = lv_label_create(cui_temperatureComponentAuxFan);
@@ -700,7 +700,7 @@ lv_obj_t *ui_temperatureComponent_create(lv_obj_t *comp_parent)
     lv_obj_clear_flag(cui_temperatureComponentAuxFanValue, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN); /// Flags
     lv_obj_set_scrollbar_mode(cui_temperatureComponentAuxFanValue, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_style_text_align(cui_temperatureComponentAuxFanValue, LV_TEXT_ALIGN_RIGHT, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(cui_temperatureComponentAuxFanValue, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(cui_temperatureComponentAuxFanValue, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     lv_obj_t *cui_temperatureComponentAuxFanInput;
     cui_temperatureComponentAuxFanInput = lv_textarea_create(cui_temperatureComponentAuxFan);
@@ -715,7 +715,7 @@ lv_obj_t *ui_temperatureComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_text_color(cui_temperatureComponentAuxFanInput, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(cui_temperatureComponentAuxFanInput, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_align(cui_temperatureComponentAuxFanInput, LV_TEXT_ALIGN_RIGHT, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(cui_temperatureComponentAuxFanInput, &lv_font_montserrat_28, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(cui_temperatureComponentAuxFanInput, lv_font_big, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(cui_temperatureComponentAuxFanInput, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(cui_temperatureComponentAuxFanInput, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_width(cui_temperatureComponentAuxFanInput, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -768,7 +768,7 @@ lv_obj_t *ui_temperatureComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_text_color(cui_temperatureComponentChamberFanIcon, lv_color_hex(0xCCCCCC), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(cui_temperatureComponentChamberFanIcon, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_align(cui_temperatureComponentChamberFanIcon, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(cui_temperatureComponentChamberFanIcon, &ui_font_xlcd, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(cui_temperatureComponentChamberFanIcon, lv_icon_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     lv_obj_t *cui_temperatureComponentChamberFanLabel;
     cui_temperatureComponentChamberFanLabel = lv_label_create(cui_temperatureComponentChamberFan);
@@ -779,7 +779,7 @@ lv_obj_t *ui_temperatureComponent_create(lv_obj_t *comp_parent)
     lv_obj_clear_flag(cui_temperatureComponentChamberFanLabel, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN); /// Flags
     lv_obj_set_scrollbar_mode(cui_temperatureComponentChamberFanLabel, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_style_text_align(cui_temperatureComponentChamberFanLabel, LV_TEXT_ALIGN_RIGHT, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(cui_temperatureComponentChamberFanLabel, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(cui_temperatureComponentChamberFanLabel, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     lv_obj_t *cui_temperatureComponentChamberFanValue;
     cui_temperatureComponentChamberFanValue = lv_label_create(cui_temperatureComponentChamberFan);
@@ -791,7 +791,7 @@ lv_obj_t *ui_temperatureComponent_create(lv_obj_t *comp_parent)
     lv_obj_clear_flag(cui_temperatureComponentChamberFanValue, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN); /// Flags
     lv_obj_set_scrollbar_mode(cui_temperatureComponentChamberFanValue, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_style_text_align(cui_temperatureComponentChamberFanValue, LV_TEXT_ALIGN_RIGHT, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(cui_temperatureComponentChamberFanValue, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(cui_temperatureComponentChamberFanValue, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     lv_obj_t *cui_temperatureComponentChamberFanInput;
     cui_temperatureComponentChamberFanInput = lv_textarea_create(cui_temperatureComponentChamberFan);
@@ -806,7 +806,7 @@ lv_obj_t *ui_temperatureComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_text_color(cui_temperatureComponentChamberFanInput, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(cui_temperatureComponentChamberFanInput, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_align(cui_temperatureComponentChamberFanInput, LV_TEXT_ALIGN_RIGHT, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(cui_temperatureComponentChamberFanInput, &lv_font_montserrat_28, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(cui_temperatureComponentChamberFanInput, lv_font_big, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(cui_temperatureComponentChamberFanInput, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(cui_temperatureComponentChamberFanInput, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_width(cui_temperatureComponentChamberFanInput, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -853,14 +853,15 @@ lv_obj_t *ui_temperatureComponent_create(lv_obj_t *comp_parent)
 
     lv_obj_t *cui_numpadKey1;
     cui_numpadKey1 = lv_label_create(cui_temperatureComponentKeyboard);
-    lv_obj_set_height(cui_numpadKey1, LV_SIZE_CONTENT); /// 48
+    lv_obj_set_height(cui_numpadKey1, lv_pct(25)); /// 48
     lv_obj_set_flex_grow(cui_numpadKey1, 1);
+    lv_obj_set_align(cui_numpadKey1, LV_ALIGN_CENTER);
     lv_label_set_text(cui_numpadKey1, "1");
     lv_obj_add_flag(cui_numpadKey1, LV_OBJ_FLAG_CLICKABLE);                                                                                                                                                                                                      /// Flags
     lv_obj_clear_flag(cui_numpadKey1, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN); /// Flags
     lv_obj_set_scrollbar_mode(cui_numpadKey1, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_style_text_align(cui_numpadKey1, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(cui_numpadKey1, &lv_font_montserrat_28, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(cui_numpadKey1, lv_font_big, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_radius(cui_numpadKey1, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(cui_numpadKey1, lv_color_hex(0x555555), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(cui_numpadKey1, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -873,14 +874,15 @@ lv_obj_t *ui_temperatureComponent_create(lv_obj_t *comp_parent)
 
     lv_obj_t *cui_numpadKey2;
     cui_numpadKey2 = lv_label_create(cui_temperatureComponentKeyboard);
-    lv_obj_set_height(cui_numpadKey2, LV_SIZE_CONTENT); /// 48
+    lv_obj_set_height(cui_numpadKey2, lv_pct(25)); /// 48
     lv_obj_set_flex_grow(cui_numpadKey2, 1);
     lv_label_set_text(cui_numpadKey2, "2");
+    lv_obj_set_align(cui_numpadKey2, LV_ALIGN_CENTER);
     lv_obj_add_flag(cui_numpadKey2, LV_OBJ_FLAG_CLICKABLE);                                                                                                                                                                                                      /// Flags
     lv_obj_clear_flag(cui_numpadKey2, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN); /// Flags
     lv_obj_set_scrollbar_mode(cui_numpadKey2, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_style_text_align(cui_numpadKey2, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(cui_numpadKey2, &lv_font_montserrat_28, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(cui_numpadKey2, lv_font_big, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_radius(cui_numpadKey2, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(cui_numpadKey2, lv_color_hex(0x555555), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(cui_numpadKey2, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -893,14 +895,15 @@ lv_obj_t *ui_temperatureComponent_create(lv_obj_t *comp_parent)
 
     lv_obj_t *cui_numpadKey3;
     cui_numpadKey3 = lv_label_create(cui_temperatureComponentKeyboard);
-    lv_obj_set_height(cui_numpadKey3, LV_SIZE_CONTENT); /// 48
+    lv_obj_set_height(cui_numpadKey3, lv_pct(25)); /// 48
     lv_obj_set_flex_grow(cui_numpadKey3, 1);
+    lv_obj_set_align(cui_numpadKey3, LV_ALIGN_CENTER);
     lv_label_set_text(cui_numpadKey3, "3");
     lv_obj_add_flag(cui_numpadKey3, LV_OBJ_FLAG_CLICKABLE);                                                                                                                                                                                                      /// Flags
     lv_obj_clear_flag(cui_numpadKey3, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN); /// Flags
     lv_obj_set_scrollbar_mode(cui_numpadKey3, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_style_text_align(cui_numpadKey3, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(cui_numpadKey3, &lv_font_montserrat_28, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(cui_numpadKey3, lv_font_big, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_radius(cui_numpadKey3, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(cui_numpadKey3, lv_color_hex(0x555555), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(cui_numpadKey3, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -913,14 +916,15 @@ lv_obj_t *ui_temperatureComponent_create(lv_obj_t *comp_parent)
 
     lv_obj_t *cui_numpadKey4;
     cui_numpadKey4 = lv_label_create(cui_temperatureComponentKeyboard);
-    lv_obj_set_height(cui_numpadKey4, LV_SIZE_CONTENT); /// 48
+    lv_obj_set_height(cui_numpadKey4, lv_pct(25)); /// 48
     lv_obj_set_flex_grow(cui_numpadKey4, 1);
+    lv_obj_set_align(cui_numpadKey4, LV_ALIGN_CENTER);
     lv_label_set_text(cui_numpadKey4, "4");
     lv_obj_add_flag(cui_numpadKey4, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_FLEX_IN_NEW_TRACK);                                                                                                                                                                      /// Flags
     lv_obj_clear_flag(cui_numpadKey4, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN); /// Flags
     lv_obj_set_scrollbar_mode(cui_numpadKey4, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_style_text_align(cui_numpadKey4, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(cui_numpadKey4, &lv_font_montserrat_28, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(cui_numpadKey4, lv_font_big, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_radius(cui_numpadKey4, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(cui_numpadKey4, lv_color_hex(0x555555), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(cui_numpadKey4, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -933,14 +937,15 @@ lv_obj_t *ui_temperatureComponent_create(lv_obj_t *comp_parent)
 
     lv_obj_t *cui_numpadKey5;
     cui_numpadKey5 = lv_label_create(cui_temperatureComponentKeyboard);
-    lv_obj_set_height(cui_numpadKey5, LV_SIZE_CONTENT); /// 48
+    lv_obj_set_height(cui_numpadKey5, lv_pct(25)); /// 48
     lv_obj_set_flex_grow(cui_numpadKey5, 1);
+    lv_obj_set_align(cui_numpadKey5, LV_ALIGN_CENTER);
     lv_label_set_text(cui_numpadKey5, "5");
     lv_obj_add_flag(cui_numpadKey5, LV_OBJ_FLAG_CLICKABLE);                                                                                                                                                                                                      /// Flags
     lv_obj_clear_flag(cui_numpadKey5, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN); /// Flags
     lv_obj_set_scrollbar_mode(cui_numpadKey5, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_style_text_align(cui_numpadKey5, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(cui_numpadKey5, &lv_font_montserrat_28, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(cui_numpadKey5, lv_font_big, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_radius(cui_numpadKey5, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(cui_numpadKey5, lv_color_hex(0x555555), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(cui_numpadKey5, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -953,14 +958,15 @@ lv_obj_t *ui_temperatureComponent_create(lv_obj_t *comp_parent)
 
     lv_obj_t *cui_numpadKey6;
     cui_numpadKey6 = lv_label_create(cui_temperatureComponentKeyboard);
-    lv_obj_set_height(cui_numpadKey6, LV_SIZE_CONTENT); /// 48
+    lv_obj_set_height(cui_numpadKey6, lv_pct(25)); /// 48
     lv_obj_set_flex_grow(cui_numpadKey6, 1);
+    lv_obj_set_align(cui_numpadKey6, LV_ALIGN_CENTER);
     lv_label_set_text(cui_numpadKey6, "6");
     lv_obj_add_flag(cui_numpadKey6, LV_OBJ_FLAG_CLICKABLE);                                                                                                                                                                                                      /// Flags
     lv_obj_clear_flag(cui_numpadKey6, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN); /// Flags
     lv_obj_set_scrollbar_mode(cui_numpadKey6, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_style_text_align(cui_numpadKey6, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(cui_numpadKey6, &lv_font_montserrat_28, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(cui_numpadKey6, lv_font_big, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_radius(cui_numpadKey6, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(cui_numpadKey6, lv_color_hex(0x555555), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(cui_numpadKey6, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -973,14 +979,15 @@ lv_obj_t *ui_temperatureComponent_create(lv_obj_t *comp_parent)
 
     lv_obj_t *cui_numpadKey7;
     cui_numpadKey7 = lv_label_create(cui_temperatureComponentKeyboard);
-    lv_obj_set_height(cui_numpadKey7, LV_SIZE_CONTENT); /// 48
+    lv_obj_set_height(cui_numpadKey7, lv_pct(25)); /// 48
     lv_obj_set_flex_grow(cui_numpadKey7, 1);
+    lv_obj_set_align(cui_numpadKey7, LV_ALIGN_CENTER);
     lv_label_set_text(cui_numpadKey7, "7");
     lv_obj_add_flag(cui_numpadKey7, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_FLEX_IN_NEW_TRACK);                                                                                                                                                                      /// Flags
     lv_obj_clear_flag(cui_numpadKey7, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN); /// Flags
     lv_obj_set_scrollbar_mode(cui_numpadKey7, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_style_text_align(cui_numpadKey7, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(cui_numpadKey7, &lv_font_montserrat_28, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(cui_numpadKey7, lv_font_big, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_radius(cui_numpadKey7, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(cui_numpadKey7, lv_color_hex(0x555555), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(cui_numpadKey7, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -993,14 +1000,15 @@ lv_obj_t *ui_temperatureComponent_create(lv_obj_t *comp_parent)
 
     lv_obj_t *cui_numpadKey8;
     cui_numpadKey8 = lv_label_create(cui_temperatureComponentKeyboard);
-    lv_obj_set_height(cui_numpadKey8, LV_SIZE_CONTENT); /// 48
+    lv_obj_set_height(cui_numpadKey8, lv_pct(25)); /// 48
     lv_obj_set_flex_grow(cui_numpadKey8, 1);
+    lv_obj_set_align(cui_numpadKey8, LV_ALIGN_CENTER);
     lv_label_set_text(cui_numpadKey8, "8");
     lv_obj_add_flag(cui_numpadKey8, LV_OBJ_FLAG_CLICKABLE);                                                                                                                                                                                                      /// Flags
     lv_obj_clear_flag(cui_numpadKey8, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN); /// Flags
     lv_obj_set_scrollbar_mode(cui_numpadKey8, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_style_text_align(cui_numpadKey8, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(cui_numpadKey8, &lv_font_montserrat_28, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(cui_numpadKey8, lv_font_big, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_radius(cui_numpadKey8, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(cui_numpadKey8, lv_color_hex(0x555555), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(cui_numpadKey8, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1013,14 +1021,15 @@ lv_obj_t *ui_temperatureComponent_create(lv_obj_t *comp_parent)
 
     lv_obj_t *cui_numpadKey9;
     cui_numpadKey9 = lv_label_create(cui_temperatureComponentKeyboard);
-    lv_obj_set_height(cui_numpadKey9, LV_SIZE_CONTENT); /// 48
+    lv_obj_set_height(cui_numpadKey9, lv_pct(25)); /// 48
     lv_obj_set_flex_grow(cui_numpadKey9, 1);
+    lv_obj_set_align(cui_numpadKey9, LV_ALIGN_CENTER);
     lv_label_set_text(cui_numpadKey9, "9");
     lv_obj_add_flag(cui_numpadKey9, LV_OBJ_FLAG_CLICKABLE);                                                                                                                                                                                                      /// Flags
     lv_obj_clear_flag(cui_numpadKey9, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN); /// Flags
     lv_obj_set_scrollbar_mode(cui_numpadKey9, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_style_text_align(cui_numpadKey9, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(cui_numpadKey9, &lv_font_montserrat_28, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(cui_numpadKey9, lv_font_big, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_radius(cui_numpadKey9, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(cui_numpadKey9, lv_color_hex(0x555555), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(cui_numpadKey9, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1033,14 +1042,15 @@ lv_obj_t *ui_temperatureComponent_create(lv_obj_t *comp_parent)
 
     lv_obj_t *cui_numpadKey0;
     cui_numpadKey0 = lv_label_create(cui_temperatureComponentKeyboard);
-    lv_obj_set_height(cui_numpadKey0, LV_SIZE_CONTENT); /// 48
+    lv_obj_set_height(cui_numpadKey0, lv_pct(25)); /// 48
     lv_obj_set_flex_grow(cui_numpadKey0, 1);
+    lv_obj_set_align(cui_numpadKey0, LV_ALIGN_CENTER);
     lv_label_set_text(cui_numpadKey0, "0");
     lv_obj_add_flag(cui_numpadKey0, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_FLEX_IN_NEW_TRACK);                                                                                                                                                                      /// Flags
     lv_obj_clear_flag(cui_numpadKey0, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN); /// Flags
     lv_obj_set_scrollbar_mode(cui_numpadKey0, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_style_text_align(cui_numpadKey0, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(cui_numpadKey0, &lv_font_montserrat_28, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(cui_numpadKey0, lv_font_big, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_radius(cui_numpadKey0, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(cui_numpadKey0, lv_color_hex(0x555555), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(cui_numpadKey0, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1053,14 +1063,15 @@ lv_obj_t *ui_temperatureComponent_create(lv_obj_t *comp_parent)
 
     lv_obj_t *cui_numpadKeyBack;
     cui_numpadKeyBack = lv_label_create(cui_temperatureComponentKeyboard);
-    lv_obj_set_height(cui_numpadKeyBack, LV_SIZE_CONTENT); /// 48
+    lv_obj_set_height(cui_numpadKeyBack, lv_pct(25)); /// 48
     lv_obj_set_flex_grow(cui_numpadKeyBack, 1);
+    lv_obj_set_align(cui_numpadKeyBack, LV_ALIGN_CENTER);
     lv_label_set_text(cui_numpadKeyBack, LV_SYMBOL_CLOSE);
     lv_obj_add_flag(cui_numpadKeyBack, LV_OBJ_FLAG_CLICKABLE);                                                                                                                                                                                                      /// Flags
     lv_obj_clear_flag(cui_numpadKeyBack, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN); /// Flags
     lv_obj_set_scrollbar_mode(cui_numpadKeyBack, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_style_text_align(cui_numpadKeyBack, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(cui_numpadKeyBack, &lv_font_montserrat_28, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(cui_numpadKeyBack, lv_font_big, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_radius(cui_numpadKeyBack, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(cui_numpadKeyBack, lv_color_hex(0x555555), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(cui_numpadKeyBack, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1073,14 +1084,15 @@ lv_obj_t *ui_temperatureComponent_create(lv_obj_t *comp_parent)
 
     lv_obj_t *cui_numpadKeyOk;
     cui_numpadKeyOk = lv_label_create(cui_temperatureComponentKeyboard);
-    lv_obj_set_height(cui_numpadKeyOk, LV_SIZE_CONTENT); /// 48
+    lv_obj_set_height(cui_numpadKeyOk, lv_pct(25)); /// 48
     lv_obj_set_flex_grow(cui_numpadKeyOk, 1);
+    lv_obj_set_align(cui_numpadKeyOk, LV_ALIGN_CENTER);
     lv_label_set_text(cui_numpadKeyOk, LV_SYMBOL_NEW_LINE);
     lv_obj_add_flag(cui_numpadKeyOk, LV_OBJ_FLAG_CLICKABLE);                                                                                                                                                                                                      /// Flags
     lv_obj_clear_flag(cui_numpadKeyOk, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN); /// Flags
     lv_obj_set_scrollbar_mode(cui_numpadKeyOk, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_style_text_align(cui_numpadKeyOk, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(cui_numpadKeyOk, &lv_font_montserrat_28, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(cui_numpadKeyOk, lv_font_big, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_radius(cui_numpadKeyOk, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(cui_numpadKeyOk, lv_color_hex(0x555555), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(cui_numpadKeyOk, 255, LV_PART_MAIN | LV_STATE_DEFAULT);

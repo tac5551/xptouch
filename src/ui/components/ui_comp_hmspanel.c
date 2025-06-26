@@ -243,7 +243,7 @@ lv_obj_t *ui_hmsPanel_create(lv_obj_t *comp_parent)
     lv_label_set_text(cui_hmsPanelRetryButtonLabel, "Retry");
     lv_obj_clear_flag(cui_hmsPanelRetryButtonLabel, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN); /// Flags
     lv_obj_set_scrollbar_mode(cui_hmsPanelRetryButtonLabel, LV_SCROLLBAR_MODE_OFF);
-    lv_obj_set_style_text_font(cui_hmsPanelRetryButtonLabel, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(cui_hmsPanelRetryButtonLabel, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     lv_obj_t *cui_hmsPanelDoneButton;
     cui_hmsPanelDoneButton = lv_label_create(cui_hmsPanelContainer);
@@ -272,7 +272,7 @@ lv_obj_t *ui_hmsPanel_create(lv_obj_t *comp_parent)
     lv_label_set_text(cui_hmsPanelDoneButtonLabel, "Done");
     lv_obj_clear_flag(cui_hmsPanelDoneButtonLabel, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN); /// Flags
     lv_obj_set_scrollbar_mode(cui_hmsPanelDoneButtonLabel, LV_SCROLLBAR_MODE_OFF);
-    lv_obj_set_style_text_font(cui_hmsPanelDoneButtonLabel, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(cui_hmsPanelDoneButtonLabel, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     lv_obj_t *cui_hmsPanelConfirmButton;
     cui_hmsPanelConfirmButton = lv_label_create(cui_hmsPanelContainer);
@@ -301,7 +301,7 @@ lv_obj_t *ui_hmsPanel_create(lv_obj_t *comp_parent)
     lv_label_set_text(cui_hmsPanelConfirmButtonLabel, "Confirm");
     lv_obj_clear_flag(cui_hmsPanelConfirmButtonLabel, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN); /// Flags
     lv_obj_set_scrollbar_mode(cui_hmsPanelConfirmButtonLabel, LV_SCROLLBAR_MODE_OFF);
-    lv_obj_set_style_text_font(cui_hmsPanelConfirmButtonLabel, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(cui_hmsPanelConfirmButtonLabel, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     lv_obj_t **children = lv_mem_alloc(sizeof(lv_obj_t *) * _UI_COMP_HMSPANEL_NUM);
     children[UI_COMP_HMSPANEL_HMSPANEL] = cui_hmsPanel;

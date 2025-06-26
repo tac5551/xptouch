@@ -4,8 +4,7 @@
 #define LGFX_AUTODETECT
 #include <LovyanGFX.hpp>
 
-#define screenWidth 240
-#define screenHeight 320
+#include "setting.h"
 
 static lv_disp_draw_buf_t draw_buf;
 static lv_color_t buf[4096];
@@ -14,6 +13,7 @@ LGFX tft;
 #include "ui/ui.h"
 #include "touch.h"
 #include "xtouch/globals.h"
+#include "xtouch/debug.h" 
 
 bool xtouch_screen_touchFromPowerOff = false;
 
@@ -62,7 +62,8 @@ void xtouch_screen_onScreenOff(lv_timer_t *timer)
 
 void xtouch_screen_onLEDOff(lv_timer_t *timer)
 {
-    if (bambuStatus.print_status == XTOUCH_PRINT_STATUS_RUNNING)
+
+    if (bambuStatus.print_status == XTOUCH_PRINT_STATUS_RUNNING && bambuStatus.camera_timelapse == true)
     {
         return;
     }

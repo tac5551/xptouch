@@ -61,6 +61,8 @@ void setup()
   while (!xtouch_wifi_setup())
     ;
 
+  xtouch_firmware_checkOnlineFirmwareUpdate();
+
   xtouch_screen_setupScreenTimer();
   xtouch_screen_setupLEDOffTimer();
   xtouch_setupGlobalEvents();

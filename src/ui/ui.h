@@ -86,6 +86,10 @@ extern "C"
   lv_obj_t *ui____initial_actions0;
 
   LV_FONT_DECLARE(ui_font_xlcd);
+#ifdef __XTOUCH_SCREEN_50__
+  LV_FONT_DECLARE(ui_font_xlcd48);
+#endif
+
   LV_FONT_DECLARE(ui_font_xlcdmin);
   LV_FONT_DECLARE(ui_font_xperiments);
 
