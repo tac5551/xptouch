@@ -16,6 +16,11 @@
 #include "devices/2.8/screen.h"
 #endif
 
+#if defined(__XTOUCH_SCREEN_50__)
+#include "devices/5.0/screen.h"
+#endif
+
+
 #include "xtouch/cloud.hpp"
 #include "xtouch/settings.h"
 #include "xtouch/net.h"

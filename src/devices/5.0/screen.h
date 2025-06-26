@@ -1,14 +1,16 @@
 #ifndef _XLCD_SCREEN
 #define _XLCD_SCREEN
 
-#define LGFX_AUTODETECT
-#include <LovyanGFX.hpp>
+#include "LGFX_ESP32_JC8048W550.h"
+#include <LovyanGFX.h>
 
-#define screenWidth 240
-#define screenHeight 320
+#define screenWidth 800
+#define screenHeight 480
+
 
 static lv_disp_draw_buf_t draw_buf;
-static lv_color_t buf[4096];
+static lv_color_t *disp_draw_buf1;
+static lv_color_t *disp_draw_buf2;
 LGFX tft;
 
 #include "ui/ui.h"
@@ -161,7 +163,7 @@ void xtouch_screen_dispFlush(lv_disp_drv_t *disp, const lv_area_t *area, lv_colo
         tft.startWrite();
     }
     tft.setAddrWindow(area->x1, area->y1, w, h);
-    // tft.pushColors((uint16_t *)&color_p->full, w * h, true);
+    // tft.writePixels((lgfx::rgb565_t *)&color_p->full, w * h);
     tft.pushImage(area->x1, area->y1, area->x2 - area->x1 + 1, area->y2 - area->y1 + 1, (lgfx::rgb565_t *)&color_p->full);
     tft.endWrite();
 
@@ -205,17 +207,20 @@ void xtouch_screen_setup()
 
     xtouch_screen_setupTFTFlip();
 
-    xtouch_screen_setBrightness(255);
+    xtouch_screen_setBrightness(128);
 
     lv_init();
 
-    lv_disp_draw_buf_init(&draw_buf, buf, NULL, 4096);
+    int buf_size = screenWidth * screenHeight / 10;
+    disp_draw_buf1 = (lv_color_t *)heap_caps_malloc(sizeof(lv_color_t) * buf_size, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+    disp_draw_buf2 = (lv_color_t *)heap_caps_malloc(sizeof(lv_color_t) * buf_size, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+    lv_disp_draw_buf_init(&draw_buf, disp_draw_buf1, disp_draw_buf2, buf_size);
 
     /*Initialize the display*/
     static lv_disp_drv_t disp_drv;
     lv_disp_drv_init(&disp_drv);
-    disp_drv.hor_res = screenHeight;
-    disp_drv.ver_res = screenWidth;
+    disp_drv.hor_res = screenWidth;
+    disp_drv.ver_res = screenHeight;
     disp_drv.flush_cb = xtouch_screen_dispFlush;
     disp_drv.draw_buf = &draw_buf;
     lv_disp_drv_register(&disp_drv);

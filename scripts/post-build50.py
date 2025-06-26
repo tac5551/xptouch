@@ -81,10 +81,10 @@ def post_build_increment_semver(json_file, bump_type="patch"):
 def post_build_create_ota_json(version_value):
 
     md5, size = calculate_md5_and_size(
-        f"../xptouch-bin/2.8/ota/xptouch.{version_value}.bin")
+        f"../xptouch-bin/5.0/ota/xptouch.{version_value}.bin")
     ota = {
         "version": version_value,
-        "url": f"http://xperiments.in/xptouch-bin/2.8/ota/xptouch.{version_value}.bin",
+        "url": f"http://xperiments.in/xptouch-bin/5.0/ota/xptouch.{version_value}.bin",
         "md5": md5,
     }
 
@@ -92,7 +92,7 @@ def post_build_create_ota_json(version_value):
     ota_serialized = json.dumps(ota, indent=2)
 
     # If you want to save it to a file, you can do:
-    with open("../xptouch-bin/2.8/ota/ota.json", "w") as ota_file:
+    with open("../xptouch-bin/5.0/ota/ota.json", "w") as ota_file:
         ota_file.write(ota_serialized)
 
 
@@ -116,26 +116,26 @@ def post_build_manifest(version_value):
     webusb_manifest_serialized = json.dumps(webusb_manifest, indent=2)
 
     # If you want to save it to a file, you can do:
-    with open("../xptouch-bin/2.8/webusb/webusb.manifest.json", "w") as webusb_manifest_file:
+    with open("../xptouch-bin/5.0/webusb/webusb.manifest.json", "w") as webusb_manifest_file:
         webusb_manifest_file.write(webusb_manifest_serialized)
 
 
 def post_build_copy_ota_fw(version):
-    ota_bin_source = "./.pio/build/esp32dev/firmware.bin"
-    ota_bin_target = f"../xptouch-bin/2.8/ota/xptouch.{version}.bin"
+    ota_bin_source = "./.pio/build/esp32-s3dev/firmware.bin"
+    ota_bin_target = f"../xptouch-bin/5.0/ota/xptouch.{version}.bin"
     print(f"copy to ota : cp {ota_bin_source} {ota_bin_target}")
     shutil.copy(ota_bin_source,ota_bin_target)
     #subprocess.run(['cp', ota_bin_source, ota_bin_target])
 
-    fw_bin_source = "./.pio/build/esp32dev/firmware.bin"
-    fw_bin_target = f"../xptouch-bin/2.8/fw/firmware.bin"
+    fw_bin_source = "./.pio/build/esp32-s3dev/firmware.bin"
+    fw_bin_target = f"../xptouch-bin/5.0/fw/firmware.bin"
     print(f"copy to fw : cp {ota_bin_source} {ota_bin_target}")
     shutil.copy(fw_bin_source,fw_bin_target)
     #subprocess.run(['cp', fw_bin_source, fw_bin_target])
 
 def post_build_merge_bin(version):
 
-    web_usb_fw = f"../../../../xptouch-bin/2.8/webusb/xptouch.web.{version}.bin"
+    web_usb_fw = f"../../../../xptouch-bin/5.0/webusb/xptouch.web.{version}.bin"
     esptool_cmd = [
         'esptool',
         '--chip', 'ESP32',
@@ -148,19 +148,19 @@ def post_build_merge_bin(version):
         '0x10000', 'firmware.bin'
     ]
     print(f"command {esptool_cmd}" )
-    subprocess.run(esptool_cmd, cwd="./.pio/build/esp32dev")
+    subprocess.run(esptool_cmd, cwd="./.pio/build/esp32-s3dev")
 
 
 def post_build_action(source, target, env):
 
-    with open("version.json", "r") as version_file:
+    with open("version50.json", "r") as version_file:
         version_data = json.load(version_file)
         version_value = version_data.get("version", "UNKNOWN")
     print(version_value)
-    print(f"xptouch delete_bin_files ../xptouch-bin/2.8/ota")
-    delete_bin_files("../xptouch-bin/2.8/ota")
-    print(f"xptouch delete_bin_files ../xptouch-bin/2.8/webusb")
-    delete_bin_files("../xptouch-bin/2.8/webusb")
+    print(f"xptouch delete_bin_files ../xptouch-bin/5.0/ota")
+    delete_bin_files("../xptouch-bin/5.0/ota")
+    print(f"xptouch delete_bin_files ../xptouch-bin/5.0/webusb")
+    delete_bin_files("../xptouch-bin/5.0/webusb")
     print(f"xptouch post_build_manifest")
     post_build_manifest(version_value)
     print(f"xptouch post_build_copy_ota_fw")
@@ -171,7 +171,7 @@ def post_build_action(source, target, env):
     post_build_merge_bin(version_value)
 
     print(f"xptouch post_build_increment_semver")
-    post_build_increment_semver("version.json", bump_type="patch")
+    post_build_increment_semver("version50.json", bump_type="patch")
     print(f"xptouch POSTBUILD")
 
 
