@@ -467,6 +467,12 @@ BambuLabプリンタータッチスクリーンのインストールまたは操
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/I3I8PSAYU)
 [Discord Server](https://discord.gg/RytEDEgfR3)
 
+
+[OpenBambuAPI](https://github.com/Doridian/OpenBambuAPI)
+Home Assistant serve
+[ha-bambulab](https://github.com/greghesp/ha-bambulab)
+
+
 ---
 
 **注意**: 本プロジェクトは教育・研究目的で開発されています。商用利用についてはXPの利用を禁止します。参照元プロジェクトを使用してください。
