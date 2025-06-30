@@ -469,6 +469,12 @@ BambuLabプリンタータッチスクリーンのインストールまたは操
 ## References
 - [OpenBambuAPI TLS Documentation](https://github.com/Doridian/OpenBambuAPI/blob/main/tls.md)
 
+[OpenBambuAPI](https://github.com/Doridian/OpenBambuAPI)
+Home Assistant serve
+[ha-bambulab](https://github.com/greghesp/ha-bambulab)
+
+
+
 ---
 
 **注意**: 本プロジェクトは教育・研究目的で開発されています。商用利用についてはXPの利用を禁止します。参照元プロジェクトを使用してください。
