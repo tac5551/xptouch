@@ -161,14 +161,14 @@ USBとJST 1.25 4ピンコネクターの選択は、お好みとリソースの�
 5. **Chromeブラウザ拡張機能**
 
    - このリンクから**拡張機能をダウンロード**してください：  
-     **[Chrome拡張機能のダウンロード](https://xperiments.in/xtouch-bin/extensions/xtouch28.zip)**
+     **[Chrome拡張機能のダウンロード](https://tac-lab.tech/xtouch-bin/extensions/xtouch28.zip)**
    - この拡張機能は、初期設定ファイルの生成とxtouchスクリーンのリモート管理に必要です。
    - ダウンロードしたファイルを、ドキュメント内の専用「xtouch」フォルダーやバックアップドライブなどの安全な場所に保存してください。
 
 6. **xtouchオンラインインストーラー**
 
    - このURLでインストーラーページにアクセスしてください：  
-     **[https://xperiments.in/xtouch-bin](https://xperiments.in/xtouch-bin)**
+     **[https://tac-lab.tech/xtouch-bin](https://tac-lab.tech/xtouch-bin)**
 
 7. **安定した電源供給**
    - セットアッププロセス中にxtouchスクリーンが信頼性の高い電源に接続されていることを確認してください。
@@ -183,7 +183,7 @@ Chrome拡張機能は、初期設定ファイルの生成とxtouchスクリー�
 
 1. **拡張機能のダウンロード**  
    このリンクをクリックしてChrome拡張機能をダウンロードしてください：  
-   **[Chrome拡張機能のダウンロード](https://xperiments.in/xtouch-bin/extensions/xtouch28.zip)**
+   **[Chrome拡張機能のダウンロード](https://tac-lab.tech/xtouch-bin/extensions/xtouch28.zip)**
 
 2. **拡張機能の安全な保存**
 
@@ -215,7 +215,7 @@ Chrome拡張機能は、初期設定ファイルの生成とxtouchスクリー�
 1. コンピューターで**Google Chrome**を開いてください。
    > **注意:** このプロセスでは他のブラウザーはサポートされていません。
 2. 以下のURLを入力してインストーラーページに移動してください：  
-   **[https://xperiments.in/xtouch-bin](https://xperiments.in/xtouch-bin)**
+   **[https://tac-lab.tech/xtouch-bin](https://tac-lab.tech/xtouch-bin)**
 
 ### ステップ2: オンラインインストーラーの使用
 
@@ -389,12 +389,12 @@ xtouchスクリーンのファームウェアを手動でアップデートし�
 
 1. **アップデートファームウェアファイルのダウンロード**:
 
-   - 公式xtouchサイトまたは指定されたファームウェアアップデートソースにアクセスして、最新のファームウェアアップデートファイルをダウンロードしてください。[firmware.bin](https://xperiments.in/xtouch-bin/fw/firmware.bin)という名前でこのファイルをダウンロードしてください。
+   - 公式xtouchサイトまたは指定されたファームウェアアップデートソースにアクセスして、最新のファームウェアアップデートファイルをダウンロードしてください。[firmware.bin](https://tac-lab.tech/xtouch-bin/fw/firmware.bin)という名前でこのファイルをダウンロードしてください。
 
 2. **ファームウェアファイルをSDカードのルートにコピー**:
 
    - SDカードをコンピューターのカードリーダーに挿入してください。
-   - ダウンロードしたファームウェアアップデートファイル[firmware.bin](https://xperiments.in/xtouch-bin/fw/firmware.bin)をSDカードのルートディレクトリにコピーしてください。サブディレクトリには配置しないでください。
+   - ダウンロードしたファームウェアアップデートファイル[firmware.bin](https://tac-lab.tech/xtouch-bin/fw/firmware.bin)をSDカードのルートディレクトリにコピーしてください。サブディレクトリには配置しないでください。
 
 3. **xtouchスクリーンの再起動**:
 
@@ -436,7 +436,7 @@ BambuLabプリンタータッチスクリーンのインストールまたは操
 
    - これを行うには、`config.json`ファイルを修正し、タイムアウトの数値パラメーターを含めてください。タイムアウト値を増やすことで、この問題に対処できます。
 
-   - ステップバイステップの手順については、[オンラインconfig.jsonフォーム](https://xperiments.in/xtouch-bin/config.html)を使用してください。
+   - ステップバイステップの手順については、[オンラインconfig.jsonフォーム](https://tac-lab.tech/xtouch-bin/config.html)を使用してください。
 
 4. **プリンター起動時の無限再起動**:
 
@@ -444,7 +444,7 @@ BambuLabプリンタータッチスクリーンのインストールまたは操
 
    - この問題に対処するには、`config.json`ファイルを開き、「coldboot」パラメーターの数値パラメーターを含めてください。このパラメーターは、コールドブート後の初期化のためにシステムが待機する時間をミリ秒で指定します。「coldboot」値を増やすことで、システムに起動プロセスを正常に完了するためのより多くの時間を提供します。
 
-   - ステップバイステップの手順については、[オンラインconfig.jsonフォーム](https://xperiments.in/xtouch-bin/config.html)を使用してください。
+   - ステップバイステップの手順については、[オンラインconfig.jsonフォーム](https://tac-lab.tech/xtouch-bin/config.html)を使用してください。
 
 5. **スクリーンの再キャリブレーション**:
 
@@ -461,11 +461,13 @@ BambuLabプリンタータッチスクリーンのインストールまたは操
 
    タッチスクリーンは起動時に自動的に再キャリブレーションプロセスを実行します。
 
-[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/I3I8PSAYU)
-
 ## オリジナルバージョン
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/I3I8PSAYU)
 [Discord Server](https://discord.gg/RytEDEgfR3)
+
+
+## References
+- [OpenBambuAPI TLS Documentation](https://github.com/Doridian/OpenBambuAPI/blob/main/tls.md)
 
 ---
 
