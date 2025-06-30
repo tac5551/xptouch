@@ -14,9 +14,9 @@ const char *xtouch_paths_touch = "/xtouch/touch.json";
 
 const char *xtouch_paths_firmware_ota_json = "/xtouch/ota.json";
 #ifdef __XTOUCH_SCREEN_50__
-const char *xtouch_paths_firmware_ota_file = "https://192.168.100.5/xptouch-bin/5.0/ota/ota.json";
+const char *xtouch_paths_firmware_ota_file = "https://tac-lab.tech/xptouch-bin/5.0/ota/ota.json";
 #else
-const char *xtouch_paths_firmware_ota_file = "https://192.168.100.5/xptouch-bin/2.8/ota/ota.json";
+const char *xtouch_paths_firmware_ota_file = "https://tac-lab.tech/xptouch-bin/2.8/ota/ota.json";
 #endif
 const char *xtouch_paths_firmware_ota_fw = "/firmware.bin";
 
