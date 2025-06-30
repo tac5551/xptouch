@@ -21,4 +21,7 @@ void ui_filamentScreen_screen_init(void)
     ui_filamentComponent = ui_filamentComponent_create(ui_filamentScreen);
     lv_obj_set_x(ui_filamentComponent, 386);
     lv_obj_set_y(ui_filamentComponent, 178);
+#ifdef __XTOUCH_SCREEN_28__
+    lv_obj_set_width(ui_sidebarComponent, 48);
+#endif
 }

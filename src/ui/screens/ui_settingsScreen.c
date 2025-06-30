@@ -21,4 +21,7 @@ void ui_settingsScreen_screen_init(void)
     ui_settingsComponent = ui_settingsComponent_create(ui_settingsScreen);
     lv_obj_set_x(ui_settingsComponent, 385);
     lv_obj_set_y(ui_settingsComponent, 178);
+#ifdef __XTOUCH_SCREEN_28__
+    lv_obj_set_width(ui_sidebarComponent, 48);
+#endif
 }
