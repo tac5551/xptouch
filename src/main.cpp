@@ -56,6 +56,8 @@ void setup()
 
   xtouch_settings_loadSettings();
 
+  xtouch_firmware_checkFirmwareUpdate();
+
   xtouch_touch_setup();
 
   while (!xtouch_wifi_setup())
