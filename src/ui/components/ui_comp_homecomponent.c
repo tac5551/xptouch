@@ -69,6 +69,16 @@ void ui_event_comp_homeComponent_mainScreenLightButton(lv_event_t *e)
         _ui_state_modify(comp_homeComponent[UI_COMP_HOMECOMPONENT_MAINSCREENRIGHT_MAINSCREENLIGHTBUTTON], LV_STATE_CHECKED, _UI_MODIFY_STATE_TOGGLE);
     }
 }
+void ui_event_comp_homeComponent_mainScreenLCDButton(lv_event_t *e)
+{
+    lv_event_code_t event_code = lv_event_get_code(e);
+    lv_obj_t *target = lv_event_get_target(e);
+    lv_obj_t **comp_homeComponent = lv_event_get_user_data(e);
+    if (event_code == LV_EVENT_CLICKED)
+    {
+        onHomeLCD(e);
+    }
+}
 void ui_event_comp_homeComponent_mainScreenBedTemp(lv_event_t *e)
 {
     lv_event_code_t event_code = lv_event_get_code(e);
@@ -438,7 +448,7 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
     lv_label_set_text(cui_mainScreenWifiIcon, "x");
     lv_obj_clear_flag(cui_mainScreenWifiIcon, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN); /// Flags
     lv_obj_set_scrollbar_mode(cui_mainScreenWifiIcon, LV_SCROLLBAR_MODE_OFF);
-    lv_obj_set_style_text_font(cui_mainScreenWifiIcon, lv_icon_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(cui_mainScreenWifiIcon, &ui_font_xlcdmin, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     lv_obj_t *cui_mainScreenCameraIcon;
     cui_mainScreenCameraIcon = lv_label_create(cui_mainScreenStatusBar);
@@ -447,7 +457,7 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
     lv_label_set_text(cui_mainScreenCameraIcon, "y");
     lv_obj_clear_flag(cui_mainScreenCameraIcon, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN); /// Flags
     lv_obj_set_scrollbar_mode(cui_mainScreenCameraIcon, LV_SCROLLBAR_MODE_OFF);
-    lv_obj_set_style_text_font(cui_mainScreenCameraIcon, lv_icon_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(cui_mainScreenCameraIcon, &ui_font_xlcdmin, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_left(cui_mainScreenCameraIcon, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_right(cui_mainScreenCameraIcon, 32, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_top(cui_mainScreenCameraIcon, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -767,7 +777,7 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
     lv_label_set_text(cui_mainScreenTimeLeftIcon, "2");
     lv_obj_clear_flag(cui_mainScreenTimeLeftIcon, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN); /// Flags
     lv_obj_set_scrollbar_mode(cui_mainScreenTimeLeftIcon, LV_SCROLLBAR_MODE_OFF);
-    lv_obj_set_style_text_font(cui_mainScreenTimeLeftIcon, lv_icon_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(cui_mainScreenTimeLeftIcon, &ui_font_xlcdmin, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     lv_obj_t *cui_mainScreenTimeLeft;
     cui_mainScreenTimeLeft = lv_label_create(cui_mainScreenController1);
@@ -810,7 +820,7 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
     lv_label_set_text(cui_mainScreenLayerIcon, "3");
     lv_obj_clear_flag(cui_mainScreenLayerIcon, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN); /// Flags
     lv_obj_set_scrollbar_mode(cui_mainScreenLayerIcon, LV_SCROLLBAR_MODE_OFF);
-    lv_obj_set_style_text_font(cui_mainScreenLayerIcon, lv_icon_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(cui_mainScreenLayerIcon, &ui_font_xlcdmin, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     lv_obj_t *cui_mainScreenLayer;
     cui_mainScreenLayer = lv_label_create(cui_mainScreenController2);
@@ -852,7 +862,7 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
     lv_label_set_text(cui_mainScreenSpeedIcon, "h");
     lv_obj_clear_flag(cui_mainScreenSpeedIcon, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN); /// Flags
     lv_obj_set_scrollbar_mode(cui_mainScreenSpeedIcon, LV_SCROLLBAR_MODE_OFF);
-    lv_obj_set_style_text_font(cui_mainScreenSpeedIcon, lv_icon_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(cui_mainScreenSpeedIcon, &ui_font_xlcdmin, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     lv_obj_t *cui_mainScreenSpeedDropDown;
     cui_mainScreenSpeedDropDown = lv_dropdown_create(cui_mainScreenCentral);
@@ -876,7 +886,7 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_border_color(lv_dropdown_get_list(cui_mainScreenSpeedDropDown), lv_color_hex(0x444444), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_opa(lv_dropdown_get_list(cui_mainScreenSpeedDropDown), 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_width(lv_dropdown_get_list(cui_mainScreenSpeedDropDown), 2, LV_PART_MAIN | LV_STATE_DEFAULT);
-
+    lv_obj_set_style_text_font(lv_dropdown_get_list(cui_mainScreenSpeedDropDown), lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_letter_space(lv_dropdown_get_list(cui_mainScreenSpeedDropDown), 0, LV_PART_SELECTED | LV_STATE_DEFAULT);
     lv_obj_set_style_text_line_space(lv_dropdown_get_list(cui_mainScreenSpeedDropDown), 32, LV_PART_SELECTED | LV_STATE_DEFAULT);
     lv_obj_set_style_text_color(lv_dropdown_get_list(cui_mainScreenSpeedDropDown), lv_color_hex(0x000000), LV_PART_SELECTED | LV_STATE_CHECKED);
@@ -913,7 +923,7 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
 
     lv_obj_t *cui_mainScreenLightButton;
     cui_mainScreenLightButton = lv_obj_create(cui_mainScreenRight);
-    lv_obj_set_height(cui_mainScreenLightButton, lv_pct(25));
+    lv_obj_set_height(cui_mainScreenLightButton, lv_pct(23));
     lv_obj_set_width(cui_mainScreenLightButton, lv_pct(100));
     lv_obj_set_flex_grow(cui_mainScreenLightButton, 1);
     lv_obj_set_x(cui_mainScreenLightButton, 386);
@@ -950,9 +960,50 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_scrollbar_mode(cui_mainScreenLightButtonIcon, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_style_text_font(cui_mainScreenLightButtonIcon, lv_icon_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
 
+
+
+    lv_obj_t *cui_mainScreenLCDButton;
+    cui_mainScreenLCDButton = lv_obj_create(cui_mainScreenRight);
+    lv_obj_set_height(cui_mainScreenLCDButton, lv_pct(23));
+    lv_obj_set_width(cui_mainScreenLCDButton, lv_pct(100));
+    lv_obj_set_flex_grow(cui_mainScreenLCDButton, 1);
+    lv_obj_set_x(cui_mainScreenLCDButton, 386);
+    lv_obj_set_y(cui_mainScreenLCDButton, 178);
+    lv_obj_set_flex_flow(cui_mainScreenLCDButton, LV_FLEX_FLOW_ROW);
+    lv_obj_set_flex_align(cui_mainScreenLCDButton, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    // lv_obj_add_state(cui_mainScreenLCDButton, LV_STATE_CHECKED);                                                                                                                                                                                                          /// States
+    lv_obj_clear_flag(cui_mainScreenLCDButton, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN); /// Flags
+    lv_obj_set_scrollbar_mode(cui_mainScreenLCDButton, LV_SCROLLBAR_MODE_OFF);
+    lv_obj_set_style_bg_color(cui_mainScreenLCDButton, lv_color_hex(0x555555), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(cui_mainScreenLCDButton, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(cui_mainScreenLCDButton, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_left(cui_mainScreenLCDButton, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(cui_mainScreenLCDButton, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_top(cui_mainScreenLCDButton, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_bottom(cui_mainScreenLCDButton, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_row(cui_mainScreenLCDButton, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_column(cui_mainScreenLCDButton, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_color(cui_mainScreenLCDButton, lv_color_hex(0x888888), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_opa(cui_mainScreenLCDButton, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_color(cui_mainScreenLCDButton, lv_color_hex(0x2aff00), LV_PART_MAIN | LV_STATE_CHECKED);
+    lv_obj_set_style_border_opa(cui_mainScreenLCDButton, 255, LV_PART_MAIN | LV_STATE_CHECKED);
+    lv_obj_set_style_border_width(cui_mainScreenLCDButton, 3, LV_PART_MAIN | LV_STATE_CHECKED);
+    lv_obj_set_style_text_color(cui_mainScreenLCDButton, lv_color_hex(0x2aff00), LV_PART_MAIN | LV_STATE_CHECKED);
+    lv_obj_set_style_text_opa(cui_mainScreenLCDButton, 255, LV_PART_MAIN | LV_STATE_CHECKED);
+
+    lv_obj_t *cui_mainScreenLCDButtonIcon;
+    cui_mainScreenLCDButtonIcon = lv_label_create(cui_mainScreenLCDButton);
+    lv_obj_set_width(cui_mainScreenLCDButtonIcon, LV_SIZE_CONTENT);  /// 1
+    lv_obj_set_height(cui_mainScreenLCDButtonIcon, LV_SIZE_CONTENT); /// 1
+    lv_obj_set_align(cui_mainScreenLCDButtonIcon, LV_ALIGN_CENTER);
+    lv_label_set_text(cui_mainScreenLCDButtonIcon, LV_SYMBOL_IMAGE " LCD");
+    lv_obj_clear_flag(cui_mainScreenLCDButtonIcon, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN); /// Flags
+    lv_obj_set_scrollbar_mode(cui_mainScreenLCDButtonIcon, LV_SCROLLBAR_MODE_OFF);
+    lv_obj_set_style_text_font(cui_mainScreenLCDButtonIcon, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
+
     lv_obj_t *cui_mainScreenTemps;
     cui_mainScreenTemps = lv_obj_create(cui_mainScreenRight);
-    lv_obj_set_height(cui_mainScreenTemps, lv_pct(75));
+    lv_obj_set_height(cui_mainScreenTemps, lv_pct(54));
     lv_obj_set_width(cui_mainScreenTemps, lv_pct(100));
     lv_obj_set_x(cui_mainScreenTemps, 386);
     lv_obj_set_y(cui_mainScreenTemps, 178);
@@ -1149,6 +1200,8 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
     lv_obj_add_event_cb(cui_mainScreenStopButton, ui_event_comp_homeComponent_mainScreenStopButton, LV_EVENT_ALL, children);
     lv_obj_add_event_cb(cui_mainScreenSpeedDropDown, ui_event_comp_homeComponent_mainScreenSpeedDropDown, LV_EVENT_ALL, children);
     lv_obj_add_event_cb(cui_mainScreenLightButton, ui_event_comp_homeComponent_mainScreenLightButton, LV_EVENT_ALL, children);
+    lv_obj_add_event_cb(cui_mainScreenLCDButton, ui_event_comp_homeComponent_mainScreenLCDButton, LV_EVENT_ALL, children);
+
     lv_obj_add_event_cb(cui_mainScreenBedTemp, ui_event_comp_homeComponent_mainScreenBedTemp, LV_EVENT_ALL, children);
     lv_obj_add_event_cb(cui_mainScreenNozzleTemp, ui_event_comp_homeComponent_mainScreenNozzleTemp, LV_EVENT_ALL, children);
     lv_obj_add_event_cb(cui_mainScreenSpeedDropDown, ui_event_comp_homeComponent_mainScreenSpeedChange, LV_EVENT_ALL, children);

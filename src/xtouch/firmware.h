@@ -85,7 +85,7 @@ void xtouch_firmware_checkOnlineFirmwareUpdate(void)
     {
         return;
     }
-
+    printf(" Checking for OTA Update\n");
     lv_label_set_text(introScreenCaption, LV_SYMBOL_CHARGE " Checking for OTA Update");
     lv_timer_handler();
     lv_task_handler();
@@ -98,7 +98,7 @@ void xtouch_firmware_checkOnlineFirmwareUpdate(void)
         DynamicJsonDocument doc = xtouch_filesystem_readJson(SD, xtouch_paths_firmware_ota_json);
         if (xtouch_firmware_semverNeedsUpdate(doc["version"]))
         {
-
+            printf(" Downloading Update%d%%\n", 0);
             lv_label_set_text_fmt(introScreenCaption, LV_SYMBOL_CHARGE " Downloading Update %d%%", 0);
             lv_timer_handler();
             lv_task_handler();
@@ -108,6 +108,7 @@ void xtouch_firmware_checkOnlineFirmwareUpdate(void)
                 xtouch_paths_firmware_ota_fw,
                 [](int progress)
                 {
+                    printf(" Downloading Update%d%%\n", progress);
                     lv_label_set_text_fmt(introScreenCaption, LV_SYMBOL_CHARGE " Downloading Update %d%%", progress);
                     lv_timer_handler();
                     lv_task_handler();
@@ -117,12 +118,15 @@ void xtouch_firmware_checkOnlineFirmwareUpdate(void)
                     switch (state)
                     {
                     case -1:
+                        printf(" Verifying Update\n");
                         lv_label_set_text(introScreenCaption, LV_SYMBOL_CHARGE " Verifying Update");
                         break;
                     case 0:
+                        printf(" Invalid Update MD5\n");
                         lv_label_set_text(introScreenCaption, LV_SYMBOL_CHARGE " Invalid Update MD5");
                         break;
                     case 1:
+                        printf(" Update Verified\n");
                         lv_label_set_text(introScreenCaption, LV_SYMBOL_CHARGE " Update Verified");
                         break;
                     }
@@ -133,6 +137,7 @@ void xtouch_firmware_checkOnlineFirmwareUpdate(void)
 
             if (xtouch_firmware_hasFirmwareUpdate)
             {
+                printf(" Update downloaded\n");
                 lv_label_set_text(introScreenCaption, LV_SYMBOL_OK " Update downloaded");
                 lv_timer_handler();
                 lv_task_handler();
@@ -141,6 +146,7 @@ void xtouch_firmware_checkOnlineFirmwareUpdate(void)
             }
             else
             {
+                printf(" Failed to download update. Retry (%d/%d)\n", xtouch_firmware_updateDownloadRetries + 1, XTOUCH_FIRMWARE_DOWNLOAD_RETRIES);
                 lv_label_set_text_fmt(introScreenCaption, LV_SYMBOL_WARNING " Failed to download update. Retry (%d/%d)", xtouch_firmware_updateDownloadRetries + 1, XTOUCH_FIRMWARE_DOWNLOAD_RETRIES);
                 lv_timer_handler();
                 lv_task_handler();
@@ -172,6 +178,7 @@ void xtouch_firmware_checkOnlineFirmwareUpdate(void)
     }
     else
     {
+        printf(" Failed to download update\n");
         lv_label_set_text(introScreenCaption, LV_SYMBOL_WARNING " Failed to download update");
         lv_timer_handler();
         lv_task_handler();
@@ -198,16 +205,19 @@ void xtouch_firmware_checkFirmwareUpdate(void)
 
         if (updateSucceeded)
         {
+            printf(" Update finished\n");
             lv_label_set_text(introScreenCaption, LV_SYMBOL_OK " Update finished");
             lv_timer_handler();
             lv_task_handler();
         }
         else
         {
+            printf(" Update error\n");
             lv_label_set_text(introScreenCaption, LV_SYMBOL_WARNING " Update error");
             lv_timer_handler();
             lv_task_handler();
             delay(3000);
+            printf(" Deleting firmware file\n");
             lv_label_set_text(introScreenCaption, LV_SYMBOL_TRASH " Deleting firmware file");
             lv_timer_handler();
             lv_task_handler();
