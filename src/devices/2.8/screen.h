@@ -13,7 +13,7 @@ LGFX tft;
 #include "ui/ui.h"
 #include "touch.h"
 #include "xtouch/globals.h"
-#include "xtouch/debug.h" 
+#include "xtouch/debug.h"
 
 bool xtouch_screen_touchFromPowerOff = false;
 
@@ -208,6 +208,7 @@ void xtouch_screen_setup()
     xtouch_screen_setupTFTFlip();
 
     xtouch_screen_setBrightness(255);
+    xtouch_screen_touchFromPowerOff = false;
 
     lv_init();
 
