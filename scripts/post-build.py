@@ -49,33 +49,33 @@ def delete_bin_files(directory):
         print(f"An error occurred: {str(e)}")
 
 
-def post_build_increment_semver(json_file, bump_type="patch"):
-    # Load the JSON from the file
-    with open(json_file, 'r') as f:
-        data = json.load(f)
+# def post_build_increment_semver(json_file, bump_type="patch"):
+#     # Load the JSON from the file
+#     with open(json_file, 'r') as f:
+#         data = json.load(f)
 
-    # Get the current version from the JSON
-    version = data.get("version", "0.0.1").split(".")
+#     # Get the current version from the JSON
+#     version = data.get("version", "0.0.1").split(".")
 
-    # Increment the version based on the bump type (major, minor, or patch)
-    if bump_type == "major":
-        version[0] = str(int(version[0]) + 1)
-        version[1] = "0"
-        version[2] = "0"
-    elif bump_type == "minor":
-        version[1] = str(int(version[1]) + 1)
-        version[2] = "0"
-    elif bump_type == "patch":
-        version[2] = str(int(version[2]) + 1)
-    else:
-        raise ValueError("Bump type must be 'major', 'minor', or 'patch'.")
+#     # Increment the version based on the bump type (major, minor, or patch)
+#     if bump_type == "major":
+#         version[0] = str(int(version[0]) + 1)
+#         version[1] = "0"
+#         version[2] = "0"
+#     elif bump_type == "minor":
+#         version[1] = str(int(version[1]) + 1)
+#         version[2] = "0"
+#     elif bump_type == "patch":
+#         version[2] = str(int(version[2]) + 1)
+#     else:
+#         raise ValueError("Bump type must be 'major', 'minor', or 'patch'.")
 
-    # Update the version in the JSON
-    data["version"] = ".".join(version)
+#     # Update the version in the JSON
+#     data["version"] = ".".join(version)
 
-    # Save the updated JSON to the file
-    with open(json_file, 'w') as f:
-        json.dump(data, f, indent=2)
+#     # Save the updated JSON to the file
+#     with open(json_file, 'w') as f:
+#         json.dump(data, f, indent=2)
 
 
 def post_build_create_ota_json(version_value):
@@ -170,8 +170,8 @@ def post_build_action(source, target, env):
     print(f"xptouch post_build_merge_bin")
     post_build_merge_bin(version_value)
 
-    print(f"xptouch post_build_increment_semver")
-    post_build_increment_semver("version.json", bump_type="patch")
+    # print(f"xptouch post_build_increment_semver")
+    # post_build_increment_semver("version.json", bump_type="patch")
     print(f"xptouch POSTBUILD")
 
 
