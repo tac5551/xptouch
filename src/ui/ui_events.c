@@ -1,4 +1,3 @@
-
 #include "ui.h"
 #include "../xtouch/types.h"
 
@@ -47,6 +46,10 @@ void onHomeControllerStop(lv_event_t *e)
 }
 void onHomeSpeedSelection(lv_event_t *e) {}
 void onHomeLight(lv_event_t *e) { lv_msg_send(XTOUCH_COMMAND_LIGHT_TOGGLE, NULL); }
+void onHomeLCD(lv_event_t *e)
+{
+    lv_msg_send(XTOUCH_COMMAND_LCD_TOGGLE, NULL);
+}
 void onHomeBedTemp(lv_event_t *e)
 {
     loadScreen(1);
@@ -91,6 +94,13 @@ void onControlAxis(lv_event_t *e) { lv_msg_send(XTOUCH_CONTROL_AXIS_SWITCH, NULL
 /* Settings */
 
 void onSettingsResetDeviceConfirm() { lv_msg_send(XTOUCH_SETTINGS_RESET_DEVICE, NULL); }
+void onSettingsOtaUpdateNowConfirm() { lv_msg_send(XTOUCH_SETTINGS_OTA_UPDATE_NOW, NULL); }
+
+void onSettingsOtaUpdateNow(lv_event_t *e)
+{
+    ui_confirmPanel_show(LV_SYMBOL_WARNING " UPDATE", onSettingsOtaUpdateNowConfirm);
+}
+
 void onSettingsResetDevice(lv_event_t *e)
 {
     ui_confirmPanel_show(LV_SYMBOL_WARNING " REBOOT", onSettingsResetDeviceConfirm);

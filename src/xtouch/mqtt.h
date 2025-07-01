@@ -924,6 +924,8 @@ void xtouch_mqtt_setup()
     lv_msg_subscribe(XTOUCH_SIDEBAR_HOME, (lv_msg_subscribe_cb_t)xtouch_device_onSidebarHomeCommand, NULL);
 
     lv_msg_subscribe(XTOUCH_COMMAND_LIGHT_TOGGLE, (lv_msg_subscribe_cb_t)xtouch_device_onLightToggleCommand, NULL);
+    lv_msg_subscribe(XTOUCH_COMMAND_LCD_TOGGLE, (lv_msg_subscribe_cb_t)xtouch_device_onLCDToggleCommand, NULL);
+    
     lv_msg_subscribe(XTOUCH_COMMAND_STOP, (lv_msg_subscribe_cb_t)xtouch_device_onStopCommand, NULL);
     lv_msg_subscribe(XTOUCH_COMMAND_PAUSE, (lv_msg_subscribe_cb_t)xtouch_device_onPauseCommand, NULL);
     lv_msg_subscribe(XTOUCH_COMMAND_RESUME, (lv_msg_subscribe_cb_t)xtouch_device_onResumeCommand, NULL);

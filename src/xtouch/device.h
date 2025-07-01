@@ -215,7 +215,10 @@ void xtouch_device_onSidebarHomeCommand(lv_msg_t *m)
     xtouch_device_pushall();
 }
 
-
+void xtouch_device_onLCDToggleCommand(lv_msg_t *m)
+{
+    xtouch_screen_setBackLedOff();
+}
 
 void xtouch_device_onLightToggleCommand(lv_msg_t *m)
 {

@@ -1,9 +1,33 @@
 #ifndef _XLCD_CONFIG
 #define _XLCD_CONFIG
 
+#include "xtouch/webserver.h"
+#include "xtouch/firmware.h"
+#include "xtouch/types.h"
+#include "ui/ui_loaders.h"
+
 void xtouch_events_onResetDevice(lv_msg_t *m)
 {
     ESP.restart();
+}
+
+void xtouch_events_onOtaUpdateNow(lv_msg_t *m)
+{
+    printf("xtouch_events_onOtaUpdateNow\n");
+
+    printf("stop webserver and mqtt\n");
+    xtouch_webserver_end();
+    
+    // MQTT接続を切断
+    if (xtouch_pubSubClient.connected()) {
+        xtouch_pubSubClient.disconnect();
+    }
+    
+    loadScreen(-1);
+    delay(1000);
+
+    xTouchConfig.xTouchOTAEnabled = true;
+    xtouch_firmware_checkOnlineFirmwareUpdate();
 }
 
 void xtouch_events_onUnPair(lv_msg_t *m)
@@ -44,7 +68,6 @@ void xtouch_events_onTFTTimerSet(lv_msg_t *m)
     xtouch_filesystem_writeJson(SD, xtouch_paths_settings, settings);
 }
 
-
 void xtouch_events_onLEDOffTimerSet(lv_msg_t *m)
 {
     int32_t value = lv_slider_get_value(ui_settingsLEDOFFSlider);
@@ -55,7 +78,6 @@ void xtouch_events_onLEDOffTimerSet(lv_msg_t *m)
     xTouchConfig.xTouchLEDOffValue = value;
     xtouch_filesystem_writeJson(SD, xtouch_paths_settings, settings);
 }
-
 
 void xtouch_events_onTFTInvert(lv_msg_t *m)
 {
@@ -97,6 +119,7 @@ void xtouch_events_onChamberTempSwitch(lv_msg_t *m)
 void xtouch_setupGlobalEvents()
 {
     lv_msg_subscribe(XTOUCH_SETTINGS_RESET_DEVICE, (lv_msg_subscribe_cb_t)xtouch_events_onResetDevice, NULL);
+    lv_msg_subscribe(XTOUCH_SETTINGS_OTA_UPDATE_NOW, (lv_msg_subscribe_cb_t)xtouch_events_onOtaUpdateNow, NULL);
     lv_msg_subscribe(XTOUCH_SETTINGS_UNPAIR, (lv_msg_subscribe_cb_t)xtouch_events_onUnPair, NULL);
     lv_msg_subscribe(XTOUCH_ON_CLOUD_SELECT, (lv_msg_subscribe_cb_t)xtouch_events_onCloudSelect, NULL);
     lv_msg_subscribe(XTOUCH_SETTINGS_BACKLIGHT, (lv_msg_subscribe_cb_t)xtouch_events_onBackLight, NULL);

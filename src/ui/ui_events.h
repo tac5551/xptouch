@@ -21,6 +21,7 @@ extern "C"
     void onHomeControllerStop(lv_event_t *e);
     void onHomeSpeedSelection(lv_event_t *e);
     void onHomeLight(lv_event_t *e);
+    void onHomeLCD(lv_event_t *e);
     void onHomeBedTemp(lv_event_t *e);
     void onHomeNozzleTemp(lv_event_t *e, int backToScreen);
 
@@ -44,7 +45,7 @@ extern "C"
     void onControlRight(lv_event_t *e);
 
     /* Settings */
-
+    void onSettingsOtaUpdateNow(lv_event_t *e);
     void onSettingsResetDevice(lv_event_t *e);
     void onSettingsUnPair(lv_event_t *e);
     void onSettingsClearAccesCodeCache(lv_event_t *e);
