@@ -8,7 +8,6 @@ Import("env")
 
 env = DefaultEnvironment()
 
-
 def calculate_md5_and_size(file_path):
     # Create an MD5 hash object
     md5_hash = hashlib.md5()
@@ -48,43 +47,13 @@ def delete_bin_files(directory):
     except Exception as e:
         print(f"An error occurred: {str(e)}")
 
-
-def post_build_increment_semver(json_file, bump_type="patch"):
-    # Load the JSON from the file
-    with open(json_file, 'r') as f:
-        data = json.load(f)
-
-    # Get the current version from the JSON
-    version = data.get("version", "0.0.1").split(".")
-
-    # Increment the version based on the bump type (major, minor, or patch)
-    if bump_type == "major":
-        version[0] = str(int(version[0]) + 1)
-        version[1] = "0"
-        version[2] = "0"
-    elif bump_type == "minor":
-        version[1] = str(int(version[1]) + 1)
-        version[2] = "0"
-    elif bump_type == "patch":
-        version[2] = str(int(version[2]) + 1)
-    else:
-        raise ValueError("Bump type must be 'major', 'minor', or 'patch'.")
-
-    # Update the version in the JSON
-    data["version"] = ".".join(version)
-
-    # Save the updated JSON to the file
-    with open(json_file, 'w') as f:
-        json.dump(data, f, indent=2)
-
-
 def post_build_create_ota_json(version_value):
 
     md5, size = calculate_md5_and_size(
         f"../xptouch-bin/5.0/ota/xptouch.{version_value}.bin")
     ota = {
         "version": version_value,
-        "url": f"http://tac-lab.tech/xptouch-bin/5.0/ota/xptouch.{version_value}.bin",
+        "url": f"https://tac-lab.tech/xptouch-bin/5.0/ota/xptouch.{version_value}.bin",
         "md5": md5,
     }
 
@@ -106,7 +75,7 @@ def post_build_manifest(version_value):
         "version": version_value,
         "builds": [
             {
-                "chipFamily": "ESP32",
+                "chipFamily": "ESP32-S3",
                 "parts": [{"path": webusb_manifest_fw_path, "offset": 0}]
             }
         ]
@@ -138,12 +107,12 @@ def post_build_merge_bin(version):
     web_usb_fw = f"../../../../xptouch-bin/5.0/webusb/xptouch.web.{version}.bin"
     esptool_cmd = [
         'esptool',
-        '--chip', 'ESP32',
+        '--chip', 'ESP32-S3',
         'merge_bin',
         '-o', web_usb_fw,
         '--flash_mode', 'dio',
-        '--flash_size', '4MB',
-        '0x1000', 'bootloader.bin',
+        '--flash_size', '16MB',
+        '0x0', 'bootloader.bin',
         '0x8000', 'partitions.bin',
         '0x10000', 'firmware.bin'
     ]
@@ -153,7 +122,7 @@ def post_build_merge_bin(version):
 
 def post_build_action(source, target, env):
 
-    with open("version50.json", "r") as version_file:
+    with open("version.json", "r") as version_file:
         version_data = json.load(version_file)
         version_value = version_data.get("version", "UNKNOWN")
     print(version_value)
@@ -170,8 +139,8 @@ def post_build_action(source, target, env):
     print(f"xptouch post_build_merge_bin")
     post_build_merge_bin(version_value)
 
-    print(f"xptouch post_build_increment_semver")
-    post_build_increment_semver("version50.json", bump_type="patch")
+    # print(f"xptouch post_build_increment_semver")
+    # post_build_increment_semver("version.json", bump_type="patch")
     print(f"xptouch POSTBUILD")
 
 
