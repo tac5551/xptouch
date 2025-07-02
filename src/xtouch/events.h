@@ -17,13 +17,17 @@ void xtouch_events_onOtaUpdateNow(lv_msg_t *m)
 
     printf("stop webserver and mqtt\n");
     xtouch_webserver_end();
-    
+
     // MQTT接続を切断
-    if (xtouch_pubSubClient.connected()) {
+    if (xtouch_pubSubClient.connected())
+    {
         xtouch_pubSubClient.disconnect();
     }
-    
+
     loadScreen(-1);
+    lv_timer_handler();
+    lv_task_handler();
+    
     delay(1000);
 
     xTouchConfig.xTouchOTAEnabled = true;

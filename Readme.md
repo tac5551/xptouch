@@ -31,7 +31,7 @@ XPTouchは、xptouchを源流とした日本語カスタマイズバージョン
 - オリジナルプロジェクトの開発者には問い合わせしないでください
 - ロゴ・ブランディングは独自に開発されています
 
-# ![image](readme-assets/xptouch.png)
+# ![image](docs/logo.png)
 
 ## 目次
 
@@ -57,8 +57,8 @@ xptouchスクリーンは、BambuLabプリンターに革命的な機能を追�
 
 ### 必要なハードウェア
 
-![image](readme-assets/screen-2.8.png)
-![image](readme-assets/screen-2.8-back.png)
+![image](readme-assets/screen-2-8.png)
+![image](readme-assets/screen-2-8-back.png)
 
 現在、手頃な価格の2.8インチESP32-2432S028Rボードでおよび5.0インチ JC8048W550ボードのみテストされており、以下のリンクで購入できます：
 恐らく2.4インチ、3.5インチも使用可能ですが、テストは実施していません
