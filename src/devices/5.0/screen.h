@@ -27,13 +27,6 @@ void xtouch_screen_setBackLedOff()
 {
     tft.setBrightness(0);
     xtouch_screen_touchFromPowerOff = true;
-    // TBD!!!
-    // pinMode(4, OUTPUT);
-    // pinMode(16, OUTPUT);
-    // pinMode(17, OUTPUT);
-    // digitalWrite(4, HIGH);
-    // digitalWrite(16, HIGH);
-    // digitalWrite(17, HIGH); // The LEDs are "active low", meaning HIGH == off, LOW == on
 }
 
 void xtouch_screen_wakeUp()
@@ -47,7 +40,7 @@ void xtouch_screen_wakeUp()
 
 void xtouch_screen_onScreenOff(lv_timer_t *timer)
 {
-    if (bambuStatus.print_status == XTOUCH_PRINT_STATUS_RUNNING && xTouchConfig.xTouchWakeOnPrint == true)
+    if (bambuStatus.print_status == XTOUCH_PRINT_STATUS_RUNNING && xTouchConfig.xTouchWakeDuringPrint == true)
     {
         return;
     }
@@ -209,7 +202,6 @@ void xtouch_screen_setup()
     ConsoleInfo.println("[xPTouch][SCREEN] Setup");
 
     xtouch_screen_setBackLedOff();
-
 
     tft.begin();
 
