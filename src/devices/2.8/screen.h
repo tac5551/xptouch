@@ -115,6 +115,12 @@ void xtouch_screen_startLEDOffTimer()
     lv_timer_reset(xtouch_screen_onLEDOffTimer);
 }
 
+void xtouch_screen_stopLEDOffTimer()
+{
+    ConsoleInfo.println("[xPTouch][SCREEN] LED off Stop");
+    lv_timer_pause(xtouch_screen_onLEDOffTimer);
+    lv_timer_reset(xtouch_screen_onLEDOffTimer);
+}
 void xtouch_screen_setLEDOffTimer(uint32_t period)
 {
     ConsoleInfo.println("[xPTouch][LED] LED off SetPeriod");

@@ -1,6 +1,7 @@
 #include <driver/i2s.h>
 #include <Arduino.h>
 #include <ArduinoJson.h>
+#include "xtouch/globals.h"
 #include "xtouch/debug.h"
 #include "xtouch/paths.h"
 #include "xtouch/eeprom.h"
@@ -19,7 +20,6 @@
 #if defined(__XTOUCH_SCREEN_50__)
 #include "devices/5.0/screen.h"
 #endif
-
 
 #include "xtouch/cloud.hpp"
 #include "xtouch/settings.h"
@@ -93,6 +93,7 @@ void setup()
   }
   Serial.println("xtouch_chamber_timer_init ...");
   xtouch_chamber_timer_init();
+  xtouch_screen_startScreenTimer();
 }
 
 void loop()

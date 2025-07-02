@@ -338,7 +338,7 @@ lv_obj_t *ui_settingsComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_pad_bottom(cui_settingsLEDOFFPanelLabel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_settingsLEDOFFSlider = lv_slider_create(cui_settingsLEDOFFPanel);
-    lv_slider_set_range(ui_settingsLEDOFFSlider, 14, 60);
+    lv_slider_set_range(ui_settingsLEDOFFSlider, 4, 60);
     lv_slider_set_value(ui_settingsLEDOFFSlider, xTouchConfig.xTouchLEDOffValue, LV_ANIM_OFF);
     lv_obj_set_height(ui_settingsLEDOFFSlider, 10);
     lv_obj_set_flex_grow(ui_settingsLEDOFFSlider, 1);

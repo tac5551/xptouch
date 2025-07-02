@@ -139,7 +139,7 @@ void xtouch_device_set_print_state(String state)
 
 void xtouch_device_publish(String request)
 {
-    //Serial.println(request);
+    // Serial.println(request);
     xtouch_pubSubClient.publish(xtouch_mqtt_request_topic.c_str(), request.c_str());
     delay(10);
 }
@@ -209,7 +209,6 @@ void xtouch_device_move_axis(String axis, double value, int speed)
     xtouch_device_gcode_line(String(cmd));
 }
 
-
 void xtouch_device_onSidebarHomeCommand(lv_msg_t *m)
 {
     xtouch_device_pushall();
@@ -217,7 +216,14 @@ void xtouch_device_onSidebarHomeCommand(lv_msg_t *m)
 
 void xtouch_device_onLCDToggleCommand(lv_msg_t *m)
 {
+
     xtouch_screen_setBackLedOff();
+}
+
+void xtouch_device_onLightResetCommand(lv_msg_t *m)
+{
+    xtouch_screen_startLEDOffTimer();
+    printf("★ clear LEDOFF Timer\n");
 }
 
 void xtouch_device_onLightToggleCommand(lv_msg_t *m)
@@ -237,6 +243,20 @@ void xtouch_device_onLightToggleCommand(lv_msg_t *m)
     serializeJson(json, result);
     xtouch_device_publish(result);
     delay(10);
+
+    if (json["system"]["led_mode"] == "on")
+    {
+        if (!xtouch_mqtt_light_on)
+        {
+            printf("★ Mqtt massage LED On Event reset LEDOFF Timer\n");
+            xtouch_device_onLightResetCommand(m);
+            xtouch_mqtt_light_on = true;
+        }
+    }
+    else
+    {
+        xtouch_mqtt_light_on = false;
+    }
 }
 
 void xtouch_device_onHomeCommand(lv_msg_t *m)

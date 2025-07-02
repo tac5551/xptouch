@@ -353,7 +353,7 @@ lv_obj_t *ui_filamentComponent_create(lv_obj_t *comp_parent)
     cui_AmsHumid = lv_label_create(cui_AmsControl);
     lv_obj_set_width(cui_AmsHumid, lv_pct(100));
     lv_obj_set_height(cui_AmsHumid, lv_pct(100));
-    lv_obj_set_flex_grow(cui_AmsHumid, 2);
+    lv_obj_set_flex_grow(cui_AmsHumid, 1);
     lv_obj_set_align(cui_AmsHumid, LV_ALIGN_CENTER);
     lv_label_set_text(cui_AmsHumid, "H\nX");
     lv_obj_clear_flag(cui_AmsHumid, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN); /// Flags
@@ -514,7 +514,7 @@ lv_obj_t *ui_filamentComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_border_width(cui_filamentScreenNozzleUp, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_left(cui_filamentScreenNozzleUp, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_right(cui_filamentScreenNozzleUp, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_top(cui_filamentScreenNozzleUp, 14, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_top(cui_filamentScreenNozzleUp, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_bottom(cui_filamentScreenNozzleUp, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(cui_filamentScreenNozzleUp, lv_color_hex(0x777777), LV_PART_MAIN | LV_STATE_PRESSED);
     lv_obj_set_style_bg_opa(cui_filamentScreenNozzleUp, 255, LV_PART_MAIN | LV_STATE_PRESSED);
@@ -580,7 +580,7 @@ lv_obj_t *ui_filamentComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_border_width(cui_filamentScreenNozzleDown, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_left(cui_filamentScreenNozzleDown, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_right(cui_filamentScreenNozzleDown, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_top(cui_filamentScreenNozzleDown, 14, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_top(cui_filamentScreenNozzleDown, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_bottom(cui_filamentScreenNozzleDown, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(cui_filamentScreenNozzleDown, lv_color_hex(0x777777), LV_PART_MAIN | LV_STATE_PRESSED);
     lv_obj_set_style_bg_opa(cui_filamentScreenNozzleDown, 255, LV_PART_MAIN | LV_STATE_PRESSED);
@@ -631,7 +631,7 @@ lv_obj_t *ui_filamentComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_border_width(cui_filamentScreenUnload, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_left(cui_filamentScreenUnload, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_right(cui_filamentScreenUnload, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_top(cui_filamentScreenUnload, 14, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_top(cui_filamentScreenUnload, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_bottom(cui_filamentScreenUnload, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(cui_filamentScreenUnload, lv_color_hex(0x777777), LV_PART_MAIN | LV_STATE_PRESSED);
     lv_obj_set_style_bg_opa(cui_filamentScreenUnload, 255, LV_PART_MAIN | LV_STATE_PRESSED);
@@ -681,7 +681,7 @@ lv_obj_t *ui_filamentComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_border_width(cui_filamentScreenLoad, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_left(cui_filamentScreenLoad, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_right(cui_filamentScreenLoad, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_top(cui_filamentScreenLoad, 14, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_top(cui_filamentScreenLoad, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_bottom(cui_filamentScreenLoad, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(cui_filamentScreenLoad, lv_color_hex(0x777777), LV_PART_MAIN | LV_STATE_PRESSED);
     lv_obj_set_style_bg_opa(cui_filamentScreenLoad, 255, LV_PART_MAIN | LV_STATE_PRESSED);

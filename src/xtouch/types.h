@@ -2,7 +2,7 @@
 #define _XLCD_TYPES
 
 #define XTOUCH_LCD_MIN_SLEEP_TIME 5
-#define XTOUCH_LIGHT_MIN_SLEEP_TIME 15
+#define XTOUCH_LIGHT_MIN_SLEEP_TIME 5
 
 #ifdef __cplusplus
 extern "C"
@@ -149,7 +149,7 @@ extern "C"
         bool xTouchAuxFanEnabled;
         bool xTouchChamberFanEnabled;
         bool xTouchChamberSensorEnabled;
-        int8_t xTouchChamberSensorReadingDiff;
+        int xTouchChamberSensorReadingDiff;
         bool xTouchOTAEnabled;
         bool xTouchTFTFlip;
         bool xTouchTFTInvert;
