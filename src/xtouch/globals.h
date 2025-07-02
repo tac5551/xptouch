@@ -1,10 +1,15 @@
 #ifndef _XLCD_GLOBALS
 #define _XLCD_GLOBALS
 
-void xtouch_globals_init()
-{
-    controlMode.inc = 1;
-    controlMode.axis = ControlAxisXY;
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void xtouch_globals_init();
+extern bool xtouch_mqtt_light_on;
+
+#ifdef __cplusplus
 }
+#endif
 
 #endif

@@ -18,12 +18,16 @@ extern "C" {
 #define UI_COMP_FILAMENTCOMPONENT_FILAMENTSCREENFILAMENT_FILAMENTSCREENUNLOAD 7
 #define UI_COMP_FILAMENTCOMPONENT_FILAMENTSCREENFILAMENT_FILAMENTSCREENFILAMENTICON 8
 #define UI_COMP_FILAMENTCOMPONENT_FILAMENTSCREENFILAMENT_FILAMENTSCREENLOAD 9
-#define _UI_COMP_FILAMENTCOMPONENT_NUM 10
+#define UI_COMP_FILAMENTCOMPONENT_FILAMENTSCREENFILAMENT_FILAMENTSCREENAMSSLOT1 10
+#define UI_COMP_FILAMENTCOMPONENT_FILAMENTSCREENFILAMENT_FILAMENTSCREENAMSSLOT2 11
+#define UI_COMP_FILAMENTCOMPONENT_FILAMENTSCREENFILAMENT_FILAMENTSCREENAMSSLOT3 12
+#define UI_COMP_FILAMENTCOMPONENT_FILAMENTSCREENFILAMENT_FILAMENTSCREENAMSSLOT4 13
+#define _UI_COMP_FILAMENTCOMPONENT_NUM 14
 lv_obj_t *ui_filamentComponent_create(lv_obj_t *comp_parent);
-void ui_event_comp_filamentComponent_filamentScreenNozzleUp( lv_event_t * e);
-void ui_event_comp_filamentComponent_filamentScreenNozzleDown( lv_event_t * e);
-void ui_event_comp_filamentComponent_filamentScreenUnload( lv_event_t * e);
-void ui_event_comp_filamentComponent_filamentScreenLoad( lv_event_t * e);
+void ui_event_comp_filamentComponent_filamentScreenNozzleUpClick( lv_event_t * e);
+void ui_event_comp_filamentComponent_filamentScreenNozzleDownCick( lv_event_t * e);
+void ui_event_comp_filamentComponent_filamentScreenUnloadClick( lv_event_t * e);
+void ui_event_comp_filamentComponent_filamentScreenLoadClick( lv_event_t * e);
 
 #ifdef __cplusplus
 } /*extern "C"*/

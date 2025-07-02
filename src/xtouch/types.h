@@ -2,6 +2,7 @@
 #define _XLCD_TYPES
 
 #define XTOUCH_LCD_MIN_SLEEP_TIME 5
+#define XTOUCH_LIGHT_MIN_SLEEP_TIME 5
 
 #ifdef __cplusplus
 extern "C"
@@ -104,7 +105,8 @@ extern "C"
         long int ams_version;
         bool ams_support_use_ams;
         int ams_rfid_status;
-        int ams_humidity;
+        int ams_humidity[4];
+        float ams_temperature[4];
         int ams_user_setting_hold_count;
         bool ams_insert_flag;
         bool ams_power_on_flag;
@@ -118,6 +120,8 @@ extern "C"
         int m_ams_id;   // local ams  : "0" ~ "3"
         int m_tray_id;  // local tray id : "0" ~ "3"
         int m_tray_now; // tray_now : "0" ~ "15" or "254", "255"
+        int m_tray_pre; // tray_now : "0" ~ "15" or "254", "255"
+        int m_humidity; // humidity : "1" ~ "5"
         int m_tray_tar; // tray_tar : "0" ~ "15" or "255"
 
     } XTouchBambuStatus;
@@ -145,7 +149,7 @@ extern "C"
         bool xTouchAuxFanEnabled;
         bool xTouchChamberFanEnabled;
         bool xTouchChamberSensorEnabled;
-        int8_t xTouchChamberSensorReadingDiff;
+        int xTouchChamberSensorReadingDiff;
         bool xTouchOTAEnabled;
         bool xTouchTFTFlip;
         bool xTouchTFTInvert;
@@ -156,6 +160,7 @@ extern "C"
         char xTouchPrinterName[32];
         int xTouchBacklightLevel;
         int xTouchTFTOFFValue;
+        int xTouchLEDOffValue;
         bool xTouchWakeOnPrint;
         int currentScreenIndex;
     } XTouchConfig;

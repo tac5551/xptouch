@@ -4,11 +4,12 @@
 - [Commercial License for OEM use](#xtouch-commercial-license-for-oem-use)
 - [Logo Copyright and Usage Agreement](#logo-copyright-and-usage-agreement)
 - [Third Party Licenses](LICENSE-3RD-PARTY.md)
+- [Credit Attribution](#credit-attribution)
 
 ## Standard Edition
 
 ```
-Licensed under GPL, Version 3.0 (the “License”); you may not use this file except in compliance with the License. You may obtain a copy of the License at https://www.gnu.org/licenses/gpl-3.0.en.html#license-text
+Licensed under GPL, Version 3.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at https://www.gnu.org/licenses/gpl-3.0.en.html#license-text
 ```
 
 ## Xtouch Commercial License for OEM Use
@@ -42,9 +43,9 @@ Licensor hereby grants Licensee a Personal, Non-assignable & non-transferable, C
 
 Licensee may use Software for the purpose of:
 
-**2.1.1. Distribute verbatim copies of Software’s output (including compiled binaries);**
+**2.1.1. Distribute verbatim copies of Software's output (including compiled binaries);**
 
-**2.1.2. Modify Software to suit Licensee’s needs and specifications.**
+**2.1.2. Modify Software to suit Licensee's needs and specifications.**
 
 ###### 2.2. Binary Restricted
 
@@ -60,11 +61,11 @@ Licensee may use Software for any purpose, including paid-services, without any 
 
 ###### 2.5. Including the Right to Create Derivative Works
 
-Licensee may create derivative works based on Software, including amending Software’s source code, modifying it, integrating it into a larger work or removing portions of Software, as long as no distribution of the derivative works is made.
+Licensee may create derivative works based on Software, including amending Software's source code, modifying it, integrating it into a larger work or removing portions of Software, as long as no distribution of the derivative works is made.
 
 ### 3. Term & Termination
 
-The Term of this license shall be until terminated. Licensor may terminate this Agreement, including Licensee’s license in the case where Licensee:
+The Term of this license shall be until terminated. Licensor may terminate this Agreement, including Licensee's license in the case where Licensee:
 **Became insolvent or otherwise entered into any liquidation process; or exported The Software to any jurisdiction where licensor may not enforce his rights under this agreements in; or Licensee was in breach of any of this license's terms and conditions and such breach was not cured, immediately upon notification; or Licensee in breach of any of the terms of clause 2 to this license; or Licensee otherwise entered into any arrangement which caused Licensor to be unable to enforce his rights under this License.**
 
 ### 4. Payment
@@ -101,7 +102,7 @@ Licensee may request additional features in Software, provided, however, that (i
 
 ### 7. Liability
 
-To the extent permitted under Law, The Software is provided under an AS-IS basis. Licensor shall never, and without any limit, be liable for any damage, cost, expense or any other payment incurred by Licesee as a result of Software’s actions, failure, bugs and/or any other interaction between The Software and Licesee’s end-equipment, computers, other software or any 3rd party, end-equipment, computer or services. Moreover, Licensor shall never be liable for any defect in source code written by Licensee when relying on The Software or using The Software’s source code.
+To the extent permitted under Law, The Software is provided under an AS-IS basis. Licensor shall never, and without any limit, be liable for any damage, cost, expense or any other payment incurred by Licesee as a result of Software's actions, failure, bugs and/or any other interaction between The Software and Licesee's end-equipment, computers, other software or any 3rd party, end-equipment, computer or services. Moreover, Licensor shall never be liable for any defect in source code written by Licensee when relying on The Software or using The Software's source code.
 
 ### 8. Warranty:
 
@@ -111,7 +112,7 @@ Licensor hereby warrants that The Software does not violate or infringe any 3rd 
 
 ###### 8.2. No-Warranty
 
-The Software is provided without any warranty; Licensor hereby disclaims any warranty that The Software shall be error free, without defects or code which may cause damage to Licensee’s computers or to Licensee, and that Software shall be functional. Licensee shall be solely liable to any damage, defect or loss incurred as a result of operating software and undertake the risks contained in running The Software.
+The Software is provided without any warranty; Licensor hereby disclaims any warranty that The Software shall be error free, without defects or code which may cause damage to Licensee's computers or to Licensee, and that Software shall be functional. Licensee shall be solely liable to any damage, defect or loss incurred as a result of operating software and undertake the risks contained in running The Software.
 
 ###### 8.3. Prior Inspection
 
@@ -123,7 +124,7 @@ Licensee warrants that he inspected The Software according to clause 7(c) and th
 
 ### 10. Indemnification
 
-Licensee hereby warrants to hold Licensor harmless and indemnify Licensor for any lawsuit brought against it in regards to Licensee’s use of The Software in means that violate, breach or otherwise circumvent this license, Licensor's intellectual property rights or Licensor's title in The Software. Licensor shall promptly notify Licensee in case of such legal action and request Licensee’s consent prior to any settlement in relation to such lawsuit or claim.
+Licensee hereby warrants to hold Licensor harmless and indemnify Licensor for any lawsuit brought against it in regards to Licensee's use of The Software in means that violate, breach or otherwise circumvent this license, Licensor's intellectual property rights or Licensor's title in The Software. Licensor shall promptly notify Licensee in case of such legal action and request Licensee's consent prior to any settlement in relation to such lawsuit or claim.
 
 ### 11. Governing Law, Jurisdiction
 
@@ -179,3 +180,28 @@ This Logo Copyright and Usage Agreement (the "Agreement") is entered into betwee
 
 IN WITNESS WHEREOF, the Parties hereto have executed this Logo Copyright and Usage Agreement as of the Effective Date.
 ```
+
+## Credit Attribution
+
+**本プロジェクト（XP）は以下のオープンソースプロジェクトから派生しています：**
+
+### オリジナルプロジェクト
+- **Xtouch** - [https://github.com/xperiments-in/xtouch](https://github.com/xperiments-in/xtouch)
+- **開発者**: Pedro Casaubon Aguilar
+- **ライセンス**: GPLv3 / 商用ライセンス
+
+### 派生プロジェクト
+- **XPTouch** - 日本語コミュニティバージョン
+- **開発者**: 日本語コミュニティ
+- **ライセンス**: GPLv3
+
+### 本プロジェクト（XP）
+- **開発者**: [あなたの名前/チーム名]
+- **ライセンス**: GPLv3
+- **派生元**: Xtouch → XPTouch → XP
+
+**法的免責事項:**
+- 本プロジェクトは教育・研究目的で開発されています
+- 商用利用の場合は適切なライセンスの取得が必要です
+- オリジナルプロジェクトの開発者には問い合わせしないでください
+- ロゴ・ブランディングは独自に開発されています

@@ -21,4 +21,7 @@ void ui_temperatureScreen_screen_init(void)
     ui_temperatureComponent = ui_temperatureComponent_create(ui_temperatureScreen);
     lv_obj_set_x(ui_temperatureComponent, 385);
     lv_obj_set_y(ui_temperatureComponent, 178);
+#ifdef __XTOUCH_SCREEN_28__
+    lv_obj_set_width(ui_sidebarComponent, 48);
+#endif
 }

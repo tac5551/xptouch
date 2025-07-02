@@ -30,6 +30,7 @@ extern "C"
 #include "ui_events.h"
 
   lv_timer_t *xtouch_screen_onScreenOffTimer;
+  lv_timer_t *xtouch_screen_onLEDOffTimer;
   lv_timer_t *xtouch_ssdp_onButtonTimerTimer;
   // SCREEN: ui_controlScreen
   void ui_introScreen_screen_init(void);
@@ -38,6 +39,9 @@ extern "C"
   void ui_controlScreen_screen_init(void);
   void ui_settingsScreen_screen_init(void);
   void ui_filamentScreen_screen_init(void);
+  void ui_accessCodeScreen_screen_init(void);
+  void ui_printerPairScreen_screen_init(void);
+  void ui_amsViewScreen_screen_init(void);
 
   lv_obj_t *introScreen;
   lv_obj_t *introScreenIcon;
@@ -59,6 +63,8 @@ extern "C"
   lv_obj_t *ui_settingsBackLightPanelSlider;
   lv_obj_t *ui_settingsTFTOFFSlider;
   lv_obj_t *ui_settingsTFTOFFValue;
+  lv_obj_t *ui_settingsLEDOFFSlider;
+  lv_obj_t *ui_settingsLEDOFFValue;
   lv_obj_t *ui_settingsTFTInvertSwitch;
   lv_obj_t *ui_settingsWOPSwitch;
   lv_obj_t *ui_settingsTFTFlipSwitch;
@@ -74,13 +80,25 @@ extern "C"
   lv_obj_t *ui_printerPairScreenRoller;
   lv_obj_t *ui_printerPairScreenSubmitButton;
   lv_obj_t *ui_mainScreenChamberTempValue;
+  lv_obj_t *ui_amsViewScreen;
+  lv_obj_t *ui_amsViewComponent;
   void ui_event____initial_actions0(lv_event_t *e);
   lv_obj_t *ui____initial_actions0;
 
   LV_FONT_DECLARE(ui_font_xlcd);
+#ifdef __XTOUCH_SCREEN_50__
+  LV_FONT_DECLARE(ui_font_xlcd48);
+#endif
+
   LV_FONT_DECLARE(ui_font_xlcdmin);
   LV_FONT_DECLARE(ui_font_xperiments);
 
+  extern const lv_font_t *lv_font_small;
+  extern const lv_font_t *lv_font_big;
+  extern const lv_font_t *lv_icon_font_small;
+  extern const lv_font_t *lv_icon_font_big;
+  extern const lv_img_dsc_t img_logo;
+  extern const lv_img_dsc_t img_logo2;
   void ui_init(void);
 
   bool xtouch_bblp_is_p1p();

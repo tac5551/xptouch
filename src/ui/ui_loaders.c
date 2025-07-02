@@ -37,6 +37,9 @@ void fillScreenData(int screen)
         break;
     case 3:
         sendMqttMsg(XTOUCH_ON_NOZZLE_TEMP, bambuStatus.nozzle_temper);
+                break;
+    case 7:
+        sendMqttMsg(XTOUCH_ON_AMS, bambuStatus.ams);
         break;
     }
 }
@@ -76,6 +79,18 @@ void loadScreen(int screen)
     case 4:
         ui_settingsScreen_screen_init();
         lv_disp_load_scr(ui_settingsScreen);
+        break;
+    case 5:
+        ui_printerPairScreen_screen_init();
+        lv_disp_load_scr(ui_printerPairScreen);
+        break;
+    case 6:
+        ui_accessCodeScreen_screen_init();
+        lv_disp_load_scr(ui_accessCodeScreen);
+        break;
+    case 7:
+        ui_amsViewScreen_screen_init();
+        lv_disp_load_scr(ui_amsViewScreen);
         break;
     }
 

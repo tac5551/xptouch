@@ -34,21 +34,51 @@ const message_containing_done = [
 
 
 const getFlatRecordsKeysC = (root, varName) => {
-    return `const char *${varName}[] PROGMEM = {${JSON.stringify(root.map((e) => String(e.ecode)), null, 2).slice(1, -1)}};`;
+    const filteredRoot = root.filter(e => {
+        const ecodeStr = String(e.ecode); // ecodeを文字列に変換
+        return ecodeStr.startsWith('12') || ecodeStr.startsWith('07') || ecodeStr.startsWith('03');
+    });
+
+    const ecodeArray = filteredRoot.map(e => String(e.ecode));
+    const arrayContent = JSON.stringify(ecodeArray, null, 2).slice(1, -1);
+
+    return `const char *${varName}[] PROGMEM = {${arrayContent}};`;
 }
+
+
+const getFlatRecordsValuesC = (root, varName = 0) => { // varNameのデフォルト値は元のコードに従います
+    const filteredRoot = root.filter(e => {
+        const ecodeStr = String(e.ecode); // ecodeを文字列に変換
+        return ecodeStr.startsWith('12') || ecodeStr.startsWith('07') || ecodeStr.startsWith('03');
+    });
+
+    const introArray = filteredRoot.map(e => String(e.intro));
+
+    const arrayContent = JSON.stringify(introArray, null, 2).slice(1, -1);
+
+    return `const char *${varName}[] PROGMEM = {${arrayContent}};`;
+}
+
+const getKeyValueLengthC = (root, varName) => {
+    const filteredRoot = root.filter(e => {
+        const ecodeStr = String(e.ecode); // ecodeを文字列に変換
+        return ecodeStr.startsWith('12') || ecodeStr.startsWith('07') || ecodeStr.startsWith('03');
+    });
+
+    const introArray = filteredRoot.map(e => String(e.intro));
+
+    const arrayContent = JSON.stringify(introArray, null, 2).slice(1, -1);
+    return `int ${varName} = ${filteredRoot.length};`;
+}
+
 const getFlatRecordsKeysH = (root, varName) => {
     return `extern const char *${varName}[] PROGMEM;`;
 }
-const getFlatRecordsValuesC = (root, varName = 0) => {
-    return `const char *${varName}[] PROGMEM = {${JSON.stringify(root.map((e) => String(e.intro)), null, 2).slice(1, -1)}};`;
-}
+
 const getFlatRecordsValuesH = (root, varName = 0) => {
     return `extern const char *${varName}[] PROGMEM;`;
 }
 
-const getKeyValueLengthC = (root, varName) => {
-    return `int ${varName} = ${root.length};`;
-}
 const getKeyValueLengthH = (root, varName) => {
     return `extern int ${varName};`;
 }

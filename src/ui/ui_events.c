@@ -1,5 +1,5 @@
 #include "ui.h"
-#include "../../src/xtouch/types.h"
+#include "../xtouch/types.h"
 
 void initialActions(lv_event_t *e) {}
 
@@ -8,6 +8,7 @@ void onSidebarHome(lv_event_t *e) { loadScreen(0); }
 void onSidebarTemp(lv_event_t *e) { loadScreen(1); }
 void onSidebarControl(lv_event_t *e) { loadScreen(2); }
 void onSidebarNozzle(lv_event_t *e) { loadScreen(3); }
+void onSidebarAmsView(lv_event_t *e) { loadScreen(7); }
 void onSidebarSettings(lv_event_t *e) { loadScreen(4); }
 
 /* -----------Home-------------- */
@@ -27,6 +28,7 @@ void onHomeControllerPlayPause(lv_event_t *e)
     case XTOUCH_PRINT_STATUS_PAUSED:
         lv_msg_send(XTOUCH_COMMAND_RESUME, NULL);
         lv_obj_add_state(target, LV_STATE_DISABLED);
+
         break;
     case XTOUCH_PRINT_STATUS_RUNNING:
     case XTOUCH_PRINT_STATUS_PREPARE:
@@ -44,6 +46,10 @@ void onHomeControllerStop(lv_event_t *e)
 }
 void onHomeSpeedSelection(lv_event_t *e) {}
 void onHomeLight(lv_event_t *e) { lv_msg_send(XTOUCH_COMMAND_LIGHT_TOGGLE, NULL); }
+void onHomeLCD(lv_event_t *e)
+{
+    lv_msg_send(XTOUCH_COMMAND_LCD_TOGGLE, NULL);
+}
 void onHomeBedTemp(lv_event_t *e)
 {
     loadScreen(1);
@@ -81,11 +87,20 @@ void onControlLeft(lv_event_t *e) { lv_msg_send(XTOUCH_COMMAND_LEFT, NULL); }
 void onControlRight(lv_event_t *e) { lv_msg_send(XTOUCH_COMMAND_RIGHT, NULL); }
 void onControlUp(lv_event_t *e) { lv_msg_send(XTOUCH_COMMAND_UP, NULL); }
 void onControlDown(lv_event_t *e) { lv_msg_send(XTOUCH_COMMAND_DOWN, NULL); }
+void onControlBedUp(lv_event_t *e) { lv_msg_send(XTOUCH_COMMAND_BED_UP, NULL); }
+void onControlBedDown(lv_event_t *e) { lv_msg_send(XTOUCH_COMMAND_BED_DOWN, NULL); }
 void onControlAxis(lv_event_t *e) { lv_msg_send(XTOUCH_CONTROL_AXIS_SWITCH, NULL); }
 
 /* Settings */
 
 void onSettingsResetDeviceConfirm() { lv_msg_send(XTOUCH_SETTINGS_RESET_DEVICE, NULL); }
+void onSettingsOtaUpdateNowConfirm() { lv_msg_send(XTOUCH_SETTINGS_OTA_UPDATE_NOW, NULL); }
+
+void onSettingsOtaUpdateNow(lv_event_t *e)
+{
+    ui_confirmPanel_show(LV_SYMBOL_WARNING " UPDATE", onSettingsOtaUpdateNowConfirm);
+}
+
 void onSettingsResetDevice(lv_event_t *e)
 {
     ui_confirmPanel_show(LV_SYMBOL_WARNING " REBOOT", onSettingsResetDeviceConfirm);
@@ -141,12 +156,17 @@ void onNozzleUp(lv_event_t *e)
 void onNozzleDown(lv_event_t *e)
 {
     lv_msg_send(XTOUCH_COMMAND_EXTRUDE_DOWN, NULL);
-    
 }
 
 void onFilamentUnloadConfirm() { lv_msg_send(XTOUCH_COMMAND_UNLOAD_FILAMENT, NULL); }
 void onFilamentUnload(lv_event_t *e)
 {
+    if (bambuStatus.m_tray_now < 16)
+    {
+        lv_msg_send(XTOUCH_COMMAND_AMS_UNLOAD_SLOT, 0);
+        return;
+    }
+
     ui_confirmPanel_show("Please remove\nthe filament after\n" LV_SYMBOL_CUT, onFilamentUnloadConfirm);
 }
 
@@ -154,4 +174,16 @@ void onFilamentLoadConfirm() { lv_msg_send(XTOUCH_COMMAND_LOAD_FILAMENT, NULL); 
 void onFilamentLoad(lv_event_t *e)
 {
     ui_confirmPanel_show(LV_SYMBOL_PLAY " Load new Filament\n" LV_SYMBOL_PLAY " into the Printer\n\n" LV_SYMBOL_OK " Tap YES to continue", onFilamentLoadConfirm);
+}
+
+int _slot = 255;
+void onAmsSlotLoadConfirm()
+{
+    lv_msg_send(XTOUCH_COMMAND_AMS_LOAD_SLOT, (void *)_slot);
+    _slot = 255;
+}
+void onAmsSlotLoad(lv_event_t *e, int slot)
+{
+    _slot = slot;
+    ui_confirmPanel_show(LV_SYMBOL_PLAY " Load new Filament\nfrom AMS Slot\n" LV_SYMBOL_PLAY " into the Printer\n\n" LV_SYMBOL_OK " Tap YES to continue", onAmsSlotLoadConfirm);
 }

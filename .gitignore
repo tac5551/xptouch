@@ -1,4 +1,8 @@
 .pio
 .vscode
 .DS_Store
+.history
+.history/*
+.history/**
 node_modules
+/.prebuild_executed
