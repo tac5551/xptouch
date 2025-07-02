@@ -67,6 +67,7 @@ extern "C"
   lv_obj_t *ui_settingsLEDOFFValue;
   lv_obj_t *ui_settingsTFTInvertSwitch;
   lv_obj_t *ui_settingsWOPSwitch;
+  lv_obj_t *ui_settingsWDPSWitch;
   lv_obj_t *ui_settingsTFTFlipSwitch;
   lv_obj_t *ui_settings_auxFanSwitch;
   lv_obj_t *ui_settings_chamberFanSwitch;

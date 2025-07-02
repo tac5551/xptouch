@@ -104,7 +104,14 @@ void ui_event_comp_settingsComponent_onWOP(lv_event_t *e)
         onSettingsWOP(e);
     }
 }
-
+void ui_event_comp_settingsComponent_onWDP(lv_event_t *e)
+{
+    lv_event_code_t event_code = lv_event_get_code(e);
+    if (event_code == LV_EVENT_VALUE_CHANGED)
+    {
+        onSettingsWDP(e);
+    }
+}
 void ui_event_comp_settingsComponent_onTFTFlip(lv_event_t *e)
 {
     lv_event_code_t event_code = lv_event_get_code(e);
@@ -404,6 +411,47 @@ lv_obj_t *ui_settingsComponent_create(lv_obj_t *comp_parent)
     if (xTouchConfig.xTouchWakeOnPrint)
     {
         lv_obj_add_state(ui_settingsWOPSwitch, LV_STATE_CHECKED);
+    }
+
+    // Wake during Print
+
+    lv_obj_t *cui_screenWDPSetting;
+    cui_screenWDPSetting = lv_obj_create(cui_settingsComponent);
+    lv_obj_set_width(cui_screenWDPSetting, lv_pct(100));
+    lv_obj_set_height(cui_screenWDPSetting, LV_SIZE_CONTENT); /// 50
+    lv_obj_set_flex_flow(cui_screenWDPSetting, LV_FLEX_FLOW_ROW);
+    lv_obj_set_flex_align(cui_screenWDPSetting, LV_FLEX_ALIGN_SPACE_BETWEEN, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_set_scrollbar_mode(cui_screenWDPSetting, LV_SCROLLBAR_MODE_OFF);
+    lv_obj_set_style_bg_color(cui_screenWDPSetting, lv_color_hex(0x222222), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(cui_screenWDPSetting, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(cui_screenWDPSetting, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_left(cui_screenWDPSetting, 16, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(cui_screenWDPSetting, 16, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_top(cui_screenWDPSetting, 16, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_bottom(cui_screenWDPSetting, 16, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    lv_obj_t *cui_screenWDPLabel;
+    cui_screenWDPLabel = lv_label_create(cui_screenWDPSetting);
+    lv_obj_set_width(cui_screenWDPLabel, LV_SIZE_CONTENT);  /// 1
+    lv_obj_set_height(cui_screenWDPLabel, LV_SIZE_CONTENT); /// 1
+    lv_obj_set_style_text_font(cui_screenWDPLabel, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_label_set_text(cui_screenWDPLabel, LV_SYMBOL_EYE_OPEN " Wake during Print");
+    lv_obj_set_scrollbar_mode(cui_screenWDPLabel, LV_SCROLLBAR_MODE_OFF);
+
+    // lv_obj_t *ui_settingsWOPSwitch;
+    ui_settingsWDPSWitch = lv_switch_create(cui_screenWDPSetting);
+    lv_obj_set_width(ui_settingsWDPSWitch, 50);
+    lv_obj_set_height(ui_settingsWDPSWitch, 25);
+    lv_obj_set_style_bg_color(ui_settingsWDPSWitch, lv_color_hex(0x2AFF00), LV_PART_INDICATOR | LV_STATE_CHECKED);
+    lv_obj_set_style_bg_opa(ui_settingsWDPSWitch, 255, LV_PART_INDICATOR | LV_STATE_CHECKED);
+    lv_obj_set_style_bg_color(ui_settingsWDPSWitch, lv_color_hex(0x2AFF00), LV_PART_KNOB | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(ui_settingsWDPSWitch, 255, LV_PART_KNOB | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(ui_settingsWDPSWitch, lv_color_hex(0x000000), LV_PART_KNOB | LV_STATE_CHECKED);
+    lv_obj_set_style_bg_opa(ui_settingsWDPSWitch, 255, LV_PART_KNOB | LV_STATE_CHECKED);
+
+    if (xTouchConfig.xTouchWakeDuringPrint)
+    {
+        lv_obj_add_state(ui_settingsWDPSWitch, LV_STATE_CHECKED);
     }
 
     lv_obj_t *cui_screenInvertSetting;
@@ -707,7 +755,7 @@ lv_obj_t *ui_settingsComponent_create(lv_obj_t *comp_parent)
     lv_label_set_text(cui_settings_otaLabel, "OTA Update");
     lv_obj_set_scrollbar_mode(cui_settings_otaLabel, LV_SCROLLBAR_MODE_OFF);
 
-    //lv_obj_t *ui_settingsTFTInvertSwitch;
+    // lv_obj_t *ui_settingsTFTInvertSwitch;
     ui_settings_otaSwitch = lv_switch_create(cui_settings_ota);
     lv_obj_set_width(ui_settings_otaSwitch, 50);
     lv_obj_set_height(ui_settings_otaSwitch, 25);
@@ -775,16 +823,17 @@ lv_obj_t *ui_settingsComponent_create(lv_obj_t *comp_parent)
     children[UI_COMP_SETTINGSCOMPONENT_TFT_WOP] = cui_screenWOPSetting;
     children[UI_COMP_SETTINGSCOMPONENT_TFT_WOP_LABEL] = cui_screenWOPLabel;
     children[UI_COMP_SETTINGSCOMPONENT_TFT_WOP_INPUT] = ui_settingsWOPSwitch;
+    children[UI_COMP_SETTINGSCOMPONENT_TFT_WDP] = cui_screenWDPSetting;
+    children[UI_COMP_SETTINGSCOMPONENT_TFT_WDP_LABEL] = cui_screenWDPLabel;
+    children[UI_COMP_SETTINGSCOMPONENT_TFT_WDP_INPUT] = ui_settingsWDPSWitch;
     children[UI_COMP_SETTINGSCOMPONENT_TFT_INVERT] = cui_screenInvertSetting;
     children[UI_COMP_SETTINGSCOMPONENT_TFT_INVERT_LABEL] = cui_screenInvertLabel;
     children[UI_COMP_SETTINGSCOMPONENT_TFT_INVERT_INPUT] = ui_settingsTFTInvertSwitch;
     children[UI_COMP_SETTINGSCOMPONENT_TFT_FLIP] = cui_settingsTFTFlip;
     children[UI_COMP_SETTINGSCOMPONENT_TFT_FLIP_LABEL] = cui_settingsTFTFlipLabel;
     children[UI_COMP_SETTINGSCOMPONENT_TFT_FLIP_INPUT] = ui_settingsTFTFlipSwitch;
-
     children[UI_COMP_SETTINGSCOMPONENT_PAIR_TITLE] = cui_pairingTitle;
     children[UI_COMP_SETTINGSCOMPONENT_UNPAIRBUTTON] = cui_unpairButton;
-
     children[UI_COMP_SETTINGSCOMPONENT_DEVICE_TITLE] = cui_deviceTitle;
     children[UI_COMP_SETTINGSCOMPONENT_AUXFAN] = cui_settings_auxFan;
     children[UI_COMP_SETTINGSCOMPONENT_AUXFAN_LABEL] = cui_settings_auxFanLabel;
@@ -813,6 +862,8 @@ lv_obj_t *ui_settingsComponent_create(lv_obj_t *comp_parent)
 
     lv_obj_add_event_cb(ui_settingsBackLightPanelSlider, ui_event_comp_settingsComponent_onBackLight, LV_EVENT_ALL, NULL);
     lv_obj_add_event_cb(ui_settingsWOPSwitch, ui_event_comp_settingsComponent_onWOP, LV_EVENT_VALUE_CHANGED, NULL);
+    lv_obj_add_event_cb(ui_settingsWDPSWitch, ui_event_comp_settingsComponent_onWDP, LV_EVENT_VALUE_CHANGED, NULL);
+
     lv_obj_add_event_cb(ui_settingsTFTInvertSwitch, ui_event_comp_settingsComponent_tftInvertInput, LV_EVENT_VALUE_CHANGED, NULL);
 
     lv_obj_add_event_cb(ui_settings_auxFanSwitch, ui_event_comp_settingsComponent_onAuxFan, LV_EVENT_VALUE_CHANGED, NULL);
