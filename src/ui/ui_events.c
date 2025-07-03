@@ -1,5 +1,6 @@
 #include "ui.h"
 #include "../xtouch/types.h"
+#include "../xtouch/globals.h"
 
 void initialActions(lv_event_t *e) {}
 
@@ -96,21 +97,13 @@ void onControlAxis(lv_event_t *e) { lv_msg_send(XTOUCH_CONTROL_AXIS_SWITCH, NULL
 void onSettingsResetDeviceConfirm() { lv_msg_send(XTOUCH_SETTINGS_RESET_DEVICE, NULL); }
 void onSettingsOtaUpdateNowOnYES()
 {
-    ui_confirmPanel_hide();
-    lv_timer_handler();
-    lv_task_handler();
-    delay(100);
-    lv_msg_send(XTOUCH_SETTINGS_OTA_UPDATE_NOW, NULL);
+    xtouch_ota_update_flag = true;
+    loadScreen(-1);
 }
-void onSettingsOtaUpdateNowOnNO() { loadScreen(0); }
 
 void onSettingsOtaUpdateNow(lv_event_t *e)
 {
-    loadScreen(-1);
-    lv_timer_handler();
-    lv_task_handler();
-    delay(100);
-    ui_confirmPanel_show_with_no(LV_SYMBOL_WARNING " UPDATE", onSettingsOtaUpdateNowOnYES, onSettingsOtaUpdateNowOnNO);
+    ui_confirmPanel_show(LV_SYMBOL_WARNING " UPDATE", onSettingsOtaUpdateNowOnYES);
 }
 
 void onSettingsResetDevice(lv_event_t *e)

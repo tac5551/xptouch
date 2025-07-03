@@ -7,7 +7,7 @@ extern "C" {
 
 void xtouch_globals_init();
 extern bool xtouch_mqtt_light_on;
-
+extern bool xtouch_ota_update_flag;
 #ifdef __cplusplus
 }
 #endif

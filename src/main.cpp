@@ -31,7 +31,7 @@
 #include "xtouch/connection.h"
 #include "xtouch/coldboot.h"
 #include "xtouch/webserver.h"
-
+#include "xtouch/globals.h"
 void xtouch_intro_show(void)
 {
   ui_introScreen_screen_init();
@@ -102,5 +102,10 @@ void loop()
   lv_task_handler();
   if (cloud.loggedIn)
     xtouch_mqtt_loop();
+  if (xtouch_ota_update_flag)
+  {
+    xtouch_ota_update_flag = false;
+    lv_msg_send(XTOUCH_SETTINGS_OTA_UPDATE_NOW, NULL);
+  }
   delay(10);
 }
