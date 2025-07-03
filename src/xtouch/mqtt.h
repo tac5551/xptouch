@@ -965,7 +965,6 @@ void xtouch_mqtt_loop()
         xtouch_mqtt_connect();
         return;
     }
-    delay(10);
 }
 
 #endif

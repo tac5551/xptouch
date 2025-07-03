@@ -36,13 +36,6 @@ lv_obj_t *ui_mainScreenStatus_create(lv_obj_t *comp_parent)
     lv_obj_set_scrollbar_mode(cui_mainScreenStatusLogo, LV_SCROLLBAR_MODE_OFF);
     lv_img_set_src(cui_mainScreenStatusLogo, &img_logo2);
 
-    // lv_obj_t *cui_mainScreenStatusLogo;
-    // cui_mainScreenStatusLogo = lv_label_create(cui_mainScreenStatus);
-    // lv_obj_set_width(cui_mainScreenStatusLogo, LV_SIZE_CONTENT);  /// 1
-    // lv_obj_set_height(cui_mainScreenStatusLogo, LV_SIZE_CONTENT); /// 1
-    // lv_label_set_text(cui_mainScreenStatusLogo, "4");
-    // lv_obj_set_style_text_font(cui_mainScreenStatusLogo, &ui_font_xperiments, LV_PART_MAIN | LV_STATE_DEFAULT);
-    // lv_obj_set_style_text_color(cui_mainScreenStatusLogo, lv_color_hex(0xAAAAAA), LV_PART_MAIN | LV_STATE_DEFAULT);
 
     lv_obj_t *cui_mainScreenStatusCaption;
     cui_mainScreenStatusCaption = lv_label_create(cui_mainScreenStatus);

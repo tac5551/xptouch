@@ -3,9 +3,9 @@
 // COMPONENT confirmPanel
 
 void (*ui_confirmPanel_showOnYes)();
+void (*ui_confirmPanel_showOnNo)();
 
-void ui_confirmPanel_NOOP(){};
-
+void ui_confirmPanel_NOOP() {};
 void ui_confirmPanel_show(const char *title, void (*onYES)(void))
 {
     ui_confirmPanel_showOnYes = onYES;
@@ -17,10 +17,16 @@ void ui_confirmPanel_show(const char *title, void (*onYES)(void))
     // [](int a){
 }
 
+void ui_confirmPanel_show_with_no(const char *title, void (*onYES)(void), void (*onNO)(void))
+{
+    ui_confirmPanel_showOnNo = onNO;
+    ui_confirmPanel_show(title, onYES);
+}
+
 void ui_confirmPanel_hide()
 {
+    printf("ui_confirmPanel_hide\n");
     lv_obj_add_flag(ui_confirmComponent, LV_OBJ_FLAG_HIDDEN); /// Flags
-    // [](int a){
 }
 
 void ui_event_comp_confirmPanel_confirmPanelNO(lv_event_t *e)
@@ -30,6 +36,11 @@ void ui_event_comp_confirmPanel_confirmPanelNO(lv_event_t *e)
     lv_obj_t **comp_confirmPanel = lv_event_get_user_data(e);
     if (event_code == LV_EVENT_CLICKED)
     {
+        if (ui_confirmPanel_showOnNo != NULL)
+        {
+            ui_confirmPanel_showOnNo();
+            ui_confirmPanel_showOnNo = NULL;
+        }
         ui_confirmPanel_hide();
     }
 }
@@ -40,9 +51,12 @@ void ui_event_comp_confirmPanel_confirmPanelYES(lv_event_t *e)
     lv_obj_t **comp_confirmPanel = lv_event_get_user_data(e);
     if (event_code == LV_EVENT_CLICKED)
     {
-        ui_confirmPanel_showOnYes();
+        if (ui_confirmPanel_showOnYes != NULL)
+        {
+            ui_confirmPanel_showOnYes();
+            ui_confirmPanel_showOnYes = NULL;
+        }
         ui_confirmPanel_hide();
-        ui_confirmPanel_showOnYes = NULL;
     }
 }
 

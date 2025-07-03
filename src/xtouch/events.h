@@ -14,21 +14,29 @@ void xtouch_events_onResetDevice(lv_msg_t *m)
 void xtouch_events_onOtaUpdateNow(lv_msg_t *m)
 {
     printf("xtouch_events_onOtaUpdateNow\n");
+    for (int i = 0; i < 1000; i++){
+        printf("Getting Update %d%%\n", i);
+        lv_label_set_text_fmt(introScreenCaption, LV_SYMBOL_WIFI " Getting Update %d%%", i);
+        lv_obj_set_style_text_color(introScreenCaption, lv_color_hex(0x555555), LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_timer_handler();
+        lv_task_handler();
+        delay(100);
+    }
 
-    printf("stop webserver and mqtt\n");
+    printf("stop webserver\n");
+    lv_label_set_text_fmt(introScreenCaption, " Stopping Webserver ");
+    lv_timer_handler();
+    lv_task_handler();
     xtouch_webserver_end();
 
     // MQTT接続を切断
     if (xtouch_pubSubClient.connected())
     {
+        lv_label_set_text_fmt(introScreenCaption, " disconnect Mqtt ");
+        lv_timer_handler();
+        lv_task_handler();
         xtouch_pubSubClient.disconnect();
     }
-
-    loadScreen(-1);
-    lv_timer_handler();
-    lv_task_handler();
-    
-    delay(1000);
 
     xTouchConfig.xTouchOTAEnabled = true;
     xtouch_firmware_checkOnlineFirmwareUpdate();

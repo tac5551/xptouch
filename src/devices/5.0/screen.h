@@ -164,7 +164,7 @@ void xtouch_screen_dispFlush(lv_disp_drv_t *disp, const lv_area_t *area, lv_colo
     }
     tft.setAddrWindow(area->x1, area->y1, w, h);
     // tft.writePixels((lgfx::rgb565_t *)&color_p->full, w * h);
-    tft.pushImage(area->x1, area->y1, area->x2 - area->x1 + 1, area->y2 - area->y1 + 1, (lgfx::rgb565_t *)&color_p->full);
+    tft.pushImageDMA(area->x1, area->y1, area->x2 - area->x1 + 1, area->y2 - area->y1 + 1, (lgfx::rgb565_t *)&color_p->full);
     tft.endWrite();
 
     lv_disp_flush_ready(disp);
@@ -212,9 +212,12 @@ void xtouch_screen_setup()
     
     lv_init();
 
-    int buf_size = screenWidth * screenHeight / 10;
-    disp_draw_buf1 = (lv_color_t *)heap_caps_malloc(sizeof(lv_color_t) * buf_size, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
-    disp_draw_buf2 = (lv_color_t *)heap_caps_malloc(sizeof(lv_color_t) * buf_size, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+    // int buf_size = screenWidth * screenHeight / 10;
+    // disp_draw_buf1 = (lv_color_t *)heap_caps_malloc(sizeof(lv_color_t) * buf_size, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+    // disp_draw_buf2 = (lv_color_t *)heap_caps_malloc(sizeof(lv_color_t) * buf_size, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+    int buf_size = screenWidth * screenHeight / 20;
+    disp_draw_buf1 = (lv_color_t *)heap_caps_malloc(sizeof(lv_color_t) * buf_size, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
+    disp_draw_buf2 = (lv_color_t *)heap_caps_malloc(sizeof(lv_color_t) * buf_size, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
     lv_disp_draw_buf_init(&draw_buf, disp_draw_buf1, disp_draw_buf2, buf_size);
 
     /*Initialize the display*/

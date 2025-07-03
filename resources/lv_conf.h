@@ -49,7 +49,11 @@
 #define LV_MEM_CUSTOM 0
 #if LV_MEM_CUSTOM == 0
     /*Size of the memory available for `lv_mem_alloc()` in bytes (>= 2kB)*/
+#ifdef __XTOUCH_SCREEN_50__
+    #define LV_MEM_SIZE (128U * 1024U)          /*[bytes]*/
+#else
     #define LV_MEM_SIZE (28U * 1024U)          /*[bytes]*/
+#endif
 
     /*Set an address for the memory pool instead of allocating it as a normal array. Can be in external SRAM too.*/
     #define LV_MEM_ADR 0     /*0: unused*/
@@ -76,13 +80,19 @@
 /*====================
    HAL SETTINGS
  *====================*/
+#ifdef __XTOUCH_SCREEN_50__
+/*Default display refresh period. LVG will redraw changed areas with this period time*/
+#define LV_DISP_DEF_REFR_PERIOD 5      /*[ms]*/
 
+/*Input device read period in milliseconds*/
+#define LV_INDEV_DEF_READ_PERIOD 15     /*[ms]*/
+#else
 /*Default display refresh period. LVG will redraw changed areas with this period time*/
 #define LV_DISP_DEF_REFR_PERIOD 25      /*[ms]*/
 
 /*Input device read period in milliseconds*/
 #define LV_INDEV_DEF_READ_PERIOD 40     /*[ms]*/
-
+#endif
 /*Use a custom tick source that tells the elapsed time in milliseconds.
  *It removes the need to manually update the tick with `lv_tick_inc()`)*/
 #define LV_TICK_CUSTOM 1

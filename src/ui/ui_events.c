@@ -94,11 +94,23 @@ void onControlAxis(lv_event_t *e) { lv_msg_send(XTOUCH_CONTROL_AXIS_SWITCH, NULL
 /* Settings */
 
 void onSettingsResetDeviceConfirm() { lv_msg_send(XTOUCH_SETTINGS_RESET_DEVICE, NULL); }
-void onSettingsOtaUpdateNowConfirm() { lv_msg_send(XTOUCH_SETTINGS_OTA_UPDATE_NOW, NULL); }
+void onSettingsOtaUpdateNowOnYES()
+{
+    ui_confirmPanel_hide();
+    lv_timer_handler();
+    lv_task_handler();
+    delay(100);
+    lv_msg_send(XTOUCH_SETTINGS_OTA_UPDATE_NOW, NULL);
+}
+void onSettingsOtaUpdateNowOnNO() { loadScreen(0); }
 
 void onSettingsOtaUpdateNow(lv_event_t *e)
 {
-    ui_confirmPanel_show(LV_SYMBOL_WARNING " UPDATE", onSettingsOtaUpdateNowConfirm);
+    loadScreen(-1);
+    lv_timer_handler();
+    lv_task_handler();
+    delay(100);
+    ui_confirmPanel_show_with_no(LV_SYMBOL_WARNING " UPDATE", onSettingsOtaUpdateNowOnYES, onSettingsOtaUpdateNowOnNO);
 }
 
 void onSettingsResetDevice(lv_event_t *e)

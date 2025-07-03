@@ -184,6 +184,9 @@ void xtouch_firmware_checkOnlineFirmwareUpdate(void)
         lv_task_handler();
         delay(3000);
     }
+    loadScreen(0);
+    lv_timer_handler();
+    lv_task_handler();
 }
 
 void xtouch_firmware_checkFirmwareUpdate(void)
