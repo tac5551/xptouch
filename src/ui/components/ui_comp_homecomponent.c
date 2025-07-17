@@ -830,23 +830,12 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_text_color(cui_mainScreenController2, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(cui_mainScreenController2, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-    lv_obj_t *cui_mainScreenLayerIcon;
-    cui_mainScreenLayerIcon = lv_label_create(cui_mainScreenController2);
-    lv_obj_set_width(cui_mainScreenLayerIcon, LV_SIZE_CONTENT);  /// 50
-    lv_obj_set_height(cui_mainScreenLayerIcon, LV_SIZE_CONTENT); /// 16
-    lv_label_set_text(cui_mainScreenLayerIcon, "3");
-    lv_obj_clear_flag(cui_mainScreenLayerIcon, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN); /// Flags
-    lv_obj_set_scrollbar_mode(cui_mainScreenLayerIcon, LV_SCROLLBAR_MODE_OFF);
-#ifdef __XTOUCH_SCREEN_50__
-    lv_obj_set_style_text_font(cui_mainScreenLayerIcon, &ui_font_xlcd, LV_PART_MAIN | LV_STATE_DEFAULT);
-#else
-    lv_obj_set_style_text_font(cui_mainScreenLayerIcon, &ui_font_xlcdmin, LV_PART_MAIN | LV_STATE_DEFAULT);
-#endif
     lv_obj_t *cui_mainScreenLayer;
-    cui_mainScreenLayer = lv_label_create(cui_mainScreenController2);
+    cui_mainScreenLayer = lv_label_create(cui_mainScreenPlayer);
     lv_obj_set_width(cui_mainScreenLayer, LV_SIZE_CONTENT);  /// 3
     lv_obj_set_height(cui_mainScreenLayer, LV_SIZE_CONTENT); /// 1
-    lv_obj_set_align(cui_mainScreenLayer, LV_ALIGN_CENTER);
+    // プログレスバーの右隣に配置
+    lv_obj_align_to(cui_mainScreenLayer, cui_mainScreenProgressBar, LV_ALIGN_OUT_RIGHT_MID, 10, 0);
     lv_label_set_long_mode(cui_mainScreenLayer, LV_LABEL_LONG_CLIP);
     lv_label_set_text(cui_mainScreenLayer, "100/255");
     lv_obj_clear_flag(cui_mainScreenLayer, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN); /// Flags
@@ -1205,7 +1194,6 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
     children[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPLAYER_MAINSCREENCONTROLLER1_MAINSCREENTIMELEFTICON] = cui_mainScreenTimeLeftIcon;
     children[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPLAYER_MAINSCREENCONTROLLER1_MAINSCREENTIMELEFT] = cui_mainScreenTimeLeft;
     children[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPLAYER_MAINSCREENCONTROLLER2] = cui_mainScreenController2;
-    children[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPLAYER_MAINSCREENCONTROLLER2_MAINSCREENLAYERICON] = cui_mainScreenLayerIcon;
     children[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPLAYER_MAINSCREENCONTROLLER2_MAINSCREENLAYER] = cui_mainScreenLayer;
     children[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENCENTRAL] = cui_mainScreenCentral;
     children[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENCENTRAL_MAINSCREENSPEEDICON] = cui_mainScreenSpeedIcon;

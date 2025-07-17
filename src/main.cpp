@@ -68,10 +68,11 @@ void setup()
   xtouch_screen_setupScreenTimer();
   xtouch_screen_setupLEDOffTimer();
   xtouch_setupGlobalEvents();
-  xtouch_webserver_begin();
+
 
   if (!cloud.hasAuthTokens())
   {
+    xtouch_webserver_begin();
     String gotoCode = "Provision at " + WiFi.localIP().toString();
     lv_label_set_text(introScreenCaption, gotoCode.c_str());
     lv_obj_set_style_text_color(introScreenCaption, lv_color_hex(0x00FF00), LV_PART_MAIN | LV_STATE_DEFAULT);
