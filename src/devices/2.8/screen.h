@@ -62,7 +62,7 @@ void xtouch_screen_onLEDOff(lv_timer_t *timer)
         return;
     }
 
-    if (xTouchConfig.xTouchTFTOFFValue < XTOUCH_LIGHT_MIN_SLEEP_TIME || xTouchConfig.xTouchTFTOFFValue == 0)
+    if (xTouchConfig.xTouchLEDOffValue < XTOUCH_LIGHT_MIN_SLEEP_TIME || xTouchConfig.xTouchLEDOffValue == 0)
     {
         return;
     }

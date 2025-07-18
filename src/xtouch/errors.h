@@ -14,6 +14,9 @@ extern "C"
     const char *xtouch_errors_getValueByKey(const char *key, const char *keys[], const char *values[], int numEntries);
     const char *xtouch_errors_getHMSError(const char *key);
     const char *xtouch_errors_getDeviceError(const char *key);
+    const char *xtouch_errors_getFormattedErrorCode(const char *key);
+    const char *xtouch_errors_formatErrorCode(const char *key);
+    const char *xtouch_errors_getErrorMessage(const char *key);
 #ifdef __cplusplus
 }
 #endif
