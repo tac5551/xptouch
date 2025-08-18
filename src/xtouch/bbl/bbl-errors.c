@@ -1,10 +1,13 @@
 #include <pgmspace.h>
 
 // Non-optimized HMS errors (legacy format)
-int hms_error_length = 125;
+int hms_error_length = 128;
 
 const char *hms_error_keys[] PROGMEM = {
   "0500010000020002",
+  "0501040000030002",
+  "0500050000010021",
+  "0501040000030001",
   "0500030000020055",
   "050003000002000E",
   "0500050000010007",
@@ -133,6 +136,9 @@ const char *hms_error_keys[] PROGMEM = {
 
 const char *hms_error_values[] PROGMEM = {
   "Liveview camera is not connected. Please check the hardware and cable connections.",
+  "Threaded rods need lubrication now.",
+  "Time-lapse kit authentication failed. Please reconnect the cable or restart the printer.",
+  "Carbon rods need cleaning now.",
   "User information has expired, please log in again.",
   "Some modules are incompatible with the printer's firmware version, which may affect use. Please go to the \"Firmware\" page to update after connected to the internet, or you may update offline according to wiki.",
   "MQTT Command verification failed. Please update Studio (including the network plugin) or Handy to the latest version, then restart the software and try again.",
@@ -260,9 +266,15 @@ const char *hms_error_values[] PROGMEM = {
 };
 
 // Non-optimized Device errors (legacy format)
-int device_error_length = 108;
+int device_error_length = 114;
 
 const char *device_error_keys[] PROGMEM = {
+  "050240A3",
+  "050040A3",
+  "050340A3",
+  "05008041",
+  "05008040",
+  "050140A3",
   "0500400F",
   "05004010",
   "05004011",
@@ -374,6 +386,12 @@ const char *device_error_keys[] PROGMEM = {
 };
 
 const char *device_error_values[] PROGMEM = {
+  "AMS(or AMS lite) C communication is abnormal. Please reconnect the module cable or restart the printer.",
+  "AMS(or AMS lite) A communication is abnormal. Please reconnect the module cable or restart the printer.",
+  "AMS(or AMS lite) D communication is abnormal. Please reconnect the module cable or restart the printer.",
+  "The filament in hotend is too cold. Extrusion may damage the extruder. Still feeding in/out the filament?",
+  "Toolhead front cover is detached. Moving the toolhead may damage the printer. Do you want to continue?",
+  "AMS(or AMS lite) B communication is abnormal. Please reconnect the module cable or restart the printer.",
   "AMS is initializing and cannot be upgraded at the moment. Please try again later.",
   "AMS is drying and cannot be upgraded at the moment. Please try again later.",
   "The printer is loading or unloading filament and cannot be upgraded at the moment. Please try again later.",

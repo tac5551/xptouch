@@ -1,7 +1,9 @@
 #ifndef _XLCD_SCREEN
 #define _XLCD_SCREEN
 
-#define LGFX_AUTODETECT
+//#define LGFX_AUTODETECT
+#define LGFX_ESP32_2432R028
+#include "LGFX_ESP32_2432R028.hpp"
 #include <LovyanGFX.hpp>
 
 #include "setting.h"
