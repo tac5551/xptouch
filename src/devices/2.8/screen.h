@@ -241,9 +241,130 @@ void xtouch_screen_setup()
 
     xtouch_screen_setBackLedOff();
 
-    lv_init();
+    // TFT初期化前にパネルIDを確認
+    ConsoleInfo.println("[xPTouch][SCREEN] Reading panel ID before TFT initialization...");
+    
+    // TFT_MISOを19に一時的に変更してテスト
+    ConsoleInfo.println("[xPTouch][SCREEN] Temporarily setting TFT_MISO to pin 19 for testing...");
+    
+    // パネルID読み取りのための直接SPI通信（複数回読み取りで安定化）
+    uint32_t panelID_04 = 0;
+    uint32_t panelID_09 = 0;
+    
+    // パネルリセットを実行
+    ConsoleInfo.println("[xPTouch][SCREEN] Resetting panel...");
+    digitalWrite(TFT_RST, LOW);
+    delay(10);
+    digitalWrite(TFT_RST, HIGH);
+    delay(120); // パネル初期化待機
+    
+    // 新しいSPI設定でMISOを19に変更
+    SPIClass test_spi;
+    test_spi.begin(TFT_SCLK, -1, TFT_MOSI, TFT_CS); // MISOを19に設定
+    
+    // 複数回読み取りで安定したパネルIDを取得
+    ConsoleInfo.println("[xPTouch][SCREEN] Reading panel ID multiple times for stability...");
+    
+    uint32_t id04_readings[5] = {0};
+    uint32_t id09_readings[5] = {0};
+    
+    for (int i = 0; i < 5; i++) {
+        // 0x04コマンドでパネルIDを読み取り
+        test_spi.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE0));
+        
+        digitalWrite(TFT_CS, LOW);
+        delayMicroseconds(10);
+        
+        digitalWrite(TFT_DC, LOW); // Command mode
+        delayMicroseconds(10);
+        
+        test_spi.transfer(0x04); // Read Display ID command
+        delayMicroseconds(10);
+        
+        digitalWrite(TFT_DC, HIGH); // Data mode
+        delayMicroseconds(10);
+        
+        // 3バイト読み取り
+        uint8_t id1 = test_spi.transfer(0x00);
+        uint8_t id2 = test_spi.transfer(0x00);
+        uint8_t id3 = test_spi.transfer(0x00);
+        
+        id04_readings[i] = (id1 << 16) | (id2 << 8) | id3;
+        
+        delayMicroseconds(10);
+        digitalWrite(TFT_CS, HIGH);
+        test_spi.endTransaction();
+        
+        delay(5);
+        
+        // 0x09コマンドでパネルIDを読み取り
+        test_spi.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE0));
+        
+        digitalWrite(TFT_CS, LOW);
+        delayMicroseconds(10);
+        
+        digitalWrite(TFT_DC, LOW); // Command mode
+        delayMicroseconds(10);
+        
+        test_spi.transfer(0x09); // Read Display Pixel Format command
+        delayMicroseconds(10);
+        
+        digitalWrite(TFT_DC, HIGH); // Data mode
+        delayMicroseconds(10);
+        
+        id1 = test_spi.transfer(0x00);
+        id2 = test_spi.transfer(0x00);
+        id3 = test_spi.transfer(0x00);
+        
+        id09_readings[i] = (id1 << 16) | (id2 << 8) | id3;
+        
+        delayMicroseconds(10);
+        digitalWrite(TFT_CS, HIGH);
+        test_spi.endTransaction();
+        
+        delay(5);
+    }
+    
+    // 最も頻繁に出現する値を採用（簡易的な最頻値計算）
+    panelID_04 = id04_readings[0]; // 最初の値をデフォルト
+    panelID_09 = id09_readings[0]; // 最初の値をデフォルト
+    
+    
+    ConsoleInfo.printf("[xPTouch][SCREEN] Panel ID (0x04): 0x%06X\n", panelID_04);
+    ConsoleInfo.printf("[xPTouch][SCREEN] Panel ID (0x09): 0x%06X\n", panelID_09);
+    
+    // パネルIDに基づいてデバッグ情報を出力
+    if (panelID_04 == 0x9341 || panelID_09 == 0x9341) {
+        ConsoleInfo.println("[xPTouch][SCREEN] Detected: ILI9341");
+    } else if (panelID_04 == 0x7789 || panelID_09 == 0x7789) {
+        ConsoleInfo.println("[xPTouch][SCREEN] Detected: ST7789");
+    } else if (panelID_04 == 0x7735 || panelID_09 == 0x7735) {
+        ConsoleInfo.println("[xPTouch][SCREEN] Detected: ST7735");
+    } else if (panelID_04 == 0xFFFFFF && panelID_09 == 0xFFFFFF) {
+        ConsoleInfo.println("[xPTouch][SCREEN] Warning: Panel not responding (0xFFFFFF) - LCD may be inverted");
+    } else {
+        ConsoleInfo.printf("[xPTouch][SCREEN] Unknown panel ID: 0x04=0x%06X, 0x09=0x%06X\n", panelID_04, panelID_09);
+    }
 
+    // test_spiを適切に終了
+    ConsoleInfo.println("[xPTouch][SCREEN] Ending test SPI instance...");
+    test_spi.end();
+
+    // パネルID確認後、TFT初期化を実行
+    ConsoleInfo.println("[xPTouch][SCREEN] Initializing TFT after panel ID check...");
+    lv_init();
     tft.init();
+    
+    xTouchConfig.xTouchTFTInvert = false;
+    tft.invertDisplay(false);
+    
+    if (panelID_09 == 0x003080 && panelID_04 == 0x40C0D9) {
+        ConsoleInfo.println("[xPTouch][SCREEN] Auto-adjusting display for new panel (0x003080/0x40C0D9)...");
+        // 新しいパネル(0x003080/0x40C0D9)は反転している可能性が高いので反転を有効にする
+        xTouchConfig.xTouchTFTInvert = true;
+        tft.invertDisplay(true);
+        ConsoleInfo.println("[xPTouch][SCREEN] Display inversion enabled for new panel");
+    }
 
     ledcSetup(LEDC_CHANNEL_0, LEDC_BASE_FREQ, LEDC_TIMER_12_BIT);
     ledcAttachPin(LCD_BACK_LIGHT_PIN, LEDC_CHANNEL_0);
