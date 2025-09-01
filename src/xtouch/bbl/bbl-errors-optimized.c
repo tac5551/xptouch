@@ -12,10 +12,15 @@ typedef struct {
 int hms_error_patterns_length = 327;
 
 const error_pattern_t hms_error_patterns[] PROGMEM = {
-    {"0582040000010045", "The firmware of AMS_DEVICE_A does not match the printer. PAGE_NAME.", {"AMS_DEVICE_A", "COMMON_PHRASE_PAGE_NAME"}, 2},
+    {"1803220000010082", "Failed to read the filament information from AMS_DEVICE_A slot 3. A third party RFID tag was detected.", {"AMS_DEVICE_A"}, 1},
+    {"0581050000010010", "The firmware of AMS_DEVICE_A does not match the printer. PAGE_NAME.", {"AMS_DEVICE_A", "COMMON_PHRASE_PAGE_NAME"}, 2},
+    {"0700230000010082", "Failed to read the filament information from AMS_DEVICE_A slot 4. A third party RFID tag was detected.", {"AMS_DEVICE_A"}, 1},
+    {"1800210000010082", "Failed to read the filament information from AMS_DEVICE_A slot 2. A third party RFID tag was detected.", {"AMS_DEVICE_A"}, 1},
+    {"1803200000010082", "Failed to read the filament information from AMS_DEVICE_A slot 1. A third party RFID tag was detected.", {"AMS_DEVICE_A"}, 1},
+    {"1805230000010082", "Failed to read the filament information from AMS_DEVICE_A. A third party RFID tag was detected.", {"AMS_DEVICE_A"}, 1},
     {"050005000001000F", "The accessory firmware does not match the printer. PAGE_NAME.", {"COMMON_PHRASE_PAGE_NAME"}, 1},
-    {"1800020000020002", "AMS_DEVICE_A the odometer has no signal. The odometer connector may have poor contact.", {"AMS_DEVICE_A"}, 1},
-    {"0500040000010049", "Communication error detected with AMS or AMS_DEVICE_AT. Please restart the printer when it is idle.", {"AMS_DEVICE_A"}, 1},
+    {"1800020000020002", "AMS_DEVICE_A The odometer has no signal. The odometer connector may have poor contact.", {"AMS_DEVICE_A"}, 1},
+    {"0500040000010049", "Communication error detected with AMS, AMS lite or AMS_DEVICE_AT. Please reconnect the module cable or restart the printer when it is idle.", {"AMS_DEVICE_A"}, 1},
     {"0705250000020001", "AMS_DEVICE_A uses printer power for drying during loading/printing. For better drying performance, please connect a power adapter.", {"AMS_DEVICE_A"}, 1},
     {"1807960000020004", "AMS_DEVICE_A The temperature control error is too large, which may be due to the lid being open or an abnormality with the heater.", {"AMS_DEVICE_A"}, 1},
     {"0700910000010004", "The current sensor of AMS_DEVICE_A exhaust VALVE_2 is abnormal; please get in touch with customer support to replace the AMS mainboard.", {"AMS_DEVICE_A", "VALVE_2"}, 2},
@@ -114,7 +119,6 @@ const error_pattern_t hms_error_patterns[] PROGMEM = {
     {"0701220000010081", "RFID_AMS_BOARD_ERROR.", {"AMS_DEVICE_A", "COMMON_PHRASE_RFID_AMS_BOARD_ERROR"}, 2},
     {"1804130000020002", "The AMS_DEVICE_A slot 4 motor is overloaded. The filament may be tangled or stuck.", {"AMS_DEVICE_A"}, 1},
     {"0703220000020005", "AMS_DEVICE_A SLOT_3 filament has run out, and purging the old filament went abnormally; please check whether the filament is stuck in the tool head.", {"AMS_DEVICE_A", "SLOT_3"}, 2},
-    {"0704210000010082", "RFID_TAG_NON_OFFICIAL. You can try to use Bambu Lab filament.", {"AMS_DEVICE_A", "COMMON_PHRASE_RFID_TAG_NON_OFFICIAL"}, 2},
     {"1805300000030003", "RFID_READ_HARDWARE_ERROR or structural error.", {"COMMON_PHRASE_RFID_READ_HARDWARE_ERROR"}, 1},
     {"0705100000010003", "The AMS_DEVICE_A slot 1 motor torque control is malfunctioning. The current sensor may be faulty.", {"AMS_DEVICE_A"}, 1},
     {"1806120000010001", "The AMS_DEVICE_A slot 3 motor has slipped. The extrusion wheel may be malfunctioning, or the filament may be too thin.", {"AMS_DEVICE_A"}, 1},
@@ -302,7 +306,6 @@ const error_pattern_t hms_error_patterns[] PROGMEM = {
     {"0C00020000020003", "LASER_NOT_BRIGHT_ENOUGH", {"COMMON_PHRASE_LASER_NOT_BRIGHT_ENOUGH"}, 1},
     {"1203230000020004", "AMS_DEVICE_A Slot4 filament may be broken in the tool head.", {"AMS_DEVICE_A"}, 1},
     {"1202110000020002", "The AMS_DEVICE_A Slot2 motor is overloaded. The filament may be tangled or stuck.", {"AMS_DEVICE_A"}, 1},
-    {"0300920000010007", "The temperature of chamber HEATER_2 is abnormal. The sensor may have an open circuit.", {"HEATER_2"}, 1},
     {"18FF200000020001", "External filament has run out; please load a new filament.", {}, 0},
     {"1203320000020002", "The RFID-tag on AMS_DEVICE_A SLOT_3 is damaged.", {"AMS_DEVICE_A", "SLOT_3"}, 2},
     {"0300010000010001", "TEMP_SENSOR_SHORT_CIRCUIT", {"COMMON_PHRASE_TEMP_SENSOR_SHORT_CIRCUIT"}, 1},
@@ -313,9 +316,7 @@ const error_pattern_t hms_error_patterns[] PROGMEM = {
     {"1201200000020004", "AMS_DEVICE_A Slot1 filament may be broken in the tool head.", {"AMS_DEVICE_A"}, 1},
     {"1201220000030001", "AMS_DEVICE_A Slot3 filament has run out. Purging the old filament; please wait.", {"AMS_DEVICE_A"}, 1},
     {"1202220000030002", "AMS_DEVICE_A Slot3 filament has run out and automatically switched to the slot with the same filament.", {"AMS_DEVICE_A"}, 1},
-    {"0300920000010008", "Chamber HEATER_2 failed to rise to target temperature.", {"HEATER_2"}, 1},
     {"0300110000020002", "RESONANCE_FREQUENCY_DIFFERS Please clean the Y-axis liner rod and conduct a calibration after printing.", {"COMMON_PHRASE_RESONANCE_FREQUENCY_DIFFERS"}, 1},
-    {"0300910000010008", "Chamber HEATER_1 failed to rise to target temperature.", {"HEATER_1"}, 1},
     {"1200450000020003", "The filament cutter handle has not been released. The handle or blade may be jammed, or there could be an issue with the filament sensor connection.", {}, 0},
     {"0700400000020003", "The AMS_DEVICE_Aub communication is abnormal; the cable may be not well connected.", {"AMS_DEVICE_A"}, 1},
     {"0300070000010001", "MOTOR_OPEN_CIRCUIT", {"COMMON_PHRASE_MOTOR_OPEN_CIRCUIT"}, 1},
@@ -330,7 +331,6 @@ const error_pattern_t hms_error_patterns[] PROGMEM = {
     {"0300910000010006", "The temperature of chamber HEATER_1 is abnormal. The sensor may have a short circuit.", {"HEATER_1"}, 1},
     {"1800400000020002", "Filament buffer position signal error: the position sensor may be malfunctioning.", {}, 0},
     {"0300920000010003", "The temperature of chamber HEATER_2 is abnormal. The heater is over temperature.", {"HEATER_2"}, 1},
-    {"0300910000010007", "The temperature of chamber HEATER_1 is abnormal. The sensor may have an open circuit.", {"HEATER_1"}, 1},
     {"0300930000010001", "CHAMBER_TEMP_SENSOR_SHORT", {"COMMON_PHRASE_CHAMBER_TEMP_SENSOR_SHORT"}, 1},
     {"0700400000020004", "The filament buffer signal is abnormal; the spring may be stuck, or the filament may be tangled.", {}, 0},
     {"0300930000010007", "CHAMBER_TEMP_SENSOR_POWER_SHORT", {"COMMON_PHRASE_CHAMBER_TEMP_SENSOR_POWER_SHORT"}, 1},
@@ -342,20 +342,15 @@ const error_pattern_t hms_error_patterns[] PROGMEM = {
 };
 
 // Normalized Device error patterns
-int device_error_patterns_length = 59;
+int device_error_patterns_length = 52;
 
 const error_pattern_t device_error_patterns[] PROGMEM = {
-    {"058440A2", "AMS_DEVICE_AT E communication is abnormal; please restart the printer.", {"AMS_DEVICE_A"}, 1},
-    {"058640A2", "AMS_DEVICE_AT G communication is abnormal; please restart the printer.", {"AMS_DEVICE_A"}, 1},
-    {"058540A2", "AMS_DEVICE_AT F communication is abnormal; please restart the printer.", {"AMS_DEVICE_A"}, 1},
-    {"058240A2", "AMS_DEVICE_AT C communication is abnormal; please restart the printer.", {"AMS_DEVICE_A"}, 1},
-    {"058740A2", "AMS_DEVICE_AT H communication is abnormal; please restart the printer.", {"AMS_DEVICE_A"}, 1},
-    {"050140A3", "AMS_DEVICE_AT B communication is abnormal; please restart the printer.", {"AMS_DEVICE_A"}, 1},
-    {"050040A3", "AMS_DEVICE_AT A communication is abnormal; please restart the printer.", {"AMS_DEVICE_A"}, 1},
-    {"050340A3", "AMS_DEVICE_AT D communication is abnormal; please restart the printer.", {"AMS_DEVICE_A"}, 1},
-    {"05004031", "The accessory firmware does not match the printer. PAGE_NAME.", {"COMMON_PHRASE_PAGE_NAME"}, 1},
     {"05004033", "The AMS firmware does not match the printer. PAGE_NAME.", {"COMMON_PHRASE_PAGE_NAME"}, 1},
     {"0582409C", "The firmware of AMS_DEVICE_A does not match the printer; the device cannot continue working. PAGE_NAME.", {"AMS_DEVICE_A", "COMMON_PHRASE_PAGE_NAME"}, 2},
+    {"05004031", "The accessory firmware does not match the printer. PAGE_NAME.", {"COMMON_PHRASE_PAGE_NAME"}, 1},
+    {"05844096", "The device cannot detect AMS_DEVICE_A. Please reconnect the AMS-HT cable or restart the printer.", {"AMS_DEVICE_A"}, 1},
+    {"05014098", "The device cannot detect AMS_DEVICE_A. Please reconnect the AMS cable or restart the printer.", {"AMS_DEVICE_A"}, 1},
+    {"058440A2", "AMS_DEVICE_A communication is abnormal. Please reconnect the module cable or restart the printer.", {"AMS_DEVICE_A"}, 1},
     {"18018023", "AMS_DEVICE_A cooling failed. The ambient temperature may be too high. Please operate the device in a suitable environment.", {"AMS_DEVICE_A"}, 1},
     {"18078005", "The AMS-HT failed to send out filament. You can clip the end of your filament flat, and reinsert. If this message persists, please check the PTFE tubes in AMS for any signs of wear and tear.", {}, 0},
     {"18058004", "AMS-HT failed to pull back filament. This could be due to a stuck spool or the end of the filament being stuck in the path.", {}, 0},
@@ -365,8 +360,6 @@ const error_pattern_t device_error_patterns[] PROGMEM = {
     {"07018005", "AMS_SEND_OUT_FAILED. You can clip the end of your filament flat, and reinsert. If this message persists, please check the PTFE tubes in AMS for any signs of wear and tear.", {"COMMON_PHRASE_AMS_SEND_OUT_FAILED"}, 1},
     {"07048006", "FEED_FILAMENT_FAILED. This could be due to an entangled filament or a stuck spool. If not, please check if the AMS PTFE tube is connected.", {"COMMON_PHRASE_FEED_FILAMENT_FAILED"}, 1},
     {"0500409D", "The firmware of AMS_DEVICE_A does not match the printer; the device cannot continue working. Please upgrade it on the \"Firmware\" page.", {"AMS_DEVICE_A"}, 1},
-    {"05844096", "Uncertified AMS_DEVICE_A detected; the device cannot continue working. Please reconnect the AMS-HT cable or restart the printer.", {"AMS_DEVICE_A"}, 1},
-    {"05014098", "Uncertified AMS_DEVICE_A detected; the device cannot continue working. Please reconnect the AMS cable or restart the printer.", {"AMS_DEVICE_A"}, 1},
     {"05004017", "Binding failed. Please retry or restart the printer and retry.", {}, 0},
     {"1800C06D", "AMS_DEVICE_A is assisting in filament insertion. Unable to start drying. Please try again later.", {"AMS_DEVICE_A"}, 1},
     {"0702C06A", "AMS_DEVICE_A is reading RFID. Unable to start drying. Please try again later.", {"AMS_DEVICE_A"}, 1},
@@ -407,7 +400,7 @@ const error_pattern_t device_error_patterns[] PROGMEM = {
 };
 
 // Retry and Done message arrays (for backward compatibility)
-int message_containing_retry_total = 404;
+int message_containing_retry_total = 393;
 
 const char *message_containing_retry[] PROGMEM = {
   "0500050000010007",
@@ -669,6 +662,8 @@ const char *message_containing_retry[] PROGMEM = {
   "0580409C",
   "0583409C",
   "0501409D",
+  "07FF8007",
+  "05008040",
   "0500400F",
   "05004010",
   "05004011",
@@ -677,19 +672,7 @@ const char *message_containing_retry[] PROGMEM = {
   "05004030",
   "0500409D",
   "0587409C",
-  "05844096",
-  "05824096",
   "0502409D",
-  "05864096",
-  "05014098",
-  "05854096",
-  "05874096",
-  "05834096",
-  "05814096",
-  "05004098",
-  "05024098",
-  "05034098",
-  "05804096",
   "05004017",
   "1800C06D",
   "0702C06A",
@@ -767,7 +750,6 @@ const char *message_containing_retry[] PROGMEM = {
   "05014019",
   "1807C06B",
   "0300800D",
-  "07FF8007",
   "07FF8012",
   "1806C06A",
   "0701C06B",
@@ -819,7 +801,7 @@ const char *message_containing_retry[] PROGMEM = {
 int message_containing_done_total = 3;
 
 const char *message_containing_done[] PROGMEM = {
+  "07FF8007",
   "07FFC00A",
-  "03008013",
-  "07FF8007"
+  "03008013"
 };

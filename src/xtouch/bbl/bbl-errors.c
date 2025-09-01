@@ -1,11 +1,17 @@
 #include <pgmspace.h>
 
 // Non-optimized HMS errors (legacy format)
-int hms_error_length = 125;
+int hms_error_length = 128;
 
 const char *hms_error_keys[] PROGMEM = {
   "0500010000020002",
+  "12FF200000030007",
   "0500030000020055",
+  "0C0003000003000B",
+  "0500020000020008",
+  "0501040000030002",
+  "0500050000010021",
+  "0501040000030001",
   "050003000002000E",
   "0500050000010007",
   "0300960000010003",
@@ -18,7 +24,6 @@ const char *hms_error_keys[] PROGMEM = {
   "0C00010000020002",
   "0C00040000010025",
   "0C00030000020019",
-  "0500020000020008",
   "0300010000010002",
   "0C00010000020008",
   "0300170000020002",
@@ -40,7 +45,6 @@ const char *hms_error_keys[] PROGMEM = {
   "0500040000030009",
   "0300930000010008",
   "03000D0000020001",
-  "12FF200000030007",
   "0300410000010001",
   "0500030000010021",
   "0300900000010004",
@@ -74,7 +78,6 @@ const char *hms_error_keys[] PROGMEM = {
   "0C00030000030007",
   "030001000001000A",
   "12FF200000020007",
-  "0C0003000003000B",
   "0C00030000020004",
   "0300900000010002",
   "0500030000010023",
@@ -133,7 +136,13 @@ const char *hms_error_keys[] PROGMEM = {
 
 const char *hms_error_values[] PROGMEM = {
   "Liveview camera is not connected. Please check the hardware and cable connections.",
-  "User information has expired, please log in again.",
+  "Checking the filament location of all AMS slots; please wait.",
+  "User information expired, please log in again.",
+  "Inspecting the first layer, please wait a moment.",
+  "Time synchronization failed.",
+  "Threaded rods need lubrication now.",
+  "Time-lapse kit authentication failed. Please reconnect the cable or restart the printer.",
+  "Carbon rods need cleaning now.",
   "Some modules are incompatible with the printer's firmware version, which may affect use. Please go to the \"Firmware\" page to update after connected to the internet, or you may update offline according to wiki.",
   "MQTT Command verification failed. Please update Studio (including the network plugin) or Handy to the latest version, then restart the software and try again.",
   "The front door Hall sensor is abnormal; please check whether the connection wire is loose.",
@@ -146,7 +155,6 @@ const char *hms_error_values[] PROGMEM = {
   "Micro Lidar camera is malfunctioning. Please refer to the Wiki for troubleshooting.",
   "The device malfunctioned; please restart.",
   "The Vision Encoder Plate is either not placed or incorrectly placed. Please ensure it is correctly positioned on the heatbed.",
-  "Time synchronization failed",
   "The heatbed temperature is abnormal; the heater may have an open circuit, or the thermal switch may be open.",
   "Failed to get image from Live View Camera. Spaghetti and waste chute pileup detection is not available at this time.",
   "The hotend cooling fan speed is slow. It may be stuck and need cleaning.",
@@ -168,7 +176,6 @@ const char *hms_error_values[] PROGMEM = {
   "The bed temperature exceeds filament's vitrification temperature, which may cause nozzle clog. Please keep the front door of the printer open. Door open detection has been temporarily turned off.",
   "Chamber temperature is abnormal. The temperature sensor at power supply may have an open circuit.",
   "Heatbed homing abnormal: there may be a bulge on the heatbed or the nozzle tip may not be clean.",
-  "Checking the filament location of all AMS slots, please wait.",
   "The system voltage is unstable. Triggering the power failure protection function.",
   "Hardware incompatible; please check the Micro Lidar.",
   "Chamber heating failed. The speed of the heating fan is too low.",
@@ -202,7 +209,6 @@ const char *hms_error_values[] PROGMEM = {
   "Possible first layer defects have been detected. Please check the first layer quality and decide if the job should be stopped.",
   "The heatbed temperature control is abnormal; the AC board may be broken.",
   "Failed to check the filament location in the tool head; please click for more help.",
-  "Inspecting the first layer: please wait a moment.",
   "First layer inspection is not supported for the current print job.",
   "Chamber heating failed. Possible causes: the chamber is not fully enclosed, ambient temperature is too low, or the power supply heat dissipation vent is blocked.",
   "The Chamber Temperature Control module is malfunctioning. Please restart the device.",
@@ -260,9 +266,18 @@ const char *hms_error_values[] PROGMEM = {
 };
 
 // Non-optimized Device errors (legacy format)
-int device_error_length = 108;
+int device_error_length = 115;
 
 const char *device_error_keys[] PROGMEM = {
+  "07FF8007",
+  "0500400E",
+  "0502C014",
+  "050240A3",
+  "050040A3",
+  "050340A3",
+  "05008041",
+  "05008040",
+  "050140A3",
   "0500400F",
   "05004010",
   "05004011",
@@ -337,7 +352,6 @@ const char *device_error_keys[] PROGMEM = {
   "07FFC003",
   "05004043",
   "0300800D",
-  "07FF8007",
   "03008008",
   "10018003",
   "05004004",
@@ -362,7 +376,6 @@ const char *device_error_keys[] PROGMEM = {
   "03008018",
   "05004002",
   "03004002",
-  "0500400E",
   "05004006",
   "05004003",
   "05014034",
@@ -374,6 +387,15 @@ const char *device_error_keys[] PROGMEM = {
 };
 
 const char *device_error_values[] PROGMEM = {
+  "Please observe the nozzle. If the filament has been extruded, select \"Done\"; if it has not, please push the filament forward slightly, and then select \"Retry\".",
+  "Printing was cancelled.",
+  "The AMS Remaining Filament Estimation is enabled by default and cannot be disabled.",
+  "AMS(or AMS lite) C communication is abnormal. Please reconnect the module cable or restart the printer.",
+  "AMS(or AMS lite) A communication is abnormal. Please reconnect the module cable or restart the printer.",
+  "AMS(or AMS lite) D communication is abnormal. Please reconnect the module cable or restart the printer.",
+  "The filament in hotend is too cold. Extrusion may damage the extruder. Still feeding in/out the filament?",
+  "Toolhead front cover is detached. Moving the toolhead may damage the printer. Do you want to continue?",
+  "AMS(or AMS lite) B communication is abnormal. Please reconnect the module cable or restart the printer.",
   "AMS is initializing and cannot be upgraded at the moment. Please try again later.",
   "AMS is drying and cannot be upgraded at the moment. Please try again later.",
   "The printer is loading or unloading filament and cannot be upgraded at the moment. Please try again later.",
@@ -448,7 +470,6 @@ const char *device_error_values[] PROGMEM = {
   "Please pull out the filament on the spool holder. If this message persists, please check to see if there is filament broken in the extruder or PTFE tube. (Connect a PTFE tube if you are about to use an AMS)",
   "Due to power limitations, only one AMS is allowed to use the device's power for drying.",
   "Detected that the extruder is not extruding normally. If the defects are acceptable, select \"Resume\" to resume the print job.",
-  "Please observe the nozzle. If the filament has been extruded, select \"Done\"; if it is not, please push the filament forward slightly, and then select \"Retry\".",
   "Nozzle temperature malfunction",
   "The time-lapse mode is set to Traditional in the slicing file. This may cause surface defects. Would you like to enable it?",
   "Device is busy and cannot start new task. Please wait for current task to complete before sending new task.",
@@ -473,7 +494,6 @@ const char *device_error_values[] PROGMEM = {
   "Chamber temperature malfunction.",
   "Unsupported print file path or name. Please resend the print job.",
   "Auto Bed Leveling failed; the task has been stopped.",
-  "Printing was cancelled.",
   "There is not enough free storage space for the print job. Restoring to factory settings can free up available space.",
   "Printing stopped because the printer was unable to parse the file. Please resend your print job.",
   "The slicing progress has not been updated for a long time, and the printing task has exited. Please confirm the parameters and reinitiate printing.",
