@@ -32,6 +32,8 @@
 #include "xtouch/coldboot.h"
 #include "xtouch/webserver.h"
 #include "xtouch/globals.h"
+#include "xtouch/led.h"
+
 void xtouch_intro_show(void)
 {
   ui_introScreen_screen_init();
@@ -48,6 +50,10 @@ void setup()
   xtouch_eeprom_setup();
   xtouch_globals_init();
   xtouch_screen_setup();
+
+  xtouch_led_init();
+  xtouch_neo_pixel_init();
+  
   xtouch_intro_show();
   while (!xtouch_sdcard_setup())
     ;

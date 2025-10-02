@@ -93,6 +93,8 @@ extern "C"
         int big_fan2_speed;
         int printing_speed_lvl;
         int printing_speed_mag;
+        int print_gcode_action;
+        int print_real_action;
         bool chamberLed;
         float nozzle_diameter;
         bool camera_recording_when_printing;

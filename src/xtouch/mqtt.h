@@ -94,6 +94,15 @@ void xtouch_mqtt_processPushStatus(JsonDocument &incomingJson)
     if (incomingJson != NULL && incomingJson.containsKey("print"))
     {
         // #pragma region printing
+        if (incomingJson["print"].containsKey("print_gcode_action"))
+        {
+            bambuStatus.print_gcode_action = incomingJson["print"]["print_gcode_action"].as<int>();
+        }
+
+        if (incomingJson["print"].containsKey("print_real_action"))
+        {
+            bambuStatus.print_real_action = incomingJson["print"]["print_real_action"].as<int>();
+        }
 
         if (incomingJson["print"].containsKey("print_type"))
         {

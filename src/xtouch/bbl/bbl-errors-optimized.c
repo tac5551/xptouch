@@ -13,11 +13,11 @@ int hms_error_patterns_length = 327;
 
 const error_pattern_t hms_error_patterns[] PROGMEM = {
     {"1803220000010082", "Failed to read the filament information from AMS_DEVICE_A slot 3. A third party RFID tag was detected.", {"AMS_DEVICE_A"}, 1},
-    {"0581050000010010", "The firmware of AMS_DEVICE_A does not match the printer. PAGE_NAME.", {"AMS_DEVICE_A", "COMMON_PHRASE_PAGE_NAME"}, 2},
     {"0700230000010082", "Failed to read the filament information from AMS_DEVICE_A slot 4. A third party RFID tag was detected.", {"AMS_DEVICE_A"}, 1},
     {"1800210000010082", "Failed to read the filament information from AMS_DEVICE_A slot 2. A third party RFID tag was detected.", {"AMS_DEVICE_A"}, 1},
     {"1803200000010082", "Failed to read the filament information from AMS_DEVICE_A slot 1. A third party RFID tag was detected.", {"AMS_DEVICE_A"}, 1},
     {"1805230000010082", "Failed to read the filament information from AMS_DEVICE_A. A third party RFID tag was detected.", {"AMS_DEVICE_A"}, 1},
+    {"0584040000010045", "The firmware of AMS_DEVICE_A does not match the printer. PAGE_NAME.", {"AMS_DEVICE_A", "COMMON_PHRASE_PAGE_NAME"}, 2},
     {"050005000001000F", "The accessory firmware does not match the printer. PAGE_NAME.", {"COMMON_PHRASE_PAGE_NAME"}, 1},
     {"1800020000020002", "AMS_DEVICE_A The odometer has no signal. The odometer connector may have poor contact.", {"AMS_DEVICE_A"}, 1},
     {"0500040000010049", "Communication error detected with AMS, AMS lite or AMS_DEVICE_AT. Please reconnect the module cable or restart the printer when it is idle.", {"AMS_DEVICE_A"}, 1},
@@ -345,9 +345,9 @@ const error_pattern_t hms_error_patterns[] PROGMEM = {
 int device_error_patterns_length = 52;
 
 const error_pattern_t device_error_patterns[] PROGMEM = {
-    {"05004033", "The AMS firmware does not match the printer. PAGE_NAME.", {"COMMON_PHRASE_PAGE_NAME"}, 1},
     {"0582409C", "The firmware of AMS_DEVICE_A does not match the printer; the device cannot continue working. PAGE_NAME.", {"AMS_DEVICE_A", "COMMON_PHRASE_PAGE_NAME"}, 2},
     {"05004031", "The accessory firmware does not match the printer. PAGE_NAME.", {"COMMON_PHRASE_PAGE_NAME"}, 1},
+    {"05004033", "The AMS firmware does not match the printer. PAGE_NAME.", {"COMMON_PHRASE_PAGE_NAME"}, 1},
     {"05844096", "The device cannot detect AMS_DEVICE_A. Please reconnect the AMS-HT cable or restart the printer.", {"AMS_DEVICE_A"}, 1},
     {"05014098", "The device cannot detect AMS_DEVICE_A. Please reconnect the AMS cable or restart the printer.", {"AMS_DEVICE_A"}, 1},
     {"058440A2", "AMS_DEVICE_A communication is abnormal. Please reconnect the module cable or restart the printer.", {"AMS_DEVICE_A"}, 1},
