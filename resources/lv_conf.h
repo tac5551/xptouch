@@ -49,9 +49,9 @@
 #define LV_MEM_CUSTOM 0
 #if LV_MEM_CUSTOM == 0
     /*Size of the memory available for `lv_mem_alloc()` in bytes (>= 2kB)*/
-#ifdef __XTOUCH_SCREEN_50__
+#if defined(__XTOUCH_SCREEN_50__)
     #define LV_MEM_SIZE (128U * 1024U)          /*[bytes]*/
-#else
+#elif defined(__XTOUCH_SCREEN_28__)
     #define LV_MEM_SIZE (28U * 1024U)          /*[bytes]*/
 #endif
 
@@ -59,7 +59,7 @@
     #define LV_MEM_ADR 0     /*0: unused*/
     /*Instead of an address give a memory allocator that will be called to get a memory pool for LVGL. E.g. my_malloc*/
     #if LV_MEM_ADR == 0
-#ifdef __XTOUCH_SCREEN_50__
+#if defined(__XTOUCH_SCREEN_50__)
         #define LV_MEM_POOL_INCLUDE <esp32-hal-psram.h>
         #define LV_MEM_POOL_ALLOC ps_malloc
 #endif
@@ -84,13 +84,13 @@
 /*====================
    HAL SETTINGS
  *====================*/
-#ifdef __XTOUCH_SCREEN_50__
+#if defined(__XTOUCH_SCREEN_50__)
 /*Default display refresh period. LVG will redraw changed areas with this period time*/
 #define LV_DISP_DEF_REFR_PERIOD 5      /*[ms]*/
 
 /*Input device read period in milliseconds*/
 #define LV_INDEV_DEF_READ_PERIOD 15     /*[ms]*/
-#else
+#elif defined(__XTOUCH_SCREEN_28__)
 /*Default display refresh period. LVG will redraw changed areas with this period time*/
 #define LV_DISP_DEF_REFR_PERIOD 25      /*[ms]*/
 
@@ -359,9 +359,9 @@
 #define LV_FONT_MONTSERRAT_42 0
 #define LV_FONT_MONTSERRAT_44 0
 #define LV_FONT_MONTSERRAT_46 0
-#ifdef __XTOUCH_SCREEN_50__
+#if defined(__XTOUCH_SCREEN_50__)
 #define LV_FONT_MONTSERRAT_48 1
-#else
+#elif defined(__XTOUCH_SCREEN_28__)
 #define LV_FONT_MONTSERRAT_48 0
 #endif
 
