@@ -22,6 +22,7 @@
 #endif
 
 #include "xtouch/cloud.hpp"
+#include "xtouch/led.h"
 #include "xtouch/settings.h"
 #include "xtouch/net.h"
 #include "xtouch/firmware.h"
@@ -32,7 +33,7 @@
 #include "xtouch/coldboot.h"
 #include "xtouch/webserver.h"
 #include "xtouch/globals.h"
-#include "xtouch/led.h"
+
 
 void xtouch_intro_show(void)
 {
@@ -50,9 +51,6 @@ void setup()
   xtouch_eeprom_setup();
   xtouch_globals_init();
   xtouch_screen_setup();
-
-  xtouch_led_init();
-  xtouch_neo_pixel_init();
   
   xtouch_intro_show();
   while (!xtouch_sdcard_setup())
@@ -101,6 +99,8 @@ void setup()
   Serial.println("xtouch_chamber_timer_init ...");
   xtouch_chamber_timer_init();
   xtouch_screen_startScreenTimer();
+
+  xtouch_led_timer_init();
 }
 
 void loop()

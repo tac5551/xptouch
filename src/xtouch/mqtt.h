@@ -22,7 +22,7 @@ String xtouch_mqtt_report_topic;
 #include "device.h"
 #include "trays.h"
 #define XTOUCH_MQTT_SERVER_TIMEOUT 20
-#define XTOUCH_MQTT_SERVER_PUSH_STATUS_TIMEOUT 120
+#define XTOUCH_MQTT_SERVER_PUSH_STATUS_TIMEOUT 1800
 #define XTOUCH_MQTT_SERVER_JSON_PARSE_SIZE 8192
 
 /* ---------------------------------------------- */
@@ -93,6 +93,13 @@ void xtouch_mqtt_processPushStatus(JsonDocument &incomingJson)
 
     if (incomingJson != NULL && incomingJson.containsKey("print"))
     {
+
+        // #pragma region printing
+        if (incomingJson["print"].containsKey("url"))
+        {
+            strcpy(bambuStatus.image_url, incomingJson["print"]["url"]);
+        }
+
         // #pragma region printing
         if (incomingJson["print"].containsKey("print_gcode_action"))
         {

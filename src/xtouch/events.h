@@ -83,6 +83,26 @@ void xtouch_events_onLEDOffTimerSet(lv_msg_t *m)
     xtouch_filesystem_writeJson(SD, xtouch_paths_settings, settings);
 }
 
+//void xtouch_events_onNeoPixelNumSet(lv_msg_t *m)
+//{
+//    int32_t value = lv_slider_get_value(ui_settingsNeoPixelNumSlider);
+//    DynamicJsonDocument settings = xtouch_filesystem_readJson(SD, xtouch_paths_settings);
+//    settings["neoPixelNum"] = value;
+//    xTouchConfig.xTouchNeoPixelNumValue = value;
+//    xtouch_filesystem_writeJson(SD, xtouch_paths_settings, settings);
+//    xtouch_neopixel_set_num(value);
+//}
+
+void xtouch_events_onNeoPixelBlightnessSet(lv_msg_t *m)
+{
+    int32_t value = lv_slider_get_value(ui_settingsNeoPixelBlightnessSlider);
+    DynamicJsonDocument settings = xtouch_filesystem_readJson(SD, xtouch_paths_settings);
+    settings["neoPixelBlightness"] = value;
+    xTouchConfig.xTouchNeoPixelBlightnessValue = value;
+    xtouch_filesystem_writeJson(SD, xtouch_paths_settings, settings);
+    xtouch_neopixel_set_brightness(value);
+}
+
 void xtouch_events_onTFTInvert(lv_msg_t *m)
 {
     bool value = lv_obj_has_state(ui_settingsTFTInvertSwitch, LV_STATE_CHECKED);
@@ -130,6 +150,8 @@ void xtouch_setupGlobalEvents()
     lv_msg_subscribe(XTOUCH_SETTINGS_BACKLIGHT_SET, (lv_msg_subscribe_cb_t)xtouch_events_onBackLightSet, NULL);
     lv_msg_subscribe(XTOUCH_SETTINGS_TFTOFF_SET, (lv_msg_subscribe_cb_t)xtouch_events_onTFTTimerSet, NULL);
     lv_msg_subscribe(XTOUCH_SETTINGS_LEDOFF_SET, (lv_msg_subscribe_cb_t)xtouch_events_onLEDOffTimerSet, NULL);
+    //lv_msg_subscribe(XTOUCH_SETTINGS_NEOPIXEL_NUM_SET, (lv_msg_subscribe_cb_t)xtouch_events_onNeoPixelNumSet, NULL);
+    lv_msg_subscribe(XTOUCH_SETTINGS_NEOPIXEL_SET, (lv_msg_subscribe_cb_t)xtouch_events_onNeoPixelBlightnessSet, NULL);
     lv_msg_subscribe(XTOUCH_SETTINGS_TFT_INVERT, (lv_msg_subscribe_cb_t)xtouch_events_onTFTInvert, NULL);
     lv_msg_subscribe(XTOUCH_SETTINGS_SAVE, (lv_msg_subscribe_cb_t)xtouch_events_onSettingsSave, NULL);
     lv_msg_subscribe(XTOUCH_SETTINGS_CHAMBER_TEMP, (lv_msg_subscribe_cb_t)xtouch_events_onChamberTempSwitch, NULL);

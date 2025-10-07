@@ -65,6 +65,10 @@ extern "C"
   lv_obj_t *ui_settingsTFTOFFValue;
   lv_obj_t *ui_settingsLEDOFFSlider;
   lv_obj_t *ui_settingsLEDOFFValue;
+  //lv_obj_t *ui_settingsNeoPixelNumSlider;
+  //lv_obj_t *ui_settingsNeoPixelNumValue;
+  lv_obj_t *ui_settingsNeoPixelBlightnessSlider;
+  lv_obj_t *ui_settingsNeoPixelBlightnessValue;
   lv_obj_t *ui_settingsTFTInvertSwitch;
   lv_obj_t *ui_settingsWOPSwitch;
   lv_obj_t *ui_settingsWDPSWitch;

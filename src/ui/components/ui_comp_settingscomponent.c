@@ -95,6 +95,51 @@ void ui_event_comp_settingsComponent_onLEDOFF(lv_event_t *e)
         lv_msg_send(XTOUCH_SETTINGS_LEDOFF_SET, NULL);
     }
 }
+//void ui_event_comp_settingsComponent_onNeoPixelNum(lv_event_t *e)
+//{
+//    lv_event_code_t event_code = lv_event_get_code(e);
+//    if (event_code == LV_EVENT_VALUE_CHANGED)
+//    {
+//        uint32_t value = lv_slider_get_value(ui_settingsNeoPixelNumSlider);
+//        lv_label_set_text_fmt(ui_settingsNeoPixelNumValue, "%dm", value);
+//        if (value < 100)
+//        {
+//            printf("ononNeoPixelNumLEDOFF OFFSIMBOLE");
+//            lv_label_set_text(ui_settingsNeoPixelNumValue, LV_SYMBOL_POWER);
+//        }
+//        else
+//        {
+//            lv_label_set_text_fmt(ui_settingsNeoPixelNumValue, "%d", value);
+//        }
+//    }
+//    if (event_code == LV_EVENT_RELEASED)
+//    {
+//        lv_msg_send(XTOUCH_SETTINGS_NEOPIXEL_NUM_SET, NULL);
+//    }
+//}
+
+void ui_event_comp_settingsComponent_onNeoPixelBlightness(lv_event_t *e)
+{
+    lv_event_code_t event_code = lv_event_get_code(e);
+    if (event_code == LV_EVENT_VALUE_CHANGED)
+    {
+        uint32_t value = lv_slider_get_value(ui_settingsNeoPixelBlightnessSlider);
+        lv_label_set_text_fmt(ui_settingsNeoPixelBlightnessValue, "%dm", value);
+        if (value < XTOUCH_LIGHT_MIN_SLEEP_TIME)
+        {
+            printf("onNeoPixelBlightness OFFSIMBOLE");
+            lv_label_set_text(ui_settingsNeoPixelBlightnessValue, LV_SYMBOL_POWER);
+        }
+        else
+        {
+            lv_label_set_text_fmt(ui_settingsNeoPixelBlightnessValue, "%d", value);
+        }
+    }
+    if (event_code == LV_EVENT_RELEASED)
+    {
+        lv_msg_send(XTOUCH_SETTINGS_NEOPIXEL_SET, NULL);
+    }
+}
 
 void ui_event_comp_settingsComponent_onWOP(lv_event_t *e)
 {
@@ -556,6 +601,134 @@ lv_obj_t *ui_settingsComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_pad_top(ui_settingsLEDOFFValue, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_bottom(ui_settingsLEDOFFValue, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
 
+    lv_obj_t *cui_neoPixelTitle;
+    cui_neoPixelTitle = lv_label_create(cui_settingsComponent);
+    lv_obj_set_width(cui_neoPixelTitle, lv_pct(100));
+    lv_obj_set_height(cui_neoPixelTitle, LV_SIZE_CONTENT); /// 40
+    lv_label_set_text(cui_neoPixelTitle, LV_SYMBOL_LIST " NeoPixel(Optional)");
+    lv_obj_set_scrollbar_mode(cui_neoPixelTitle, LV_SCROLLBAR_MODE_OFF);
+    lv_obj_set_style_text_font(cui_neoPixelTitle, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_left(cui_neoPixelTitle, 16, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(cui_neoPixelTitle, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_top(cui_neoPixelTitle, 12, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_bottom(cui_neoPixelTitle, 12, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(cui_neoPixelTitle, lv_color_hex(0x333333), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(cui_neoPixelTitle, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(cui_neoPixelTitle, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_radius(cui_neoPixelTitle, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_color(cui_neoPixelTitle, lv_color_hex(0xffffff), LV_PART_MAIN | LV_STATE_DEFAULT);
+
+
+    // lv_obj_t *cui_settingsNeoPixelNumPanel;
+    // cui_settingsNeoPixelNumPanel = lv_obj_create(cui_settingsComponent);
+    // lv_obj_set_width(cui_settingsNeoPixelNumPanel, lv_pct(100));
+    // lv_obj_set_height(cui_settingsNeoPixelNumPanel, 70);
+    // lv_obj_set_flex_flow(cui_settingsNeoPixelNumPanel, LV_FLEX_FLOW_ROW);
+    // lv_obj_set_flex_align(cui_settingsNeoPixelNumPanel, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    // lv_obj_set_style_radius(cui_settingsNeoPixelNumPanel, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
+    // lv_obj_set_style_bg_color(cui_settingsNeoPixelNumPanel, lv_color_hex(0x222222), LV_PART_MAIN | LV_STATE_DEFAULT);
+    // lv_obj_set_style_bg_opa(cui_settingsNeoPixelNumPanel, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    // lv_obj_set_style_border_width(cui_settingsNeoPixelNumPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    // lv_obj_set_style_pad_left(cui_settingsNeoPixelNumPanel, 16, LV_PART_MAIN | LV_STATE_DEFAULT);
+    // lv_obj_set_style_pad_right(cui_settingsNeoPixelNumPanel, 16, LV_PART_MAIN | LV_STATE_DEFAULT);
+    // lv_obj_set_style_pad_top(cui_settingsNeoPixelNumPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    // lv_obj_set_style_pad_bottom(cui_settingsNeoPixelNumPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    // lv_obj_t *cui_settingsNeoPixelNumPanelLabel;
+    // cui_settingsNeoPixelNumPanelLabel = lv_label_create(cui_settingsNeoPixelNumPanel);
+    // lv_obj_set_width(cui_settingsNeoPixelNumPanelLabel, LV_SIZE_CONTENT);  /// 1
+    // lv_obj_set_height(cui_settingsNeoPixelNumPanelLabel, LV_SIZE_CONTENT); /// 1
+    // lv_label_set_text(cui_settingsNeoPixelNumPanelLabel, "Number of LEDs");
+    // lv_obj_set_style_text_font(cui_settingsNeoPixelNumPanelLabel, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
+    // lv_obj_set_style_pad_left(cui_settingsNeoPixelNumPanelLabel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    // lv_obj_set_style_pad_right(cui_settingsNeoPixelNumPanelLabel, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
+    // lv_obj_set_style_pad_top(cui_settingsNeoPixelNumPanelLabel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    // lv_obj_set_style_pad_bottom(cui_settingsNeoPixelNumPanelLabel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    // ui_settingsNeoPixelNumSlider = lv_slider_create(cui_settingsNeoPixelNumPanel);
+    // lv_slider_set_range(ui_settingsNeoPixelNumSlider, 5, 100);
+    // lv_slider_set_value(ui_settingsNeoPixelNumSlider, xTouchConfig.xTouchNeoPixelNumValue, LV_ANIM_OFF);
+    // lv_obj_set_height(ui_settingsNeoPixelNumSlider, 10);
+    // lv_obj_set_flex_grow(ui_settingsNeoPixelNumSlider, 1);
+    // lv_obj_set_x(ui_settingsNeoPixelNumSlider, 9);
+    // lv_obj_set_y(ui_settingsNeoPixelNumSlider, 28);
+    // lv_obj_set_style_bg_color(ui_settingsNeoPixelNumSlider, lv_color_hex(0x333333), LV_PART_MAIN | LV_STATE_DEFAULT);
+    // lv_obj_set_style_bg_opa(ui_settingsNeoPixelNumSlider, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    // lv_obj_set_style_bg_color(ui_settingsNeoPixelNumSlider, lv_color_hex(0x00FF00), LV_PART_INDICATOR | LV_STATE_DEFAULT);
+    // lv_obj_set_style_bg_opa(ui_settingsNeoPixelNumSlider, 255, LV_PART_INDICATOR | LV_STATE_DEFAULT);
+
+    // lv_obj_set_style_bg_color(ui_settingsNeoPixelNumSlider, lv_color_hex(0xFFFFFF), LV_PART_KNOB | LV_STATE_DEFAULT);
+    // lv_obj_set_style_bg_opa(ui_settingsNeoPixelNumSlider, 255, LV_PART_KNOB | LV_STATE_DEFAULT);
+
+    // ui_settingsNeoPixelNumValue = lv_label_create(cui_settingsNeoPixelNumPanel);
+    // lv_obj_set_width(ui_settingsNeoPixelNumValue, LV_SIZE_CONTENT);  /// 1
+    // lv_obj_set_height(ui_settingsNeoPixelNumValue, LV_SIZE_CONTENT); /// 1
+
+    // int32_t value4 = lv_slider_get_value(ui_settingsNeoPixelNumSlider);
+    // lv_label_set_text_fmt(ui_settingsNeoPixelNumValue, value4 < 100 ? LV_SYMBOL_POWER : "%d", value4);
+    // lv_obj_set_style_text_font(ui_settingsNeoPixelNumValue, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
+    // lv_obj_set_style_pad_left(ui_settingsNeoPixelNumValue, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
+    // lv_obj_set_style_pad_right(ui_settingsNeoPixelNumValue, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    // lv_obj_set_style_pad_top(ui_settingsNeoPixelNumValue, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    // lv_obj_set_style_pad_bottom(ui_settingsNeoPixelNumValue, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    lv_obj_t *cui_settingsNeoPixelPanel;
+    cui_settingsNeoPixelPanel = lv_obj_create(cui_settingsComponent);
+    lv_obj_set_width(cui_settingsNeoPixelPanel, lv_pct(100));
+    lv_obj_set_height(cui_settingsNeoPixelPanel, 70);
+    lv_obj_set_flex_flow(cui_settingsNeoPixelPanel, LV_FLEX_FLOW_ROW);
+    lv_obj_set_flex_align(cui_settingsNeoPixelPanel, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_set_style_radius(cui_settingsNeoPixelPanel, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(cui_settingsNeoPixelPanel, lv_color_hex(0x222222), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(cui_settingsNeoPixelPanel, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(cui_settingsNeoPixelPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_left(cui_settingsNeoPixelPanel, 16, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(cui_settingsNeoPixelPanel, 16, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_top(cui_settingsNeoPixelPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_bottom(cui_settingsNeoPixelPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    lv_obj_t *cui_settingsNeoPixelPanelLabel;
+    cui_settingsNeoPixelPanelLabel = lv_label_create(cui_settingsNeoPixelPanel);
+    lv_obj_set_width(cui_settingsNeoPixelPanelLabel, LV_SIZE_CONTENT);  /// 1
+    lv_obj_set_height(cui_settingsNeoPixelPanelLabel, LV_SIZE_CONTENT); /// 1
+    lv_label_set_text(cui_settingsNeoPixelPanelLabel, "Blightness");
+    lv_obj_set_style_text_font(cui_settingsNeoPixelPanelLabel, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_left(cui_settingsNeoPixelPanelLabel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(cui_settingsNeoPixelPanelLabel, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_top(cui_settingsNeoPixelPanelLabel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_bottom(cui_settingsNeoPixelPanelLabel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    ui_settingsNeoPixelBlightnessSlider = lv_slider_create(cui_settingsNeoPixelPanel);
+    lv_slider_set_range(ui_settingsNeoPixelBlightnessSlider, 4, 255);
+    lv_slider_set_value(ui_settingsNeoPixelBlightnessSlider, xTouchConfig.xTouchNeoPixelBlightnessValue, LV_ANIM_OFF);
+    lv_obj_set_height(ui_settingsNeoPixelBlightnessSlider, 10);
+    lv_obj_set_flex_grow(ui_settingsNeoPixelBlightnessSlider, 1);
+    lv_obj_set_x(ui_settingsNeoPixelBlightnessSlider, 9);
+    lv_obj_set_y(ui_settingsNeoPixelBlightnessSlider, 28);
+    lv_obj_set_style_bg_color(ui_settingsNeoPixelBlightnessSlider, lv_color_hex(0x333333), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(ui_settingsNeoPixelBlightnessSlider, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    lv_obj_set_style_bg_color(ui_settingsNeoPixelBlightnessSlider, lv_color_hex(0x00FF00), LV_PART_INDICATOR | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(ui_settingsNeoPixelBlightnessSlider, 255, LV_PART_INDICATOR | LV_STATE_DEFAULT);
+
+    lv_obj_set_style_bg_color(ui_settingsNeoPixelBlightnessSlider, lv_color_hex(0xFFFFFF), LV_PART_KNOB | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(ui_settingsNeoPixelBlightnessSlider, 255, LV_PART_KNOB | LV_STATE_DEFAULT);
+
+    ui_settingsNeoPixelBlightnessValue = lv_label_create(cui_settingsNeoPixelPanel);
+    lv_obj_set_width(ui_settingsNeoPixelBlightnessValue, LV_SIZE_CONTENT);  /// 1
+    lv_obj_set_height(ui_settingsNeoPixelBlightnessValue, LV_SIZE_CONTENT); /// 1
+
+    int32_t value3 = lv_slider_get_value(ui_settingsNeoPixelBlightnessSlider);
+    lv_label_set_text_fmt(ui_settingsNeoPixelBlightnessValue, value3 < XTOUCH_LIGHT_MIN_SLEEP_TIME ? LV_SYMBOL_POWER : "%d", value3);
+    lv_obj_set_style_text_font(ui_settingsNeoPixelBlightnessValue, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_left(ui_settingsNeoPixelBlightnessValue, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(ui_settingsNeoPixelBlightnessValue, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_top(ui_settingsNeoPixelBlightnessValue, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_bottom(ui_settingsNeoPixelBlightnessValue, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+
+
     lv_obj_t *cui_pairingTitle;
     cui_pairingTitle = lv_label_create(cui_settingsComponent);
     lv_obj_set_width(cui_pairingTitle, lv_pct(100));
@@ -855,6 +1028,15 @@ lv_obj_t *ui_settingsComponent_create(lv_obj_t *comp_parent)
     children[UI_COMP_SETTINGSCOMPONENT_LEDOFF_LABEL] = cui_settingsLEDOFFPanelLabel;
     children[UI_COMP_SETTINGSCOMPONENT_LEDOFF_SLIDER] = ui_settingsLEDOFFSlider;
     children[UI_COMP_SETTINGSCOMPONENT_LEDOFF_VALUE] = ui_settingsLEDOFFValue;
+    children[UI_COMP_SETTINGSCOMPONENT_NEOPIXEL_NUM] = cui_settingsNeoPixelNumPanel;
+    children[UI_COMP_SETTINGSCOMPONENT_NEOPIXEL_NUM_LABEL] = cui_settingsNeoPixelNumPanelLabel;
+    children[UI_COMP_SETTINGSCOMPONENT_NEOPIXEL_NUM_SLIDER] = ui_settingsNeoPixelNumSlider;
+    children[UI_COMP_SETTINGSCOMPONENT_NEOPIXEL_NUM_VALUE] = ui_settingsNeoPixelNumValue;
+
+    children[UI_COMP_SETTINGSCOMPONENT_NEOPIXEL] = cui_settingsNeoPixelPanel;
+    children[UI_COMP_SETTINGSCOMPONENT_NEOPIXEL_LABEL] = cui_settingsNeoPixelPanelLabel;
+    children[UI_COMP_SETTINGSCOMPONENT_NEOPIXEL_SLIDER] = ui_settingsNeoPixelBlightnessSlider;
+    children[UI_COMP_SETTINGSCOMPONENT_NEOPIXEL_VALUE] = ui_settingsNeoPixelBlightnessValue;
     children[UI_COMP_SETTINGSCOMPONENT_PAIR_TITLE] = cui_pairingTitle;
     children[UI_COMP_SETTINGSCOMPONENT_UNPAIRBUTTON] = cui_unpairButton;
     children[UI_COMP_SETTINGSCOMPONENT_DEVICE_TITLE] = cui_deviceTitle;
@@ -882,6 +1064,10 @@ lv_obj_t *ui_settingsComponent_create(lv_obj_t *comp_parent)
 
     lv_obj_add_event_cb(ui_settingsTFTOFFSlider, ui_event_comp_settingsComponent_onTFTOFF, LV_EVENT_ALL, NULL);
     lv_obj_add_event_cb(ui_settingsLEDOFFSlider, ui_event_comp_settingsComponent_onLEDOFF, LV_EVENT_ALL, NULL);
+
+    lv_obj_add_event_cb(ui_settingsNeoPixelNumSlider, ui_event_comp_settingsComponent_onNeoPixelNum, LV_EVENT_ALL, NULL);
+    lv_obj_add_event_cb(ui_settingsNeoPixelBlightnessSlider, ui_event_comp_settingsComponent_onNeoPixelBlightness, LV_EVENT_ALL, NULL);
+
 
     lv_obj_add_event_cb(ui_settingsBackLightPanelSlider, ui_event_comp_settingsComponent_onBackLight, LV_EVENT_ALL, NULL);
     lv_obj_add_event_cb(ui_settingsWOPSwitch, ui_event_comp_settingsComponent_onWOP, LV_EVENT_VALUE_CHANGED, NULL);

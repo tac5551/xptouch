@@ -6,6 +6,7 @@ int hms_error_length = 128;
 const char *hms_error_keys[] PROGMEM = {
   "0500010000020002",
   "12FF200000030007",
+  "0C00020000010005",
   "0500020000020008",
   "0C0003000003000B",
   "0500030000020055",
@@ -125,7 +126,6 @@ const char *hms_error_keys[] PROGMEM = {
   "0300400000020001",
   "0500020000020007",
   "0300120000020001",
-  "0C00020000010005",
   "0300030000020002",
   "050003000001000A",
   "0500040000010001",
@@ -137,6 +137,7 @@ const char *hms_error_keys[] PROGMEM = {
 const char *hms_error_values[] PROGMEM = {
   "Liveview camera is not connected. Please check the hardware and cable connections.",
   "Checking the filament location of all AMS slots; please wait.",
+  "A new Micro Lidar was detected. Please calibrate it on the Calibration page before use.",
   "Time synchronization failed",
   "Inspecting the first layer: please wait a moment.",
   "User information has expired, please log in again.",
@@ -256,7 +257,6 @@ const char *hms_error_values[] PROGMEM = {
   "Data transmission over the serial port is abnormal; the software system may be faulty.",
   "Liveview service login failed; please check your network connection.",
   "The front cover of the toolhead fell off.",
-  "A new Micro Lidar was detected. Please calibrate it on the Calibration page before use.",
   "The hotend cooling fan is running slowly. It may be obstructed. Please check for debris and clean if necessary.",
   "System state is abnormal; please restore to factory settings.",
   "Failed to download print job; please check your network connection.",
@@ -270,6 +270,8 @@ int device_error_length = 115;
 
 const char *device_error_keys[] PROGMEM = {
   "07FF8007",
+  "0500803C",
+  "0300400D",
   "0500400E",
   "0502C014",
   "050240A3",
@@ -299,7 +301,6 @@ const char *device_error_keys[] PROGMEM = {
   "03004001",
   "1000C002",
   "0300800A",
-  "0500403C",
   "0500C010",
   "0300800C",
   "0500402D",
@@ -338,7 +339,6 @@ const char *device_error_keys[] PROGMEM = {
   "05004038",
   "05014035",
   "10014002",
-  "0300400D",
   "03008009",
   "05004001",
   "03008002",
@@ -388,6 +388,8 @@ const char *device_error_keys[] PROGMEM = {
 
 const char *device_error_values[] PROGMEM = {
   "Please observe the nozzle. If the filament has been extruded, select \"Done\"; if it has not, please push the filament forward slightly, and then select \"Retry\".",
+  "The current nozzle setting does not match the slicing file. Continuing to print may affect print quality. It is recommended to re-slice before starting the print.",
+  "Resume failed after power loss.",
   "Printing was cancelled.",
   "The AMS Remaining Filament Estimation is enabled by default and cannot be disabled.",
   "AMS(or AMS lite) C communication is abnormal. Please reconnect the module cable or restart the printer.",
@@ -417,7 +419,6 @@ const char *device_error_values[] PROGMEM = {
   "The printer timed out waiting for the nozzle to cool down before homing.",
   "Printing CF material with stainless steel may cause nozzle damage.",
   "A Filament pile-up was detected by AI Print Monitoring. Please clean filament from the waste chute.",
-  "The nozzle setup does not match the slicing file. Please initiate the print after re-slicing.",
   "MicroSD Card read/write exception: please reinsert or replace the MicroSD Card.",
   "Skipped step detected: auto-recover complete; please resume print and check if there are any layer shift problems.",
   "System exception",
@@ -456,7 +457,6 @@ const char *device_error_values[] PROGMEM = {
   "The nozzle diameter in sliced file is not consistent with the current nozzle setting. This file can't be printed.",
   "The device is in the process of binding and cannot respond to new binding requests.",
   "Timelapse is not supported as the Print sequence is set to \"By object\".",
-  "Resume failed after power loss.",
   "Heatbed temperature malfunction",
   "Failed to connect to Bambu Cloud. Please check your network connection.",
   "First layer defects were detected by the Micro Lidar. Please check the quality of the printed model before continuing your print.",
