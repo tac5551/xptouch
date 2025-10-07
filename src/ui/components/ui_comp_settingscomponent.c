@@ -1028,10 +1028,10 @@ lv_obj_t *ui_settingsComponent_create(lv_obj_t *comp_parent)
     children[UI_COMP_SETTINGSCOMPONENT_LEDOFF_LABEL] = cui_settingsLEDOFFPanelLabel;
     children[UI_COMP_SETTINGSCOMPONENT_LEDOFF_SLIDER] = ui_settingsLEDOFFSlider;
     children[UI_COMP_SETTINGSCOMPONENT_LEDOFF_VALUE] = ui_settingsLEDOFFValue;
-    children[UI_COMP_SETTINGSCOMPONENT_NEOPIXEL_NUM] = cui_settingsNeoPixelNumPanel;
-    children[UI_COMP_SETTINGSCOMPONENT_NEOPIXEL_NUM_LABEL] = cui_settingsNeoPixelNumPanelLabel;
-    children[UI_COMP_SETTINGSCOMPONENT_NEOPIXEL_NUM_SLIDER] = ui_settingsNeoPixelNumSlider;
-    children[UI_COMP_SETTINGSCOMPONENT_NEOPIXEL_NUM_VALUE] = ui_settingsNeoPixelNumValue;
+    // children[UI_COMP_SETTINGSCOMPONENT_NEOPIXEL_NUM] = cui_settingsNeoPixelNumPanel;
+    // children[UI_COMP_SETTINGSCOMPONENT_NEOPIXEL_NUM_LABEL] = cui_settingsNeoPixelNumPanelLabel;
+    // children[UI_COMP_SETTINGSCOMPONENT_NEOPIXEL_NUM_SLIDER] = ui_settingsNeoPixelNumSlider;
+    // children[UI_COMP_SETTINGSCOMPONENT_NEOPIXEL_NUM_VALUE] = ui_settingsNeoPixelNumValue;
 
     children[UI_COMP_SETTINGSCOMPONENT_NEOPIXEL] = cui_settingsNeoPixelPanel;
     children[UI_COMP_SETTINGSCOMPONENT_NEOPIXEL_LABEL] = cui_settingsNeoPixelPanelLabel;
@@ -1065,7 +1065,7 @@ lv_obj_t *ui_settingsComponent_create(lv_obj_t *comp_parent)
     lv_obj_add_event_cb(ui_settingsTFTOFFSlider, ui_event_comp_settingsComponent_onTFTOFF, LV_EVENT_ALL, NULL);
     lv_obj_add_event_cb(ui_settingsLEDOFFSlider, ui_event_comp_settingsComponent_onLEDOFF, LV_EVENT_ALL, NULL);
 
-    lv_obj_add_event_cb(ui_settingsNeoPixelNumSlider, ui_event_comp_settingsComponent_onNeoPixelNum, LV_EVENT_ALL, NULL);
+    ////lv_obj_add_event_cb(ui_settingsNeoPixelNumSlider, ui_event_comp_settingsComponent_onNeoPixelNum, LV_EVENT_ALL, NULL);
     lv_obj_add_event_cb(ui_settingsNeoPixelBlightnessSlider, ui_event_comp_settingsComponent_onNeoPixelBlightness, LV_EVENT_ALL, NULL);
 
 
