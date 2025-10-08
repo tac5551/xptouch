@@ -31,7 +31,9 @@ void xtouch_screen_setBackLedOff()
 void xtouch_screen_wakeUp()
 {
     ConsoleInfo.println("[xPTouch][SCREEN] Screen Reset");
-    lv_timer_reset(xtouch_screen_onScreenOffTimer);
+    if (xtouch_screen_onScreenOffTimer != NULL) { // NULLチェックを追加
+        lv_timer_reset(xtouch_screen_onScreenOffTimer);
+    }
     xtouch_screen_touchFromPowerOff = false;
     loadScreen(0);
     xtouch_screen_setBrightness(xTouchConfig.xTouchBacklightLevel);
@@ -175,7 +177,10 @@ void xtouch_screen_touchRead(lv_indev_drv_t *indev_driver, lv_indev_data_t *data
     bool touched = tft.getTouch(&touchX, &touchY);
     if (touched)
     {
-        lv_timer_reset(xtouch_screen_onScreenOffTimer);
+        if (xtouch_screen_onScreenOffTimer != NULL) { // NULLチェック
+            lv_timer_reset(xtouch_screen_onScreenOffTimer);
+        }
+
         // dont pass first touch after power on
         if (xtouch_screen_touchFromPowerOff)
         {
