@@ -5,7 +5,9 @@ int hms_error_length = 128;
 
 const char *hms_error_keys[] PROGMEM = {
   "0500010000020002",
+  "0C0003000002000C",
   "12FF200000030007",
+  "0C0003000001000A",
   "0C00020000010005",
   "0500020000020008",
   "0C0003000003000B",
@@ -98,12 +100,10 @@ const char *hms_error_keys[] PROGMEM = {
   "0300900000010010",
   "0500030000010002",
   "0300940000030001",
-  "0C0003000001000A",
   "0300200000010001",
   "0500040000010002",
   "0C00030000020005",
   "0300040000020001",
-  "0C0003000002000C",
   "0C00010000020007",
   "0C00030000020001",
   "03001B0000010003",
@@ -136,7 +136,9 @@ const char *hms_error_keys[] PROGMEM = {
 
 const char *hms_error_values[] PROGMEM = {
   "Liveview camera is not connected. Please check the hardware and cable connections.",
+  "The build plate localization marker was not detected. Please check if the build plate is aligned correctly",
   "Checking the filament location of all AMS slots; please wait.",
+  "Your printer is in factory mode. Please contact Technical Support",
   "A new Micro Lidar was detected. Please calibrate it on the Calibration page before use.",
   "Time synchronization failed",
   "Inspecting the first layer: please wait a moment.",
@@ -229,12 +231,10 @@ const char *hms_error_values[] PROGMEM = {
   "The communication of chamber temperature controller is abnormal.",
   "The toolhead is malfunctioning. Please restart the device.",
   "Chamber cooling may be too slow. You can open the front door or top cover to help cooling if the air in the chamber is non-toxic.",
-  "Your printer is in factory mode. Please contact Technical Support.",
   "X-axis homing abnormal: please check if the toolhead is stuck or the carbon rod resistance is too high.",
   "Failed to report print state; please check your network connection.",
   "First layer inspection timed out abnormally, and the current results may be inaccurate.",
   "The speed of the part cooling fan is too slow or stopped. It may be stuck, or the connector may not be plugged in properly.",
-  "The build plate localization marker was not detected. Please check if the build plate is aligned correctly.",
   "Micro Lidar laser parameters have drifted. Please re-calibrate your printer.",
   "Filament exposure metering failed because laser reflection is too weak on this material. First layer inspection may be inaccurate.",
   "The heatbed acceleration sensor detected unexpected continuous force. The sensor may be stuck, or the analog front end may be broken.",
@@ -270,6 +270,7 @@ int device_error_length = 115;
 
 const char *device_error_keys[] PROGMEM = {
   "07FF8007",
+  "0C00402C",
   "0500803C",
   "0300400D",
   "0500400E",
@@ -366,7 +367,6 @@ const char *device_error_keys[] PROGMEM = {
   "10014001",
   "07FF8004",
   "07FF8011",
-  "0C00402C",
   "03008005",
   "07FFC008",
   "0500400A",
@@ -388,6 +388,7 @@ const char *device_error_keys[] PROGMEM = {
 
 const char *device_error_values[] PROGMEM = {
   "Please observe the nozzle. If the filament has been extruded, select \"Done\"; if it has not, please push the filament forward slightly, and then select \"Retry\".",
+  "Device data link error. Please reboot the printer",
   "The current nozzle setting does not match the slicing file. Continuing to print may affect print quality. It is recommended to re-slice before starting the print.",
   "Resume failed after power loss.",
   "Printing was cancelled.",
@@ -484,7 +485,6 @@ const char *device_error_values[] PROGMEM = {
   "Timelapse is not supported as Spiral Vase mode is enabled in slicing presets.",
   "Failed to pull back the filament from the toolhead to AMS. Please check whether the filament or the spool is stuck.",
   "External filament has run out; please load a new filament.",
-  "Device data link error. Please reboot the printer.",
   "Toolhead front cover fell off. Please remount the front cover and check to make sure your print is going okay.",
   "Please pull out the filament on the spool holder. If this message persists, please check to see if there is filament broken in the extruder. (Connect a PTFE tube if you are about to use an AMS)",
   "The file name is not supported. Please rename and restart the print job.",

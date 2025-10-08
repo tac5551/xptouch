@@ -119,8 +119,8 @@ void xtouch_touch_setup()
 
         while (tft.getTouch(&touchX, &touchY))
             ;
-        tft.drawFastHLine(screenWidth - 20, screenHeight - 10, 20, 0xFFFFFFU);
-        tft.drawFastVLine(screenWidth - 10, screenHeight - 20, 20, 0xFFFFFFU);
+        tft.drawFastHLine(screenHeight - 20, screenWidth - 10, 20, 0xFFFFFFU);
+        tft.drawFastVLine(screenHeight - 10, screenWidth - 20, 20, 0xFFFFFFU);
 
         while (!tft.getTouch(&touchX, &touchY))
             ;
@@ -128,8 +128,8 @@ void xtouch_touch_setup()
 
         x2 = touchX;
         y2 = touchY;
-        tft.drawFastHLine(screenWidth - 20, screenHeight - 10, 20, 0x000000U);
-        tft.drawFastVLine(screenWidth - 10, screenHeight - 20, 20, 0x000000U);
+        tft.drawFastHLine(screenHeight - 20, screenWidth - 10, 20, 0x000000U);
+        tft.drawFastVLine(screenHeight - 10, screenWidth - 20, 20, 0x000000U);
 
         int16_t xDist = screenWidth - 40;
         int16_t yDist = screenHeight - 40;

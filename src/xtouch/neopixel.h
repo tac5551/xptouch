@@ -96,6 +96,7 @@ void xtouch_neo_pixel_timer_init()
 
 void xtouch_neo_pixel_init(void)
 {
+#if defined(__XTOUCH_SCREEN_28__)
     lgfx::boards::board_t board = tft.getBoard();
     if (board == lgfx::boards::board_t::board_ESP32_ESP32E)
         return;
@@ -109,7 +110,9 @@ void xtouch_neo_pixel_init(void)
     {
         strip.setPin(27);
     }
-
+#elif defined(__XTOUCH_SCREEN_50__)
+        strip.setPin(17);
+#endif
     strip.begin();
 
 }
@@ -121,9 +124,11 @@ void xtouch_neo_pixel_off()
 
 void xtouch_neo_pixel_on(int iRed, int iGreen, int iBlue)
 {
+#if defined(__XTOUCH_SCREEN_28__)
     lgfx::boards::board_t board = tft.getBoard();
     if (board == lgfx::boards::board_t::board_ESP32_ESP32E)
         return;
+#endif
     // ひとつづつつけていく
     for (int j = 0; j < NeoPixelCount; j++)
     {

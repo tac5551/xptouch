@@ -542,7 +542,7 @@ lv_obj_t *ui_settingsComponent_create(lv_obj_t *comp_parent)
     cui_ledTitle = lv_label_create(cui_settingsComponent);
     lv_obj_set_width(cui_ledTitle, lv_pct(100));
     lv_obj_set_height(cui_ledTitle, LV_SIZE_CONTENT); /// 40
-    lv_label_set_text(cui_ledTitle, LV_SYMBOL_IMAGE " LED");
+    lv_label_set_text(cui_ledTitle, LV_SYMBOL_IMAGE " CHAMBER LED");
     lv_obj_set_scrollbar_mode(cui_ledTitle, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_style_text_font(cui_ledTitle, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_left(cui_ledTitle, 16, LV_PART_MAIN | LV_STATE_DEFAULT);

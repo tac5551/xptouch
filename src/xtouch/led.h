@@ -27,7 +27,7 @@ void xtouch_led_set(int red, int green, int blue)
 void xtouch_led_init(void)
 {
     lgfx::boards::board_t board = tft.getBoard();
-
+#if defined(__XTOUCH_SCREEN_28__)
     if (board == lgfx::boards::board_t::board_Guition_ESP32_2432W328R || board == lgfx::boards::board_t::board_Guition_ESP32_2432W328C)
     {
         ConsoleDebug.println("LED GPIO 4, 16, 17");
@@ -42,7 +42,7 @@ void xtouch_led_init(void)
         led_green = 16;
         led_blue = 17;
     }
-
+#endif
     ConsoleDebug.println("XTOUCH_LED_RED: " + String(led_red) + " GREEN: " + String(led_green) + " BLUE: " + String(led_blue));
 
     // LED用GPIOの初期化とオフ設定

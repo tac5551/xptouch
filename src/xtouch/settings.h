@@ -37,8 +37,8 @@ void xtouch_settings_loadSettings()
         xTouchConfig.xTouchBacklightLevel = 128;
         xTouchConfig.xTouchTFTOFFValue = 15;
         xTouchConfig.xTouchLEDOffValue = 15;
-        xTouchConfig.xTouchNeoPixelBlightnessValue = 64;
-        xTouchConfig.xTouchNeoPixelNumValue = 10;
+        xTouchConfig.xTouchNeoPixelBlightnessValue = 50;
+        xTouchConfig.xTouchNeoPixelNumValue = 0;
         xTouchConfig.xTouchTFTInvert = false;
         xTouchConfig.xTouchOTAEnabled = false;
         xTouchConfig.xTouchWakeOnPrint = true;
