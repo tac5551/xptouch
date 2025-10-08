@@ -90,6 +90,7 @@ void xtouch_events_onNeoPixelNumSet(lv_msg_t *m)
    settings["neoPixelNum"] = value;
    xTouchConfig.xTouchNeoPixelNumValue = value;
    xtouch_neo_pixel_set_num(value);
+   xtouch_neo_pixel_reset_all();
    xtouch_filesystem_writeJson(SD, xtouch_paths_settings, settings);
 }
 

@@ -30,6 +30,7 @@ void xtouch_neo_pixel_set_status_timeout(int timeout);
 void xtouch_neo_pixel_control_timer_handler(lv_timer_t *timer);
 void xtouch_neo_pixel_set_brightness(int brightness);
 void xtouch_neo_pixel_set_num(int num);
+void xtouch_neo_pixel_reset_all();
 
 lv_timer_t *xtouch_neo_pixel_control_timer;
 bool xtouch_neo_pixel_control_started = false;
@@ -144,15 +145,16 @@ void xtouch_neo_pixel_set_num(int num)
     int backup = NeoPixelCount;
     NeoPixelCount = num;
 
-    // 範囲外を消灯
+}
 
-    for (int i = NeoPixelCount; i < PIXEL_COUNT; i++)
+void xtouch_neo_pixel_reset_all()
+{
+    for (int i = 0; i < PIXEL_COUNT; i++)
     {
         strip.setPixelColor(i, strip.Color(0, 0, 0));
     }
     strip.show();
 }
-
 void xtouch_neo_pixel_set_brightness(int brightness)
 {
     blightness_max = brightness;

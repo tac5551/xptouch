@@ -78,7 +78,7 @@ void xtouch_settings_loadSettings()
     xtouch_screen_setupTFTFlip();
     xtouch_screen_setBrightness(xTouchConfig.xTouchBacklightLevel);
     xtouch_neo_pixel_set_brightness(xTouchConfig.xTouchNeoPixelBlightnessValue);
-    //xtouch_neo_pixel_set_num(xTouchConfig.xTouchNeoPixelNumValue);
+    xtouch_neo_pixel_set_num(xTouchConfig.xTouchNeoPixelNumValue);
     xtouch_screen_invertColors();
 }
 
