@@ -162,7 +162,7 @@ extern "C"
         int xTouchBacklightLevel;
         int xTouchTFTOFFValue;
         int xTouchLEDOffValue;
-        //int xTouchNeoPixelNumValue;
+        int xTouchNeoPixelNumValue;
         int xTouchNeoPixelBlightnessValue;
         bool xTouchWakeOnPrint;
         bool xTouchWakeDuringPrint;

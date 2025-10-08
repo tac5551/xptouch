@@ -38,7 +38,7 @@ void xtouch_settings_loadSettings()
         xTouchConfig.xTouchTFTOFFValue = 15;
         xTouchConfig.xTouchLEDOffValue = 15;
         xTouchConfig.xTouchNeoPixelBlightnessValue = 64;
-        //xTouchConfig.xTouchNeoPixelNumValue = 10;
+        xTouchConfig.xTouchNeoPixelNumValue = 10;
         xTouchConfig.xTouchTFTInvert = false;
         xTouchConfig.xTouchOTAEnabled = false;
         xTouchConfig.xTouchWakeOnPrint = true;
@@ -53,7 +53,7 @@ void xtouch_settings_loadSettings()
     xTouchConfig.xTouchTFTOFFValue = settings.containsKey("tftOff") ? settings["tftOff"].as<int>() : 15;
     xTouchConfig.xTouchLEDOffValue = settings.containsKey("lightOff") ? settings["lightOff"].as<int>() : 15;
     xTouchConfig.xTouchNeoPixelBlightnessValue = settings.containsKey("neoPixelBlightness") ? settings["neoPixelBlightness"].as<int>() : 128;
-    //xTouchConfig.xTouchNeoPixelNumValue = settings.containsKey("neoPixelNum") ? settings["neoPixelNum"].as<int>() : 10;
+    xTouchConfig.xTouchNeoPixelNumValue = settings.containsKey("neoPixelNum") ? settings["neoPixelNum"].as<int>() : 10;
     xTouchConfig.xTouchTFTInvert = settings.containsKey("tftInvert") ? settings["tftInvert"].as<bool>() : false;
     xTouchConfig.xTouchOTAEnabled = settings.containsKey("ota") ? settings["ota"].as<bool>() : true;
     xTouchConfig.xTouchWakeOnPrint = settings.containsKey("wop") ? settings["wop"].as<bool>() : true;
@@ -77,8 +77,8 @@ void xtouch_settings_loadSettings()
 
     xtouch_screen_setupTFTFlip();
     xtouch_screen_setBrightness(xTouchConfig.xTouchBacklightLevel);
-    xtouch_neopixel_set_brightness(xTouchConfig.xTouchNeoPixelBlightnessValue);
-    //xtouch_neopixel_set_num(xTouchConfig.xTouchNeoPixelNumValue);
+    xtouch_neo_pixel_set_brightness(xTouchConfig.xTouchNeoPixelBlightnessValue);
+    //xtouch_neo_pixel_set_num(xTouchConfig.xTouchNeoPixelNumValue);
     xtouch_screen_invertColors();
 }
 

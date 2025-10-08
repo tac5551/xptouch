@@ -42,6 +42,7 @@ extern "C"
   void ui_accessCodeScreen_screen_init(void);
   void ui_printerPairScreen_screen_init(void);
   void ui_amsViewScreen_screen_init(void);
+  void ui_optionalScreen_screen_init(void);
 
   lv_obj_t *introScreen;
   lv_obj_t *introScreenIcon;
@@ -65,18 +66,27 @@ extern "C"
   lv_obj_t *ui_settingsTFTOFFValue;
   lv_obj_t *ui_settingsLEDOFFSlider;
   lv_obj_t *ui_settingsLEDOFFValue;
-  //lv_obj_t *ui_settingsNeoPixelNumSlider;
-  //lv_obj_t *ui_settingsNeoPixelNumValue;
-  lv_obj_t *ui_settingsNeoPixelBlightnessSlider;
-  lv_obj_t *ui_settingsNeoPixelBlightnessValue;
+  // lv_obj_t *ui_settingsNeoPixelNumSlider;
+  // lv_obj_t *ui_settingsNeoPixelNumValue;
+  // lv_obj_t *ui_settingsNeoPixelBlightnessSlider;
+  // lv_obj_t *ui_settingsNeoPixelBlightnessValue;
   lv_obj_t *ui_settingsTFTInvertSwitch;
   lv_obj_t *ui_settingsWOPSwitch;
   lv_obj_t *ui_settingsWDPSWitch;
   lv_obj_t *ui_settingsTFTFlipSwitch;
   lv_obj_t *ui_settings_auxFanSwitch;
   lv_obj_t *ui_settings_chamberFanSwitch;
-  lv_obj_t *ui_settings_chamberSensorSwitch;
+  // lv_obj_t *ui_settings_chamberSensorSwitch;
   lv_obj_t *ui_settings_otaSwitch;
+  
+  lv_obj_t *ui_optionalScreen;
+  lv_obj_t *ui_optionalComponent;
+  lv_obj_t *ui_optionalNeoPixelNumSlider;
+  lv_obj_t *ui_optionalNeoPixelNumValue;
+  lv_obj_t *ui_optionalNeoPixelBlightnessSlider;
+  lv_obj_t *ui_optionalNeoPixelBlightnessValue;
+  lv_obj_t *ui_optional_chamberSensorSwitch;
+
   lv_obj_t *ui_confirmComponent; // layertop
   lv_obj_t *ui_hmsComponent;     // layertop
   lv_obj_t *ui_mainStatusComponent;

@@ -106,6 +106,11 @@ void onSettingsOtaUpdateNow(lv_event_t *e)
     ui_confirmPanel_show(LV_SYMBOL_WARNING " UPDATE", onSettingsOtaUpdateNowOnYES);
 }
 
+void onSettingsMoveOptional(lv_event_t *e)
+{
+    loadScreen(8);
+}
+
 void onSettingsResetDevice(lv_event_t *e)
 {
     ui_confirmPanel_show(LV_SYMBOL_WARNING " REBOOT", onSettingsResetDeviceConfirm);
@@ -141,10 +146,11 @@ void onSettingsChamberFan(lv_event_t *e)
     lv_msg_send(XTOUCH_SETTINGS_SAVE, NULL);
 }
 
-void onSettingsChamberSensor(lv_event_t *e)
+//void onSettingsChamberSensor(lv_event_t *e)
+void onOptionalChamberSensor(lv_event_t *e)
 {
     xTouchConfig.xTouchChamberSensorEnabled = !xTouchConfig.xTouchChamberSensorEnabled;
-    lv_msg_send(XTOUCH_SETTINGS_CHAMBER_TEMP, NULL);
+    lv_msg_send(XTOUCH_OPTIONAL_CHAMBER_TEMP, NULL);
     lv_msg_send(XTOUCH_SETTINGS_SAVE, NULL);
 }
 

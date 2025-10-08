@@ -22,6 +22,7 @@
 #endif
 
 #include "xtouch/cloud.hpp"
+#include "xtouch/neopixel.h"
 #include "xtouch/led.h"
 #include "xtouch/settings.h"
 #include "xtouch/net.h"
@@ -100,7 +101,7 @@ void setup()
   xtouch_chamber_timer_init();
   xtouch_screen_startScreenTimer();
 
-  xtouch_led_timer_init();
+  xtouch_neo_pixel_timer_init();
 }
 
 void loop()

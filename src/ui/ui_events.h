@@ -46,11 +46,13 @@ extern "C"
 
     /* Settings */
     void onSettingsOtaUpdateNow(lv_event_t *e);
+    void onSettingsMoveOptional(lv_event_t *e);
     void onSettingsResetDevice(lv_event_t *e);
     void onSettingsClearAccesCodeCache(lv_event_t *e);
     void onSettingsAuxFan(lv_event_t *e);
     void onSettingsChamberFan(lv_event_t *e);
-    void onSettingsChamberSensor(lv_event_t *e);
+    //void onSettingsChamberSensor(lv_event_t *e);
+    void onOptionalChamberSensor(lv_event_t *e);
     void onSettingsTFTFlip(lv_event_t *e);
     void onSettingsUnPair(lv_event_t *e);
     void onSettingsOTA(lv_event_t *e);
