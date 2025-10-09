@@ -24,8 +24,8 @@ void xtouch_screen_setBrightness(byte brightness)
 
 void xtouch_screen_setBackLedOff()
 {
-    tft.setBrightness(0);
-    xtouch_screen_touchFromPowerOff = true;
+     tft.setBrightness(0);
+     xtouch_screen_touchFromPowerOff = true;
 }
 
 void xtouch_screen_wakeUp()

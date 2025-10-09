@@ -96,6 +96,10 @@ void loadScreen(int screen)
         ui_optionalScreen_screen_init();
         lv_disp_load_scr(ui_optionalScreen);
         break;
+    case 9:
+        ui_characterScreen_screen_init();
+        lv_disp_load_scr(ui_characterScreen);
+        break;
     }
 
     fillScreenData(screen);

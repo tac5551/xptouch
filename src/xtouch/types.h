@@ -150,8 +150,6 @@ extern "C"
     {
         bool xTouchAuxFanEnabled;
         bool xTouchChamberFanEnabled;
-        bool xTouchChamberSensorEnabled;
-        int xTouchChamberSensorReadingDiff;
         bool xTouchOTAEnabled;
         bool xTouchTFTFlip;
         bool xTouchTFTInvert;
@@ -162,11 +160,17 @@ extern "C"
         int xTouchBacklightLevel;
         int xTouchTFTOFFValue;
         int xTouchLEDOffValue;
-        int xTouchNeoPixelNumValue;
-        int xTouchNeoPixelBlightnessValue;
         bool xTouchWakeOnPrint;
         bool xTouchWakeDuringPrint;
         int currentScreenIndex;
+ 
+        bool xTouchStackChanEnabled;
+ 
+        int xTouchNeoPixelNumValue;
+        int xTouchNeoPixelBlightnessValue;
+ 
+        bool xTouchChamberSensorEnabled;
+        int xTouchChamberSensorReadingDiff;
     } XTouchConfig;
 
     XTouchConfig xTouchConfig;

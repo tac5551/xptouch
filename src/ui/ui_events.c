@@ -146,12 +146,25 @@ void onSettingsChamberFan(lv_event_t *e)
     lv_msg_send(XTOUCH_SETTINGS_SAVE, NULL);
 }
 
-//void onSettingsChamberSensor(lv_event_t *e)
+
 void onOptionalChamberSensor(lv_event_t *e)
 {
     xTouchConfig.xTouchChamberSensorEnabled = !xTouchConfig.xTouchChamberSensorEnabled;
     lv_msg_send(XTOUCH_OPTIONAL_CHAMBER_TEMP, NULL);
     lv_msg_send(XTOUCH_SETTINGS_SAVE, NULL);
+}
+
+void onOptionalStackChan(lv_event_t *e)
+{
+    xTouchConfig.xTouchStackChanEnabled = !xTouchConfig.xTouchStackChanEnabled;
+    lv_msg_send(XTOUCH_SETTINGS_SAVE, NULL);
+}
+
+
+void onTouchStackChan(lv_event_t *e)
+{
+    //goto home
+    loadScreen(0);
 }
 
 void onSettingsTFTFlipConfirm()

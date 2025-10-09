@@ -5,12 +5,17 @@ void xtouch_settings_save(bool onlyRoot = false)
 {
     DynamicJsonDocument doc(256);
     doc["backlight"] = xTouchConfig.xTouchBacklightLevel;
+    doc["lightOff"] = xTouchConfig.xTouchLEDOffValue; 
     doc["tftOff"] = xTouchConfig.xTouchTFTOFFValue;
     doc["tftInvert"] = xTouchConfig.xTouchTFTInvert;
     doc["ota"] = xTouchConfig.xTouchOTAEnabled;
     doc["wop"] = xTouchConfig.xTouchWakeOnPrint;
     doc["wdp"] = xTouchConfig.xTouchWakeDuringPrint;
     doc["chamberTempDiff"] = xTouchConfig.xTouchChamberSensorReadingDiff;
+
+    doc["stackChanEnabled"] = xTouchConfig.xTouchStackChanEnabled;
+    doc["neoPixelBlightness"]= xTouchConfig.xTouchNeoPixelBlightnessValue ;
+    doc["neoPixelNum"]= xTouchConfig.xTouchNeoPixelNumValue;
 
     xtouch_filesystem_writeJson(SD, xtouch_paths_settings, doc);
 
@@ -37,13 +42,15 @@ void xtouch_settings_loadSettings()
         xTouchConfig.xTouchBacklightLevel = 128;
         xTouchConfig.xTouchTFTOFFValue = 15;
         xTouchConfig.xTouchLEDOffValue = 15;
-        xTouchConfig.xTouchNeoPixelBlightnessValue = 50;
-        xTouchConfig.xTouchNeoPixelNumValue = 0;
         xTouchConfig.xTouchTFTInvert = false;
         xTouchConfig.xTouchOTAEnabled = false;
         xTouchConfig.xTouchWakeOnPrint = true;
         xTouchConfig.xTouchWakeDuringPrint = true;
         xTouchConfig.xTouchChamberSensorReadingDiff = 0;
+
+        xTouchConfig.xTouchStackChanEnabled = true;
+        xTouchConfig.xTouchNeoPixelBlightnessValue = 50;
+        xTouchConfig.xTouchNeoPixelNumValue = 0;
         xtouch_settings_save(true);
     }
 
@@ -52,13 +59,15 @@ void xtouch_settings_loadSettings()
     xTouchConfig.xTouchBacklightLevel = settings.containsKey("backlight") ? settings["backlight"].as<int>() : 128;
     xTouchConfig.xTouchTFTOFFValue = settings.containsKey("tftOff") ? settings["tftOff"].as<int>() : 15;
     xTouchConfig.xTouchLEDOffValue = settings.containsKey("lightOff") ? settings["lightOff"].as<int>() : 15;
-    xTouchConfig.xTouchNeoPixelBlightnessValue = settings.containsKey("neoPixelBlightness") ? settings["neoPixelBlightness"].as<int>() : 128;
-    xTouchConfig.xTouchNeoPixelNumValue = settings.containsKey("neoPixelNum") ? settings["neoPixelNum"].as<int>() : 10;
     xTouchConfig.xTouchTFTInvert = settings.containsKey("tftInvert") ? settings["tftInvert"].as<bool>() : false;
     xTouchConfig.xTouchOTAEnabled = settings.containsKey("ota") ? settings["ota"].as<bool>() : true;
     xTouchConfig.xTouchWakeOnPrint = settings.containsKey("wop") ? settings["wop"].as<bool>() : true;
     xTouchConfig.xTouchWakeDuringPrint = settings.containsKey("wdp") ? settings["wdp"].as<bool>() : true;
     xTouchConfig.xTouchChamberSensorReadingDiff = settings.containsKey("chamberTempDiff") ? settings["chamberTempDiff"].as<int8_t>() : 0;
+
+    xTouchConfig.xTouchStackChanEnabled = settings.containsKey("stackChanEnabled") ? settings["stackChanEnabled"].as<bool>() : true;
+    xTouchConfig.xTouchNeoPixelBlightnessValue = settings.containsKey("neoPixelBlightness") ? settings["neoPixelBlightness"].as<int>() : 128;
+    xTouchConfig.xTouchNeoPixelNumValue = settings.containsKey("neoPixelNum") ? settings["neoPixelNum"].as<int>() : 10;
 
     if (cloud.isPaired())
     {

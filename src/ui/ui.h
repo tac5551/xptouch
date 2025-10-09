@@ -43,6 +43,7 @@ extern "C"
   void ui_printerPairScreen_screen_init(void);
   void ui_amsViewScreen_screen_init(void);
   void ui_optionalScreen_screen_init(void);
+  void ui_characterScreen_screen_init(void);
 
   lv_obj_t *introScreen;
   lv_obj_t *introScreenIcon;
@@ -86,6 +87,10 @@ extern "C"
   lv_obj_t *ui_optionalNeoPixelBlightnessSlider;
   lv_obj_t *ui_optionalNeoPixelBlightnessValue;
   lv_obj_t *ui_optional_chamberSensorSwitch;
+  lv_obj_t *ui_optional_stackChanSwitch;
+
+  lv_obj_t *ui_characterScreen;
+  lv_obj_t *ui_characterComponent;
 
   lv_obj_t *ui_confirmComponent; // layertop
   lv_obj_t *ui_hmsComponent;     // layertop

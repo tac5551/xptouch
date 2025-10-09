@@ -17,6 +17,7 @@ extern "C"
     void ui_comp_mainScreenStatus_create_hook(lv_obj_t *comp);
     void ui_comp_filamentComponent_create_hook(lv_obj_t *comp);
     void ui_comp_amsViewComponent_create_hook(lv_obj_t *comp);
+    void ui_comp_characterComponent_create_hook(lv_obj_t *comp);
 
 #ifdef __cplusplus
 } /*extern "C"*/

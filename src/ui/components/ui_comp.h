@@ -24,6 +24,7 @@ extern "C"
 #include "ui_comp_mainscreenstatus.h"
 #include "ui_comp_filamentcomponent.h"
 #include "ui_comp_amsviewcomponent.h"
+#include "ui_comp_charactercomponent.h"
 
 #ifdef __cplusplus
 } /*extern "C"*/
