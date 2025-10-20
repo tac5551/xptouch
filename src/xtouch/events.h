@@ -83,16 +83,7 @@ void xtouch_events_onLEDOffTimerSet(lv_msg_t *m)
     xtouch_filesystem_writeJson(SD, xtouch_paths_settings, settings);
 }
 
-void xtouch_events_onNeoPixelNumSet(lv_msg_t *m)
-{
-   int32_t value = lv_slider_get_value(ui_optionalNeoPixelNumSlider);
-   DynamicJsonDocument settings = xtouch_filesystem_readJson(SD, xtouch_paths_settings);
-   settings["neoPixelNum"] = value;
-   xTouchConfig.xTouchNeoPixelNumValue = value;
-   xtouch_neo_pixel_set_num(value);
-   xtouch_neo_pixel_reset_all();
-   xtouch_filesystem_writeJson(SD, xtouch_paths_settings, settings);
-}
+
 
 void xtouch_events_onNeoPixelBlightnessSet(lv_msg_t *m)
 {
@@ -102,6 +93,25 @@ void xtouch_events_onNeoPixelBlightnessSet(lv_msg_t *m)
     xTouchConfig.xTouchNeoPixelBlightnessValue = value;
     xtouch_filesystem_writeJson(SD, xtouch_paths_settings, settings);
     xtouch_neo_pixel_set_brightness(value);
+}
+
+void xtouch_events_onAlarmTimeoutSet(lv_msg_t *m)
+{
+    int32_t value = lv_slider_get_value(ui_optionalAlarmTimeoutSlider);
+    DynamicJsonDocument settings = xtouch_filesystem_readJson(SD, xtouch_paths_settings);
+    settings["alarmTimeout"] = value;
+    xTouchConfig.xTouchAlarmTimeoutValue = value;
+    xtouch_filesystem_writeJson(SD, xtouch_paths_settings, settings);
+}
+
+void xtouch_events_onIdleLEDSwitch(lv_msg_t *m)
+{
+    bool value = lv_obj_has_state(ui_optional_Idle_ledSwitch, LV_STATE_CHECKED);
+    DynamicJsonDocument settings = xtouch_filesystem_readJson(SD, xtouch_paths_settings);
+    settings["idleLEDEnabled"] = value;
+    xTouchConfig.xTouchIdleLEDEnabled = value;
+    xtouch_neo_pixel_set_idle_led_enabled(value);
+    xtouch_filesystem_writeJson(SD, xtouch_paths_settings, settings);
 }
 
 void xtouch_events_onTFTInvert(lv_msg_t *m)
@@ -128,6 +138,28 @@ void xtouch_events_onResetTouch(lv_msg_t *m)
 {
     xtouch_resetTouchConfig();
 }
+
+void xtouch_events_onNeoPixelNumSet(lv_msg_t *m)
+{
+   int32_t value = lv_slider_get_value(ui_optionalNeoPixelNumSlider);
+   ConsoleDebug.printf("xtouch_events_onNeoPixelNumSet: %d", value);
+   DynamicJsonDocument settings = xtouch_filesystem_readJson(SD, xtouch_paths_settings);
+   settings["neoPixelNum"] = value;
+   xtouch_filesystem_writeJson(SD, xtouch_paths_settings, settings);
+   xTouchConfig.xTouchNeoPixelNumValue = value;
+
+    if (xTouchConfig.xTouchNeoPixelNumValue > 0)
+    {
+        xtouch_neo_pixel_control_timer_start(xTouchConfig.xTouchNeoPixelPinValue);
+        xtouch_neo_pixel_set_num(value);
+        xtouch_neo_pixel_reset_all();
+    }
+    else
+    {
+        xtouch_neo_pixel_control_timer_stop();
+    }
+}
+
 
 void xtouch_events_onChamberTempSwitch(lv_msg_t *m)
 {
@@ -161,6 +193,8 @@ void xtouch_setupGlobalEvents()
     lv_msg_subscribe(XTOUCH_OPTIONAL_NEOPIXEL_NUM_SET, (lv_msg_subscribe_cb_t)xtouch_events_onNeoPixelNumSet, NULL);
     lv_msg_subscribe(XTOUCH_OPTIONAL_NEOPIXEL_SET, (lv_msg_subscribe_cb_t)xtouch_events_onNeoPixelBlightnessSet, NULL);
     lv_msg_subscribe(XTOUCH_OPTIONAL_CHAMBER_TEMP, (lv_msg_subscribe_cb_t)xtouch_events_onChamberTempSwitch, NULL);
+    lv_msg_subscribe(XTOUCH_OPTIONAL_ALARM_TIMEOUT_SET, (lv_msg_subscribe_cb_t)xtouch_events_onAlarmTimeoutSet, NULL);
+    lv_msg_subscribe(XTOUCH_OPTIONAL_IDLE_LED_SET, (lv_msg_subscribe_cb_t)xtouch_events_onIdleLEDSwitch, NULL);
 
 }
 

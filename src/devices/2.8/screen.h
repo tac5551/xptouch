@@ -27,14 +27,14 @@ void xtouch_screen_setBrightness(byte brightness)
 void xtouch_screen_sleep()
 {
     xtouch_screen_touchFromPowerOff = true;
-    // if (xTouchConfig.xTouchStackChanEnabled == true)
-    // {
-    //      loadScreen(9);
-    // }
-    // else
-    // {
+    if (xTouchConfig.xTouchStackChanEnabled == true)
+    {
+         loadScreen(9);
+    }
+    else
+    {
         xtouch_screen_setBrightness(0);
-    // }
+    }
 }
 
 void xtouch_screen_wakeUp()

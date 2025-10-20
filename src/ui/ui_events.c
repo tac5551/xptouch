@@ -46,7 +46,19 @@ void onHomeControllerStop(lv_event_t *e)
     ui_confirmPanel_show(LV_SYMBOL_WARNING " Cancel Print?", onHomeControllerStopConfirm);
 }
 void onHomeSpeedSelection(lv_event_t *e) {}
-void onHomeLight(lv_event_t *e) { lv_msg_send(XTOUCH_COMMAND_LIGHT_TOGGLE, NULL); }
+
+/* -----------Lighting-------------- */
+void onHomeLightToggle(){
+    lv_msg_send(XTOUCH_COMMAND_LIGHT_TOGGLE, NULL); 
+}
+void onHomeLight(lv_event_t *e) { 
+    // if (xTouchConfig.xTouchNeoPixelNumValue > 0){
+    //     ui_confirmPanel_show(LV_SYMBOL_WARNING " NeoPixel Light is not enabled", onHomeLightToggle);
+    // }else{
+        onHomeLightToggle();
+    // }
+}
+
 void onHomeLCD(lv_event_t *e)
 {
     lv_msg_send(XTOUCH_COMMAND_LCD_TOGGLE, NULL);
@@ -154,12 +166,19 @@ void onOptionalChamberSensor(lv_event_t *e)
     lv_msg_send(XTOUCH_SETTINGS_SAVE, NULL);
 }
 
+
 void onOptionalStackChan(lv_event_t *e)
 {
     xTouchConfig.xTouchStackChanEnabled = !xTouchConfig.xTouchStackChanEnabled;
     lv_msg_send(XTOUCH_SETTINGS_SAVE, NULL);
 }
 
+void onOptionalIdleLED(lv_event_t *e)
+{
+    xTouchConfig.xTouchIdleLEDEnabled = !xTouchConfig.xTouchIdleLEDEnabled;
+    lv_msg_send(XTOUCH_OPTIONAL_IDLE_LED_SET, NULL);
+    lv_msg_send(XTOUCH_SETTINGS_SAVE, NULL);
+}
 
 void onTouchStackChan(lv_event_t *e)
 {

@@ -614,7 +614,7 @@ lv_obj_t *ui_settingsComponent_create(lv_obj_t *comp_parent)
     lv_obj_clear_flag(cui_OptionalButton, LV_OBJ_FLAG_SCROLLABLE); /// Flags
     lv_obj_set_scrollbar_mode(cui_OptionalButton, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_style_radius(cui_OptionalButton, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_bg_color(cui_OptionalButton, lv_color_hex(0x68FF2A), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(cui_OptionalButton, lv_color_hex(0x682AFF), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(cui_OptionalButton, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_left(cui_OptionalButton, 16, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_right(cui_OptionalButton, 0, LV_PART_MAIN | LV_STATE_DEFAULT);

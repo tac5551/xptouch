@@ -86,13 +86,17 @@ extern "C"
   lv_obj_t *ui_optionalNeoPixelNumValue;
   lv_obj_t *ui_optionalNeoPixelBlightnessSlider;
   lv_obj_t *ui_optionalNeoPixelBlightnessValue;
+  lv_obj_t *ui_optionalAlarmTimeoutSlider;
+  lv_obj_t *ui_optionalAlarmTimeoutValue;
   lv_obj_t *ui_optional_chamberSensorSwitch;
   lv_obj_t *ui_optional_stackChanSwitch;
+  lv_obj_t *ui_optional_Idle_ledSwitch;
 
   lv_obj_t *ui_characterScreen;
   lv_obj_t *ui_characterComponent;
 
   lv_obj_t *ui_confirmComponent; // layertop
+  lv_obj_t *ui_lightingComponent; // layertop
   lv_obj_t *ui_hmsComponent;     // layertop
   lv_obj_t *ui_mainStatusComponent;
   lv_obj_t *ui_filamentScreen;
@@ -102,6 +106,12 @@ extern "C"
   lv_obj_t *ui_mainScreenChamberTempValue;
   lv_obj_t *ui_amsViewScreen;
   lv_obj_t *ui_amsViewComponent;
+
+  // キャラクター制御用変数
+  lv_obj_t *left_eye ;
+  lv_obj_t *right_eye ;
+  lv_obj_t *mouth ;
+
   void ui_event____initial_actions0(lv_event_t *e);
   lv_obj_t *ui____initial_actions0;
 

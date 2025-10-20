@@ -2,436 +2,282 @@
 #include "ui_comp_charactercomponent.h"
 #include "../ui.h"
 
-// キャラクターコンポーネントの内部構造
-typedef struct {
-    lv_obj_t *face;
-    lv_obj_t *left_ear;
-    lv_obj_t *right_ear;
-    lv_obj_t *left_ear_inner;
-    lv_obj_t *right_ear_inner;
-    lv_obj_t *left_eye;
-    lv_obj_t *right_eye;
-    lv_obj_t *nose;
-    lv_obj_t *mouth;
-    lv_obj_t *tail;
-    lv_obj_t *status_label;
-    lv_obj_t *mood_label;
-    
-    character_mood_t current_mood;
-    character_color_t current_color;
-    bool animation_running;
-    int blink_state;
-    int animation_frame;
-} character_component_t;
+// 関数宣言
+void xtouch_events_onCharacterAnimation();
+void calc_position(int x_offset, int y_offset);
+void xtouch_character_timer_init();
+void xtouch_character_timer_stop();
+void xtouch_character_timer_handler(lv_timer_t *timer);
 
-static character_component_t *char_comp = NULL;
-static lv_timer_t *blink_timer = NULL;
-static lv_timer_t *expression_timer = NULL;
-static lv_timer_t *tail_timer = NULL;
+// グローバル変数の定義
+lv_timer_t *xtouch_character_timer = NULL;
+bool xtouch_character_timer_started = false;
 
-// プライベート関数
-static void character_blink_timer_cb(lv_timer_t *timer);
-static void character_expression_timer_cb(lv_timer_t *timer);
-static void character_tail_timer_cb(lv_timer_t *timer);
-static void update_character_expression(void);
-static void update_character_color(void);
-static void update_character_ears(void);
-static void yawn_timer_cb(lv_timer_t *timer);
-static void meow_timer_cb(lv_timer_t *timer);
+// キャラクター制御用変数
+bool is_blinking = false;
+int eye_blink_counter = 0;
+bool is_mouth_animating = false;
+int mouth_animation_counter = 0;
+int mouth_pakupaku_count = 0; // パクパクの回数カウンター
+int position_change_counter = 0; // 位置変更用カウンター
 
+// 座標計算用変数
+const int screen_width = 320;
+const int screen_height = 240;
+const int center_x = screen_width / 2;
+const int center_y = screen_height / 2;
+const int eye_size = 8;
+const int mouth_width = 30;
+const int mouth_height = 5;
+const int eye_offset_x = 65;
+const int eye_offset_y = -30;
+const int eye_diff = 120;
+const int mouth_offset_x = 45;
+const int mouth_offset_y = 30;
 
-void ui_characterComponent_set_mood(character_mood_t mood)
+int left_eye_x = 0;
+int right_eye_x = 0;
+int eye_y = 0;
+int mouth_x = 0;
+int mouth_y = 0;
+
+// 座標計算関数
+void calc_position(int x_offset, int y_offset)
 {
-    if (!char_comp) return;
-    
-    char_comp->current_mood = mood;
-    update_character_expression();
-    
-    // 気分ラベル更新
-    const char* mood_texts[] = {
-        "Normal", "Happy", "Sleepy", "Alert", "Sad", "Angry"
-    };
-    lv_label_set_text(char_comp->mood_label, mood_texts[mood]);
-}
 
-void ui_characterComponent_set_color(character_color_t color)
-{
-    if (!char_comp) return;
-    
-    char_comp->current_color = color;
-    update_character_color();
-}
 
-void ui_characterComponent_set_status_text(const char* text)
-{
-    if (!char_comp) return;
-    
-    lv_label_set_text(char_comp->status_label, text);
-}
+    // 座標計算 (左目基準)
+    left_eye_x = center_x - eye_offset_x + x_offset;
+    right_eye_x = left_eye_x + eye_diff;
+    eye_y = center_y - eye_offset_y + y_offset;
 
-void ui_characterComponent_start_animation(void)
-{
-    if (!char_comp) return;
-    
-    char_comp->animation_running = true;
-    
-    // まばたきタイマー
-    if (!blink_timer) {
-        blink_timer = lv_timer_create(character_blink_timer_cb, 200, NULL);
+    mouth_x = left_eye_x + mouth_offset_x;
+    mouth_y = eye_y + mouth_offset_y;
+
+    // 既存オブジェクトがあれば即時反映
+    if (left_eye) {
+        lv_obj_set_x(left_eye, left_eye_x);
+        lv_obj_set_y(left_eye, eye_y);
     }
-    
-    // 表情タイマー
-    if (!expression_timer) {
-        expression_timer = lv_timer_create(character_expression_timer_cb, 1000, NULL);
+    if (right_eye) {
+        lv_obj_set_x(right_eye, right_eye_x);
+        lv_obj_set_y(right_eye, eye_y);
     }
-    
-    // しっぽタイマー
-    if (!tail_timer) {
-        tail_timer = lv_timer_create(character_tail_timer_cb, 100, NULL);
+    if (mouth) {
+        lv_obj_set_x(mouth, mouth_x);
+        lv_obj_set_y(mouth, mouth_y);
     }
 }
 
-void ui_characterComponent_stop_animation(void)
+// キャラクター関連イベント関数
+void xtouch_events_onCharacterAnimation()
 {
-    if (!char_comp) return;
-    
-    char_comp->animation_running = false;
-    
-    if (blink_timer) {
-        lv_timer_del(blink_timer);
-        blink_timer = NULL;
+    // screenが9の場合のみ処理を実行
+    if (xTouchConfig.currentScreenIndex != 9)
+    {
+        xtouch_character_timer_stop();
+        return;
     }
-    
-    if (expression_timer) {
-        lv_timer_del(expression_timer);
-        expression_timer = NULL;
-    }
-    
-    if (tail_timer) {
-        lv_timer_del(tail_timer);
-        tail_timer = NULL;
-    }
-}
 
-void ui_characterComponent_blink(void)
-{
-    if (!char_comp) return;
-    
-    char_comp->blink_state = 3; // 3フレームまばたき
-}
+    if (!left_eye || !right_eye || !mouth)
+        return;
 
-void ui_characterComponent_yawn(void)
-{
-    if (!char_comp) return;
-    
-    // あくびアニメーション
-    lv_obj_set_size(char_comp->mouth, 30, 30);
-    lv_arc_set_angles(char_comp->mouth, 0, 360);
-    
-    // 2秒後に元に戻す
-    lv_timer_t *yawn_timer = lv_timer_create(yawn_timer_cb, 2000, NULL);
-    lv_timer_set_repeat_count(yawn_timer, 1);
-}
-
-void ui_characterComponent_meow(void)
-{
-    if (!char_comp) return;
-    
-    // 鳴き声アニメーション
-    lv_obj_set_size(char_comp->mouth, 25, 25);
-    lv_arc_set_angles(char_comp->mouth, 0, 360);
-    
-    // 1秒後に元に戻す
-    lv_timer_t *meow_timer = lv_timer_create(meow_timer_cb, 1000, NULL);
-    lv_timer_set_repeat_count(meow_timer, 1);
-}
-
-// プライベート関数の実装
-static void character_blink_timer_cb(lv_timer_t *timer)
-{
-    if (!char_comp || !char_comp->animation_running) return;
-    
-    if (char_comp->blink_state > 0) {
-        char_comp->blink_state--;
-        // 目を閉じる
-        lv_obj_set_size(char_comp->left_eye, 12, 2);
-        lv_obj_set_size(char_comp->right_eye, 12, 2);
-    } else {
-        // 目を開く
-        lv_obj_set_size(char_comp->left_eye, 12, 20);
-        lv_obj_set_size(char_comp->right_eye, 12, 20);
-        
-        // ランダムでまばたき
-        if (rand() % 100 < 5) {
-            char_comp->blink_state = 2;
+    // 瞬きの処理
+    if (is_blinking)
+    {
+        // 2回のタイマー呼び出し（100ms）で目を開く
+        if (eye_blink_counter >= 2)
+        {
+            lv_obj_set_height(left_eye, 8);
+            lv_obj_set_height(right_eye, 8);
+            is_blinking = false;
+            eye_blink_counter = 0;
         }
     }
-}
-
-static void character_expression_timer_cb(lv_timer_t *timer)
-{
-    if (!char_comp || !char_comp->animation_running) return;
-    
-    char_comp->animation_frame++;
-    
-    // 10秒ごとに気分をランダムに変更
-    if (char_comp->animation_frame >= 10) {
-        char_comp->current_mood = (character_mood_t)(rand() % 6);
-        char_comp->animation_frame = 0;
-        update_character_expression();
+    else
+    {
+        // ランダムで瞬き（約3秒に1回）
+        if (eye_blink_counter >= 60 && rand() % 100 < 2)
+        {
+            is_blinking = true;
+            eye_blink_counter = 0;
+            // 目を細くする（瞬き開始）
+            lv_obj_set_height(left_eye, 2);
+            lv_obj_set_height(right_eye, 2);
+        }
     }
-}
 
-static void character_tail_timer_cb(lv_timer_t *timer)
-{
-    if (!char_comp || !char_comp->animation_running) return;
-    
-    static int tail_angle = 0;
-    static int tail_direction = 1;
-    
-    tail_angle += tail_direction * 3;
-    
-    if (tail_angle > 20) tail_direction = -1;
-    if (tail_angle < -20) tail_direction = 1;
-    
-    // しっぽの回転
-    lv_obj_set_style_transform_angle(char_comp->tail, tail_angle * 10, LV_PART_MAIN);
-}
-
-static void update_character_expression(void)
-{
-    if (!char_comp) return;
-    
-    switch(char_comp->current_mood) {
-        case CHARACTER_MOOD_NORMAL:
-            lv_arc_set_angles(char_comp->mouth, 0, 180);
-            lv_obj_set_size(char_comp->left_eye, 12, 20);
-            lv_obj_set_size(char_comp->right_eye, 12, 20);
-            break;
+    // 口のアニメーション処理
+    if (is_mouth_animating)
+    {
+        // パクパクアニメーション（2回のタイマー呼び出しで1回のパクパク）
+        if (mouth_animation_counter >= 2)
+        {
+            mouth_animation_counter = 0;
+            mouth_pakupaku_count++;
             
-        case CHARACTER_MOOD_HAPPY:
-            lv_arc_set_angles(char_comp->mouth, 0, 180);
-            lv_obj_set_style_bg_color(char_comp->face, lv_color_hex(0xFFD700), LV_PART_MAIN);
-            break;
-            
-        case CHARACTER_MOOD_SLEEPY:
-            lv_obj_set_size(char_comp->left_eye, 12, 8);
-            lv_obj_set_size(char_comp->right_eye, 12, 8);
-            lv_arc_set_angles(char_comp->mouth, 0, 90);
-            break;
-            
-        case CHARACTER_MOOD_ALERT:
-            lv_obj_set_size(char_comp->left_ear, 20, 30);
-            lv_obj_set_size(char_comp->right_ear, 20, 30);
-            lv_arc_set_angles(char_comp->mouth, 0, 180);
-            break;
-            
-        case CHARACTER_MOOD_SAD:
-            lv_arc_set_angles(char_comp->mouth, 180, 360);
-            lv_obj_set_style_bg_color(char_comp->face, lv_color_hex(0x87CEEB), LV_PART_MAIN);
-            break;
-            
-        case CHARACTER_MOOD_ANGRY:
-            lv_obj_set_size(char_comp->left_eye, 12, 15);
-            lv_obj_set_size(char_comp->right_eye, 12, 15);
-            lv_arc_set_angles(char_comp->mouth, 0, 180);
-            lv_obj_set_style_bg_color(char_comp->face, lv_color_hex(0xFF4500), LV_PART_MAIN);
-            break;
+            // 3回パクパクしたら終了
+            if (mouth_pakupaku_count >= 3)
+            {
+                // 口を元のサイズに戻す
+                lv_obj_set_height(mouth, mouth_height);
+                is_mouth_animating = false;
+                mouth_animation_counter = 0;
+                mouth_pakupaku_count = 0;
+            }
+            else
+            {
+                // 口を閉じる（元のサイズ）
+                lv_obj_set_height(mouth, mouth_height);
+            }
+        }
+        else
+        {
+            // 口を開く（4倍の高さに拡大）
+            lv_obj_set_height(mouth, mouth_height * 4);
+        }
     }
-}
-
-static void update_character_color(void)
-{
-    if (!char_comp) return;
-    
-    switch(char_comp->current_color) {
-        case CHARACTER_COLOR_ORANGE:
-            lv_obj_set_style_bg_color(char_comp->face, lv_color_hex(0xFFA500), LV_PART_MAIN);
-            lv_obj_set_style_bg_color(char_comp->left_ear, lv_color_hex(0xFF8C00), LV_PART_MAIN);
-            lv_obj_set_style_bg_color(char_comp->right_ear, lv_color_hex(0xFF8C00), LV_PART_MAIN);
-            lv_obj_set_style_bg_color(char_comp->tail, lv_color_hex(0xFF8C00), LV_PART_MAIN);
-            break;
-            
-        case CHARACTER_COLOR_WHITE:
-            lv_obj_set_style_bg_color(char_comp->face, lv_color_hex(0xFFFFFF), LV_PART_MAIN);
-            lv_obj_set_style_bg_color(char_comp->left_ear, lv_color_hex(0xF0F0F0), LV_PART_MAIN);
-            lv_obj_set_style_bg_color(char_comp->right_ear, lv_color_hex(0xF0F0F0), LV_PART_MAIN);
-            lv_obj_set_style_bg_color(char_comp->tail, lv_color_hex(0xF0F0F0), LV_PART_MAIN);
-            break;
-            
-        case CHARACTER_COLOR_BLACK:
-            lv_obj_set_style_bg_color(char_comp->face, lv_color_hex(0x2F2F2F), LV_PART_MAIN);
-            lv_obj_set_style_bg_color(char_comp->left_ear, lv_color_hex(0x1C1C1C), LV_PART_MAIN);
-            lv_obj_set_style_bg_color(char_comp->right_ear, lv_color_hex(0x1C1C1C), LV_PART_MAIN);
-            lv_obj_set_style_bg_color(char_comp->tail, lv_color_hex(0x1C1C1C), LV_PART_MAIN);
-            break;
-            
-        case CHARACTER_COLOR_CALICO:
-            lv_obj_set_style_bg_color(char_comp->face, lv_color_hex(0xFFD700), LV_PART_MAIN);
-            lv_obj_set_style_bg_color(char_comp->left_ear, lv_color_hex(0xFF8C00), LV_PART_MAIN);
-            lv_obj_set_style_bg_color(char_comp->right_ear, lv_color_hex(0xFF8C00), LV_PART_MAIN);
-            lv_obj_set_style_bg_color(char_comp->tail, lv_color_hex(0xFF8C00), LV_PART_MAIN);
-            break;
+    else
+    {
+        // ランダムで口のアニメーション（約5秒に1回）
+        if (mouth_animation_counter >= 100 && rand() % 100 < 1)
+        {
+            is_mouth_animating = true;
+            mouth_animation_counter = 0;
+            mouth_pakupaku_count = 0;
+        }
     }
-}
 
-// コールバック関数の実装
-static void yawn_timer_cb(lv_timer_t *timer)
-{
-    if (char_comp) {
-        lv_obj_set_size(char_comp->mouth, 20, 20);
-        lv_arc_set_angles(char_comp->mouth, 0, 180);
+    // 位置変更の処理
+    position_change_counter++;
+    // ランダムで位置変更（約10秒に1回）
+    if (position_change_counter >= 200 && rand() % 100 < 1)
+    {
+        // -50から+50の範囲でランダムな位置に移動
+        int random_x = (rand() % 101) - 50; // -50 から +50
+        int random_y = (rand() % 101) - 50; // -50 から +50
+        calc_position(random_x, random_y);
+        position_change_counter = 0;
     }
-    lv_timer_del(timer);
-}
-
-static void meow_timer_cb(lv_timer_t *timer)
-{
-    if (char_comp) {
-        lv_obj_set_size(char_comp->mouth, 20, 20);
-        lv_arc_set_angles(char_comp->mouth, 0, 180);
-    }
-    lv_timer_del(timer);
 }
 
 // イベントハンドラー
 void ui_event_comp_characterComponent_characterFace(lv_event_t *e)
 {
     lv_event_code_t event_code = lv_event_get_code(e);
-    
-    if (event_code == LV_EVENT_CLICKED) {
+
+    if (event_code == LV_EVENT_CLICKED)
+    {
         onTouchStackChan(e);
     }
 }
 
 
+
+
+// タイマー関連の関数
+void xtouch_character_timer_init()
+{
+    if (!xtouch_character_timer_started)
+    {
+        xtouch_character_timer = lv_timer_create(xtouch_character_timer_handler, 50, NULL);
+        lv_timer_set_repeat_count(xtouch_character_timer, -1);
+        xtouch_character_timer_started = true;
+    }
+}
+
+void xtouch_character_timer_stop()
+{
+    if (xtouch_character_timer_started && xtouch_character_timer)
+    {
+        lv_timer_del(xtouch_character_timer);
+        xtouch_character_timer = NULL;
+        xtouch_character_timer_started = false;
+    }
+}
+
+void xtouch_character_timer_handler(lv_timer_t *timer)
+{
+    // screenが9の場合のみ処理を実行
+    if (xTouchConfig.currentScreenIndex != 9) {
+        return;
+    }
+
+    if (!left_eye || !right_eye || !mouth)
+        return;
+
+    eye_blink_counter++;
+    mouth_animation_counter++;
+
+    xtouch_events_onCharacterAnimation();
+}
+
+
 lv_obj_t *ui_characterComponent_create(lv_obj_t *comp_parent)
 {
-    // メモリ確保
-    char_comp = (character_component_t*)malloc(sizeof(character_component_t));
-    if (!char_comp) return NULL;
-    memset(char_comp, 0, sizeof(character_component_t));
-    
     // メインコンテナ
     lv_obj_t *ui_characterComponent = lv_obj_create(comp_parent);
     lv_obj_set_width(ui_characterComponent, 200);
-    lv_obj_set_height(ui_characterComponent, 180);
-    lv_obj_set_style_bg_opa(ui_characterComponent, LV_OPA_TRANSP, LV_PART_MAIN);
-    lv_obj_set_style_border_opa(ui_characterComponent, LV_OPA_TRANSP, LV_PART_MAIN);
-    lv_obj_set_style_pad_all(ui_characterComponent, 0, LV_PART_MAIN);
-    
-    // 猫の顔（楕円形）
-    char_comp->face = lv_obj_create(ui_characterComponent);
-    lv_obj_set_size(char_comp->face, 120, 100);
-    lv_obj_set_pos(char_comp->face, 40, 20);
-    lv_obj_set_style_radius(char_comp->face, 50, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(char_comp->face, lv_color_hex(0xFFA500), LV_PART_MAIN);
-    lv_obj_set_style_border_opa(char_comp->face, LV_OPA_TRANSP, LV_PART_MAIN);
-    
-    // 左耳
-    char_comp->left_ear = lv_obj_create(char_comp->face);
-    lv_obj_set_size(char_comp->left_ear, 20, 25);
-    lv_obj_set_pos(char_comp->left_ear, 10, -5);
-    lv_obj_set_style_radius(char_comp->left_ear, 0, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(char_comp->left_ear, lv_color_hex(0xFF8C00), LV_PART_MAIN);
-    lv_obj_set_style_border_opa(char_comp->left_ear, LV_OPA_TRANSP, LV_PART_MAIN);
-    
-    // 右耳
-    char_comp->right_ear = lv_obj_create(char_comp->face);
-    lv_obj_set_size(char_comp->right_ear, 20, 25);
-    lv_obj_set_pos(char_comp->right_ear, 90, -5);
-    lv_obj_set_style_radius(char_comp->right_ear, 0, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(char_comp->right_ear, lv_color_hex(0xFF8C00), LV_PART_MAIN);
-    lv_obj_set_style_border_opa(char_comp->right_ear, LV_OPA_TRANSP, LV_PART_MAIN);
-    
-    // 左耳の内側
-    char_comp->left_ear_inner = lv_obj_create(char_comp->left_ear);
-    lv_obj_set_size(char_comp->left_ear_inner, 10, 15);
-    lv_obj_set_pos(char_comp->left_ear_inner, 5, 5);
-    lv_obj_set_style_radius(char_comp->left_ear_inner, 0, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(char_comp->left_ear_inner, lv_color_hex(0xFFB6C1), LV_PART_MAIN);
-    lv_obj_set_style_border_opa(char_comp->left_ear_inner, LV_OPA_TRANSP, LV_PART_MAIN);
-    
-    // 右耳の内側
-    char_comp->right_ear_inner = lv_obj_create(char_comp->right_ear);
-    lv_obj_set_size(char_comp->right_ear_inner, 10, 15);
-    lv_obj_set_pos(char_comp->right_ear_inner, 5, 5);
-    lv_obj_set_style_radius(char_comp->right_ear_inner, 0, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(char_comp->right_ear_inner, lv_color_hex(0xFFB6C1), LV_PART_MAIN);
-    lv_obj_set_style_border_opa(char_comp->right_ear_inner, LV_OPA_TRANSP, LV_PART_MAIN);
-    
-    // 左目（縦長の楕円）
-    char_comp->left_eye = lv_obj_create(char_comp->face);
-    lv_obj_set_size(char_comp->left_eye, 12, 20);
-    lv_obj_set_pos(char_comp->left_eye, 30, 25);
-    lv_obj_set_style_radius(char_comp->left_eye, 6, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(char_comp->left_eye, lv_color_hex(0x000000), LV_PART_MAIN);
-    lv_obj_set_style_border_opa(char_comp->left_eye, LV_OPA_TRANSP, LV_PART_MAIN);
-    
-    // 右目（縦長の楕円）
-    char_comp->right_eye = lv_obj_create(char_comp->face);
-    lv_obj_set_size(char_comp->right_eye, 12, 20);
-    lv_obj_set_pos(char_comp->right_eye, 78, 25);
-    lv_obj_set_style_radius(char_comp->right_eye, 6, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(char_comp->right_eye, lv_color_hex(0x000000), LV_PART_MAIN);
-    lv_obj_set_style_border_opa(char_comp->right_eye, LV_OPA_TRANSP, LV_PART_MAIN);
-    
-    // 鼻（三角形）
-    char_comp->nose = lv_obj_create(char_comp->face);
-    lv_obj_set_size(char_comp->nose, 8, 6);
-    lv_obj_set_pos(char_comp->nose, 56, 40);
-    lv_obj_set_style_radius(char_comp->nose, 0, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(char_comp->nose, lv_color_hex(0xFF69B4), LV_PART_MAIN);
-    lv_obj_set_style_border_opa(char_comp->nose, LV_OPA_TRANSP, LV_PART_MAIN);
-    
-    // 口（弧）
-    char_comp->mouth = lv_arc_create(char_comp->face);
-    lv_obj_set_size(char_comp->mouth, 20, 20);
-    lv_obj_set_pos(char_comp->mouth, 50, 50);
-    lv_arc_set_bg_angles(char_comp->mouth, 0, 180);
-    lv_arc_set_angles(char_comp->mouth, 0, 180);
-    lv_obj_set_style_arc_width(char_comp->mouth, 3, LV_PART_MAIN);
-    lv_obj_set_style_arc_color(char_comp->mouth, lv_color_hex(0x000000), LV_PART_MAIN);
-    lv_obj_set_style_arc_width(char_comp->mouth, 0, LV_PART_INDICATOR);
-    
-    // しっぽ
-    char_comp->tail = lv_obj_create(ui_characterComponent);
-    lv_obj_set_size(char_comp->tail, 8, 60);
-    lv_obj_set_pos(char_comp->tail, 160, 30);
-    lv_obj_set_style_radius(char_comp->tail, 4, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(char_comp->tail, lv_color_hex(0xFF8C00), LV_PART_MAIN);
-    lv_obj_set_style_border_opa(char_comp->tail, LV_OPA_TRANSP, LV_PART_MAIN);
-    
-    // ステータスラベル
-    char_comp->status_label = lv_label_create(ui_characterComponent);
-    lv_label_set_text(char_comp->status_label, "Ready");
-    lv_obj_set_pos(char_comp->status_label, 10, 140);
-    lv_obj_set_style_text_font(char_comp->status_label, &lv_font_montserrat_14, LV_PART_MAIN);
-    
-    // 気分ラベル
-    char_comp->mood_label = lv_label_create(ui_characterComponent);
-    lv_label_set_text(char_comp->mood_label, "Normal");
-    lv_obj_set_pos(char_comp->mood_label, 10, 160);
-    lv_obj_set_style_text_font(char_comp->mood_label, &lv_font_montserrat_14, LV_PART_MAIN);
-    lv_obj_set_style_text_color(char_comp->mood_label, lv_color_hex(0x666666), LV_PART_MAIN);
-    
-    // 初期化
-    char_comp->current_mood = CHARACTER_MOOD_NORMAL;
-    char_comp->current_color = CHARACTER_COLOR_ORANGE;
-    char_comp->animation_running = false;
-    char_comp->blink_state = 0;
-    char_comp->animation_frame = 0;
-    
+    lv_obj_set_height(ui_characterComponent, 200);
+    lv_obj_align(ui_characterComponent, LV_ALIGN_CENTER, 0, 0);
+    lv_obj_clear_flag(ui_characterComponent, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN); /// Flags
+    lv_obj_add_flag(ui_characterComponent, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_set_scrollbar_mode(ui_characterComponent, LV_SCROLLBAR_MODE_OFF);
+    lv_obj_set_style_radius(ui_characterComponent, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(ui_characterComponent, lv_color_hex(0xFF0000), LV_PART_MAIN | LV_STATE_DEFAULT);
+    // lv_obj_set_style_border_width(ui_characterComponent, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
+    // lv_obj_set_style_pad_left(ui_characterScreen, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    // lv_obj_set_style_pad_right(ui_characterScreen, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    // lv_obj_set_style_pad_top(ui_characterScreen, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    // lv_obj_set_style_pad_bottom(ui_characterScreen, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    // lv_obj_set_style_pad_row(ui_characterScreen, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    // lv_obj_set_style_pad_column(ui_characterScreen, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    //    lv_obj_set_style_bg_opa(ui_characterComponent, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    calc_position(0, 0);
+
+    // 左目（白い点）
+    left_eye = lv_obj_create(ui_characterScreen);
+    lv_obj_set_width(left_eye, eye_size);
+    lv_obj_set_height(left_eye, eye_size);
+    lv_obj_set_x(left_eye, left_eye_x);
+    lv_obj_set_y(left_eye, eye_y);
+    lv_obj_set_style_radius(left_eye, eye_size / 2, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(left_eye, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(left_eye, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(left_eye, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_all(left_eye, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    // 右目（白い点）
+    right_eye = lv_obj_create(ui_characterScreen);
+    lv_obj_set_width(right_eye, eye_size);
+    lv_obj_set_height(right_eye, eye_size);
+    lv_obj_set_x(right_eye, right_eye_x);
+    lv_obj_set_y(right_eye, eye_y);
+    lv_obj_set_style_radius(right_eye, eye_size / 2, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(right_eye, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(right_eye, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(right_eye, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_all(right_eye, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    // 口（白い線）
+    mouth = lv_obj_create(ui_characterScreen);
+    lv_obj_set_width(mouth, mouth_width);
+    lv_obj_set_height(mouth, mouth_height);
+    lv_obj_set_x(mouth, mouth_x);
+    lv_obj_set_y(mouth, mouth_y);
+    lv_obj_set_style_radius(mouth, mouth_height / 2, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(mouth, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(mouth, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(mouth, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_all(mouth, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+
     // イベントハンドラー設定
-    lv_obj_add_event_cb(char_comp->face, ui_event_comp_characterComponent_characterFace, LV_EVENT_ALL, NULL);
-    
-    // 初期化処理
-    ui_characterComponent_start_animation();
-    ui_characterComponent_set_mood(CHARACTER_MOOD_NORMAL);
-    ui_characterComponent_set_color(CHARACTER_COLOR_ORANGE);
-    ui_characterComponent_set_status_text("Ready");
-    
+    lv_obj_add_event_cb(ui_characterComponent, ui_event_comp_characterComponent_characterFace, LV_EVENT_ALL, NULL);
+
+    xtouch_character_timer_init();
+
     ui_comp_characterComponent_create_hook(ui_characterComponent);
     return ui_characterComponent;
 }
-

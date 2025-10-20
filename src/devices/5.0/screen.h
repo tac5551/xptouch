@@ -25,8 +25,15 @@ void xtouch_screen_setBrightness(byte brightness)
 
 void xtouch_screen_sleep()
 {
-    tft.setBrightness(0);
     xtouch_screen_touchFromPowerOff = true;
+    if (xTouchConfig.xTouchStackChanEnabled == true)
+    {
+        loadScreen(9);
+    }
+    else
+    {
+        xtouch_screen_setBrightness(0);
+    }
 }
 
 void xtouch_screen_wakeUp()
@@ -51,8 +58,7 @@ void xtouch_screen_onScreenTimeout(lv_timer_t *timer)
     }
 
     ConsoleInfo.println("[xPTouch][SCREEN] Screen Off");
-    xtouch_screen_setBrightness(0);
-    xtouch_screen_touchFromPowerOff = true;
+    xtouch_screen_sleep();
 }
 
 void xtouch_screen_onLEDOff(lv_timer_t *timer)

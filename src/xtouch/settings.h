@@ -16,7 +16,9 @@ void xtouch_settings_save(bool onlyRoot = false)
     doc["stackChanEnabled"] = xTouchConfig.xTouchStackChanEnabled;
     doc["neoPixelBlightness"]= xTouchConfig.xTouchNeoPixelBlightnessValue ;
     doc["neoPixelNum"]= xTouchConfig.xTouchNeoPixelNumValue;
-
+    doc["neoPixelPin"] = xTouchConfig.xTouchNeoPixelPinValue;
+    doc["alarmTimeout"] = xTouchConfig.xTouchAlarmTimeoutValue;
+    doc["idleLEDEnabled"] = xTouchConfig.xTouchIdleLEDEnabled;
     xtouch_filesystem_writeJson(SD, xtouch_paths_settings, doc);
 
     if (onlyRoot)
@@ -51,6 +53,10 @@ void xtouch_settings_loadSettings()
         xTouchConfig.xTouchStackChanEnabled = true;
         xTouchConfig.xTouchNeoPixelBlightnessValue = 50;
         xTouchConfig.xTouchNeoPixelNumValue = 0;
+        xTouchConfig.xTouchNeoPixelPinValue = 0;
+
+        xTouchConfig.xTouchAlarmTimeoutValue = 1;
+        xTouchConfig.xTouchIdleLEDEnabled = true;
         xtouch_settings_save(true);
     }
 
@@ -68,6 +74,9 @@ void xtouch_settings_loadSettings()
     xTouchConfig.xTouchStackChanEnabled = settings.containsKey("stackChanEnabled") ? settings["stackChanEnabled"].as<bool>() : true;
     xTouchConfig.xTouchNeoPixelBlightnessValue = settings.containsKey("neoPixelBlightness") ? settings["neoPixelBlightness"].as<int>() : 128;
     xTouchConfig.xTouchNeoPixelNumValue = settings.containsKey("neoPixelNum") ? settings["neoPixelNum"].as<int>() : 10;
+    xTouchConfig.xTouchNeoPixelPinValue = settings.containsKey("neoPixelPin") ? settings["neoPixelPin"].as<int>() : 0;
+    xTouchConfig.xTouchAlarmTimeoutValue = settings.containsKey("alarmTimeout") ? settings["alarmTimeout"].as<int>() : 1;
+    xTouchConfig.xTouchIdleLEDEnabled = settings.containsKey("idleLEDEnabled") ? settings["idleLEDEnabled"].as<bool>() : true;
 
     if (cloud.isPaired())
     {
@@ -88,6 +97,8 @@ void xtouch_settings_loadSettings()
     xtouch_screen_setBrightness(xTouchConfig.xTouchBacklightLevel);
     xtouch_neo_pixel_set_brightness(xTouchConfig.xTouchNeoPixelBlightnessValue);
     xtouch_neo_pixel_set_num(xTouchConfig.xTouchNeoPixelNumValue);
+    xtouch_neo_pixel_set_alarm_timeout(xTouchConfig.xTouchAlarmTimeoutValue);
+    xtouch_neo_pixel_set_idle_led_enabled(xTouchConfig.xTouchIdleLEDEnabled);
     xtouch_screen_invertColors();
 }
 

@@ -59,6 +59,7 @@ extern "C"
 
     void onOptionalChamberSensor(lv_event_t *e);
     void onOptionalStackChan(lv_event_t *e);
+    void onOptionalIdleLED(lv_event_t *e);
 
     void onTouchStackChan(lv_event_t *e);
 

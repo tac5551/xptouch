@@ -17,12 +17,12 @@ int NeoPixelCount = PIXEL_COUNT;
 
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(PIXEL_COUNT, 27, NEO_GRB + NEO_KHZ800);
 
-void xtouch_neo_pixel_timer_init();
-void xtouch_neo_pixel_init(void);
+void xtouch_neo_pixel_timer_init(int pin);
+void xtouch_neo_pixel_init(int pin);
 void xtouch_neo_pixel_on(int iRed, int iGreen, int iBlue);
 void xtouch_neo_pixel_off();
 void xtouch_neo_pixel_control_timer_create();
-void xtouch_neo_pixel_control_timer_start();
+void xtouch_neo_pixel_control_timer_start(int pin);
 void xtouch_neo_pixel_control_timer_stop();
 void xtouch_neo_pixel_set_led_color(int red, int green, int blue);
 void xtouch_neo_pixel_set_pettern(int pattern);
@@ -31,6 +31,7 @@ void xtouch_neo_pixel_control_timer_handler(lv_timer_t *timer);
 void xtouch_neo_pixel_set_brightness(int brightness);
 void xtouch_neo_pixel_set_num(int num);
 void xtouch_neo_pixel_reset_all();
+void xtouch_neo_pixel_set_idle_led_enabled(bool enabled);
 
 lv_timer_t *xtouch_neo_pixel_control_timer;
 bool xtouch_neo_pixel_control_started = false;
@@ -39,7 +40,11 @@ bool print_status_changed = false;
 int last_print_gcode_action = 0;
 bool print_gcode_action_changed = false;
 
+
 int status_timeout = -1; // -1:無期限 x:x秒でステータスにかかわらずIDLEに戻す
+int alarm_timeout = -1; // Alarm Timeout : from setting value
+bool idle_led_enabled = true; // Idle LED Enabled : from setting value
+
 int led_color[3] = {0, 0, 0};
 int pettern = 0; // 0:on hold 1:fade slow 2:fade fast 3:flowing light
 
@@ -63,11 +68,11 @@ void xtouch_neo_pixel_control_timer_create()
     lv_timer_set_repeat_count(xtouch_neo_pixel_control_timer, -1); // 無限ループ
 }
 
-void xtouch_neo_pixel_control_timer_start()
+void xtouch_neo_pixel_control_timer_start(int pin)
 {
     if (!xtouch_neo_pixel_control_started)
     {
-        xtouch_neo_pixel_init();
+        xtouch_neo_pixel_init(pin);
         xtouch_neo_pixel_control_started = true;
     }
     xtouch_neo_pixel_control_timer_create();
@@ -78,11 +83,11 @@ void xtouch_neo_pixel_control_timer_stop()
     lv_timer_pause(xtouch_neo_pixel_control_timer);
 }
 
-void xtouch_neo_pixel_timer_init()
+void xtouch_neo_pixel_timer_init(int pin)
 {
     if (xTouchConfig.xTouchNeoPixelNumValue > 0)
     {
-    xtouch_neo_pixel_control_timer_start();
+        xtouch_neo_pixel_control_timer_start(pin);
     }
     else
     {
@@ -94,25 +99,9 @@ void xtouch_neo_pixel_timer_init()
     }
 }
 
-void xtouch_neo_pixel_init(void)
+void xtouch_neo_pixel_init(int pin)
 {
-#if defined(__XTOUCH_SCREEN_28__)
-    lgfx::boards::board_t board = tft.getBoard();
-    if (board == lgfx::boards::board_t::board_ESP32_ESP32E)
-        return;
-
-    ConsoleDebug.println("XTOUCH_NEO_PIXEL_INIT");
-    if (board == lgfx::boards::board_t::board_Guition_ESP32_2432W328R || board == lgfx::boards::board_t::board_Guition_ESP32_2432W328C)
-    {
-        strip.setPin(21);
-    }
-    else if (board == lgfx::boards::board_t::board_Sunton_ESP32_2432S028_7789 || board == lgfx::boards::board_t::board_Sunton_ESP32_2432S028_9341)
-    {
-        strip.setPin(27);
-    }
-#elif defined(__XTOUCH_SCREEN_50__)
-        strip.setPin(17);
-#endif
+    strip.setPin(pin);
     strip.begin();
 
 }
@@ -124,11 +113,6 @@ void xtouch_neo_pixel_off()
 
 void xtouch_neo_pixel_on(int iRed, int iGreen, int iBlue)
 {
-#if defined(__XTOUCH_SCREEN_28__)
-    lgfx::boards::board_t board = tft.getBoard();
-    if (board == lgfx::boards::board_t::board_ESP32_ESP32E)
-        return;
-#endif
     // ひとつづつつけていく
     for (int j = 0; j < NeoPixelCount; j++)
     {
@@ -172,6 +156,16 @@ void xtouch_neo_pixel_set_pettern(int pattern)
 void xtouch_neo_pixel_set_status_timeout(int timeout)
 {
     status_timeout = timeout;
+}
+
+void xtouch_neo_pixel_set_alarm_timeout(int timeout)
+{
+    alarm_timeout = timeout;
+}
+
+void xtouch_neo_pixel_set_idle_led_enabled(bool enabled)
+{
+    idle_led_enabled = enabled;
 }
 
 void xtouch_neo_pixel_control_timer_handler(lv_timer_t *timer)
@@ -266,13 +260,23 @@ void xtouch_neo_pixel_control_timer_handler(lv_timer_t *timer)
         {
             xtouch_neo_pixel_set_led_color(0, 255, 0);
             xtouch_neo_pixel_set_pettern(1);
-            xtouch_neo_pixel_set_status_timeout(30000);
+            if(alarm_timeout > 0){
+                xtouch_neo_pixel_set_status_timeout(alarm_timeout * 30 * 1000);
+            }
+            else{
+                xtouch_neo_pixel_set_status_timeout(-1);
+            }
         }
         else if (bambuStatus.print_status == XTOUCH_PRINT_STATUS_FAILED)
         {
             xtouch_neo_pixel_set_led_color(64, 0, 0); // 赤色の点滅
             xtouch_neo_pixel_set_pettern(6);
-            xtouch_neo_pixel_set_status_timeout(120000);
+            if(alarm_timeout > 0){
+                xtouch_neo_pixel_set_status_timeout(alarm_timeout * 30 * 1000);
+            }
+            else{
+                xtouch_neo_pixel_set_status_timeout(-1);
+            }
         }
         else if (bambuStatus.print_status == XTOUCH_PRINT_STATUS_IDLE)
         {
@@ -297,6 +301,20 @@ void xtouch_neo_pixel_control_timer_handler(lv_timer_t *timer)
         print_status_changed = true; // ステータス変更状態とする
         status_timeout = -1;         // タイムアウトを無制限に。
     }
+
+    // Idle LEDが無効の場合はIDLE状態でもLEDを消灯
+    if (!idle_led_enabled && pettern == 5)
+    {
+        xtouch_neo_pixel_set_led_color(0, 0, 0);
+        xtouch_neo_pixel_set_pettern(0);
+        print_status_changed = true;
+    // Idle LEDが有効の場合はIDLE状態に戻す
+    }else if (idle_led_enabled && pettern == 0 && led_color[0] == 0 && led_color[1] == 0 && led_color[2] == 0){
+        xtouch_neo_pixel_set_led_color(32, 0, 0);
+        xtouch_neo_pixel_set_pettern(5);
+        print_status_changed = true;
+    }
+
     // ステータスが変わっていない場合のみアニメーション処理を実行
     // パターンに応じたアニメーション処理
     int current_red = led_color[0];

@@ -168,7 +168,11 @@ extern "C"
  
         int xTouchNeoPixelNumValue;
         int xTouchNeoPixelBlightnessValue;
- 
+        int xTouchNeoPixelPinValue;
+
+        int xTouchAlarmTimeoutValue;
+        bool xTouchIdleLEDEnabled;
+
         bool xTouchChamberSensorEnabled;
         int xTouchChamberSensorReadingDiff;
     } XTouchConfig;
