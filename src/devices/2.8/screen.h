@@ -22,10 +22,19 @@ void xtouch_screen_setBrightness(byte brightness)
     tft.setBrightness(brightness);
 }
 
-void xtouch_screen_setBackLedOff()
+
+
+void xtouch_screen_sleep()
 {
-     tft.setBrightness(0);
-     xtouch_screen_touchFromPowerOff = true;
+    xtouch_screen_touchFromPowerOff = true;
+    // if (xTouchConfig.xTouchStackChanEnabled == true)
+    // {
+    //      loadScreen(9);
+    // }
+    // else
+    // {
+        xtouch_screen_setBrightness(0);
+    // }
 }
 
 void xtouch_screen_wakeUp()
@@ -39,7 +48,7 @@ void xtouch_screen_wakeUp()
     xtouch_screen_setBrightness(xTouchConfig.xTouchBacklightLevel);
 }
 
-void xtouch_screen_onScreenOff(lv_timer_t *timer)
+void xtouch_screen_onScreenTimeout(lv_timer_t *timer)
 {
     if (bambuStatus.print_status == XTOUCH_PRINT_STATUS_RUNNING && xTouchConfig.xTouchWakeDuringPrint == true)
     {
@@ -52,8 +61,8 @@ void xtouch_screen_onScreenOff(lv_timer_t *timer)
     }
 
     ConsoleInfo.println("[xPTouch][SCREEN] Screen Off");
-    xtouch_screen_setBrightness(0);
-    xtouch_screen_touchFromPowerOff = true;
+    xtouch_screen_sleep();
+
 }
 
 void xtouch_screen_onLEDOff(lv_timer_t *timer)
@@ -79,7 +88,7 @@ void xtouch_screen_onLEDOff(lv_timer_t *timer)
 
 void xtouch_screen_setupScreenTimer()
 {
-    xtouch_screen_onScreenOffTimer = lv_timer_create(xtouch_screen_onScreenOff, xTouchConfig.xTouchTFTOFFValue * 1000 * 60, NULL);
+    xtouch_screen_onScreenOffTimer = lv_timer_create(xtouch_screen_onScreenTimeout, xTouchConfig.xTouchTFTOFFValue * 1000 * 60, NULL);
     lv_timer_pause(xtouch_screen_onScreenOffTimer);
 }
 
@@ -205,7 +214,7 @@ void xtouch_screen_setup()
 
     ConsoleInfo.println("[xPTouch][SCREEN] Setup");
 
-    xtouch_screen_setBackLedOff();
+    xtouch_screen_sleep();
 
     tft.begin();
 
