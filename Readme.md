@@ -60,10 +60,18 @@ xptouchスクリーンは、BambuLabプリンターに革命的な機能を追�
 ![image](readme-assets/screen-2-8.png)
 ![image](readme-assets/screen-2-8-back.png)
 
-現在、手頃な価格の2.8インチESP32-2432S028Rボードでおよび5.0インチ JC8048W550ボードのみテストされており、以下のリンクで購入できます：
-恐らく2.4インチ、3.5インチも使用可能ですが、テストは実施していません
-- [ESP32-2432S028R](https://s.click.aliexpress.com/e/_olsZIza)
-- [JC8048W550] (https://s.click.aliexpress.com/e/_okFyaE4)
+現在、手頃な価格の2.8インチ下記の5モデルでテストされており、以下のリンクで購入できます：
+恐らく解像度が同一の2.4インチ[ESP32-2432S024R]、3.5インチ[ESP32-2432S035]も使用可能ですが、テストは実施していません。
+※オリジナル版XTouchの[ESP32-2432S028R]のUSBがTypeCになったモデルで、バックライトが真っ暗になることがあるようです。
+現状は安定して利用できる[JC2432W328R]での利用がおすすめです。
+2.8インチシリーズ
+- [JC2432W328R] (https://s.click.aliexpress.com/e/_c2zmqFtZ) <- same URL
+- [JC2432W328C] (https://s.click.aliexpress.com/e/_c2zmqFtZ)
+- [ESP32-2432S028R](https://s.click.aliexpress.com/e/_c3cak4SX)
+- [ESP32-32E With Touch] (https://s.click.aliexpress.com/e/_c4X4IIfD)
+
+5インチシリーズ
+- [JC8048W550] (https://s.click.aliexpress.com/e/_c3fHrXZh)
 
 
 3Dモデルは以下のリンクで見つけることができます：
@@ -72,12 +80,16 @@ xptouchスクリーンは、BambuLabプリンターに革命的な機能を追�
 
 ### オプションハードウェア
 
-- **[DS18B20温度センサー](docs/temperature-sensor.md)**: チャンバー温度センサーが内蔵されていないプリンターの場合、外部DS18B20温度センサーを追加するオプションがあります。このセンサーは正確なチャンバー温度測定を提供し、xptouchスクリーンの機能を向上させます。スクリーンのコネクターは1.25 MZ JST 4Pです。
+- **[DS18B20温度センサー](docs/temperature-sensor.md)
+**: チャンバー温度センサーが内蔵されていないプリンターの場合、外部DS18B20温度センサーを追加するオプションがあります。このセンサーは正確なチャンバー温度測定を提供し、xptouchスクリーンの機能を向上させます。スクリーンのコネクターは1.25 MZ JST 4Pです。
 
+- **[NEOPIXEL LEDリボン]docs/led-status.md)
+**: NEOPIXEL LEDテープを追加するオプションがあります。印刷ステータスに応じた色でステータス表現することができます。
 
-温度センサーは以下のリンクで購入できます：
+オプション品は以下のリンクで購入できます：
 
-- [DS18B20 温度センサーB](https://s.click.aliexpress.com/e/_oBYP2pE)
+- [DS18B20 温度センサー] (https://s.click.aliexpress.com/e/_c3aI14JZ)
+- [WS2811 LEDストリップ] (https://s.click.aliexpress.com/e/_c3KYzqHN)
 
 - **DS18B20 P1P/P1Sチャンバー温度エンクロージャー**: さらに、DS18B20温度センサーをP1P/P1Sプリンター内に簡単に統合できる3Dモデルを作成しました。
 
