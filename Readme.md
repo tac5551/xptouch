@@ -67,7 +67,7 @@ xptouchスクリーンは、BambuLabプリンターに革命的な機能を追�
 2.8インチシリーズ
 - [JC2432W328R] (https://s.click.aliexpress.com/e/_c2zmqFtZ) <- same URL
 - [JC2432W328C] (https://s.click.aliexpress.com/e/_c2zmqFtZ)
-- [ESP32-2432S028R](https://s.click.aliexpress.com/e/_c3cak4SX)
+- [ESP32-2432S028R] (https://s.click.aliexpress.com/e/_c3cak4SX)
 - [ESP32-32E_With_Touch] (https://s.click.aliexpress.com/e/_c4X4IIfD)
 
 5インチシリーズ
@@ -80,10 +80,10 @@ xptouchスクリーンは、BambuLabプリンターに革命的な機能を追�
 
 ### オプションハードウェア
 
-- **[DS18B20温度センサー](docs/temperature-sensor.md)
+- **[DS18B20温度センサー] (docs/temperature-sensor.md)
 **: チャンバー温度センサーが内蔵されていないプリンターの場合、外部DS18B20温度センサーを追加するオプションがあります。このセンサーは正確なチャンバー温度測定を提供し、xptouchスクリーンの機能を向上させます。スクリーンのコネクターは1.25 MZ JST 4Pです。
 
-- **[NEOPIXEL LEDリボン]docs/led-status.md)
+- **[NEOPIXELLEDリボン] (docs/led-status.md)
 **: NEOPIXEL LEDテープを追加するオプションがあります。印刷ステータスに応じた色でステータス表現することができます。
 
 オプション品は以下のリンクで購入できます：
