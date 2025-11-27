@@ -21,6 +21,9 @@ void ui_comp_optionalComponent_create_hook(lv_obj_t *comp)
 void ui_comp_confirmPanel_create_hook(lv_obj_t *comp)
 {
 }
+void ui_comp_lightingPanel_create_hook(lv_obj_t *comp)
+{
+}
 void ui_comp_hmsPanel_create_hook(lv_obj_t *comp)
 {
 }

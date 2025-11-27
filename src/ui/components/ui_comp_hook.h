@@ -9,6 +9,7 @@ extern "C"
     void ui_comp_sidebarComponent_create_hook(lv_obj_t *comp);
     void ui_comp_homeComponent_create_hook(lv_obj_t *comp);
     void ui_comp_temperatureComponent_create_hook(lv_obj_t *comp);
+    void ui_comp_LightingPanel_create_hook(lv_obj_t *comp);
     void ui_comp_controlComponent_create_hook(lv_obj_t *comp);
     void ui_comp_settingsComponent_create_hook(lv_obj_t *comp);
     void ui_comp_optionalComponent_create_hook(lv_obj_t *comp);

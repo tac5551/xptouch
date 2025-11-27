@@ -4,7 +4,7 @@
 
 #define AMS_COUNT 4
 #define SLOT_COUNT 5
-#define AMS_BORDER 8
+#define AMS_BORDER 3
 
 void ui_event_comp_amsViewComponent_onAmsHumidity(lv_event_t *e)
 {
@@ -107,7 +107,7 @@ void ui_event_comp_amsViewComponent_onAmsUpdate(lv_event_t *e)
     uint32_t tray_status = get_tray_status(tmp_ams_id, tmp_tray_id);
     uint16_t tray_id = ((tray_status >> 4) & 0x0F);
     uint16_t loaded = ((tray_status) & 0x01);
-
+    char *tray_type = get_tray_type(tmp_ams_id, tmp_tray_id);
     // printf("onAmsUpdate %d %d %d %d\n", tmp_ams_id, tmp_tray_id, tray_id, loaded);
 
     // for (int i = 0; i < 4; i++)
@@ -131,10 +131,12 @@ void ui_event_comp_amsViewComponent_onAmsUpdate(lv_event_t *e)
         lv_color_t color = lv_color_hex(tray_status >> 8);
         lv_color_t color_inv = lv_color_hex((0xFFFFFF - (tray_status >> 8)) & 0xFFFFFF);
 
-        char buffer[100];
-        memset(buffer, 0, 100);
-        sprintf(buffer, "Slot %d\n%s", tray_id, get_tray_type(tmp_ams_id, tmp_tray_id));
-        lv_label_set_text(target, buffer);
+        // tray_typeがnullポインタでなく、空文字列でもなく、文字列"null"でもない場合、その文字列を設定（優先）
+        if (tray_type[0] != '\0' && strcmp(tray_type, "null") != 0) {
+            lv_label_set_text(target, tray_type);
+        } else {
+            lv_label_set_text(target, "x");
+        }
 
         // printf(" tray_now: %d, tray_tar: %d, slot: %d, color: %06llX \n", bambuStatus.m_tray_now, bambuStatus.m_tray_tar, tray_id, message->data >> 8);
 
@@ -153,18 +155,166 @@ void ui_event_comp_amsViewComponent_onAmsUpdate(lv_event_t *e)
             lv_obj_set_style_border_color(target, color_inv, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_border_width(target, AMS_BORDER, LV_PART_MAIN | LV_STATE_DEFAULT);
         }
-        else if (bambuStatus.m_tray_pre + 1 == tray_id && bambuStatus.m_tray_pre != bambuStatus.m_tray_tar)
-        {
-            // lv_label_set_text(target, "U");
-        }
-        else if (!loaded)
-        {
-            // lv_label_set_text(target, "X");
-        }
-        else
-        {
-            // lv_label_set_text(target, "");
-        }
+    }
+}
+
+
+
+void ui_event_comp_AMSViewComponent_onAMSSlot1_1Click(lv_event_t *e)
+{
+    lv_event_code_t event_code = lv_event_get_code(e);
+    if (event_code == LV_EVENT_CLICKED)
+    {
+        printf("ui_event_comp_AMSViewComponent_onAMSSlot1_1Click\n");
+        onAmsSlotLoad(e, 1);
+    }
+}
+
+void ui_event_comp_AMSViewComponent_onAMSSlot1_2Click(lv_event_t *e)
+{
+    lv_event_code_t event_code = lv_event_get_code(e);
+    if (event_code == LV_EVENT_CLICKED)
+    {
+        printf("ui_event_comp_AMSViewComponent_onAMSSlot1_2Click\n");
+        onAmsSlotLoad(e, 2);
+    }
+}
+
+void ui_event_comp_AMSViewComponent_onAMSSlot1_3Click(lv_event_t *e)
+{
+    lv_event_code_t event_code = lv_event_get_code(e);
+    if (event_code == LV_EVENT_CLICKED)
+    {
+        printf("ui_event_comp_AMSViewComponent_onAMSSlot1_3Click\n");
+        onAmsSlotLoad(e, 3);
+    }
+}
+
+void ui_event_comp_AMSViewComponent_onAMSSlot1_4Click(lv_event_t *e)
+{
+    lv_event_code_t event_code = lv_event_get_code(e);
+    if (event_code == LV_EVENT_CLICKED)
+    {
+        printf("ui_event_comp_AMSViewComponent_onAMSSlot1_4Click\n");
+        onAmsSlotLoad(e, 4);
+    }
+}
+
+void ui_event_comp_AMSViewComponent_onAMSSlot2_1Click(lv_event_t *e)
+{
+    lv_event_code_t event_code = lv_event_get_code(e);
+    if (event_code == LV_EVENT_CLICKED)
+    {
+        printf("ui_event_comp_AMSViewComponent_onAMSSlot2_1Click\n");
+        onAmsSlotLoad(e, 101);
+    }
+}
+
+void ui_event_comp_AMSViewComponent_onAMSSlot2_2Click(lv_event_t *e)
+{
+    lv_event_code_t event_code = lv_event_get_code(e);
+    if (event_code == LV_EVENT_CLICKED)
+    {
+        printf("ui_event_comp_AMSViewComponent_onAMSSlot2_2Click\n");
+        onAmsSlotLoad(e, 102);
+    }
+}
+
+void ui_event_comp_AMSViewComponent_onAMSSlot2_3Click(lv_event_t *e)
+{
+    lv_event_code_t event_code = lv_event_get_code(e);
+    if (event_code == LV_EVENT_CLICKED)
+    {
+        printf("ui_event_comp_AMSViewComponent_onAMSSlot2_3Click\n");
+        onAmsSlotLoad(e, 103);
+    }
+}
+
+void ui_event_comp_AMSViewComponent_onAMSSlot2_4Click(lv_event_t *e)
+{
+    lv_event_code_t event_code = lv_event_get_code(e);
+    if (event_code == LV_EVENT_CLICKED)
+    {
+        printf("ui_event_comp_AMSViewComponent_onAMSSlot2_4Click\n");
+        onAmsSlotLoad(e, 104);
+    }
+}
+void ui_event_comp_AMSViewComponent_onAMSSlot3_1Click(lv_event_t *e)
+{
+    lv_event_code_t event_code = lv_event_get_code(e);
+    if (event_code == LV_EVENT_CLICKED)
+    {
+        printf("ui_event_comp_AMSViewComponent_onAMSSlot3_1Click\n");
+        onAmsSlotLoad(e, 201);
+    }
+}
+
+void ui_event_comp_AMSViewComponent_onAMSSlot3_2Click(lv_event_t *e)
+{
+    lv_event_code_t event_code = lv_event_get_code(e);
+    if (event_code == LV_EVENT_CLICKED)
+    {
+        printf("ui_event_comp_AMSViewComponent_onAMSSlot3_2Click\n");
+        onAmsSlotLoad(e, 202);
+    }
+}
+
+void ui_event_comp_AMSViewComponent_onAMSSlot3_3Click(lv_event_t *e)
+{
+    lv_event_code_t event_code = lv_event_get_code(e);
+    if (event_code == LV_EVENT_CLICKED)
+    {
+        printf("ui_event_comp_AMSViewComponent_onAMSSlot3_3Click\n");
+        onAmsSlotLoad(e, 203);
+    }
+}
+
+void ui_event_comp_AMSViewComponent_onAMSSlot3_4Click(lv_event_t *e)
+{
+    lv_event_code_t event_code = lv_event_get_code(e);
+    if (event_code == LV_EVENT_CLICKED)
+    {
+        printf("ui_event_comp_AMSViewComponent_onAMSSlot3_4Click\n");
+        onAmsSlotLoad(e, 204);
+    }
+}
+void ui_event_comp_AMSViewComponent_onAMSSlot4_1Click(lv_event_t *e)
+{
+    lv_event_code_t event_code = lv_event_get_code(e);
+    if (event_code == LV_EVENT_CLICKED)
+    {
+        printf("ui_event_comp_AMSViewComponent_onAMSSlot4_1Click\n");
+        onAmsSlotLoad(e, 301);
+    }
+}
+
+void ui_event_comp_AMSViewComponent_onAMSSlot4_2Click(lv_event_t *e)
+{
+    lv_event_code_t event_code = lv_event_get_code(e);
+    if (event_code == LV_EVENT_CLICKED)
+    {
+        printf("ui_event_comp_AMSViewComponent_onAMSSlot4_2Click\n");
+        onAmsSlotLoad(e, 302);
+    }
+}
+
+void ui_event_comp_AMSViewComponent_onAMSSlot4_3Click(lv_event_t *e)
+{
+    lv_event_code_t event_code = lv_event_get_code(e);
+    if (event_code == LV_EVENT_CLICKED)
+    {
+        printf("ui_event_comp_AMSViewComponent_onAMSSlot4_3Click\n");
+        onAmsSlotLoad(e, 303);
+    }
+}
+
+void ui_event_comp_AMSViewComponent_onAMSSlot4_4Click(lv_event_t *e)
+{
+    lv_event_code_t event_code = lv_event_get_code(e);
+    if (event_code == LV_EVENT_CLICKED)
+    {
+        printf("ui_event_comp_AMSViewComponent_onAMSSlot4_4Click\n");
+        onAmsSlotLoad(e, 304);
     }
 }
 
@@ -469,8 +619,8 @@ lv_obj_t *ui_amsViewComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_bg_color(cui_AmsSlot1_1, lv_color_hex(0x444444), LV_PART_MAIN | LV_STATE_DISABLED);
     lv_obj_set_style_bg_opa(cui_AmsSlot1_1, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_width(cui_AmsSlot1_1, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_left(cui_AmsSlot1_1, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_right(cui_AmsSlot1_1, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_left(cui_AmsSlot1_1, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(cui_AmsSlot1_1, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_top(cui_AmsSlot1_1, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_bottom(cui_AmsSlot1_1, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(cui_AmsSlot1_1, lv_color_hex(0x777777), LV_PART_MAIN | LV_STATE_PRESSED);
@@ -494,8 +644,8 @@ lv_obj_t *ui_amsViewComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_bg_color(cui_AmsSlot1_2, lv_color_hex(0x444444), LV_PART_MAIN | LV_STATE_DISABLED);
     lv_obj_set_style_bg_opa(cui_AmsSlot1_2, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_width(cui_AmsSlot1_2, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_left(cui_AmsSlot1_2, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_right(cui_AmsSlot1_2, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_left(cui_AmsSlot1_2, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(cui_AmsSlot1_2, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_top(cui_AmsSlot1_2, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_bottom(cui_AmsSlot1_2, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(cui_AmsSlot1_2, lv_color_hex(0x777777), LV_PART_MAIN | LV_STATE_PRESSED);
@@ -519,8 +669,8 @@ lv_obj_t *ui_amsViewComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_bg_color(cui_AmsSlot1_3, lv_color_hex(0x444444), LV_PART_MAIN | LV_STATE_DISABLED);
     lv_obj_set_style_bg_opa(cui_AmsSlot1_3, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_width(cui_AmsSlot1_3, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_left(cui_AmsSlot1_3, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_right(cui_AmsSlot1_3, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_left(cui_AmsSlot1_3, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(cui_AmsSlot1_3, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_top(cui_AmsSlot1_3, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_bottom(cui_AmsSlot1_3, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(cui_AmsSlot1_3, lv_color_hex(0x777777), LV_PART_MAIN | LV_STATE_PRESSED);
@@ -544,8 +694,8 @@ lv_obj_t *ui_amsViewComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_bg_color(cui_AmsSlot1_4, lv_color_hex(0x444444), LV_PART_MAIN | LV_STATE_DISABLED);
     lv_obj_set_style_bg_opa(cui_AmsSlot1_4, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_width(cui_AmsSlot1_4, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_left(cui_AmsSlot1_4, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_right(cui_AmsSlot1_4, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_left(cui_AmsSlot1_4, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(cui_AmsSlot1_4, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_top(cui_AmsSlot1_4, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_bottom(cui_AmsSlot1_4, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(cui_AmsSlot1_4, lv_color_hex(0x777777), LV_PART_MAIN | LV_STATE_PRESSED);
@@ -569,8 +719,8 @@ lv_obj_t *ui_amsViewComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_bg_color(cui_AmsSlot2_1, lv_color_hex(0x444444), LV_PART_MAIN | LV_STATE_DISABLED);
     lv_obj_set_style_bg_opa(cui_AmsSlot2_1, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_width(cui_AmsSlot2_1, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_left(cui_AmsSlot2_1, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_right(cui_AmsSlot2_1, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_left(cui_AmsSlot2_1, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(cui_AmsSlot2_1, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_top(cui_AmsSlot2_1, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_bottom(cui_AmsSlot2_1, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(cui_AmsSlot2_1, lv_color_hex(0x777777), LV_PART_MAIN | LV_STATE_PRESSED);
@@ -594,8 +744,8 @@ lv_obj_t *ui_amsViewComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_bg_color(cui_AmsSlot2_2, lv_color_hex(0x444444), LV_PART_MAIN | LV_STATE_DISABLED);
     lv_obj_set_style_bg_opa(cui_AmsSlot2_2, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_width(cui_AmsSlot2_2, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_left(cui_AmsSlot2_2, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_right(cui_AmsSlot2_2, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_left(cui_AmsSlot2_2, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(cui_AmsSlot2_2, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_top(cui_AmsSlot2_2, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_bottom(cui_AmsSlot2_2, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(cui_AmsSlot2_2, lv_color_hex(0x777777), LV_PART_MAIN | LV_STATE_PRESSED);
@@ -619,8 +769,8 @@ lv_obj_t *ui_amsViewComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_bg_color(cui_AmsSlot2_3, lv_color_hex(0x444444), LV_PART_MAIN | LV_STATE_DISABLED);
     lv_obj_set_style_bg_opa(cui_AmsSlot2_3, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_width(cui_AmsSlot2_3, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_left(cui_AmsSlot2_3, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_right(cui_AmsSlot2_3, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_left(cui_AmsSlot2_3, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(cui_AmsSlot2_3, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_top(cui_AmsSlot2_3, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_bottom(cui_AmsSlot2_3, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(cui_AmsSlot2_3, lv_color_hex(0x777777), LV_PART_MAIN | LV_STATE_PRESSED);
@@ -644,8 +794,8 @@ lv_obj_t *ui_amsViewComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_bg_color(cui_AmsSlot2_4, lv_color_hex(0x444444), LV_PART_MAIN | LV_STATE_DISABLED);
     lv_obj_set_style_bg_opa(cui_AmsSlot2_4, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_width(cui_AmsSlot2_4, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_left(cui_AmsSlot2_4, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_right(cui_AmsSlot2_4, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_left(cui_AmsSlot2_4, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(cui_AmsSlot2_4, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_top(cui_AmsSlot2_4, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_bottom(cui_AmsSlot2_4, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(cui_AmsSlot2_4, lv_color_hex(0x777777), LV_PART_MAIN | LV_STATE_PRESSED);
@@ -669,8 +819,8 @@ lv_obj_t *ui_amsViewComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_bg_color(cui_AmsSlot3_1, lv_color_hex(0x444444), LV_PART_MAIN | LV_STATE_DISABLED);
     lv_obj_set_style_bg_opa(cui_AmsSlot3_1, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_width(cui_AmsSlot3_1, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_left(cui_AmsSlot3_1, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_right(cui_AmsSlot3_1, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_left(cui_AmsSlot3_1, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(cui_AmsSlot3_1, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_top(cui_AmsSlot3_1, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_bottom(cui_AmsSlot3_1, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(cui_AmsSlot3_1, lv_color_hex(0x777777), LV_PART_MAIN | LV_STATE_PRESSED);
@@ -694,8 +844,8 @@ lv_obj_t *ui_amsViewComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_bg_color(cui_AmsSlot3_2, lv_color_hex(0x444444), LV_PART_MAIN | LV_STATE_DISABLED);
     lv_obj_set_style_bg_opa(cui_AmsSlot3_2, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_width(cui_AmsSlot3_2, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_left(cui_AmsSlot3_2, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_right(cui_AmsSlot3_2, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_left(cui_AmsSlot3_2, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(cui_AmsSlot3_2, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_top(cui_AmsSlot3_2, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_bottom(cui_AmsSlot3_2, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(cui_AmsSlot3_2, lv_color_hex(0x777777), LV_PART_MAIN | LV_STATE_PRESSED);
@@ -719,8 +869,8 @@ lv_obj_t *ui_amsViewComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_bg_color(cui_AmsSlot3_3, lv_color_hex(0x444444), LV_PART_MAIN | LV_STATE_DISABLED);
     lv_obj_set_style_bg_opa(cui_AmsSlot3_3, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_width(cui_AmsSlot3_3, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_left(cui_AmsSlot3_3, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_right(cui_AmsSlot3_3, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_left(cui_AmsSlot3_3, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(cui_AmsSlot3_3, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_top(cui_AmsSlot3_3, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_bottom(cui_AmsSlot3_3, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(cui_AmsSlot3_3, lv_color_hex(0x777777), LV_PART_MAIN | LV_STATE_PRESSED);
@@ -744,8 +894,8 @@ lv_obj_t *ui_amsViewComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_bg_color(cui_AmsSlot3_4, lv_color_hex(0x444444), LV_PART_MAIN | LV_STATE_DISABLED);
     lv_obj_set_style_bg_opa(cui_AmsSlot3_4, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_width(cui_AmsSlot3_4, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_left(cui_AmsSlot3_4, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_right(cui_AmsSlot3_4, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_left(cui_AmsSlot3_4, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(cui_AmsSlot3_4, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_top(cui_AmsSlot3_4, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_bottom(cui_AmsSlot3_4, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(cui_AmsSlot3_4, lv_color_hex(0x777777), LV_PART_MAIN | LV_STATE_PRESSED);
@@ -769,8 +919,8 @@ lv_obj_t *ui_amsViewComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_bg_color(cui_AmsSlot4_1, lv_color_hex(0x444444), LV_PART_MAIN | LV_STATE_DISABLED);
     lv_obj_set_style_bg_opa(cui_AmsSlot4_1, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_width(cui_AmsSlot4_1, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_left(cui_AmsSlot4_1, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_right(cui_AmsSlot4_1, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_left(cui_AmsSlot4_1, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(cui_AmsSlot4_1, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_top(cui_AmsSlot4_1, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_bottom(cui_AmsSlot4_1, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(cui_AmsSlot4_1, lv_color_hex(0x777777), LV_PART_MAIN | LV_STATE_PRESSED);
@@ -794,8 +944,8 @@ lv_obj_t *ui_amsViewComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_bg_color(cui_AmsSlot4_2, lv_color_hex(0x444444), LV_PART_MAIN | LV_STATE_DISABLED);
     lv_obj_set_style_bg_opa(cui_AmsSlot4_2, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_width(cui_AmsSlot4_2, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_left(cui_AmsSlot4_2, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_right(cui_AmsSlot4_2, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_left(cui_AmsSlot4_2, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(cui_AmsSlot4_2, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_top(cui_AmsSlot4_2, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_bottom(cui_AmsSlot4_2, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(cui_AmsSlot4_2, lv_color_hex(0x777777), LV_PART_MAIN | LV_STATE_PRESSED);
@@ -819,8 +969,8 @@ lv_obj_t *ui_amsViewComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_bg_color(cui_AmsSlot4_3, lv_color_hex(0x444444), LV_PART_MAIN | LV_STATE_DISABLED);
     lv_obj_set_style_bg_opa(cui_AmsSlot4_3, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_width(cui_AmsSlot4_3, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_left(cui_AmsSlot4_3, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_right(cui_AmsSlot4_3, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_left(cui_AmsSlot4_3, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(cui_AmsSlot4_3, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_top(cui_AmsSlot4_3, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_bottom(cui_AmsSlot4_3, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(cui_AmsSlot4_3, lv_color_hex(0x777777), LV_PART_MAIN | LV_STATE_PRESSED);
@@ -844,13 +994,63 @@ lv_obj_t *ui_amsViewComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_bg_color(cui_AmsSlot4_4, lv_color_hex(0x444444), LV_PART_MAIN | LV_STATE_DISABLED);
     lv_obj_set_style_bg_opa(cui_AmsSlot4_4, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_width(cui_AmsSlot4_4, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_left(cui_AmsSlot4_4, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_right(cui_AmsSlot4_4, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_left(cui_AmsSlot4_4, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(cui_AmsSlot4_4, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_top(cui_AmsSlot4_4, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_bottom(cui_AmsSlot4_4, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(cui_AmsSlot4_4, lv_color_hex(0x777777), LV_PART_MAIN | LV_STATE_PRESSED);
     lv_obj_set_style_bg_opa(cui_AmsSlot4_4, 255, LV_PART_MAIN | LV_STATE_PRESSED);
     lv_obj_set_style_border_width(cui_AmsSlot4_4, AMS_BORDER, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    lv_obj_t **children = lv_mem_alloc(sizeof(lv_obj_t *) * _UI_COMP_AMSVIEWCOMPONENT_NUM);
+    children[UI_COMP_AMSVIEWCOMPONENT_AMSVIEWCOMPONENT] = cui_amsViewComponent;
+    children[UI_COMP_AMSVIEWCOMPONENT_AMSVIEWCOMPONENTCONTROL1] = cui_AmsControl1;
+    children[UI_COMP_AMSVIEWCOMPONENT_AMSVIEWCOMPONENTCONTROL2] = cui_AmsControl2;
+    children[UI_COMP_AMSVIEWCOMPONENT_AMSVIEWCOMPONENTCONTROL3] = cui_AmsControl3;
+    children[UI_COMP_AMSVIEWCOMPONENT_AMSVIEWCOMPONENTCONTROL4] = cui_AmsControl4;
+    children[UI_COMP_AMSVIEWCOMPONENT_AMSVIEWCOMPONENTHUMID1] = cui_AmsHumid1;
+    children[UI_COMP_AMSVIEWCOMPONENT_AMSVIEWCOMPONENTHUMID2] = cui_AmsHumid2;
+    children[UI_COMP_AMSVIEWCOMPONENT_AMSVIEWCOMPONENTHUMID3] = cui_AmsHumid3;
+    children[UI_COMP_AMSVIEWCOMPONENT_AMSVIEWCOMPONENTHUMID4] = cui_AmsHumid4;
+    children[UI_COMP_AMSVIEWCOMPONENT_AMSVIEWCOMPONENTSLOT1_1] = cui_AmsSlot1_1;
+    children[UI_COMP_AMSVIEWCOMPONENT_AMSVIEWCOMPONENTSLOT1_2] = cui_AmsSlot1_2;
+    children[UI_COMP_AMSVIEWCOMPONENT_AMSVIEWCOMPONENTSLOT1_3] = cui_AmsSlot1_3;
+    children[UI_COMP_AMSVIEWCOMPONENT_AMSVIEWCOMPONENTSLOT1_4] = cui_AmsSlot1_4;
+    children[UI_COMP_AMSVIEWCOMPONENT_AMSVIEWCOMPONENTSLOT2_1] = cui_AmsSlot2_1;
+    children[UI_COMP_AMSVIEWCOMPONENT_AMSVIEWCOMPONENTSLOT2_2] = cui_AmsSlot2_2;
+    children[UI_COMP_AMSVIEWCOMPONENT_AMSVIEWCOMPONENTSLOT2_3] = cui_AmsSlot2_3;
+    children[UI_COMP_AMSVIEWCOMPONENT_AMSVIEWCOMPONENTSLOT2_4] = cui_AmsSlot2_4;
+    children[UI_COMP_AMSVIEWCOMPONENT_AMSVIEWCOMPONENTSLOT3_1] = cui_AmsSlot3_1;
+    children[UI_COMP_AMSVIEWCOMPONENT_AMSVIEWCOMPONENTSLOT3_2] = cui_AmsSlot3_2;
+    children[UI_COMP_AMSVIEWCOMPONENT_AMSVIEWCOMPONENTSLOT3_3] = cui_AmsSlot3_3;
+    children[UI_COMP_AMSVIEWCOMPONENT_AMSVIEWCOMPONENTSLOT3_4] = cui_AmsSlot3_4;
+    children[UI_COMP_AMSVIEWCOMPONENT_AMSVIEWCOMPONENTSLOT4_1] = cui_AmsSlot4_1;
+    children[UI_COMP_AMSVIEWCOMPONENT_AMSVIEWCOMPONENTSLOT4_2] = cui_AmsSlot4_2;
+    children[UI_COMP_AMSVIEWCOMPONENT_AMSVIEWCOMPONENTSLOT4_3] = cui_AmsSlot4_3;
+    children[UI_COMP_AMSVIEWCOMPONENT_AMSVIEWCOMPONENTSLOT4_4] = cui_AmsSlot4_4;
+
+    lv_obj_add_event_cb(cui_amsViewComponent, get_component_child_event_cb, LV_EVENT_GET_COMP_CHILD, children);
+    lv_obj_add_event_cb(cui_amsViewComponent, del_component_child_event_cb, LV_EVENT_DELETE, children);
+
+    // lv_obj_add_event_cb(cui_AmsSlot1_1, ui_event_comp_AMSViewComponent_onAMSSlot1_1Click, LV_EVENT_ALL, children);
+    // lv_obj_add_event_cb(cui_AmsSlot1_2, ui_event_comp_AMSViewComponent_onAMSSlot1_2Click, LV_EVENT_ALL, children);
+    // lv_obj_add_event_cb(cui_AmsSlot1_3, ui_event_comp_AMSViewComponent_onAMSSlot1_3Click, LV_EVENT_ALL, children);
+    // lv_obj_add_event_cb(cui_AmsSlot1_4, ui_event_comp_AMSViewComponent_onAMSSlot1_4Click, LV_EVENT_ALL, children);
+
+    // lv_obj_add_event_cb(cui_AmsSlot2_1, ui_event_comp_AMSViewComponent_onAMSSlot2_1Click, LV_EVENT_ALL, children);
+    // lv_obj_add_event_cb(cui_AmsSlot2_2, ui_event_comp_AMSViewComponent_onAMSSlot2_2Click, LV_EVENT_ALL, children);
+    // lv_obj_add_event_cb(cui_AmsSlot2_3, ui_event_comp_AMSViewComponent_onAMSSlot2_3Click, LV_EVENT_ALL, children);
+    // lv_obj_add_event_cb(cui_AmsSlot2_4, ui_event_comp_AMSViewComponent_onAMSSlot2_4Click, LV_EVENT_ALL, children);
+
+    // lv_obj_add_event_cb(cui_AmsSlot3_1, ui_event_comp_AMSViewComponent_onAMSSlot3_1Click, LV_EVENT_ALL, children);
+    // lv_obj_add_event_cb(cui_AmsSlot3_2, ui_event_comp_AMSViewComponent_onAMSSlot3_2Click, LV_EVENT_ALL, children);
+    // lv_obj_add_event_cb(cui_AmsSlot3_3, ui_event_comp_AMSViewComponent_onAMSSlot3_3Click, LV_EVENT_ALL, children);
+    // lv_obj_add_event_cb(cui_AmsSlot3_4, ui_event_comp_AMSViewComponent_onAMSSlot3_4Click, LV_EVENT_ALL, children);
+
+    // lv_obj_add_event_cb(cui_AmsSlot4_1, ui_event_comp_AMSViewComponent_onAMSSlot4_1Click, LV_EVENT_ALL, children);
+    // lv_obj_add_event_cb(cui_AmsSlot4_2, ui_event_comp_AMSViewComponent_onAMSSlot4_2Click, LV_EVENT_ALL, children);
+    // lv_obj_add_event_cb(cui_AmsSlot4_3, ui_event_comp_AMSViewComponent_onAMSSlot4_3Click, LV_EVENT_ALL, children);
+    // lv_obj_add_event_cb(cui_AmsSlot4_4, ui_event_comp_AMSViewComponent_onAMSSlot4_4Click, LV_EVENT_ALL, children);
 
     // Bits
     lv_obj_add_event_cb(cui_AmsControl1, ui_amsViewComponent_onAMSBitsSlot, LV_EVENT_MSG_RECEIVED, (void *)1);

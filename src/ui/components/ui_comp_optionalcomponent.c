@@ -129,7 +129,7 @@ lv_obj_t *ui_optionalComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_radius(cui_optionalTitle, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_color(cui_optionalTitle, lv_color_hex(0x000), LV_PART_MAIN | LV_STATE_DEFAULT);
 
-    //---------------------------------
+    //---StackChan Mode Start------------------------------
 
     lv_obj_t *cui_optional_stackChan;
     cui_optional_stackChan = lv_obj_create(cui_optionalComponent);
@@ -171,8 +171,9 @@ lv_obj_t *ui_optionalComponent_create(lv_obj_t *comp_parent)
         lv_obj_add_state(ui_optional_stackChanSwitch, LV_STATE_CHECKED);
     }
     //lv_obj_add_flag(cui_optional_stackChan, LV_OBJ_FLAG_HIDDEN);
-    //---------------------------------
+    //---StackChan Mode End------------------------------
 
+    //---NEOPIXEL Num Start------------------------------
     lv_obj_t *cui_optionalneoPixelTitle;
     cui_optionalneoPixelTitle = lv_label_create(cui_optionalComponent);
     lv_obj_set_width(cui_optionalneoPixelTitle, lv_pct(100));
@@ -244,8 +245,9 @@ lv_obj_t *ui_optionalComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_pad_top(ui_optionalNeoPixelNumValue, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_bottom(ui_optionalNeoPixelNumValue, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-    //---------------------------------
+    //---NEOPIXEL Num End------------------------------
 
+    //---NEOPIXEL Blightness Start ------------------------------
     lv_obj_t *cui_optionalNeoPixelBlightnessPanel;
     cui_optionalNeoPixelBlightnessPanel = lv_obj_create(cui_optionalComponent);
     lv_obj_set_width(cui_optionalNeoPixelBlightnessPanel, lv_pct(100));
@@ -300,9 +302,9 @@ lv_obj_t *ui_optionalComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_pad_top(ui_optionalNeoPixelBlightnessValue, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_bottom(ui_optionalNeoPixelBlightnessValue, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-    //---------------------------------
+    //---NEOPIXEL Blightness end------------------------------
 
-
+    //---NEOPIXEL Alarm timeout start------------------------------
     lv_obj_t *cui_optionalAlarmTimeoutPanel;
     cui_optionalAlarmTimeoutPanel = lv_obj_create(cui_optionalComponent);
     lv_obj_set_width(cui_optionalAlarmTimeoutPanel, lv_pct(100));
@@ -356,10 +358,51 @@ lv_obj_t *ui_optionalComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_pad_right(ui_optionalAlarmTimeoutValue, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_top(ui_optionalAlarmTimeoutValue, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_bottom(ui_optionalAlarmTimeoutValue, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    //---NEOPIXEL Alarm timeout start------------------------------
 
-    //---------------------------------
+    //---NEOPIXEL Idle LED Start-------------------------------
+    lv_obj_t *cui_optional_Idle_led;
+    cui_optional_Idle_led = lv_obj_create(cui_optionalComponent);
+    lv_obj_set_width(cui_optional_Idle_led, lv_pct(100));
+    lv_obj_set_height(cui_optional_Idle_led, LV_SIZE_CONTENT); /// 50
+    lv_obj_set_flex_flow(cui_optional_Idle_led, LV_FLEX_FLOW_ROW);
+    lv_obj_set_flex_align(cui_optional_Idle_led, LV_FLEX_ALIGN_SPACE_BETWEEN, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_set_scrollbar_mode(cui_optional_Idle_led, LV_SCROLLBAR_MODE_OFF);
+    lv_obj_set_style_bg_color(cui_optional_Idle_led, lv_color_hex(0x222222), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(cui_optional_Idle_led, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(cui_optional_Idle_led, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_left(cui_optional_Idle_led, 16, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(cui_optional_Idle_led, 16, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_top(cui_optional_Idle_led, 16, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_bottom(cui_optional_Idle_led, 16, LV_PART_MAIN | LV_STATE_DEFAULT);
 
+    lv_obj_t *cui_optional_Idle_ledLabel;
+    cui_optional_Idle_ledLabel = lv_label_create(cui_optional_Idle_led);
+    lv_obj_set_width(cui_optional_Idle_ledLabel, LV_SIZE_CONTENT);  /// 1
+    lv_obj_set_height(cui_optional_Idle_ledLabel, LV_SIZE_CONTENT); /// 1
+    lv_obj_set_style_text_font(cui_optional_Idle_ledLabel, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_label_set_text(cui_optional_Idle_ledLabel, "Idle LED");
+    lv_obj_set_scrollbar_mode(cui_optional_Idle_ledLabel, LV_SCROLLBAR_MODE_OFF);
 
+    ui_optional_Idle_ledSwitch = lv_switch_create(cui_optional_Idle_led);
+    lv_obj_set_width(ui_optional_Idle_ledSwitch, 50);
+    lv_obj_set_height(ui_optional_Idle_ledSwitch, 25);
+
+    lv_obj_set_style_bg_color(ui_optional_Idle_ledSwitch, lv_color_hex(0x2AFF00), LV_PART_INDICATOR | LV_STATE_CHECKED);
+    lv_obj_set_style_bg_opa(ui_optional_Idle_ledSwitch, 255, LV_PART_INDICATOR | LV_STATE_CHECKED);
+
+    lv_obj_set_style_bg_color(ui_optional_Idle_ledSwitch, lv_color_hex(0x2AFF00), LV_PART_KNOB | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(ui_optional_Idle_ledSwitch, 255, LV_PART_KNOB | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(ui_optional_Idle_ledSwitch, lv_color_hex(0x000000), LV_PART_KNOB | LV_STATE_CHECKED);
+    lv_obj_set_style_bg_opa(ui_optional_Idle_ledSwitch, 255, LV_PART_KNOB | LV_STATE_CHECKED);
+
+    if (xTouchConfig.xTouchIdleLEDEnabled)
+    {
+        lv_obj_add_state(ui_optional_Idle_ledSwitch, LV_STATE_CHECKED);
+    }
+    //---NEOPIXEL Idle LED End------------------------------
+
+    //--- Chamber Sersor Start --------------------
     lv_obj_t *cui_optional_chamberSensor;
     cui_optional_chamberSensor = lv_obj_create(cui_optionalComponent);
     lv_obj_set_width(cui_optional_chamberSensor, lv_pct(100));
@@ -406,48 +449,9 @@ lv_obj_t *ui_optionalComponent_create(lv_obj_t *comp_parent)
             lv_obj_add_state(ui_optional_chamberSensorSwitch, LV_STATE_CHECKED);
         }
     }
-    //---------------------------------
+    //---Chamber Sensor End------------------------------
 
-    lv_obj_t *cui_optional_Idle_led;
-    cui_optional_Idle_led = lv_obj_create(cui_optionalComponent);
-    lv_obj_set_width(cui_optional_Idle_led, lv_pct(100));
-    lv_obj_set_height(cui_optional_Idle_led, LV_SIZE_CONTENT); /// 50
-    lv_obj_set_flex_flow(cui_optional_Idle_led, LV_FLEX_FLOW_ROW);
-    lv_obj_set_flex_align(cui_optional_Idle_led, LV_FLEX_ALIGN_SPACE_BETWEEN, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
-    lv_obj_set_scrollbar_mode(cui_optional_Idle_led, LV_SCROLLBAR_MODE_OFF);
-    lv_obj_set_style_bg_color(cui_optional_Idle_led, lv_color_hex(0x222222), LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_bg_opa(cui_optional_Idle_led, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_border_width(cui_optional_Idle_led, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_left(cui_optional_Idle_led, 16, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_right(cui_optional_Idle_led, 16, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_top(cui_optional_Idle_led, 16, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_bottom(cui_optional_Idle_led, 16, LV_PART_MAIN | LV_STATE_DEFAULT);
-
-    lv_obj_t *cui_optional_Idle_ledLabel;
-    cui_optional_Idle_ledLabel = lv_label_create(cui_optional_Idle_led);
-    lv_obj_set_width(cui_optional_Idle_ledLabel, LV_SIZE_CONTENT);  /// 1
-    lv_obj_set_height(cui_optional_Idle_ledLabel, LV_SIZE_CONTENT); /// 1
-    lv_obj_set_style_text_font(cui_optional_Idle_ledLabel, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_label_set_text(cui_optional_Idle_ledLabel, "Idle LED");
-    lv_obj_set_scrollbar_mode(cui_optional_Idle_ledLabel, LV_SCROLLBAR_MODE_OFF);
-
-    ui_optional_Idle_ledSwitch = lv_switch_create(cui_optional_Idle_led);
-    lv_obj_set_width(ui_optional_Idle_ledSwitch, 50);
-    lv_obj_set_height(ui_optional_Idle_ledSwitch, 25);
-
-    lv_obj_set_style_bg_color(ui_optional_Idle_ledSwitch, lv_color_hex(0x2AFF00), LV_PART_INDICATOR | LV_STATE_CHECKED);
-    lv_obj_set_style_bg_opa(ui_optional_Idle_ledSwitch, 255, LV_PART_INDICATOR | LV_STATE_CHECKED);
-
-    lv_obj_set_style_bg_color(ui_optional_Idle_ledSwitch, lv_color_hex(0x2AFF00), LV_PART_KNOB | LV_STATE_DEFAULT);
-    lv_obj_set_style_bg_opa(ui_optional_Idle_ledSwitch, 255, LV_PART_KNOB | LV_STATE_DEFAULT);
-    lv_obj_set_style_bg_color(ui_optional_Idle_ledSwitch, lv_color_hex(0x000000), LV_PART_KNOB | LV_STATE_CHECKED);
-    lv_obj_set_style_bg_opa(ui_optional_Idle_ledSwitch, 255, LV_PART_KNOB | LV_STATE_CHECKED);
-
-    if (xTouchConfig.xTouchStackChanEnabled)
-    {
-        lv_obj_add_state(ui_optional_Idle_ledSwitch, LV_STATE_CHECKED);
-    }
-    //---------------------------------
+  
 
     lv_obj_t **children = lv_mem_alloc(sizeof(lv_obj_t *) * _UI_COMP_OPTIONALCOMPONENT_NUM);
     children[UI_COMP_OPTIONALCOMPONENT_OPTIONALCOMPONENT] = cui_optionalComponent;

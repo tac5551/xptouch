@@ -24,4 +24,5 @@ void ui_homeScreen_screen_init(void)
 #ifdef __XTOUCH_SCREEN_28__
     lv_obj_set_width(ui_sidebarComponent, 48);
 #endif
+printf("ok1\n");
 }

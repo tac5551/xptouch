@@ -43,6 +43,16 @@ typedef enum {
     CHARACTER_COLOR_CALICO
 } character_color_t;
 
+enum CharactorPanelComponents
+{
+UI_COMP_CHARACTORPANEL_CHARACTORPANEL,
+UI_COMP_CHARACTORPANEL_RIGHT_EYE,
+UI_COMP_CHARACTORPANEL_LEFT_EYE,
+UI_COMP_CHARACTORPANEL_MOUSE,
+_UI_COMP_CHARACTORPANEL_NUM
+};
+
+
 lv_obj_t *ui_characterComponent_create(lv_obj_t *comp_parent);
 void ui_characterComponent_set_mood(character_mood_t mood);
 void ui_characterComponent_set_color(character_color_t color);
@@ -52,6 +62,9 @@ void ui_characterComponent_stop_animation(void);
 void ui_characterComponent_blink(void);
 void ui_characterComponent_yawn(void);
 void ui_characterComponent_meow(void);
+void xtouch_character_timer_init(void);
+void xtouch_character_timer_stop(void);
+void xtouch_character_timer_handler(lv_timer_t *timer);
 
 // イベントハンドラー
 void ui_event_comp_characterComponent_characterFace(lv_event_t *e);

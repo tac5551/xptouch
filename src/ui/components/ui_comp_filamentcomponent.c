@@ -3,7 +3,7 @@
 #include "../../ui/ui_msgs.h"
 
 #define SLOT_COUNT 5
-#define AMS_BORDER 8
+#define AMS_BORDER 3
 
 void ui_event_comp_filamentComponent_onNozzleTemp(lv_event_t *e)
 {
@@ -229,7 +229,7 @@ void ui_event_comp_filamentComponent_onAmsUpdate(lv_event_t *e)
     uint32_t tray_status = get_tray_status(tmp_ams_id, tmp_tray_id);
     uint16_t tray_id = ((tray_status >> 4) & 0x0F);
     uint16_t loaded = ((tray_status) & 0x01);
-
+    char *tray_type = get_tray_type(tmp_ams_id, tmp_tray_id);
     // lv_obj_t *unload = ui_comp_get_child(target, UI_COMP_FILAMENTCOMPONENT_FILAMENTSCREENFILAMENT_FILAMENTSCREENUNLOAD);
 
     if (tmp_tray_id == tray_id)
@@ -239,8 +239,13 @@ void ui_event_comp_filamentComponent_onAmsUpdate(lv_event_t *e)
 
         char buffer[100];
         memset(buffer, 0, 100);
-        sprintf(buffer, "Slot %d\n%s", tray_id, get_tray_type(tmp_ams_id, tmp_tray_id));
-        lv_label_set_text(target, buffer);
+   
+        // tray_typeがnullポインタでなく、空文字列でもなく、文字列"null"でもない場合、その文字列を設定（優先）
+        if (tray_type[0] != '\0' && strcmp(tray_type, "null") != 0) {
+            lv_label_set_text(target, tray_type);
+        } else {
+            lv_label_set_text(target, "x");
+        }
 
         // printf(" tray_now: %d, tray_tar: %d, slot: %d, color: %06llX \n", bambuStatus.m_tray_now, bambuStatus.m_tray_tar, tray_id, message->data >> 8);
 
@@ -392,8 +397,8 @@ lv_obj_t *ui_filamentComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_bg_color(cui_AmsSlot1, lv_color_hex(0x444444), LV_PART_MAIN | LV_STATE_DISABLED);
     lv_obj_set_style_bg_opa(cui_AmsSlot1, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_width(cui_AmsSlot1, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_left(cui_AmsSlot1, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_right(cui_AmsSlot1, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_left(cui_AmsSlot1, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(cui_AmsSlot1, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_top(cui_AmsSlot1, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_bottom(cui_AmsSlot1, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(cui_AmsSlot1, lv_color_hex(0x777777), LV_PART_MAIN | LV_STATE_PRESSED);
@@ -417,8 +422,8 @@ lv_obj_t *ui_filamentComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_bg_color(cui_AmsSlot2, lv_color_hex(0x444444), LV_PART_MAIN | LV_STATE_DISABLED);
     lv_obj_set_style_bg_opa(cui_AmsSlot2, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_width(cui_AmsSlot2, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_left(cui_AmsSlot2, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_right(cui_AmsSlot2, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_left(cui_AmsSlot2, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(cui_AmsSlot2, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_top(cui_AmsSlot2, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_bottom(cui_AmsSlot2, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(cui_AmsSlot2, lv_color_hex(0x777777), LV_PART_MAIN | LV_STATE_PRESSED);
@@ -442,8 +447,8 @@ lv_obj_t *ui_filamentComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_bg_color(cui_AmsSlot3, lv_color_hex(0x444444), LV_PART_MAIN | LV_STATE_DISABLED);
     lv_obj_set_style_bg_opa(cui_AmsSlot3, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_width(cui_AmsSlot3, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_left(cui_AmsSlot3, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_right(cui_AmsSlot3, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_left(cui_AmsSlot3, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(cui_AmsSlot3, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_top(cui_AmsSlot3, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_bottom(cui_AmsSlot3, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(cui_AmsSlot3, lv_color_hex(0x777777), LV_PART_MAIN | LV_STATE_PRESSED);
@@ -467,7 +472,7 @@ lv_obj_t *ui_filamentComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_bg_color(cui_AmsSlot4, lv_color_hex(0x444444), LV_PART_MAIN | LV_STATE_DISABLED);
     lv_obj_set_style_bg_opa(cui_AmsSlot4, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_width(cui_AmsSlot4, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_left(cui_AmsSlot4, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_left(cui_AmsSlot4, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_right(cui_AmsSlot4, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_top(cui_AmsSlot4, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_bottom(cui_AmsSlot4, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -722,10 +727,10 @@ lv_obj_t *ui_filamentComponent_create(lv_obj_t *comp_parent)
     lv_obj_add_event_cb(cui_filamentScreenLoad, ui_event_comp_filamentComponent_filamentScreenLoadClick, LV_EVENT_ALL, children);
     lv_obj_add_event_cb(cui_filamentScreenNozzleIcon, ui_event_comp_filamentComponent_onNozzleTempClick, LV_EVENT_ALL, children);
 
-    lv_obj_add_event_cb(cui_AmsSlot1, ui_event_comp_filamentComponent_onAMSSlot1Click, LV_EVENT_ALL, children);
-    lv_obj_add_event_cb(cui_AmsSlot2, ui_event_comp_filamentComponent_onAMSSlot2Click, LV_EVENT_ALL, children);
-    lv_obj_add_event_cb(cui_AmsSlot3, ui_event_comp_filamentComponent_onAMSSlot3Click, LV_EVENT_ALL, children);
-    lv_obj_add_event_cb(cui_AmsSlot4, ui_event_comp_filamentComponent_onAMSSlot4Click, LV_EVENT_ALL, children);
+    // lv_obj_add_event_cb(cui_AmsSlot1, ui_event_comp_filamentComponent_onAMSSlot1Click, LV_EVENT_ALL, children);
+    // lv_obj_add_event_cb(cui_AmsSlot2, ui_event_comp_filamentComponent_onAMSSlot2Click, LV_EVENT_ALL, children);
+    // lv_obj_add_event_cb(cui_AmsSlot3, ui_event_comp_filamentComponent_onAMSSlot3Click, LV_EVENT_ALL, children);
+    // lv_obj_add_event_cb(cui_AmsSlot4, ui_event_comp_filamentComponent_onAMSSlot4Click, LV_EVENT_ALL, children);
 
     // ams
     lv_obj_add_event_cb(cui_AmsControl, ui_filamentComponent_onAMSBitsSlot, LV_EVENT_MSG_RECEIVED, (void *)1);

@@ -40,7 +40,6 @@ bool print_status_changed = false;
 int last_print_gcode_action = 0;
 bool print_gcode_action_changed = false;
 
-
 int status_timeout = -1; // -1:無期限 x:x秒でステータスにかかわらずIDLEに戻す
 int alarm_timeout = -1; // Alarm Timeout : from setting value
 bool idle_led_enabled = true; // Idle LED Enabled : from setting value
@@ -93,9 +92,10 @@ void xtouch_neo_pixel_timer_init(int pin)
     {
         if (xtouch_neo_pixel_control_started)
         {
-
             xtouch_neo_pixel_control_timer_stop();
         }
+        // LED個数が0の場合は消灯
+        xtouch_neo_pixel_reset_all();
     }
 }
 
@@ -133,7 +133,30 @@ void xtouch_neo_pixel_set_num(int num)
 {
     int backup = NeoPixelCount;
     NeoPixelCount = num;
-
+    
+    // LED個数が0に設定された場合は消灯
+    if (num == 0)
+    {
+        xtouch_neo_pixel_reset_all();
+        if (xtouch_neo_pixel_control_started)
+        {
+            xtouch_neo_pixel_control_timer_stop();
+        }
+    }
+    
+    // LED個数が変更されたとき、flowing_positionをリセット
+    if (backup != num)
+    {
+        // flowing_positionを0にリセット（速度を一定に保つため）
+        flowing_position = 0;
+        // アニメーション状態もリセット
+        animation_frame = 0;
+        animation_direction = 1;
+        blink_state = false;
+        blink_counter = 0;
+        fade_counter = 0;
+        fade_direction = 1;
+    }
 }
 
 void xtouch_neo_pixel_reset_all()
@@ -206,44 +229,44 @@ void xtouch_neo_pixel_control_timer_handler(lv_timer_t *timer)
 
         if (bambuStatus.print_status == XTOUCH_PRINT_STATUS_PREPARE)
         {
-            xtouch_neo_pixel_set_led_color(255, 80, 0); // オレンジ色
+            xtouch_neo_pixel_set_led_color(128, 40, 0); // オレンジ色
             xtouch_neo_pixel_set_pettern(4);
         }
         else if (bambuStatus.print_status == XTOUCH_PRINT_STATUS_RUNNING)
         {
             if (bambuStatus.print_gcode_action == 0) // 0	turn off light and wait extrude temperature
             {
-                xtouch_neo_pixel_set_led_color(0, 0, 255); // 青色
+                xtouch_neo_pixel_set_led_color(0, 0, 128); // 青色
                 xtouch_neo_pixel_set_pettern(4);           // 進捗表示パターン
             }
             else if (bambuStatus.print_gcode_action == 1) // 1	bed leveling
             {
-                xtouch_neo_pixel_set_led_color(255, 110, 0); // オレンジ色
+                xtouch_neo_pixel_set_led_color(128, 55, 0); // オレンジ色
                 xtouch_neo_pixel_set_pettern(4);
             }
             else if (bambuStatus.print_gcode_action == 2) // 2	heatbet preheat
             {
-                xtouch_neo_pixel_set_led_color(255, 60, 0); // オレンジ色
+                xtouch_neo_pixel_set_led_color(128, 30, 0); // オレンジ色
                 xtouch_neo_pixel_set_pettern(3);
             }
             else if (bambuStatus.print_gcode_action == 8) // 8	draw extrinsic para cali pain
             {
-                xtouch_neo_pixel_set_led_color(255, 130, 0); // オレンジ色
+                xtouch_neo_pixel_set_led_color(128, 65, 0); // オレンジ色
                 xtouch_neo_pixel_set_pettern(4);
             }
             else if (bambuStatus.print_gcode_action == 13) // 13	home after wipe mouth
             {
-                xtouch_neo_pixel_set_led_color(255, 140, 0); // オレンジ色
+                xtouch_neo_pixel_set_led_color(128, 70, 0); // オレンジ色
                 xtouch_neo_pixel_set_pettern(4);
             }
             else if (bambuStatus.print_gcode_action == 14) // 14	nozzle wipe
             {
-                xtouch_neo_pixel_set_led_color(255, 150, 0); // オレンジ色
+                xtouch_neo_pixel_set_led_color(128, 75, 0); // オレンジ色
                 xtouch_neo_pixel_set_pettern(4);
             }
             else if (bambuStatus.print_gcode_action == 255) // 255	unknown
             {
-                xtouch_neo_pixel_set_led_color(0, 160, 255); // シアン（水色）
+                xtouch_neo_pixel_set_led_color(0, 80, 128); // シアン（水色）
                 xtouch_neo_pixel_set_pettern(3);
             }
             else
@@ -253,12 +276,12 @@ void xtouch_neo_pixel_control_timer_handler(lv_timer_t *timer)
         }
         else if (bambuStatus.print_status == XTOUCH_PRINT_STATUS_PAUSED)
         {
-            xtouch_neo_pixel_set_led_color(128, 128, 255); // 白色
+            xtouch_neo_pixel_set_led_color(64, 64, 128); // 白色
             xtouch_neo_pixel_set_pettern(1);
         }
         else if (bambuStatus.print_status == XTOUCH_PRINT_STATUS_FINISHED)
         {
-            xtouch_neo_pixel_set_led_color(0, 255, 0);
+            xtouch_neo_pixel_set_led_color(0, 128, 0);
             xtouch_neo_pixel_set_pettern(1);
             if(alarm_timeout > 0){
                 xtouch_neo_pixel_set_status_timeout(alarm_timeout * 30 * 1000);
@@ -312,6 +335,13 @@ void xtouch_neo_pixel_control_timer_handler(lv_timer_t *timer)
     }else if (idle_led_enabled && pettern == 0 && led_color[0] == 0 && led_color[1] == 0 && led_color[2] == 0){
         xtouch_neo_pixel_set_led_color(32, 0, 0);
         xtouch_neo_pixel_set_pettern(5);
+        print_status_changed = true;
+    }
+
+    if (!neopixel_enabled)
+    {
+        xtouch_neo_pixel_set_led_color(0, 0, 0);
+        xtouch_neo_pixel_set_pettern(0);
         print_status_changed = true;
     }
 

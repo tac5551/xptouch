@@ -5,6 +5,8 @@
 // グローバル変数の実際の定義
 bool xtouch_mqtt_light_on = false;
 bool xtouch_ota_update_flag = false;
+bool neopixel_enabled = true;
+
 // グローバル関数の実際の定義
 void xtouch_globals_init()
 {

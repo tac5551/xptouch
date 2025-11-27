@@ -22,6 +22,7 @@ extern "C"
     void onHomeSpeedSelection(lv_event_t *e);
     void onHomeLight(lv_event_t *e);
     void onHomeLCD(lv_event_t *e);
+    void onHomeNeoPixel(lv_event_t *e);
     void onHomeBedTemp(lv_event_t *e);
     void onHomeNozzleTemp(lv_event_t *e, int backToScreen);
 

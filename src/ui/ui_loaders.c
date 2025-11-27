@@ -53,7 +53,6 @@ void loadScreen(int screen)
         lv_obj_clean(current);
         lv_obj_del(current);
     }
-
     switch (screen)
     {
     case -1:
@@ -65,8 +64,8 @@ void loadScreen(int screen)
         lv_disp_load_scr(ui_homeScreen);
         break;
     case 1:
-        ui_temperatureScreen_screen_init();
-        lv_disp_load_scr(ui_temperatureScreen);
+       ui_temperatureScreen_screen_init();
+       lv_disp_load_scr(ui_temperatureScreen);
         break;
     case 2:
         ui_controlScreen_screen_init();
@@ -84,10 +83,6 @@ void loadScreen(int screen)
         ui_printerPairScreen_screen_init();
         lv_disp_load_scr(ui_printerPairScreen);
         break;
-    case 6:
-        ui_accessCodeScreen_screen_init();
-        lv_disp_load_scr(ui_accessCodeScreen);
-        break;
     case 7:
         ui_amsViewScreen_screen_init();
         lv_disp_load_scr(ui_amsViewScreen);
@@ -101,7 +96,6 @@ void loadScreen(int screen)
         lv_disp_load_scr(ui_characterScreen);
         break;
     }
-
     fillScreenData(screen);
 
     if (screen >= 0 && screen < 5)

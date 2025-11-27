@@ -16,6 +16,7 @@ LGFX tft;
 #include "xtouch/debug.h"
 
 bool xtouch_screen_touchFromPowerOff = false;
+bool xtouch_screen_neoPixelFromPowerOff = false;
 
 void xtouch_screen_setBrightness(byte brightness)
 {

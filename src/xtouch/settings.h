@@ -50,13 +50,13 @@ void xtouch_settings_loadSettings()
         xTouchConfig.xTouchWakeDuringPrint = true;
         xTouchConfig.xTouchChamberSensorReadingDiff = 0;
 
-        xTouchConfig.xTouchStackChanEnabled = true;
-        xTouchConfig.xTouchNeoPixelBlightnessValue = 50;
+        xTouchConfig.xTouchStackChanEnabled = false;
+        xTouchConfig.xTouchNeoPixelBlightnessValue = 25;
         xTouchConfig.xTouchNeoPixelNumValue = 0;
         xTouchConfig.xTouchNeoPixelPinValue = 0;
 
         xTouchConfig.xTouchAlarmTimeoutValue = 1;
-        xTouchConfig.xTouchIdleLEDEnabled = true;
+        xTouchConfig.xTouchIdleLEDEnabled = false;
         xtouch_settings_save(true);
     }
 

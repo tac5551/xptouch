@@ -9,33 +9,34 @@
 
 char ams_gcode_buffer[2048];
 
-const char *ams_load_gcode = "M620 S%d\n"
-                             "M106 S255\n"
-                             "M104 S250\n"
-                             "M17 S\n"
-                             "M17 X0.5 Y0.5\n"
-                             "G91\n"
-                             "G1 Y-5 F1200\n"
-                             "G1 Z3\n"
-                             "G90\n"
-                             "G28 X\n"
-                             "M17 R\n"
-                             "G1 X70 F21000\n"
-                             "G1 Y245\n"
-                             "G1 Y265 F3000\n"
-                             "G4\n"
-                             "M106 S0\n"
-                             "M109 S250\n"
-                             "G1 X90\n"
-                             "G1 Y255\n"
-                             "G1 X120\n"
-                             "G1 X20 Y50 F21000\n"
-                             "G1 Y-3\n"
-                             "T%d\n"
-                             "G1 X54\n"
-                             "G1 Y265\n"
-                             "G92 E0\n"
-                             "G1 E40 F180\n"
+const char *ams_load_gcode = "M620 S%d\n"           //AMSを有効にする
+                             "M106 S255\n"             //フィラメントを排出
+                             "M104 S250\n"             //ノズルを250度に加熱　slicerではここから始まる
+                             "M17 S\n"                 //S軸を有効にする　　　　もともとはない
+                             "M17 X0.5 Y0.5\n"        //X軸, Y軸を0.5mmに移動　もともとはない
+                             "G91\n"                //相対位置
+                             "G1 Y-5 F1200\n"       //すこし逃がす
+                             "G1 Z3\n"               //Z軸を3mm上げる
+                             "G90\n"                 //絶対位置
+                             "G28 X\n"               //X軸を原点に戻す
+                             "M17 R\n"                //R軸をリセット
+                             "G1 X70 F21000\n"         //X軸を70mmに移動（X軸移動速度1200mm/min）
+                             "G1 Y245\n"                //Y軸を245mmに移動    
+                             "G1 Y265 F3000\n"          //Y軸を265mmに移動 パージエリア
+                             "G4\n"                     //ウェイト
+                             "M106 S0\n"                //フィラメントを排出    
+                             "M109 S250\n"             //ノズルを250度に加熱    
+                             "G1 X90\n"                 //X軸を90mmに移動
+                             "G1 Y255\n"                //Y軸を255mmに移動
+                             "G1 X120\n"                 //X軸を120mmに移動
+                             "G1 X20 Y50 F21000\n"      //X軸を20mm, Y軸を50mmに移動（X軸移動速度1200mm/min）
+                             "G1 Y-3\n"                 //Y軸を-3mmに移動
+                             "T%d\n"                    //ツールの選択（ツール番号）
+                             "G1 X54 F12000\n"                 //X軸を54mmに移動
+                             "G1 Y265\n"                //Y軸を265mmに移動
+                            // M400         //一時停止
+                             "G92 E0\n"                 //E軸を0にリセット
+                             "G1 E40 F180\n"            //E軸を40mmに移動（E軸移動速度180mm/min）
                              "G4\n"
                              "M104 S%d\n"
                              "G1 X70 F15000\n"
@@ -218,6 +219,15 @@ void xtouch_device_onLCDToggleCommand(lv_msg_t *m)
 {
 
     xtouch_screen_sleep();
+}
+
+void xtouch_device_onNeoPixelToggleCommand(lv_msg_t *m)
+{
+    printf("xtouch_device_onNeoPixelToggleCommand\n");
+    neopixel_enabled = !neopixel_enabled;
+    struct XTOUCH_MESSAGE_DATA eventData;
+    eventData.data = neopixel_enabled;
+    lv_msg_send(XTOUCH_ON_NEOPIXEL_REPORT, &eventData);
 }
 
 void xtouch_device_onLightResetCommand(lv_msg_t *m)

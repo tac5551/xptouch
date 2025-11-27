@@ -39,7 +39,7 @@ extern "C"
   void ui_controlScreen_screen_init(void);
   void ui_settingsScreen_screen_init(void);
   void ui_filamentScreen_screen_init(void);
-  void ui_accessCodeScreen_screen_init(void);
+
   void ui_printerPairScreen_screen_init(void);
   void ui_amsViewScreen_screen_init(void);
   void ui_optionalScreen_screen_init(void);
@@ -107,10 +107,6 @@ extern "C"
   lv_obj_t *ui_amsViewScreen;
   lv_obj_t *ui_amsViewComponent;
 
-  // キャラクター制御用変数
-  lv_obj_t *left_eye ;
-  lv_obj_t *right_eye ;
-  lv_obj_t *mouth ;
 
   void ui_event____initial_actions0(lv_event_t *e);
   lv_obj_t *ui____initial_actions0;
@@ -124,6 +120,7 @@ extern "C"
   LV_FONT_DECLARE(ui_font_xperiments);
 
   extern const lv_font_t *lv_font_small;
+  extern const lv_font_t *lv_font_middle;
   extern const lv_font_t *lv_font_big;
   extern const lv_font_t *lv_icon_font_small;
   extern const lv_font_t *lv_icon_font_big;

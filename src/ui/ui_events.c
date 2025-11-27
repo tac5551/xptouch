@@ -59,10 +59,16 @@ void onHomeLight(lv_event_t *e) {
     // }
 }
 
+void onHomeNeoPixel(lv_event_t *e)
+{
+    lv_msg_send(XTOUCH_COMMAND_NEOPIXEL_TOGGLE, NULL);
+}
+
 void onHomeLCD(lv_event_t *e)
 {
     lv_msg_send(XTOUCH_COMMAND_LCD_TOGGLE, NULL);
 }
+
 void onHomeBedTemp(lv_event_t *e)
 {
     loadScreen(1);

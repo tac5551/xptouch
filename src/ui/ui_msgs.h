@@ -10,6 +10,7 @@ extern "C"
     {
         XTOUCH_ON_MQTT,
         XTOUCH_ON_LIGHT_REPORT,
+        XTOUCH_ON_NEOPIXEL_REPORT,  
         XTOUCH_ON_BED_TEMP,
         XTOUCH_ON_BED_TARGET_TEMP,
         XTOUCH_ON_NOZZLE_TEMP,
@@ -40,6 +41,7 @@ extern "C"
         XTOUCH_COMMAND_LIGHT_TOGGLE,
         XTOUCH_COMMAND_LIGHT_RESET,
         XTOUCH_COMMAND_LCD_TOGGLE,
+        XTOUCH_COMMAND_NEOPIXEL_TOGGLE,
         XTOUCH_COMMAND_HOME,
         XTOUCH_COMMAND_RIGHT,
         XTOUCH_COMMAND_LEFT,
@@ -87,11 +89,17 @@ extern "C"
         XTOUCH_FIRMWARE_UPDATE,
         XTOUCH_FIRMWARE_UPDATE_PROGRESS,
 
+        XTOUCH_ON_CHARACTER_FACEPOTITION_UPDATE,
+        XTOUCH_ON_CHARACTER_LEFT_EYE_UPDATE,
+        XTOUCH_ON_CHARACTER_RIGHT_EYE_UPDATE,
+        XTOUCH_ON_CHARACTER_MOUTH_UPDATE,
+
     };
 
     struct XTOUCH_MESSAGE_DATA
     {
         unsigned long long data;
+        unsigned long long data2;
     };
 
 #ifdef __cplusplus
