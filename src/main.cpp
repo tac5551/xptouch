@@ -134,5 +134,9 @@ void loop()
     xtouch_ota_update_flag = false;
     lv_msg_send(XTOUCH_SETTINGS_OTA_UPDATE_NOW, NULL);
   }
+  
+  // キャラクターアニメーション処理（millis()ベース、タイマー不要）
+  xtouch_events_onCharacterAnimation();
+  
   delay(10);
 }

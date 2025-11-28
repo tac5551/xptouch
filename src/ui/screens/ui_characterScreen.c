@@ -18,5 +18,5 @@ printf("ui_characterScreen : ui_characterComponent_create\n");
     ui_characterComponent = ui_characterComponent_create(ui_characterScreen);
 
 printf("ok1\n");
-    xtouch_character_timer_init();
+    xtouch_character_init();
 }

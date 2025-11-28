@@ -210,7 +210,7 @@ void onXTouchAMSUpdate(lv_event_t *e)
         lv_color_t color = lv_color_hex(color_code);
         lv_color_t color_inv = lv_color_hex((0xFFFFFF - color_code) & 0xFFFFFF);
 
-        printf(" tray_now: %d, tray_tar: %d, slot: %d, color: %06X loaded: %d tray_type: %s\n", bambuStatus.m_tray_now, bambuStatus.m_tray_tar, tray_id, color_code, loaded, tray_type);
+        //printf(" tray_now: %d, tray_tar: %d, slot: %d, color: %06X loaded: %d tray_type: %s\n", bambuStatus.m_tray_now, bambuStatus.m_tray_tar, tray_id, color_code, loaded, tray_type);
 
         lv_obj_set_style_bg_color(target, color, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_text_color(target, color_inv, LV_PART_MAIN | LV_STATE_DEFAULT);

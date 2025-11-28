@@ -451,6 +451,12 @@ BambuLabプリンタータッチスクリーンのインストールまたは操
 
    タッチスクリーンは起動時に自動的に再キャリブレーションプロセスを実行します。
 
+
+
+## 動作確認中
+[2.8-4.0 version](https://ja.aliexpress.com/item/1005008239809369.html)
+
+
 ## オリジナルバージョン
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/I3I8PSAYU)
 [Discord Server](https://discord.gg/RytEDEgfR3)
