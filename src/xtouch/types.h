@@ -97,6 +97,7 @@ extern "C"
         int print_real_action;
         bool chamberLed;
         float nozzle_diameter;
+        char nozzle_type[32];  // "stainless_steel" or "hardened_steel"
         bool camera_recording_when_printing;
         bool camera_timelapse;
         bool has_ipcam;

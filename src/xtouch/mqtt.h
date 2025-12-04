@@ -414,6 +414,15 @@ void xtouch_mqtt_processPushStatus(JsonDocument &incomingJson)
             }
         }
 
+        if (incomingJson["print"].containsKey("nozzle_type"))
+        {
+            if (incomingJson["print"]["nozzle_type"].is<String>())
+            {
+                strcpy(bambuStatus.nozzle_type, incomingJson["print"]["nozzle_type"].as<String>().c_str());
+            }
+        }
+
+
         // #pragma region upgrade
         // #pragma endregion
 
@@ -970,6 +979,9 @@ void xtouch_mqtt_setup()
     /* filament */
     lv_msg_subscribe(XTOUCH_COMMAND_EXTRUDE_UP, (lv_msg_subscribe_cb_t)xtouch_device_onNozzleUp, NULL);
     lv_msg_subscribe(XTOUCH_COMMAND_EXTRUDE_DOWN, (lv_msg_subscribe_cb_t)xtouch_device_onNozzleDown, NULL);
+
+    lv_msg_subscribe(XTOUCH_COMMAND_SET_ACCESSORIES_NOZZLE, (lv_msg_subscribe_cb_t)xtouch_device_onSetaccessoriesNozzleCommand, NULL);
+
 
     delay(2000);
 }

@@ -531,6 +531,24 @@ void xtouch_device_command_clean_print_error(void *s, lv_msg_t *m)
     }
 }
 
+
+void xtouch_device_onSetaccessoriesNozzleCommand(lv_msg_t *m)
+{
+    DynamicJsonDocument json(256);
+    json["system"]["sequence_id"] = xtouch_device_next_sequence();
+    json["system"]["accessory_type"] = "nozzle";
+    json["system"]["command"] = "set_accessories";
+    json["system"]["nozzle_diameter"] = bambuStatus.nozzle_diameter;
+    json["system"]["nozzle_type"] = bambuStatus.nozzle_type;
+    String result;
+    serializeJson(json, result);
+    xtouch_device_publish(result);
+
+    delay(10);
+    xtouch_device_pushall();
+}
+
+
 // void xtouch_device_command_getPaCalibration()
 // {
 

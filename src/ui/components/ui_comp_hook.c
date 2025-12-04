@@ -41,3 +41,8 @@ void ui_comp_amsViewComponent_create_hook(lv_obj_t *comp)
 void ui_comp_characterComponent_create_hook(lv_obj_t *comp)
 {
 }
+
+void ui_comp_nozzleComponent_create_hook(lv_obj_t *comp)
+{
+}
+ 

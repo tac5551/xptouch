@@ -64,6 +64,8 @@ extern "C"
 
     void onTouchStackChan(lv_event_t *e);
 
+    void onMoveNozzleScreen(lv_event_t *e);
+
     /* -----------Confirm-------------- */
     void onConfirmPanelNO(lv_event_t *e);
     void onConfirmPanelYES(lv_event_t *e);

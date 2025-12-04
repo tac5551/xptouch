@@ -530,8 +530,9 @@ XPTouchは、xptouchを源流とした日本語カスタマイズバージョン
 
 ## References
 
-[OpenBambuAPI](https://github.com/Doridian/OpenBambuAPI)
-[ha-bambulab](https://github.com/greghesp/ha-bambulab)
+[OpenBambuAPI](https://github.com/tac5551/OpenBambuAPI)
+[ha-bambulab](https://github.com/tac5551/ha-bambulab)
+[Bambu-Lab-Cloud-API](https://github.com/tac5551/Bambu-Lab-Cloud-API)
 
 ---
 

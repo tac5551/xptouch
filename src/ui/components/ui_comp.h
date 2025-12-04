@@ -25,6 +25,8 @@ extern "C"
 #include "ui_comp_filamentcomponent.h"
 #include "ui_comp_amsviewcomponent.h"
 #include "ui_comp_charactercomponent.h"
+#include "ui_comp_nozzlecomponent.h"
+
 
 #ifdef __cplusplus
 } /*extern "C"*/

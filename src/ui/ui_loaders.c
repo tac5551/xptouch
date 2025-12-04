@@ -95,6 +95,10 @@ void loadScreen(int screen)
         ui_characterScreen_screen_init();
         lv_disp_load_scr(ui_characterScreen);
         break;
+    case 10:
+        ui_nozzleScreen_screen_init();
+        lv_disp_load_scr(ui_nozzleScreen);
+        break;
     }
     fillScreenData(screen);
 

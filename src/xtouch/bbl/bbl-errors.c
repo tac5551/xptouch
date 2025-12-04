@@ -1,7 +1,7 @@
 #include <pgmspace.h>
 
 // Non-optimized HMS errors (legacy format)
-int hms_error_length = 118;
+int hms_error_length = 119;
 
 const char *hms_error_keys[] PROGMEM = {
   "0C00040000010025",
@@ -13,6 +13,7 @@ const char *hms_error_keys[] PROGMEM = {
   "0501040000030001",
   "0501040000030002",
   "0500050000010021",
+  "0500050000020023",
   "050005000001000F",
   "0C0003000002000E",
   "0500020000020002",
@@ -50,7 +51,6 @@ const char *hms_error_keys[] PROGMEM = {
   "0500050000010001",
   "0500030000010008",
   "0300200000010002",
-  "0300410000010001",
   "0C00010000010001",
   "0300940000020003",
   "03001B0000010002",
@@ -97,6 +97,7 @@ const char *hms_error_keys[] PROGMEM = {
   "0500030000010006",
   "0300900000010010",
   "030001000001000C",
+  "0300410000010001",
   "0500030000010021",
   "0300900000010004",
   "0300160000010001",
@@ -133,7 +134,8 @@ const char *hms_error_values[] PROGMEM = {
   "User information has expired, please log in again.",
   "Carbon rods need cleaning now.",
   "Threaded rods need lubrication now.",
-  "Time-lapse kit authentication failed. Please reconnect the cable or restart the printer.",
+  "Time-lapse kit communication error. Please reconnect the cable or restart the printer.",
+  "A new version of the Timelapse Kit is available. Please connect to Handy to update this accessory separately.",
   "The accessory firmware does not match the printer. Please upgrade it on the \"Firmware\" page.",
   "Your nozzle seems to be covered with jammed or clogged material.",
   "Device login failed; please check your account information.",
@@ -156,7 +158,7 @@ const char *hms_error_values[] PROGMEM = {
   "Wireless hardware error: please turn off/on WiFi or restart the device.",
   "The print file is unauthorized.",
   "Chamber temperature setting value exceed the limit, the boundary value will be set.",
-  "The current firmware is abnormal. Please update again.",
+  "The current firmware is abnormal. Please go to the “Firmware” page to update.",
   "Failed to calibrate Micro Lidar. Please make sure the calibration chart is clean and not obscured. Then, run machine calibration again.",
   "Your printer seems to be printing without extruding.",
   "The media pipeline is malfunctioning. Please restart the printer. If multiple attempts fail, please contact customer support.",
@@ -171,7 +173,6 @@ const char *hms_error_values[] PROGMEM = {
   "The factory data of the AP board is abnormal; please replace the AP board with a new one.",
   "A system hang occurred. Please restart the device.",
   "Y-axis homing abnormal: please check if the toolhead is stuck or the Y carriage has too much resistance.",
-  "The system voltage is unstable. Triggering the power failure protection function.",
   "Micro Lidar is offline. Please check the hardware connection.",
   "Chamber failed to reach the desired temperature. The machine will stop waiting for the chamber temperature.",
   "External disturbance was detected on the heatbed acceleeration sensor. The sensor signal wire may not be affixed.",
@@ -218,6 +219,7 @@ const char *hms_error_values[] PROGMEM = {
   "A system panic occurred. Please restart the device.",
   "The communication of chamber temperature controller is abnormal.",
   "The heatbed has worked at full load for a long time. The temperature control system may be abnormal.",
+  "The system voltage is unstable. Triggering the power failure protection function.",
   "Hardware incompatible; please check the Micro Lidar.",
   "Chamber heating failed. The speed of the heating fan is too low.",
   "The extruder servo motor's current sensor is abnormal. A failure of the hardware sampling circuit may cause this.",
@@ -246,7 +248,7 @@ const char *hms_error_values[] PROGMEM = {
 };
 
 // Non-optimized Device errors (legacy format)
-int device_error_length = 118;
+int device_error_length = 119;
 
 const char *device_error_keys[] PROGMEM = {
   "07004001",
@@ -366,7 +368,8 @@ const char *device_error_keys[] PROGMEM = {
   "05008041",
   "05008040",
   "0502C014",
-  "0502C024"
+  "0502C024",
+  "0502C026"
 };
 
 const char *device_error_values[] PROGMEM = {
@@ -487,5 +490,6 @@ const char *device_error_values[] PROGMEM = {
   "The filament in hotend is too cold. Extrusion may damage the extruder. Still feeding in/out the filament?",
   "Toolhead front cover is detached. Moving the toolhead may damage the printer. Do you want to continue?",
   "The AMS Remaining Filament Estimation is enabled by default and cannot be disabled.",
-  "The flow dynamic calibration records have exceeded the storage limit. Please delete some historical records in the slicer software before adding new calibration data."
+  "The flow dynamic calibration records have exceeded the storage limit. Please delete some historical records in the slicer software before adding new calibration data.",
+  "The device is busy with the current task and cannot perform this operation for now. Please try again later."
 };
