@@ -456,10 +456,9 @@ lv_obj_t *ui_optionalComponent_create(lv_obj_t *comp_parent)
     lv_obj_t **children = lv_mem_alloc(sizeof(lv_obj_t *) * _UI_COMP_OPTIONALCOMPONENT_NUM);
     children[UI_COMP_OPTIONALCOMPONENT_OPTIONALCOMPONENT] = cui_optionalComponent;
 
-    children[UI_COMP_OPTIONALCOMPONENT_NEOPIXEL_NUM] = cui_optionalNeoPixelNumPanel;
-    children[UI_COMP_OPTIONALCOMPONENT_NEOPIXEL_NUM_LABEL] = cui_optionalNeoPixelNumPanelLabel;
-    children[UI_COMP_OPTIONALCOMPONENT_NEOPIXEL_NUM_SLIDER] = ui_optionalNeoPixelNumSlider;
-    children[UI_COMP_OPTIONALCOMPONENT_NEOPIXEL_NUM_VALUE] = ui_optionalNeoPixelNumValue;
+    children[UI_COMP_OPTIONALCOMPONENT_CHAMBER_TEMP] = cui_optional_chamberSensor;
+    children[UI_COMP_OPTIONALCOMPONENT_CHAMBER_TEMP_LABEL] = cui_optional_chamberSensorLabel;
+    children[UI_COMP_OPTIONALCOMPONENT_CHAMBER_TEMP_SWITCH] = ui_optional_chamberSensorSwitch;
 
     children[UI_COMP_OPTIONALCOMPONENT_NEOPIXEL] = cui_optionalNeoPixelBlightnessPanel;
     children[UI_COMP_OPTIONALCOMPONENT_NEOPIXEL_LABEL] = cui_optionalNeoPixelBlightnessPanelLabel;
@@ -471,18 +470,21 @@ lv_obj_t *ui_optionalComponent_create(lv_obj_t *comp_parent)
     children[UI_COMP_OPTIONALCOMPONENT_ALARM_TIMEOUT_SLIDER] = ui_optionalAlarmTimeoutSlider;
     children[UI_COMP_OPTIONALCOMPONENT_ALARM_TIMEOUT_VALUE] = ui_optionalAlarmTimeoutValue;
 
-    children[UI_COMP_OPTIONALCOMPONENT_CHAMBER_TEMP] = cui_optional_chamberSensor;
-    children[UI_COMP_OPTIONALCOMPONENT_CHAMBER_TEMP_LABEL] = cui_optional_chamberSensorLabel;
-    children[UI_COMP_OPTIONALCOMPONENT_CHAMBER_TEMP_SWITCH] = ui_optional_chamberSensorSwitch;
-
-    children[UI_COMP_OPTIONALCOMPONENT_STACK_CHAN] = cui_optional_stackChan;
-    children[UI_COMP_OPTIONALCOMPONENT_STACK_CHAN_LABEL] = cui_optional_stackChanLabel;
-    children[UI_COMP_OPTIONALCOMPONENT_STACK_CHAN_SWITCH] = ui_optional_stackChanSwitch;
+    children[UI_COMP_OPTIONALCOMPONENT_NEOPIXEL_NUM] = cui_optionalNeoPixelNumPanel;
+    children[UI_COMP_OPTIONALCOMPONENT_NEOPIXEL_NUM_LABEL] = cui_optionalNeoPixelNumPanelLabel;
+    children[UI_COMP_OPTIONALCOMPONENT_NEOPIXEL_NUM_SLIDER] = ui_optionalNeoPixelNumSlider;
+    children[UI_COMP_OPTIONALCOMPONENT_NEOPIXEL_NUM_VALUE] = ui_optionalNeoPixelNumValue;
 
     children[UI_COMP_OPTIONALCOMPONENT_IDLE_LED] = cui_optional_Idle_led;
     children[UI_COMP_OPTIONALCOMPONENT_IDLE_LED_LABEL] = cui_optional_Idle_ledLabel;
     children[UI_COMP_OPTIONALCOMPONENT_IDLE_LED_SWITCH] = ui_optional_Idle_ledSwitch;
 
+    children[UI_COMP_OPTIONALCOMPONENT_STACK_CHAN] = cui_optional_stackChan;
+    children[UI_COMP_OPTIONALCOMPONENT_STACK_CHAN_LABEL] = cui_optional_stackChanLabel;
+    children[UI_COMP_OPTIONALCOMPONENT_STACK_CHAN_SWITCH] = ui_optional_stackChanSwitch;
+  
+   lv_obj_add_event_cb(cui_optionalComponent, get_component_child_event_cb, LV_EVENT_GET_COMP_CHILD, children);
+   lv_obj_add_event_cb(cui_optionalComponent, del_component_child_event_cb, LV_EVENT_DELETE, children);
 
     lv_obj_add_event_cb(ui_optionalNeoPixelNumSlider, ui_event_comp_optionalComponent_onNeoPixelNum, LV_EVENT_ALL, NULL);
     lv_obj_add_event_cb(ui_optionalNeoPixelBlightnessSlider, ui_event_comp_optionalComponent_onNeoPixelBlightness, LV_EVENT_ALL, NULL);

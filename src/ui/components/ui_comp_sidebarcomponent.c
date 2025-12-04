@@ -66,14 +66,15 @@ void ui_event_comp_sidebarComponent_sidebarSettingsButton(lv_event_t *e)
 void ui_sidebarComponent_set_active(int index)
 {
     lv_obj_t *target;
-    uint32_t indexes[5] = {
+    uint32_t indexes[6] = {
         UI_COMP_SIDEBARCOMPONENT_SIDEBARHOMEBUTTON,
         UI_COMP_SIDEBARCOMPONENT_SIDEBARTEMPBUTTON,
         UI_COMP_SIDEBARCOMPONENT_SIDEBARCONTROLBUTTON,
         UI_COMP_SIDEBARCOMPONENT_SIDEBARNOZZLEBUTTON,
+        UI_COMP_SIDEBARCOMPONENT_SIDEBARAMSVIEWBUTTON,
         UI_COMP_SIDEBARCOMPONENT_SIDEBARSETTINGSBUTTON};
 
-    for (int i = 0; i < 5; i++)
+    for (int i = 0; i < 6; i++)
     {
         target = ui_comp_get_child(ui_sidebarComponent, indexes[i]);
         lv_obj_clear_state(target, LV_STATE_CHECKED);

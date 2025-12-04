@@ -45,6 +45,7 @@ void xtouch_intro_show(void)
 
 void setup()
 {
+
 #if XTOUCH_USE_SERIAL == true || XTOUCH_DEBUG_ERROR == true || XTOUCH_DEBUG_DEBUG == true || XTOUCH_DEBUG_INFO == true
   Serial.begin(115200);
 #endif
@@ -52,7 +53,6 @@ void setup()
   xtouch_eeprom_setup();
   xtouch_globals_init();
   xtouch_screen_setup();
-  
   xtouch_intro_show();
   while (!xtouch_sdcard_setup())
     ;
@@ -86,6 +86,7 @@ void setup()
   else
   {
     cloud.loadAuthTokens();
+
     if (!cloud.isPaired())
     {
       cloud.selectPrinter();
@@ -94,10 +95,8 @@ void setup()
     {
       cloud.loadPair();
     }
-    Serial.println("xtouch_mqtt_setup ...");
     xtouch_mqtt_setup();
   }
-  Serial.println("xtouch_chamber_timer_init ...");
   xtouch_chamber_timer_init();
 
 #if defined(__XTOUCH_SCREEN_28__)
