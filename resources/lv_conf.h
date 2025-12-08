@@ -52,7 +52,7 @@
 #if defined(__XTOUCH_SCREEN_50__)
     #define LV_MEM_SIZE (128U * 1024U)          /*[bytes]*/
 #elif defined(__XTOUCH_SCREEN_28__)
-    #define LV_MEM_SIZE (28U * 1024U)          /*[bytes]*/
+    #define LV_MEM_SIZE (48U * 1024U)          /*[bytes]*/
 #endif
 
     /*Set an address for the memory pool instead of allocating it as a normal array. Can be in external SRAM too.*/
@@ -76,7 +76,7 @@
 
 /*Number of the intermediate memory buffer used during rendering and other internal processing mechanisms.
  *You will see an error log message if there wasn't enough buffers. */
-#define LV_MEM_BUF_MAX_NUM 16
+#define LV_MEM_BUF_MAX_NUM 32
 
 /*Use the standard `memcpy` and `memset` instead of LVGL's own functions. (Might or might not be faster).*/
 #define LV_MEMCPY_MEMSET_STD 0

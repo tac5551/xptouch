@@ -65,6 +65,7 @@ extern "C"
     void onTouchStackChan(lv_event_t *e);
 
     void onMoveNozzleScreen(lv_event_t *e);
+    void onMoveHomeScreen(lv_event_t *e);
 
     /* -----------Confirm-------------- */
     void onConfirmPanelNO(lv_event_t *e);
@@ -77,6 +78,11 @@ extern "C"
     void onFilamentUnload(lv_event_t *e);
 
     void onAmsSlotLoad(lv_event_t *e, int slot);
+
+    /* pre heat */
+    void onPreHeatPLA(lv_event_t *e);
+    void onPreHeatABS(lv_event_t *e);
+    void onPreHeatOff(lv_event_t *e);
 #ifdef __cplusplus
 } /*extern "C"*/
 #endif

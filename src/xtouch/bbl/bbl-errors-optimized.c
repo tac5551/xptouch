@@ -12,9 +12,9 @@ typedef struct {
 int hms_error_patterns_length = 263;
 
 const error_pattern_t hms_error_patterns[] PROGMEM = {
-    {"0701200000020025", "AMS_DEVICE_A slot 1 feed resistance is too high. Please reduce the feed resistance, decrease the rotation resistance of the spool, and avoid having the filament tube too long and excessively bent.", {"AMS_DEVICE_A"}, 1},
-    {"1803230000020025", "AMS_DEVICE_A slot 4 feed resistance is too high. Please reduce the feed resistance, decrease the rotation resistance of the spool, and avoid having the filament tube too long and excessively bent.", {"AMS_DEVICE_A"}, 1},
-    {"1806220000020025", "AMS_DEVICE_A slot 3 feed resistance is too high. Please reduce the feed resistance, decrease the rotation resistance of the spool, and avoid having the filament tube too long and excessively bent.", {"AMS_DEVICE_A"}, 1},
+    {"1802230000020025", "AMS_DEVICE_A slot 4 feed resistance is too high. Please reduce the feed resistance, decrease the rotation resistance of the spool, and avoid having the filament tube too long and excessively bent.", {"AMS_DEVICE_A"}, 1},
+    {"0705200000020025", "AMS_DEVICE_A slot 1 feed resistance is too high. Please reduce the feed resistance, decrease the rotation resistance of the spool, and avoid having the filament tube too long and excessively bent.", {"AMS_DEVICE_A"}, 1},
+    {"1805220000020025", "AMS_DEVICE_A slot 3 feed resistance is too high. Please reduce the feed resistance, decrease the rotation resistance of the spool, and avoid having the filament tube too long and excessively bent.", {"AMS_DEVICE_A"}, 1},
     {"0701210000020025", "AMS_DEVICE_A slot 2 feed resistance is too high. Please reduce the feed resistance, decrease the rotation resistance of the spool, and avoid having the filament tube too long and excessively bent.", {"AMS_DEVICE_A"}, 1},
     {"0700920000020003", "The AMS_DEVICE_A HEATER_1 cooling fan cannot start because the power adapter is not connected.", {"AMS_DEVICE_A", "HEATER_1"}, 2},
     {"1805930000020003", "The AMS_DEVICE_A HEATER_2 cooling fan cannot start because the power adapter is not connected.", {"AMS_DEVICE_A", "HEATER_2"}, 2},
@@ -34,6 +34,10 @@ const error_pattern_t hms_error_patterns[] PROGMEM = {
     {"0500040000010049", "Communication error detected with AMS, AMS lite or AMS_DEVICE_AT. Please reconnect the module cable or restart the printer when it is idle.", {"AMS_DEVICE_A"}, 1},
     {"1802940000010002", "Temperature sensor 1 on the AMS_DEVICE_A heater has malfunctioned, resulting in abnormal temperature readings.", {"AMS_DEVICE_A"}, 1},
     {"0704950000010002", "Temperature sensor 2 on the AMS_DEVICE_A heater has malfunctioned, resulting in abnormal temperature readings.", {"AMS_DEVICE_A"}, 1},
+    {"1803230000020015", "AMS_DEVICE_A slot 4 FILAMENT_STATUS_ABNORMAL, which may be due to a filament breakage inside the AMS.", {"AMS_DEVICE_A", "COMMON_PHRASE_FILAMENT_STATUS_ABNORMAL"}, 2},
+    {"1802960000010003", "AMS_DEVICE_A Unable to start drying; please pull out the filament from filament hub and try again.", {"AMS_DEVICE_A"}, 1},
+    {"1802120000010001", "The AMS_DEVICE_A slot 3 motor has slipped. The extrusion wheel may be malfunctioning, or the filament may be too thin.", {"AMS_DEVICE_A"}, 1},
+    {"0705200000020005", "AMS_DEVICE_A SLOT_1 filament has run out, and purging the old filament went abnormally; please check whether the filament is stuck in the tool head.", {"AMS_DEVICE_A", "SLOT_1"}, 2},
     {"0704310000010004", "Encryption chip failure", {}, 0},
     {"1801200000020013", "AMS_DEVICE_A slot 1 FEEDER_MOTOR_NO_SIGNAL, which may be due to poor contact in the motor connector or a motor fault.", {"AMS_DEVICE_A", "COMMON_PHRASE_FEEDER_MOTOR_NO_SIGNAL"}, 2},
     {"1803350000010002", "AMS_DEVICE_A The humidity sensor is disconnected, which may be due to poor connector contact.", {"AMS_DEVICE_A"}, 1},
@@ -107,7 +111,6 @@ const error_pattern_t hms_error_patterns[] PROGMEM = {
     {"0700230000020012", "AMS_DEVICE_A slot 4 feeder unit MOTOR_STALLED.", {"AMS_DEVICE_A", "COMMON_PHRASE_MOTOR_STALLED"}, 2},
     {"1800210000030001", "AMS_DEVICE_A SLOT_2 filament has run out. Please wait while old filament is purged.", {"AMS_DEVICE_A", "SLOT_2"}, 2},
     {"0707020000020002", "AMS_DEVICE_A The odometer has no signal. The odometer connector may have poor contact.", {"AMS_DEVICE_A"}, 1},
-    {"0706200000020005", "AMS_DEVICE_A SLOT_1 filament has run out, and purging the old filament went abnormally; please check whether the filament is stuck in the tool head.", {"AMS_DEVICE_A", "SLOT_1"}, 2},
     {"1805220000020003", "AMS_DEVICE_A SLOT_3's filament may be broken in AMS-HT.", {"AMS_DEVICE_A", "SLOT_3"}, 2},
     {"0701010000020007", "AMS_DEVICE_A The assist motor encoder wires are not connected. The assist motor connector may have poor contact.", {"AMS_DEVICE_A"}, 1},
     {"0702230000020001", "AMS_DEVICE_A SLOT_4 filament has run out. Please insert a new filament.", {"AMS_DEVICE_A", "SLOT_4"}, 2},
@@ -154,7 +157,6 @@ const error_pattern_t hms_error_patterns[] PROGMEM = {
     {"0703230000030001", "AMS_DEVICE_A SLOT_4 filament has run out. Please wait while old filament is purged.", {"AMS_DEVICE_A", "SLOT_4"}, 2},
     {"1800230000020023", "AMS_DEVICE_A slot 4 the tube inside the AMS is broken, or feed-out hall sensor is faulty and cannot detect the filament.", {"AMS_DEVICE_A"}, 1},
     {"0704310000010001", "The AMS_DEVICE_A RFID 2 board has an error.", {"AMS_DEVICE_A"}, 1},
-    {"1807120000010001", "The AMS_DEVICE_A slot 3 motor has slipped. The extrusion wheel may be malfunctioning, or the filament may be too thin.", {"AMS_DEVICE_A"}, 1},
     {"1805210000020007", "AMS_DEVICE_A SLOT_2 feed-out Hall sensor is disconnected. The connector may have poor contact.", {"AMS_DEVICE_A", "SLOT_2"}, 2},
     {"0300010000010001", "TEMP_SENSOR_SHORT_CIRCUIT", {"COMMON_PHRASE_TEMP_SENSOR_SHORT_CIRCUIT"}, 1},
     {"1806010000010011", "AMS_DEVICE_A The assist motor calibration parameter error. Please pull out the filament from the filament hub and then restart the AMS.", {"AMS_DEVICE_A"}, 1},
@@ -187,7 +189,6 @@ const error_pattern_t hms_error_patterns[] PROGMEM = {
     {"0300070000010003", "MOTOR_RESISTANCE_ABNORMAL", {"COMMON_PHRASE_MOTOR_RESISTANCE_ABNORMAL"}, 1},
     {"0704930000020002", "AMS_DEVICE_A The cooling fan speed of HEATER_2 is too low, which could be due to excessive fan resistance.", {"AMS_DEVICE_A", "HEATER_2"}, 2},
     {"1804230000020002", "AMS_DEVICE_A SLOT_4 is empty; please insert a new filament.", {"AMS_DEVICE_A", "SLOT_4"}, 2},
-    {"1800230000020015", "AMS_DEVICE_A slot 4 FILAMENT_STATUS_ABNORMAL, which may be due to a filament breakage inside the AMS.", {"AMS_DEVICE_A", "COMMON_PHRASE_FILAMENT_STATUS_ABNORMAL"}, 2},
     {"0700620000020001", "The AMS_DEVICE_A SLOT_3 is overloaded. The filament may be tangled or the filament buffer may be stuck.", {"AMS_DEVICE_A", "SLOT_3"}, 2},
     {"1803120000010003", "The AMS_DEVICE_A slot 3 motor torque control is malfunctioning. The current sensor may be faulty.", {"AMS_DEVICE_A"}, 1},
     {"1804230000020013", "AMS_DEVICE_A slot 4 FEEDER_MOTOR_NO_SIGNAL, which may be due to poor contact in the motor connector or a motor fault.", {"AMS_DEVICE_A", "COMMON_PHRASE_FEEDER_MOTOR_NO_SIGNAL"}, 2},
@@ -200,7 +201,6 @@ const error_pattern_t hms_error_patterns[] PROGMEM = {
     {"18FF200000020001", "External filament has run out; please load a new filament.", {}, 0},
     {"1801130000010003", "The AMS_DEVICE_A slot 4 motor torque control is malfunctioning. The current sensor may be faulty.", {"AMS_DEVICE_A"}, 1},
     {"0707220000020018", "AMS_DEVICE_A slot 3 assist motor is stalled，due to excessive resistance in the tube near AMS.", {"AMS_DEVICE_A"}, 1},
-    {"0700960000010003", "AMS_DEVICE_A Unable to start drying; please pull out the filament from filament hub and try again.", {"AMS_DEVICE_A"}, 1},
     {"0707800000010002", "AMS_DEVICE_A The HEATER_1 is disconnected, which may be due to poor connector contact.", {"AMS_DEVICE_A", "HEATER_1"}, 2},
     {"1807700000020002", "Failed to feed the filament into the toolhead. Possible cause: filament or spool stuck.", {}, 0},
     {"0700700000020001", "PULL_OUT_FILAMENT_FAILED or broken filament.", {"COMMON_PHRASE_PULL_OUT_FILAMENT_FAILED"}, 1},
@@ -246,7 +246,6 @@ const error_pattern_t hms_error_patterns[] PROGMEM = {
     {"0300920000010001", "The temperature of chamber HEATER_2 is abnormal. The heater may have a short circuit.", {"HEATER_2"}, 1},
     {"07FF200000020002", "External filament is missing; please load a new filament.", {}, 0},
     {"0300110000020001", "RESONANCE_FREQUENCY_LOW", {"COMMON_PHRASE_RESONANCE_FREQUENCY_LOW"}, 1},
-    {"03000B0000010001", "HEATBED_FORCE_SENSOR_TOO_SENSITIVE", {"COMMON_PHRASE_HEATBED_FORCE_SENSOR_TOO_SENSITIVE"}, 1},
     {"1800400000020004", "The filament buffer signal is abnormal; the spring may be stuck, or the filament may be tangled.", {}, 0},
     {"0C00020000020002", "LASER_LINE_TOO_WIDE", {"COMMON_PHRASE_LASER_LINE_TOO_WIDE"}, 1},
     {"03000A0000010004", "FORCE_SENSOR_EXTERNAL_DISTURBANCE", {"COMMON_PHRASE_FORCE_SENSOR_EXTERNAL_DISTURBANCE"}, 1},
@@ -261,6 +260,7 @@ const error_pattern_t hms_error_patterns[] PROGMEM = {
     {"03000B0000010003", "HEATBED_FORCE_SENSOR_TOO_WEAK", {"COMMON_PHRASE_HEATBED_FORCE_SENSOR_TOO_WEAK"}, 1},
     {"1800450000020001", "The filament cutter sensor is malfunctioning; please check whether the connector is properly plugged in.", {}, 0},
     {"1800450000020003", "The filament cutter handle has not been released. The handle or blade may be jammed, or there could be an issue with the filament sensor connection.", {}, 0},
+    {"03000A0000010001", "HEATBED_FORCE_SENSOR_TOO_SENSITIVE", {"COMMON_PHRASE_HEATBED_FORCE_SENSOR_TOO_SENSITIVE"}, 1},
     {"0300010000010007", "TEMP_SENSOR_OPEN_CIRCUIT", {"COMMON_PHRASE_TEMP_SENSOR_OPEN_CIRCUIT"}, 1},
     {"0700400000020002", "Filament buffer position signal error: the position sensor may be malfunctioning.", {}, 0},
     {"0300920000010003", "The temperature of chamber HEATER_2 is abnormal. The heater is over temperature.", {"HEATER_2"}, 1},
@@ -334,13 +334,14 @@ const error_pattern_t device_error_patterns[] PROGMEM = {
 };
 
 // Retry and Done message arrays (for backward compatibility)
-int message_containing_retry_total = 394;
+int message_containing_retry_total = 395;
 
 const char *message_containing_retry[] PROGMEM = {
   "18FF700000020008",
   "07FF700000020008",
   "07FE700000020008",
   "18FE700000020008",
+  "1802960000010003",
   "1806220000020016",
   "1805200000010084",
   "0705210000010084",
@@ -548,7 +549,6 @@ const char *message_containing_retry[] PROGMEM = {
   "1804230000020016",
   "0703200000020016",
   "0700210000020016",
-  "1802960000010003",
   "1800200000010086",
   "0300180000010006",
   "1800700000020007",
@@ -697,6 +697,7 @@ const char *message_containing_retry[] PROGMEM = {
   "07078012",
   "05014031",
   "0703C06E",
+  "05004042",
   "0300800C",
   "1804C06C",
   "1803C06E",

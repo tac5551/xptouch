@@ -9,7 +9,7 @@ void onSidebarHome(lv_event_t *e) { loadScreen(0); }
 void onSidebarTemp(lv_event_t *e) { loadScreen(1); }
 void onSidebarControl(lv_event_t *e) { loadScreen(2); }
 void onSidebarNozzle(lv_event_t *e) { loadScreen(3); }
-void onSidebarAmsView(lv_event_t *e) { loadScreen(7); }
+void onSidebarAmsView(lv_event_t *e) { loadScreen(11); }
 void onSidebarSettings(lv_event_t *e) { loadScreen(4); }
 
 /* -----------Home-------------- */
@@ -134,6 +134,10 @@ void onMoveNozzleScreen(lv_event_t *e) {
     loadScreen(10); 
 }
 
+void onMoveHomeScreen(lv_event_t *e) { 
+    loadScreen(0); 
+}
+
 void onSettingsResetDevice(lv_event_t *e)
 {
     ui_confirmPanel_show(LV_SYMBOL_WARNING " REBOOT", onSettingsResetDeviceConfirm);
@@ -252,4 +256,33 @@ void onAmsSlotLoad(lv_event_t *e, int slot)
 {
     _slot = slot;
     ui_confirmPanel_show(LV_SYMBOL_PLAY " Load new Filament\nfrom AMS Slot\n" LV_SYMBOL_PLAY " into the Printer\n\n" LV_SYMBOL_OK " Tap YES to continue", onAmsSlotLoadConfirm);
+}
+
+void onPreHeatPLA(lv_event_t *e)
+{
+    lv_msg_send(XTOUCH_PREHEAT_BUTTON1, NULL);
+    controlMode.target_bed_temper = 60;
+    lv_msg_send(XTOUCH_COMMAND_BED_TARGET_TEMP, NULL);
+    bambuStatus.big_fan1_speed = 80 * 255 / 100;
+    lv_msg_send(XTOUCH_COMMAND_AUX_FAN_SPEED, NULL);
+}
+
+void onPreHeatABS(lv_event_t *e)
+{
+    lv_msg_send(XTOUCH_PREHEAT_BUTTON2, NULL);
+    controlMode.target_bed_temper = 100;
+    lv_msg_send(XTOUCH_COMMAND_BED_TARGET_TEMP, NULL);
+
+    bambuStatus.big_fan1_speed = 80 * 255 / 100;
+    lv_msg_send(XTOUCH_COMMAND_AUX_FAN_SPEED, NULL);
+}
+
+void onPreHeatOff(lv_event_t *e)   
+{
+    lv_msg_send(XTOUCH_PREHEAT_BUTTON3, NULL);
+
+    controlMode.target_bed_temper = 0;
+    lv_msg_send(XTOUCH_COMMAND_BED_TARGET_TEMP, NULL);
+    bambuStatus.big_fan1_speed = 0 ;
+    lv_msg_send(XTOUCH_COMMAND_AUX_FAN_SPEED, NULL);
 }

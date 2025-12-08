@@ -135,7 +135,7 @@ const char *hms_error_values[] PROGMEM = {
   "Carbon rods need cleaning now.",
   "Threaded rods need lubrication now.",
   "Time-lapse kit communication error. Please reconnect the cable or restart the printer.",
-  "A new version of the Timelapse Kit is available. Please connect to Handy to update this accessory separately.",
+  "A new version of the Timelapse Kit is available. Please connect to CyberBrick App to update this accessory separately.",
   "The accessory firmware does not match the printer. Please upgrade it on the \"Firmware\" page.",
   "Your nozzle seems to be covered with jammed or clogged material.",
   "Device login failed; please check your account information.",
@@ -248,7 +248,7 @@ const char *hms_error_values[] PROGMEM = {
 };
 
 // Non-optimized Device errors (legacy format)
-int device_error_length = 119;
+int device_error_length = 120;
 
 const char *device_error_keys[] PROGMEM = {
   "07004001",
@@ -369,7 +369,8 @@ const char *device_error_keys[] PROGMEM = {
   "05008040",
   "0502C014",
   "0502C024",
-  "0502C026"
+  "0502C026",
+  "05004057"
 };
 
 const char *device_error_values[] PROGMEM = {
@@ -462,7 +463,7 @@ const char *device_error_values[] PROGMEM = {
   "The nozzle is clogged with filament. Please cancel this print and clean the nozzle or select \"Resume\" to resume the print job.",
   "Device discovery binding is in progress, and the QR code cannot be displayed on the screen. You can wait for the binding to finish or abort the device discovery binding process in the APP/Studio and retry scanning the QR code on the screen for binding.",
   "Filament ran out. Please load new filament.",
-  "Due to power limitations, starting AMS drying will pause current operations such as nozzle heating and fan running. Do you want to proceed with drying?",
+  "Printing and calibration cannot be performed while the AMS is drying. Please stop the drying process or connect a power adapter to any AMS unit not used for the current print, then try again.",
   "Starting printing failed; please power cycle the printer and resend the print job.",
   "MicroSD Card read/write exception: please reinsert or replace the MicroSD Card.",
   "Skipped step detected: auto-recover complete; please resume print and check if there are any layer shift problems.",
@@ -491,5 +492,6 @@ const char *device_error_values[] PROGMEM = {
   "Toolhead front cover is detached. Moving the toolhead may damage the printer. Do you want to continue?",
   "The AMS Remaining Filament Estimation is enabled by default and cannot be disabled.",
   "The flow dynamic calibration records have exceeded the storage limit. Please delete some historical records in the slicer software before adding new calibration data.",
-  "The device is busy with the current task and cannot perform this operation for now. Please try again later."
+  "The device is busy with the current task and cannot perform this operation for now. Please try again later.",
+  "The filament selected in the slicer requires a harder nozzle. Please replace the nozzle or adjust the filament settings before reprinting."
 };

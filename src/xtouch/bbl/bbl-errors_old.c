@@ -4,6 +4,9 @@
 int hms_error_length = 3907;
 
 const char *hms_error_keys[] PROGMEM = {
+  "1802230000020025",
+  "0705200000020025",
+  "1805220000020025",
   "0701200000020025",
   "1803230000020025",
   "1806220000020025",
@@ -298,6 +301,10 @@ const char *hms_error_keys[] PROGMEM = {
   "1802950000010002",
   "0703950000010002",
   "1800940000010002",
+  "1803230000020015",
+  "1802960000010003",
+  "1802120000010001",
+  "0705200000020005",
   "0704310000010004",
   "1801200000020013",
   "1803350000010002",
@@ -1591,11 +1598,6 @@ const char *hms_error_keys[] PROGMEM = {
   "0701810000010001",
   "0700220000020013",
   "1806220000010083",
-  "1803210000020018",
-  "0706940000010001",
-  "0707220000020005",
-  "03000B0000010001",
-  "0701110000020002",
   "1800120000010001",
   "1803220000020024",
   "1801230000020017",
@@ -3209,10 +3211,11 @@ const char *hms_error_keys[] PROGMEM = {
   "0705930000020002",
   "1804130000020004",
   "0703200000020024",
-  "1803230000020015",
-  "1802960000010003",
-  "1802120000010001",
-  "0705200000020005",
+  "1803210000020018",
+  "0706940000010001",
+  "0707220000020005",
+  "03000B0000010001",
+  "0701110000020002",
   "1803700000020003",
   "0300410000010001",
   "1807220000020024",
@@ -3907,13 +3910,13 @@ const char *hms_error_keys[] PROGMEM = {
   "1804230000020025",
   "1802210000020025",
   "0706200000020025",
-  "0702200000020025",
-  "1802230000020025",
-  "0705200000020025",
-  "1805220000020025"
+  "0702200000020025"
 };
 
 const char *hms_error_values[] PROGMEM = {
+  "AMS-HT C slot 4 feed resistance is too high. Please reduce the feed resistance, decrease the rotation resistance of the spool, and avoid having the filament tube too long and excessively bent.",
+  "AMS F slot 1 feed resistance is too high. Please reduce the feed resistance, decrease the rotation resistance of the spool, and avoid having the filament tube too long and excessively bent.",
+  "AMS-HT F slot 3 feed resistance is too high. Please reduce the feed resistance, decrease the rotation resistance of the spool, and avoid having the filament tube too long and excessively bent.",
   "AMS B slot 1 feed resistance is too high. Please reduce the feed resistance, decrease the rotation resistance of the spool, and avoid having the filament tube too long and excessively bent.",
   "AMS-HT D slot 4 feed resistance is too high. Please reduce the feed resistance, decrease the rotation resistance of the spool, and avoid having the filament tube too long and excessively bent.",
   "AMS-HT G slot 3 feed resistance is too high. Please reduce the feed resistance, decrease the rotation resistance of the spool, and avoid having the filament tube too long and excessively bent.",
@@ -4204,10 +4207,14 @@ const char *hms_error_values[] PROGMEM = {
   "Temperature sensor 2 on the AMS C heater has malfunctioned, resulting in abnormal temperature readings.",
   "Temperature sensor 2 on the AMS H heater has malfunctioned, resulting in abnormal temperature readings.",
   "Temperature sensor 1 on the AMS H heater has malfunctioned, resulting in abnormal temperature readings.",
-  "A new version of the Timelapse Kit is available. Please connect to Handy to update this accessory separately.",
+  "A new version of the Timelapse Kit is available. Please connect to CyberBrick App to update this accessory separately.",
   "Temperature sensor 2 on the AMS-HT C heater has malfunctioned, resulting in abnormal temperature readings.",
   "Temperature sensor 2 on the AMS D heater has malfunctioned, resulting in abnormal temperature readings.",
   "Temperature sensor 1 on the AMS-HT A heater has malfunctioned, resulting in abnormal temperature readings.",
+  "AMS-HT D slot 4 filament status is abnormal, which may be due to a filament breakage inside the AMS.",
+  "AMS-HT C Unable to start drying; please pull out the filament from filament hub and try again.",
+  "The AMS-HT C slot 3 motor has slipped. The extrusion wheel may be malfunctioning, or the filament may be too thin.",
+  "AMS F Slot 1 filament has run out, and purging the old filament went abnormally; please check whether the filament is stuck in the tool head.",
   "Encryption chip failure",
   "AMS-HT B slot 1 feeder unit motor has no signal, which may be due to poor contact in the motor connector or a motor fault.",
   "AMS-HT D The humidity sensor is disconnected, which may be due to poor connector contact.",
@@ -5501,11 +5508,6 @@ const char *hms_error_values[] PROGMEM = {
   "AMS B The current sensor of heater 2 is abnormal.",
   "AMS A slot 3 feeder unit motor has no signal, which may be due to poor contact in the motor connector or a motor fault.",
   "Failed to read the filament information from AMS-HT G slot 3. The RFID tag may be damaged.",
-  "AMS-HT D slot 2 assist motor is stalled，due to excessive resistance in the tube near AMS.",
-  "AMS G The temperature sensor of heater 1 is offline, which may be due to poor connector contact.",
-  "AMS H Slot 3 filament has run out, and purging the old filament went abnormally; please check whether the filament is stuck in the tool head.",
-  "Heatbed force sensor 2 is too sensitive. It may be stuck between the strain arm and heatbed support, or the adjusting screw may be too tight.",
-  "The AMS B slot 2 motor is overloaded. The filament may be tangled or stuck.",
   "The AMS-HT A slot 3 motor has slipped. The extrusion wheel may be malfunctioning, or the filament may be too thin.",
   "AMS-HT D slot 3 failed to rotate the filament spool when pulling filament back to AMS.",
   "AMS-HT B slot 4 assist motor is stalled，due to excessive resistance in the tube between AMS and the printer.",
@@ -7119,10 +7121,11 @@ const char *hms_error_values[] PROGMEM = {
   "AMS F The cooling fan speed of heater 2 is too low, which could be due to excessive fan resistance.",
   "AMS-HT E The brushed motor 4 has no signal, which may be due to poor contact in the motor connector or a motor fault.",
   "AMS D slot 1 failed to rotate the filament spool when pulling filament back to AMS.",
-  "AMS-HT D slot 4 filament status is abnormal, which may be due to a filament breakage inside the AMS.",
-  "AMS-HT C Unable to start drying; please pull out the filament from filament hub and try again.",
-  "The AMS-HT C slot 3 motor has slipped. The extrusion wheel may be malfunctioning, or the filament may be too thin.",
-  "AMS F Slot 1 filament has run out, and purging the old filament went abnormally; please check whether the filament is stuck in the tool head.",
+  "AMS-HT D slot 2 assist motor is stalled，due to excessive resistance in the tube near AMS.",
+  "AMS G The temperature sensor of heater 1 is offline, which may be due to poor connector contact.",
+  "AMS H Slot 3 filament has run out, and purging the old filament went abnormally; please check whether the filament is stuck in the tool head.",
+  "Heatbed force sensor 2 is too sensitive. It may be stuck between the strain arm and heatbed support, or the adjusting screw may be too tight.",
+  "The AMS B slot 2 motor is overloaded. The filament may be tangled or stuck.",
   "Failed to extrude the filament. Possible cause: extruder or nozzle clog.",
   "The system voltage is unstable. Triggering the power failure protection function.",
   "AMS-HT H slot 3 failed to rotate the filament spool when pulling filament back to AMS.",
@@ -7817,14 +7820,11 @@ const char *hms_error_values[] PROGMEM = {
   "AMS-HT E slot 4 feed resistance is too high. Please reduce the feed resistance, decrease the rotation resistance of the spool, and avoid having the filament tube too long and excessively bent.",
   "AMS-HT C slot 2 feed resistance is too high. Please reduce the feed resistance, decrease the rotation resistance of the spool, and avoid having the filament tube too long and excessively bent.",
   "AMS G slot 1 feed resistance is too high. Please reduce the feed resistance, decrease the rotation resistance of the spool, and avoid having the filament tube too long and excessively bent.",
-  "AMS C slot 1 feed resistance is too high. Please reduce the feed resistance, decrease the rotation resistance of the spool, and avoid having the filament tube too long and excessively bent.",
-  "AMS-HT C slot 4 feed resistance is too high. Please reduce the feed resistance, decrease the rotation resistance of the spool, and avoid having the filament tube too long and excessively bent.",
-  "AMS F slot 1 feed resistance is too high. Please reduce the feed resistance, decrease the rotation resistance of the spool, and avoid having the filament tube too long and excessively bent.",
-  "AMS-HT F slot 3 feed resistance is too high. Please reduce the feed resistance, decrease the rotation resistance of the spool, and avoid having the filament tube too long and excessively bent."
+  "AMS C slot 1 feed resistance is too high. Please reduce the feed resistance, decrease the rotation resistance of the spool, and avoid having the filament tube too long and excessively bent."
 };
 
 // All Device errors (no optimization)
-int device_error_length = 488;
+int device_error_length = 489;
 
 const char *device_error_keys[] PROGMEM = {
   "07038012",
@@ -8314,7 +8314,8 @@ const char *device_error_keys[] PROGMEM = {
   "0500803C",
   "0502C024",
   "0500403C",
-  "0502C026"
+  "0502C026",
+  "05004057"
 };
 
 const char *device_error_values[] PROGMEM = {
@@ -8677,7 +8678,7 @@ const char *device_error_values[] PROGMEM = {
   "The AMS-HT failed to send out filament. You can clip the end of your filament flat, and reinsert. If this message persists, please check the PTFE tubes in AMS for any signs of wear and tear.",
   "AMS D motor is performing self-test. Unable to start drying. Please try again later.",
   "Filament ran out. Please load new filament.",
-  "Due to power limitations, starting AMS drying will pause current operations such as nozzle heating and fan running. Do you want to proceed with drying?",
+  "Printing and calibration cannot be performed while the AMS is drying. Please stop the drying process or connect a power adapter to any AMS unit not used for the current print, then try again.",
   "Starting printing failed; please power cycle the printer and resend the print job.",
   "Failed to read the filament information.",
   "Failed to read the filament information.",
@@ -8805,17 +8806,19 @@ const char *device_error_values[] PROGMEM = {
   "The current nozzle setting does not match the slicing file. Continuing to print may affect print quality. It is recommended to re-slice before starting the print.",
   "The flow dynamic calibration records have exceeded the storage limit. Please delete some historical records in the slicer software before adding new calibration data.",
   "The current nozzle setting does not match the slicing file. Continuing to print may affect print quality. It is recommended to re-slice before starting the print.",
-  "The device is busy with the current task and cannot perform this operation for now. Please try again later."
+  "The device is busy with the current task and cannot perform this operation for now. Please try again later.",
+  "The filament selected in the slicer requires a harder nozzle. Please replace the nozzle or adjust the filament settings before reprinting."
 };
 
 // Retry and Done message arrays
-int message_containing_retry_total = 394;
+int message_containing_retry_total = 395;
 
 const char *message_containing_retry[] PROGMEM = {
   "18FF700000020008",
   "07FF700000020008",
   "07FE700000020008",
   "18FE700000020008",
+  "1802960000010003",
   "1806220000020016",
   "1805200000010084",
   "0705210000010084",
@@ -9023,7 +9026,6 @@ const char *message_containing_retry[] PROGMEM = {
   "1804230000020016",
   "0703200000020016",
   "0700210000020016",
-  "1802960000010003",
   "1800200000010086",
   "0300180000010006",
   "1800700000020007",
@@ -9172,6 +9174,7 @@ const char *message_containing_retry[] PROGMEM = {
   "07078012",
   "05014031",
   "0703C06E",
+  "05004042",
   "0300800C",
   "1804C06C",
   "1803C06E",

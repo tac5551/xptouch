@@ -13,6 +13,8 @@ void ui_settingsScreen_screen_init(void);
 void ui_filamentScreen_screen_init(void);
 void ui_printerPairScreen_screen_init(void);
 void ui_amsViewScreen_screen_init(void);
+void ui_nozzleScreen_screen_init(void);
+void ui_utilScreen_screen_init(void);
 
 lv_obj_t *introScreen;
 lv_obj_t *introScreenIcon;

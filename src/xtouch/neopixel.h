@@ -63,6 +63,8 @@ const int timer_tick = 5;
 
 void xtouch_neo_pixel_control_timer_create()
 {
+
+
     xtouch_neo_pixel_control_timer = lv_timer_create(xtouch_neo_pixel_control_timer_handler, timer_tick, NULL);
     lv_timer_set_repeat_count(xtouch_neo_pixel_control_timer, -1); // 無限ループ
 }

@@ -196,6 +196,12 @@ void xtouch_setupGlobalEvents()
     lv_msg_subscribe(XTOUCH_OPTIONAL_ALARM_TIMEOUT_SET, (lv_msg_subscribe_cb_t)xtouch_events_onAlarmTimeoutSet, NULL);
     lv_msg_subscribe(XTOUCH_OPTIONAL_IDLE_LED_SET, (lv_msg_subscribe_cb_t)xtouch_events_onIdleLEDSwitch, NULL);
 
+    lv_msg_subscribe(XTOUCH_COMMAND_NEOPIXEL_TOGGLE, (lv_msg_subscribe_cb_t)xtouch_device_onNeoPixelToggleCommand, NULL);
+
+    lv_msg_subscribe(XTOUCH_PREHEAT_BUTTON1, (lv_msg_subscribe_cb_t)xtouch_device_onPreHeatPLACommand, NULL);
+    lv_msg_subscribe(XTOUCH_PREHEAT_BUTTON2, (lv_msg_subscribe_cb_t)xtouch_device_onPreHeatABSCommand, NULL);
+    lv_msg_subscribe(XTOUCH_PREHEAT_BUTTON3, (lv_msg_subscribe_cb_t)xtouch_device_onPreHeatOffCommand, NULL);
+
 }
 
 #endif

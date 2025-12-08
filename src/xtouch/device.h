@@ -548,6 +548,20 @@ void xtouch_device_onSetaccessoriesNozzleCommand(lv_msg_t *m)
     xtouch_device_pushall();
 }
 
+void xtouch_device_onPreHeatPLACommand(lv_msg_t *m)
+{
+    printf("xtouch_device_onPreHeatPLACommand\n");
+}
+
+void xtouch_device_onPreHeatABSCommand(lv_msg_t *m)
+{
+    printf("xtouch_device_onPreHeatABSCommand\n");
+}
+
+void xtouch_device_onPreHeatOffCommand(lv_msg_t *m)
+{
+    printf("xtouch_device_onPreHeatOffCommand\n");
+}
 
 // void xtouch_device_command_getPaCalibration()
 // {

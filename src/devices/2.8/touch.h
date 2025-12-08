@@ -29,12 +29,12 @@ ScreenPoint getScreenCoords(int16_t x, int16_t y)
     int16_t yCoord = round((y * x_touch_touchConfig.yCalM) + x_touch_touchConfig.yCalC);
     if (xCoord < 0)
         xCoord = 0;
-    if (xCoord >= 320)
-        xCoord = 320 - 1;
+    if (xCoord >= screenHeight)
+        xCoord = screenHeight - 1;
     if (yCoord < 0)
         yCoord = 0;
-    if (yCoord >= 240)
-        yCoord = 240 - 1;
+    if (yCoord >= screenWidth)
+        yCoord = screenWidth - 1;
     return (ScreenPoint(xCoord, yCoord));
 }
 

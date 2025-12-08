@@ -144,6 +144,7 @@ void ui_event_comp_nozzleComponent_onSaveButtonClick(lv_event_t *e)
 
         // メッセージを送信
         lv_msg_send(XTOUCH_COMMAND_SET_ACCESSORIES_NOZZLE, NULL);
+        onMoveHomeScreen(e);
     }
 }
 
@@ -327,6 +328,8 @@ lv_obj_t *ui_nozzleComponent_create(lv_obj_t *comp_parent)
     cui_saveNozzleButton = lv_label_create(cui_nozzleTypeSelect);
     lv_obj_set_width(cui_saveNozzleButton, lv_pct(100));
     lv_obj_set_height(cui_saveNozzleButton, LV_SIZE_CONTENT); /// 1
+    lv_obj_set_align(cui_saveNozzleButton, LV_ALIGN_CENTER);
+    lv_obj_set_style_text_align(cui_saveNozzleButton, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_font(cui_saveNozzleButton, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_label_set_text(cui_saveNozzleButton, LV_SYMBOL_SAVE " Save");
     lv_obj_add_flag(cui_saveNozzleButton, LV_OBJ_FLAG_CLICKABLE);    /// Flags
