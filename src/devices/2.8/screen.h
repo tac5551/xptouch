@@ -3,7 +3,6 @@
 
 #define LGFX_AUTODETECT
 #include <LovyanGFX.hpp>
-#include <string.h>
 
 #include "setting.h"
 
