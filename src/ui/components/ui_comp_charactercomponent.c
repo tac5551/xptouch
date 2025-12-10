@@ -4,7 +4,6 @@
 
 // 関数宣言
 void xtouch_events_onCharacterAnimation();
-void calc_position(int x_offset, int y_offset);
 void xtouch_character_init();  // 初期化関数（タイマー不要）
 
 // キャラクター制御用変数
@@ -20,35 +19,57 @@ int mouth_pakupaku_count = 0; // パクパクの回数カウンター
 unsigned long last_position_time = 0;  // 最後に位置変更した時刻
 int eye_position = 0;  // 目の基準位置からのオフセット（-8～8）
 
-// 座標計算用変数
-#if defined(__XTOUCH_SCREEN_28__)
-const int screen_width = 320;
-const int screen_height = 240;
-#elif defined(__XTOUCH_SCREEN_50__)
-const int screen_width = 800;
-const int screen_height = 480;
-#endif
+int screen_width = 320;
+int screen_height = 240;
+int center_x = 0;
+int center_y = 0;
+int character_width = 0;
+int character_height= 0;
+int character_padding = 0;
+int character_padding_low = 0;
+int character_border_width = 0;
+int charactor_display_width = 0;
+int sw_box_height= 0;
+int sw_box_padding_column = 0;
+int eye_size = 0;
+int eye_diff = 0;
+int eye_position_x= 0;
+int eye_position_y= 0;
+int mouth_width= 0;
+int mouth_height = 0;
+int mouth_position_x = 0;
+int mouth_position_y = 0;
 
-const int center_x = screen_width / 2;
-const int center_y = screen_height / 2;
-const int character_width = 158;
-const int character_height = 155;
-const int character_padding = 10;
-const int character_padding_low = 5;
-const int character_border_width = 2;
-const int charactor_display_width = character_width - character_padding*2 - character_border_width*2;
+void inir_face_position(lv_obj_t *comp_parent)
+{
+    lv_disp_t *disp = lv_obj_get_disp(comp_parent);
+    lv_coord_t sw = lv_disp_get_hor_res(disp);
+    lv_coord_t sh = lv_disp_get_ver_res(disp);
 
-const int sw_box_height = 20;
-const int sw_box_padding_column = 5;
-const int eye_size = 8;
-const int eye_diff = 92;
-const int eye_position_x = (charactor_display_width - (eye_diff + eye_size *2)) / 2;//センタリング片方の目は考慮に入れない
-const int eye_position_y = 30;
+    screen_width = (int)sw;
+    screen_height = (int)sh;
+    center_x = screen_width / 2;
+    center_y = screen_height / 2;
+    character_width = 158;
+    character_height = 155;
+    character_padding = 10;
+    character_padding_low = 5;
+    character_border_width = 2;
+    charactor_display_width = character_width - character_padding*2 - character_border_width*2;
 
-const int mouth_width = 30;
-const int mouth_height = 5;
-const int mouth_position_x = (charactor_display_width - (mouth_width) - character_border_width*2) / 2;//センタリング
-const int mouth_position_y = eye_position_y + 30;
+    sw_box_height = 20;
+    sw_box_padding_column = 5;
+    eye_size = 8;
+    eye_diff = 92;
+    eye_position_x = (charactor_display_width - (eye_diff + eye_size *2)) / 2;//センタリング片方の目は考慮に入れない
+    eye_position_y = 30;
+
+    mouth_width = 30;
+    mouth_height = 5;
+    mouth_position_x = (charactor_display_width - (mouth_width) - character_border_width*2) / 2;//センタリング
+    mouth_position_y = eye_position_y + 30;
+}
+
 
 // キャラクター関連イベント関数
 void xtouch_events_onCharacterAnimation()
@@ -251,6 +272,8 @@ void onXTouchCharacterPositionXYUpdate(lv_event_t *e)
 
 lv_obj_t *ui_characterComponent_create(lv_obj_t *comp_parent)
 {
+    inir_face_position(comp_parent);
+
     // 顔のセット
     lv_obj_t *ui_characterComponent = lv_obj_create(comp_parent);
     lv_obj_set_width(ui_characterComponent, character_width);

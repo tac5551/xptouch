@@ -2,6 +2,13 @@
 #include "ui_helpers.h"
 #include "ui_msgs.h"
 
+// マクロを一旦無効化（関数定義のため）
+#undef lv_font_small
+#undef lv_font_middle
+#undef lv_font_big
+#undef lv_icon_font_small
+#undef lv_icon_font_big
+
 ///////////////////// VARIABLES ////////////////////
 
 // SCREEN: ui_controlScreen
@@ -55,19 +62,78 @@ void ui_event____initial_actions0(lv_event_t *e);
 lv_obj_t *ui____initial_actions0;
 
 
-#ifdef __XTOUCH_SCREEN_50__
-const lv_font_t *lv_font_small = &lv_font_montserrat_28;
-const lv_font_t *lv_font_middle = &lv_font_montserrat_32;
-const lv_font_t *lv_font_big = &lv_font_montserrat_48;
-const lv_font_t *lv_icon_font_small = &ui_font_xlcd48;
-const lv_font_t *lv_icon_font_big = &ui_font_xperiments;
-#else
-const lv_font_t *lv_font_small = &lv_font_montserrat_14;
-const lv_font_t *lv_font_middle = &lv_font_montserrat_24;
-const lv_font_t *lv_font_big = &lv_font_montserrat_28;
-const lv_font_t *lv_icon_font_small = &ui_font_xlcd;
-const lv_font_t *lv_icon_font_big = &ui_font_xperiments;
-#endif
+// 内部変数（staticで隠蔽）
+// LVGLのフォントはconstとして扱うべきだが、定義がconstでない場合があるため警告を抑制
+// #pragma GCC diagnostic push
+// #pragma GCC diagnostic ignored "-Wdiscarded-qualifiers"
+// #ifdef __XTOUCH_SCREEN_50__
+//  static const lv_font_t *_lv_font_small_ptr = (const lv_font_t *)&lv_font_montserrat_28;
+//  static const lv_font_t *_lv_font_middle_ptr = (const lv_font_t *)&lv_font_montserrat_32;
+//  static const lv_font_t *_lv_font_big_ptr = (const lv_font_t *)&lv_font_montserrat_48;
+//  static const lv_font_t *_lv_icon_font_small_ptr = (const lv_font_t *)&ui_font_xlcd48;
+//  static const lv_font_t *_lv_icon_font_big_ptr = (const lv_font_t *)&ui_font_xperiments;
+// #else
+//  static const lv_font_t *_lv_font_small_ptr = (const lv_font_t *)&lv_font_montserrat_14;
+//  static const lv_font_t *_lv_font_middle_ptr = (const lv_font_t *)&lv_font_montserrat_24;
+//  static const lv_font_t *_lv_font_big_ptr = (const lv_font_t *)&lv_font_montserrat_28;
+//  static const lv_font_t *_lv_icon_font_small_ptr = (const lv_font_t *)&ui_font_xlcd;
+//  static const lv_font_t *_lv_icon_font_big_ptr = (const lv_font_t *)&ui_font_xperiments;
+// #endif
+// #pragma GCC diagnostic pop
+ static const lv_font_t *_lv_font_small_ptr = &lv_font_montserrat_14;
+ static const lv_font_t *_lv_font_middle_ptr = &lv_font_montserrat_24;
+ static const lv_font_t *_lv_font_big_ptr = &lv_font_montserrat_28;
+ static const lv_font_t *_lv_icon_font_small_ptr = &ui_font_xlcd;
+ static const lv_font_t *_lv_icon_font_big_ptr = &ui_font_xperiments;
+
+// 関数として定義（変数名と同じ名前）
+const lv_font_t *lv_font_small(void) {
+    return _lv_font_small_ptr;
+}
+
+const lv_font_t *lv_font_middle(void) {
+    return _lv_font_middle_ptr;
+}
+
+const lv_font_t *lv_font_big(void) {
+    return _lv_font_big_ptr;
+}
+
+const lv_font_t *lv_icon_font_small(void) {
+    return _lv_icon_font_small_ptr;
+}
+
+const lv_font_t *lv_icon_font_big(void) {
+    return _lv_icon_font_big_ptr;
+}
+
+// 切り替え用のsetter関数（必要に応じて使用可能）
+void lv_font_small_set(const lv_font_t *font) {
+    _lv_font_small_ptr = font;
+}
+
+void lv_font_middle_set(const lv_font_t *font) {
+    _lv_font_middle_ptr = font;
+}
+
+void lv_font_big_set(const lv_font_t *font) {
+    _lv_font_big_ptr = font;
+}
+
+void lv_icon_font_small_set(const lv_font_t *font) {
+    _lv_icon_font_small_ptr = font;
+}
+
+void lv_icon_font_big_set(const lv_font_t *font) {
+    _lv_icon_font_big_ptr = font;
+}
+
+// マクロを再定義（関数定義の後）
+#define lv_font_small (lv_font_small())
+#define lv_font_middle (lv_font_middle())
+#define lv_font_big (lv_font_big())
+#define lv_icon_font_small (lv_icon_font_small())
+#define lv_icon_font_big (lv_icon_font_big())
 
 
 

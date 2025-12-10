@@ -66,6 +66,7 @@ extern "C"
 
     void onMoveNozzleScreen(lv_event_t *e);
     void onMoveHomeScreen(lv_event_t *e);
+    void onMoveAmsViewScreen(lv_event_t *e);
 
     /* -----------Confirm-------------- */
     void onConfirmPanelNO(lv_event_t *e);

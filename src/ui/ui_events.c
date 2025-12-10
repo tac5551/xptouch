@@ -129,6 +129,12 @@ void onSettingsMoveOptional(lv_event_t *e)
     loadScreen(8);
 }
 
+void onMoveAmsViewScreen(lv_event_t *e)
+{
+    loadScreen(7);
+}
+
+
 
 void onMoveNozzleScreen(lv_event_t *e) { 
     loadScreen(10); 

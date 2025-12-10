@@ -64,6 +64,7 @@ void ui_characterComponent_yawn(void);
 void ui_characterComponent_meow(void);
 void xtouch_character_init(void);  // キャラクター初期化（タイマー不要）
 void xtouch_events_onCharacterAnimation(void);  // アニメーション処理（loop()から呼び出す）
+void inir_face_position(lv_obj_t *comp_parent);
 
 // イベントハンドラー
 void ui_event_comp_characterComponent_characterFace(lv_event_t *e);

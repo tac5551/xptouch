@@ -114,8 +114,11 @@ void loadScreen(int screen)
     case 1: sidebar_index = 1; break; // Temp
     case 2: sidebar_index = 2; break; // Control
     case 3: sidebar_index = 3; break; // Nozzle
-    case 11: sidebar_index = 4; break; // AMS View
+    case 7: sidebar_index = 4; break; // AMS View
+    case 10: sidebar_index = 4; break; // Nozzle
+    case 11: sidebar_index = 4; break; // Util
     case 4: sidebar_index = 5; break; // Settings
+    case 8: sidebar_index = 5; break; // OptionalSettings
     default: break;
     }
     if (sidebar_index >= 0)

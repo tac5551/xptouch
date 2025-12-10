@@ -53,6 +53,27 @@ void setup()
   xtouch_eeprom_setup();
   xtouch_globals_init();
   xtouch_screen_setup();
+
+#ifdef __XTOUCH_SCREEN_50__
+  lv_font_small_set(&lv_font_montserrat_28);
+  lv_font_middle_set(&lv_font_montserrat_32);
+  lv_font_big_set(&lv_font_montserrat_48);
+  lv_icon_font_small_set(&ui_font_xlcd48);
+  lv_icon_font_big_set(&ui_font_xperiments);
+#endif
+
+  lgfx::boards::board_t board = tft.getBoard();
+
+  if (board == lgfx::boards::board_t::board_Sunton_ESP32_3248S035C){
+#define __XTOUCH_SCREEN_35__
+  }
+
+#ifdef __XTOUCH_SCREEN_35__
+  lv_font_small_set(&lv_font_montserrat_24);
+  lv_font_middle_set(&lv_font_montserrat_28);
+  lv_font_big_set(&lv_font_montserrat_32);
+#endif
+
   xtouch_intro_show();
   while (!xtouch_sdcard_setup())
     ;
@@ -97,10 +118,9 @@ void setup()
     }
     xtouch_mqtt_setup();
   }
-  xtouch_chamber_timer_init();
+
 
 #if defined(__XTOUCH_SCREEN_28__)
-  lgfx::boards::board_t board = tft.getBoard();
   if (board == lgfx::boards::board_t::board_ESP32_ESP32E)
       return;
 
@@ -121,7 +141,7 @@ void setup()
 #endif
 
   xtouch_neo_pixel_timer_init(xTouchConfig.xTouchNeoPixelPinValue);
-  
+  xtouch_chamber_timer_init();
   xtouch_screen_startScreenTimer();
 }
 

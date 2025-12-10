@@ -14,6 +14,17 @@ void ui_event_comp_UtilComponent_onButton1Click(lv_event_t *e)
 }
 
 
+void ui_event_comp_UtilComponent_onButton3Click(lv_event_t *e)
+{
+    lv_event_code_t event_code = lv_event_get_code(e);
+    if (event_code == LV_EVENT_CLICKED)
+    {
+        printf("ui_event_comp_UtilComponent_onButton3Click\n");
+        onMoveAmsViewScreen(e);
+    }
+}
+
+
 void onXTouchUtilPrintStatus(lv_event_t *e)
 {
     lv_obj_t *target = lv_event_get_target(e);
@@ -191,7 +202,7 @@ lv_obj_t *ui_utilComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_height(button3, lv_pct(100));
     lv_obj_set_flex_grow(button3, 2);
     lv_obj_set_align(button3, LV_ALIGN_CENTER);
-    lv_label_set_text(button3, "Dummy3");
+    lv_label_set_text(button3, "AMS");
     lv_obj_add_flag(button3, LV_OBJ_FLAG_CLICKABLE);                                                                                                                                                                                                      /// Flags
     lv_obj_clear_flag(button3, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN); /// Flags
     lv_obj_set_scrollbar_mode(button3, LV_SCROLLBAR_MODE_OFF);
@@ -210,7 +221,7 @@ lv_obj_t *ui_utilComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_bg_color(button3, lv_color_hex(0x333333), LV_PART_MAIN | LV_STATE_PRESSED);
     lv_obj_set_style_bg_opa(button3, 255, LV_PART_MAIN | LV_STATE_PRESSED);
     lv_obj_set_style_border_width(button3, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_add_state(button3, LV_STATE_DISABLED);
+
     lv_obj_t *button4;
     button4 = lv_label_create(cui_UtilLine2);
     lv_obj_set_width(button4, lv_pct(50));
@@ -236,7 +247,8 @@ lv_obj_t *ui_utilComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_bg_color(button4, lv_color_hex(0x333333), LV_PART_MAIN | LV_STATE_PRESSED);
     lv_obj_set_style_bg_opa(button4, 255, LV_PART_MAIN | LV_STATE_PRESSED);
     lv_obj_set_style_border_width(button4, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_add_state(button3, LV_STATE_DISABLED);
+    lv_obj_add_state(button4, LV_STATE_DISABLED);
+
 
     lv_obj_t **children = lv_mem_alloc(sizeof(lv_obj_t *) * _UI_COMP_UTILCOMPONENT_NUM);
     children[UI_COMP_UTILCOMPONENT_UTILCOMPONENT] = cui_utilComponent;
@@ -252,6 +264,7 @@ lv_obj_t *ui_utilComponent_create(lv_obj_t *comp_parent)
     
     // for NozzleSelect
     lv_obj_add_event_cb(button1, ui_event_comp_UtilComponent_onButton1Click, LV_EVENT_ALL, children);
+    lv_obj_add_event_cb(button3, ui_event_comp_UtilComponent_onButton3Click, LV_EVENT_ALL, children);
 
  lv_obj_add_event_cb(cui_utilComponent, onXTouchUtilPrintStatus, LV_EVENT_MSG_RECEIVED, children);
 
