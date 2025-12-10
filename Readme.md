@@ -122,10 +122,11 @@ xtouchとかP1touch用に作られてているものがPrintableやMakerWorldに
 
 - [DS18B20 温度センサーB](https://s.click.aliexpress.com/e/_oBYP2pE)
 - **DS18B20 P1P/P1Sチャンバー温度エンクロージャー**: さらに、DS18B20温度センサーをP1P/P1Sプリンター内に簡単に統合できる3Dモデルを作成しました。
-  3Dモデルは以下のリンクで見つけることができます：
-  　- [モデルA](https://makerworld.com/en/models/19658)
-  　<img src="https://github.com/xperiments-in/xtouch/assets/417709/a8d14564-09e9-4d36-9ad9-10fd8f295c86" width="200">
-  　- [モデルB](https://makerworld.com/en/models/42533)
+  3Dモデルは以下のリンクで見つけることができます：<br>
+
+  　- [モデルA](https://makerworld.com/en/models/19658)<br>
+  　<img src="https://github.com/xperiments-in/xtouch/assets/417709/a8d14564-09e9-4d36-9ad9-10fd8f295c86" width="200"><br>
+  　- [モデルB](https://makerworld.com/en/models/42533)<br>
   　<img src="https://github.com/xperiments-in/xtouch/assets/417709/22871bdf-ba37-44f0-a4b3-33c6352f7f86" width="300">
 
 ---
