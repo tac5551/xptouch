@@ -105,15 +105,18 @@ void setup()
       return;
 
   ConsoleDebug.println("XTOUCH_NEO_PIXEL_INIT");
-  if (board == lgfx::boards::board_t::board_Guition_ESP32_2432W328R || board == lgfx::boards::board_t::board_Guition_ESP32_2432W328C)
+  if (board == lgfx::boards::board_t::board_Guition_ESP32_2432W328R || board == lgfx::boards::board_t::board_Guition_ESP32_2432W328C|| board == lgfx::boards::board_t::board_Sunton_ESP32_3248S035C)
   {
-      xTouchConfig.xTouchNeoPixelPinValue = 21;
+    ConsoleDebug.println("LED 21");
+    xTouchConfig.xTouchNeoPixelPinValue = 21;
   }
   else if (board == lgfx::boards::board_t::board_Sunton_ESP32_2432S028_7789 || board == lgfx::boards::board_t::board_Sunton_ESP32_2432S028_9341)
   {
-      xTouchConfig.xTouchNeoPixelPinValue = 27;
+    ConsoleDebug.println("LED 27");
+    xTouchConfig.xTouchNeoPixelPinValue = 27;
   }
 #elif defined(__XTOUCH_SCREEN_50__)
+  ConsoleDebug.println("LED 17");
   xTouchConfig.xTouchNeoPixelPinValue = 17;
 #endif
 

@@ -106,9 +106,21 @@ void loadScreen(int screen)
     }
     fillScreenData(screen);
 
-    if (screen >= 0 && screen < 5)
+    // サイドバーのハイライトを画面番号に応じて設定
+    int sidebar_index = -1;
+    switch (screen)
     {
-        ui_sidebarComponent_set_active(screen);
+    case 0: sidebar_index = 0; break; // Home
+    case 1: sidebar_index = 1; break; // Temp
+    case 2: sidebar_index = 2; break; // Control
+    case 3: sidebar_index = 3; break; // Nozzle
+    case 11: sidebar_index = 4; break; // AMS View
+    case 4: sidebar_index = 5; break; // Settings
+    default: break;
+    }
+    if (sidebar_index >= 0)
+    {
+        ui_sidebarComponent_set_active(sidebar_index);
     }
 }
 

@@ -3,6 +3,7 @@
 
 #define LGFX_AUTODETECT
 #include <LovyanGFX.hpp>
+#include <string.h>
 
 #include "setting.h"
 
@@ -223,6 +224,11 @@ void xtouch_screen_setup()
 
     xtouch_screen_setBrightness(255);
     xtouch_screen_touchFromPowerOff = false;
+
+    // 実際の物理画面の解像度を取得
+    screenWidth = tft.height();
+    screenHeight = tft.width();
+    ConsoleInfo.println("[xPTouch][SCREEN] Physical display size: " + String(screenWidth) + "x" + String(screenHeight));
 
     lv_init();
 
