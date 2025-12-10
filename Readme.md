@@ -61,7 +61,7 @@ xptouchスクリーンは、BambuLabプリンターに革命的な機能を追�
 | サイズ                            | 2.8 inch                                              | 2.8 inch                                              | 3.2 inch                                              | 2.8 inch                                              |
 | 動作確認                          | **Yes**                                         | **Yes**                                         | Probably works                                        | **Yes**                                         |
 | 温度センサー                      | **Yes**                                         | **Yes**                                         | **Yes**                                         | **Yes**                                         |
-| ステータスLED `<br>`NexpixelLED | **Yes**                                         | **Yes**                                         | **Yes**                                         | **Yes**                                         |
+| ステータスLED <br>NexpixelLED | **Yes**                                         | **Yes**                                         | **Yes**                                         | **Yes**                                         |
 | バッテリ装着                      | No                                                    | No                                                    | No                                                    | **Yes**                                         |
 | 購入先                            | [購入リンク](https://s.click.aliexpress.com/e/_c3fGqpNT) | [購入リンク](https://s.click.aliexpress.com/e/_c36MHgF7) | [購入リンク](https://s.click.aliexpress.com/e/_c4miViDf) | [購入リンク](https://s.click.aliexpress.com/e/_c3V5Eyjj) |
 
@@ -72,9 +72,9 @@ xptouchスクリーンは、BambuLabプリンターに革命的な機能を追�
 | サイズ                            | 5.5 inch                                                                                                           | 4.3 inch                                              | 5.0 inch                                              |
 | 動作確認                          | **Yes**                                                                                                      | Probably works                                        | Probably works                                        |
 | 温度センサー                      | **Yes**                                                                                                      | **Yes**                                         | **Yes**                                         |
-| ステータスLED `<br>`NexpixelLED | **Yes**                                                                                                      | **Yes**                                         | **Yes**                                         |
+| ステータスLED <br>NexpixelLED | **Yes**                                                                                                      | **Yes**                                         | **Yes**                                         |
 | バッテリ装着                      | **Yes**                                                                                                      | No                                                    | No                                                    |
-| 購入先                            | [購入リンク](https://s.click.aliexpress.com/e/_okFyaE4) `<br>`[購入リンク](https://s.click.aliexpress.com/e/_c3GmfL9F) | [購入リンク](https://s.click.aliexpress.com/e/_c3q54KiD) | [購入リンク](https://s.click.aliexpress.com/e/_c4qhBxsZ) |
+| 購入先                            | [購入リンク](https://s.click.aliexpress.com/e/_okFyaE4) <br>[購入リンク](https://s.click.aliexpress.com/e/_c3GmfL9F) | [購入リンク](https://s.click.aliexpress.com/e/_c3q54KiD) | [購入リンク](https://s.click.aliexpress.com/e/_c4qhBxsZ) |
 
 *制限付き互換ボード
 
@@ -83,7 +83,7 @@ xptouchスクリーンは、BambuLabプリンターに革命的な機能を追�
 | サイズ                            | 2.8 inch                                              | 2.8 inch                                              | 3.2 inch                                              |
 | 動作確認                          | **Yes**                                         | **Yes**                                         | Probably works                                        |
 | 温度センサー                      | Not Support                                           | Not Support                                           | Not Support                                           |
-| ステータスLED `<br>`NexpixelLED | Not Support                                           | Not Support                                           | Not Support                                           |
+| ステータスLED <br>NexpixelLED | Not Support                                           | Not Support                                           | Not Support                                           |
 | バッテリ装着                      | **Yes**                                         | **Yes**                                         | **Yes**                                         |
 | 購入先                            | [購入リンク](https://s.click.aliexpress.com/e/_c3IEJhcZ) | [購入リンク](https://s.click.aliexpress.com/e/_c3IEJhcZ) | [購入リンク](https://s.click.aliexpress.com/e/_c3IEJhcZ) |
 
@@ -124,9 +124,9 @@ xtouchとかP1touch用に作られてているものがPrintableやMakerWorldに
 - **DS18B20 P1P/P1Sチャンバー温度エンクロージャー**: さらに、DS18B20温度センサーをP1P/P1Sプリンター内に簡単に統合できる3Dモデルを作成しました。
   3Dモデルは以下のリンクで見つけることができます：
   　- [モデルA](https://makerworld.com/en/models/19658)
-  　`<img src="https://github.com/xperiments-in/xtouch/assets/417709/a8d14564-09e9-4d36-9ad9-10fd8f295c86" width="200">`
+  　<img src="https://github.com/xperiments-in/xtouch/assets/417709/a8d14564-09e9-4d36-9ad9-10fd8f295c86" width="200">
   　- [モデルB](https://makerworld.com/en/models/42533)
-  　`<img src="https://github.com/xperiments-in/xtouch/assets/417709/22871bdf-ba37-44f0-a4b3-33c6352f7f86" width="300">`
+  　<img src="https://github.com/xperiments-in/xtouch/assets/417709/22871bdf-ba37-44f0-a4b3-33c6352f7f86" width="300">
 
 ---
 
@@ -236,7 +236,7 @@ xptouchではWifi経由でBambuCloudに接続する為、Wifiの接続設定とB
 ### 初回プロビジョニング
 
 Chrome拡張機能を初めて開く際は、以下の手順に従ってください：
-`<img src="readme-assets/ChromeExtention.png" width="300">`
+<img src="readme-assets/ChromeExtention.png" width="300">
 
 1. **必要な情報の入力**
 
@@ -333,7 +333,7 @@ xptouchスクリーンは、USBポートで電源供給します。
    　**おすすめは、P1Sのコントローラーの背面に用意されているUSB電源ポートへの接続です。**
    　ケーブルを本体内に通す際には、右側にある穴を経由して導入してください。
    　[AMS Rizer](https://makerworld.com/ja/models/647484-ams-airflow-slim-riser-slider-p1p-p1s-x1c#profileId-573815)等を導入済みの方は加工して最短距離の配線も可能です。
-   　`<img src="readme-assets/USB_Route.png" width="300"><img src="readme-assets/simple_route.png" width="300">`
+   　<img src="readme-assets/USB_Route.png" width="300"><img src="readme-assets/simple_route.png" width="300">
 
 ---
 
