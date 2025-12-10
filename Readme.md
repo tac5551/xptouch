@@ -64,8 +64,8 @@ xptouchスクリーンは、BambuLabプリンターに革命的な機能を追�
 | ステータスLED <br>NexpixelLED |  **<font color=green>Yes</font>**                                           |  **<font color=green>Yes</font>**                                           |  **<font color=green>Yes</font>**                                           |  **<font color=green>Yes</font>**                                           |
 | バッテリ装着                      | No                                                    | No                                                    | No                                                    |  **<font color=green>Yes</font>**                                           |
 | 購入先                            | [購入リンク](https://s.click.aliexpress.com/e/_c3fGqpNT) | [購入リンク](https://s.click.aliexpress.com/e/_c36MHgF7) | [購入リンク](https://s.click.aliexpress.com/e/_c4miViDf) | [購入リンク](https://s.click.aliexpress.com/e/_c3V5Eyjj) |
-
 | 注意事項 | USB-Cのバージョンは非対応 |  |  |  |
+
 *推奨ボード(800x480)
 
 | ボード                            | JC8048W550                                                                                                         | 8048S043                                              | 8048S050                                              |
