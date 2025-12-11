@@ -52,48 +52,61 @@ xptouchスクリーンは、BambuLabプリンターに革命的な機能を追�
 現在、手頃な価格のCYD呼ばれる開発ボードで動作するように拡張しています。
 用途や入手性に合わせて、選択できます。
 各種サポートを進めていますがすべてに対応することは難しいため、2432S028もしくは、JC2432W328Rがいろいろなところから入手可能なため、お勧めです。
-3.2インチのモデルについては恐らく仕様上使用可能ですが、テストは実施していません
+2.4および3.2インチのモデルについてはコントローラーが同一のため恐らく使用可能ですが、テストは実施していません。
+
 
 *推奨ボード(320ｘ240)
 
-| ボード                            | 2432S028                                              | 2432S028_UPG                                          | 2432S032                                              | JC2432W328                                            |
-| --------------------------------- | ----------------------------------------------------- | ----------------------------------------------------- | ----------------------------------------------------- | ----------------------------------------------------- |
-| サイズ                            | 2.8 inch                                              | 2.8 inch                                              | 3.2 inch                                              | 2.8 inch                                              |
-| 動作確認                          | **<font color=green>Yes</font>**                                         |  **<font color=green>Yes</font>**                                           | Probably works                                        |  **<font color=green>Yes</font>**                                           |
-| 温度センサー                      |  **<font color=green>Yes</font>**                                           |  **<font color=green>Yes</font>**                                           |  **<font color=green>Yes</font>**                                           |  **<font color=green>Yes</font>**                                           |
-| ステータスLED <br>NexpixelLED |  **<font color=green>Yes</font>**                                           |  **<font color=green>Yes</font>**                                           |  **<font color=green>Yes</font>**                                           |  **<font color=green>Yes</font>**                                           |
-| バッテリ装着                      | No                                                    | No                                                    | No                                                    |  **<font color=green>Yes</font>**                                           |
-| 購入先                            | [購入リンク](https://s.click.aliexpress.com/e/_c3fGqpNT) | [購入リンク](https://s.click.aliexpress.com/e/_c36MHgF7) | [購入リンク](https://s.click.aliexpress.com/e/_c4miViDf) | [購入リンク](https://s.click.aliexpress.com/e/_c3V5Eyjj) |
-| 注意事項 | USB-Cのバージョンは非対応 |  |  |  |
+| ボード                         | 2432S028R                                             | 2432S028R(USB-C)                                      | JC2432W328R                                           | JC2432W328C                                           | 2432S024                                        | 2432S032                                              |
+| ------------------------------ | ----------------------------------------------------- | ----------------------------------------------------- | ----------------------------------------------------- | ----------------------------------------------------- | ----------------------------------------------- | ----------------------------------------------------- |
+| サイズ                         | 2.8 inch                                              | 2.8 inch                                              | 2.8 inch                                              | 2.8 inch                                              | 2.4 inch                                        | 3.2 inch                                              |
+| 動作確認                       | **`<font color=green>`Yes `</font>`**       | **`<font color=green>`Yes `</font>`**       | **`<font color=green>`Yes `</font>`**       | **`<font color=green>`Yes `</font>`**       | Probably works                                  | Probably works                                        |
+| 温度センサー                   | **`<font color=green>`Yes `</font>`**       | **`<font color=green>`Yes `</font>`**       | **`<font color=green>`Yes `</font>`**       | **`<font color=green>`Yes `</font>`**       | **`<font color=green>`Yes `</font>`** | **`<font color=green>`Yes `</font>`**       |
+| ステータスLED<br />NexpixelLED | **`<font color=green>`Yes `</font>`**       | ？？？？                                              | **`<font color=green>`Yes `</font>`**       | **`<font color=green>`Yes `</font>`**       | **`<font color=green>`Yes `</font>`** | **`<font color=green>`Yes `</font>`**       |
+| バッテリ装着                   | No                                                    | No                                                    | **`<font color=green>`Yes `</font>`**       | `<font color=green>`**Yes** `</font>`       | No                                              |                                                       |
+| 購入先                         | [購入リンク](https://s.click.aliexpress.com/e/_c3fGqpNT) | [購入リンク](https://s.click.aliexpress.com/e/_c36MHgF7) | [購入リンク](https://s.click.aliexpress.com/e/_c3V5Eyjj) | [購入リンク](https://s.click.aliexpress.com/e/_c3V5Eyjj) |                                                 | [購入リンク](https://s.click.aliexpress.com/e/_c4miViDf) |
+| 注意事項                       | 2432S028Cは未確認                                     | ボード手配中<br />LED使用時エラー報告あり             |                                                       |                                                       | 検証予定なし                                    | 検証予定なし                                          |
+
+*推奨ボード(480ｘ320)
+
+| ボード                         | 3248S35C                                                                                                         | 3248S35R                                        | JC3248W535C                                     | JC3248W535R                                     |
+| ------------------------------ | ---------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- | ----------------------------------------------- | ----------------------------------------------- |
+| サイズ                         | 3.5 inch                                                                                                         | 3.5 inch                                        |                                                 | 3.5 inch                                        |
+| 動作確認                       | **`<font color=green>`Yes `</font>`**                                                                  | No                                              |                                                 | Probably works                                  |
+| 温度センサー                   | **`<font color=green>`Yes `</font>`**                                                                  | **`<font color=green>`Yes `</font>`** | **`<font color=green>`Yes `</font>`** | **`<font color=green>`Yes `</font>`** |
+| ステータスLED<br />NexpixelLED | **`<font color=green>`Yes `</font>`**                                                                  | **`<font color=green>`Yes `</font>`** | **`<font color=green>`Yes `</font>`** | **`<font color=green>`Yes `</font>`** |
+| バッテリ装着                   | No                                                                                                               | **No**                                    | **`<font color=green>`Yes `</font>`** | **`<font color=green>`Yes `</font>`** |
+| 購入先                         | [購入リンク](https://s.click.aliexpress.com/e/_c3APFetR)<br />[購入リンク](https://s.click.aliexpress.com/e/_c4oUvBW5) |                                                 | 販売終了？                                      | 販売終了？                                      |
+| 注意事項                       |                                                                                                                  | 検証中                                          | 検証予定なし                                    | 検証予定なし                                    |
 
 *推奨ボード(800x480)
 
-| ボード                            | JC8048W550                                                                                                         | 8048S043                                              | 8048S050                                              |
-| --------------------------------- | ------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------- | ----------------------------------------------------- |
-| サイズ                            | 5.5 inch                                                                                                           | 4.3 inch                                              | 5.0 inch                                              |
-| 動作確認                          |  **<font color=green>Yes</font>**                                                                                                        | Probably works                                        | Probably works                                        |
-| 温度センサー                      |  **<font color=green>Yes</font>**                                                                                                        |  **<font color=green>Yes</font>**                                           |  **<font color=green>Yes</font>**                                           |
-| ステータスLED <br>NexpixelLED |  **<font color=green>Yes</font>**                                                                                                        |  **<font color=green>Yes</font>**                                           |  **<font color=green>Yes</font>**                                           |
-| バッテリ装着                      |  **<font color=green>Yes</font>**                                                                                                        | No                                                    | No                                                    |
-| 購入先                            | [購入リンク](https://s.click.aliexpress.com/e/_okFyaE4) <br>[購入リンク](https://s.click.aliexpress.com/e/_c3GmfL9F) | [購入リンク](https://s.click.aliexpress.com/e/_c3q54KiD) | [購入リンク](https://s.click.aliexpress.com/e/_c4qhBxsZ) |
+| ボード                         | JC8048W550                                                                                                       | 8048S043                                              | 8048S050                                              |
+| ------------------------------ | ---------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- | ----------------------------------------------------- |
+| サイズ                         | 5.5 inch                                                                                                         | 4.3 inch                                              | 5.0 inch                                              |
+| 動作確認                       | **`<font color=green>`Yes`</font>`**                                                                   | Probably works                                        | Probably works                                        |
+| 温度センサー                   | **`<font color=green>`Yes`</font>`**                                                                   | **`<font color=green>`Yes`</font>`**        | **`<font color=green>`Yes`</font>`**        |
+| ステータスLED<br />NexpixelLED | **`<font color=green>`Yes`</font>`**                                                                   | **`<font color=green>`Yes`</font>`**        | **`<font color=green>`Yes`</font>`**        |
+| バッテリ装着                   | **`<font color=green>`Yes`</font>`**                                                                   | No                                                    | No                                                    |
+| 購入先                         | [購入リンク](https://s.click.aliexpress.com/e/_okFyaE4) <br />[購入リンク](https://s.click.aliexpress.com/e/_c3GmfL9F) | [購入リンク](https://s.click.aliexpress.com/e/_c3q54KiD) | [購入リンク](https://s.click.aliexpress.com/e/_c4qhBxsZ) |
 
 *制限付き互換ボード
 
 | ボード                            | E32-28T                                               | E32-28T_7789                                          | E32-32T                                               |
 | --------------------------------- | ----------------------------------------------------- | ----------------------------------------------------- | ----------------------------------------------------- |
 | サイズ                            | 2.8 inch                                              | 2.8 inch                                              | 3.2 inch                                              |
-| 動作確認                          |  **<font color=green>Yes</font>**                                           |  **<font color=green>Yes</font>**                                           | Probably works                                        |
+| 動作確認                          | **`<font color=green>`Yes`</font>`**        | **`<font color=green>`Yes`</font>`**        | Probably works                                        |
 | 温度センサー                      | Not Support                                           | Not Support                                           | Not Support                                           |
-| ステータスLED <br>NexpixelLED | Not Support                                           | Not Support                                           | Not Support                                           |
-| バッテリ装着                      |  **<font color=green>Yes</font>**                                           |  **<font color=green>Yes</font>**                                           |  **<font color=green>Yes</font>**                                           |
+| ステータスLED `<br>`NexpixelLED | Not Support                                           | Not Support                                           | Not Support                                           |
+| バッテリ装着                      | **`<font color=green>`Yes`</font>`**        | **`<font color=green>`Yes`</font>`**        | **`<font color=green>`Yes`</font>`**        |
 | 購入先                            | [購入リンク](https://s.click.aliexpress.com/e/_c3IEJhcZ) | [購入リンク](https://s.click.aliexpress.com/e/_c3IEJhcZ) | [購入リンク](https://s.click.aliexpress.com/e/_c3IEJhcZ) |
 
 *480ｘ320モデル(動作不可 ※将来的にサポート予定)
 
 | **No.** | 購入元   | ボード名                | サイズ   | 購入リンク                                            |
 | ------------- | -------- | ----------------------- | -------- | ----------------------------------------------------- |
-| **1**   | Sonton   | 3248S035                | 3.5 inch | [購入リンク](https://s.click.aliexpress.com/e/_c3APFetR) |
-| **2**   | GUITION  | 3248S035                | 3.5 inch | [購入リンク](https://s.click.aliexpress.com/e/_c4oUvBW5) |
+| **1**   | Sonton   | 3248S035                | 3.5 inch |                                                       |
+| **2**   | GUITION  | 3248S035                | 3.5 inch |                                                       |
 | **3**   | GUITION  | JC3248W535              | 3.5 inch | [販売終了]                                            |
 | **4**   | IPistBit | ESP-32E(3.5 with touch) | 3.5 inch | [購入リンク](https://s.click.aliexpress.com/e/_c3IEJhcZ) |
 | **5**   | IPistBit | ESP-32E(4.0 with touch) | 4.0 inch | [購入リンク](https://s.click.aliexpress.com/e/_c3IEJhcZ) |
@@ -123,12 +136,12 @@ xtouchとかP1touch用に作られてているものがPrintableやMakerWorldに
 
 - [DS18B20 温度センサーB](https://s.click.aliexpress.com/e/_oBYP2pE)
 - **DS18B20 P1P/P1Sチャンバー温度エンクロージャー**: さらに、DS18B20温度センサーをP1P/P1Sプリンター内に簡単に統合できる3Dモデルを作成しました。
-  3Dモデルは以下のリンクで見つけることができます：<br>
+  3Dモデルは以下のリンクで見つけることができます：`<br>`
 
-  　- [モデルA](https://makerworld.com/en/models/19658)<br>
-  　<img src="https://github.com/xperiments-in/xtouch/assets/417709/a8d14564-09e9-4d36-9ad9-10fd8f295c86" width="200"><br>
-  　- [モデルB](https://makerworld.com/en/models/42533)<br>
-  　<img src="https://github.com/xperiments-in/xtouch/assets/417709/22871bdf-ba37-44f0-a4b3-33c6352f7f86" width="300">
+  　- [モデルA](https://makerworld.com/en/models/19658) `<br>`
+  　`<img src="https://github.com/xperiments-in/xtouch/assets/417709/a8d14564-09e9-4d36-9ad9-10fd8f295c86" width="200"><br>`
+  　- [モデルB](https://makerworld.com/en/models/42533) `<br>`
+  　`<img src="https://github.com/xperiments-in/xtouch/assets/417709/22871bdf-ba37-44f0-a4b3-33c6352f7f86" width="300">`
 
 ---
 
@@ -238,7 +251,7 @@ xptouchではWifi経由でBambuCloudに接続する為、Wifiの接続設定とB
 ### 初回プロビジョニング
 
 Chrome拡張機能を初めて開く際は、以下の手順に従ってください：
-<img src="readme-assets/ChromeExtention.png" width="300">
+`<img src="readme-assets/ChromeExtention.png" width="300">`
 
 1. **必要な情報の入力**
 
@@ -335,7 +348,7 @@ xptouchスクリーンは、USBポートで電源供給します。
    　**おすすめは、P1Sのコントローラーの背面に用意されているUSB電源ポートへの接続です。**
    　ケーブルを本体内に通す際には、右側にある穴を経由して導入してください。
    　[AMS Rizer](https://makerworld.com/ja/models/647484-ams-airflow-slim-riser-slider-p1p-p1s-x1c#profileId-573815)等を導入済みの方は加工して最短距離の配線も可能です。
-   　<img src="readme-assets/USB_Route.png" width="300"><img src="readme-assets/simple_route.png" width="300">
+   　`<img src="readme-assets/USB_Route.png" width="300"><img src="readme-assets/simple_route.png" width="300">`
 
 ---
 
@@ -521,21 +534,27 @@ XPTouchは、xptouchを源流とした日本語カスタマイズバージョン
 
 - **xtouch** - [https://github.com/xperiments-in/xtouch](https://github.com/xperiments-in/xtouch)
 - **開発者**: Pedro Casaubon Aguilar
-- **ライセンス**: GPLv3 / 商用ライセンス
+- **ライセンス**: GPLv3 
 
 ## 法的免責事項
 
 - 本プロジェクトは教育・研究目的で開発されています
-- 商用利用についてはXPの利用を禁止します。参照元プロジェクトを使用してください。
+- Bambulab Cloudを利用したサービスのため、提供元の仕様変更などにより使用できなくなる可能性があります。
+- このプロジェクトはXTOUCHの拡張を行い、ボード対応を追加していますが、すべての機能の動作を保証するものではありません。
+- 参照元プロジェクトの制限によりXPtouchの商用利用は全面的に禁止します。
 - オリジナルプロジェクトの開発者には問い合わせしないでください
-- ロゴ・ブランディングは独自に開発されています
+
 
 ## References
 
+画面がうまく表示ができない場合はボードを提供いただけると
+対応するかも！
+[LovyanGFX](https://github.com/tac5551/LovyanGFX)
 [OpenBambuAPI](https://github.com/tac5551/OpenBambuAPI)
 [ha-bambulab](https://github.com/tac5551/ha-bambulab)
 [Bambu-Lab-Cloud-API](https://github.com/tac5551/Bambu-Lab-Cloud-API)
 
 ---
 
-**注意**: 本プロジェクトは教育・研究目的で開発されています。商用利用についてはXPtouchの利用を禁止します。参照元プロジェクトを使用してください。
+**注意**: 本プロジェクトは教育・研究目的で開発されています。
+
