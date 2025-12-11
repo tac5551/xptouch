@@ -60,8 +60,7 @@ void setup()
   lv_font_big_set(&lv_font_montserrat_48);
   lv_icon_font_small_set(&ui_font_xlcd48);
   lv_icon_font_big_set(&ui_font_xperiments);
-#endif
-
+#else
   lgfx::boards::board_t board = tft.getBoard();
 
   if (board == lgfx::boards::board_t::board_Sunton_ESP32_3248S035C){
@@ -69,6 +68,9 @@ void setup()
     lv_font_middle_set(&lv_font_montserrat_28);
     lv_font_big_set(&lv_font_montserrat_32);
   }
+#endif
+
+
 
   xtouch_intro_show();
   while (!xtouch_sdcard_setup())
