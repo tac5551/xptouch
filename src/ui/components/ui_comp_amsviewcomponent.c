@@ -324,7 +324,7 @@ void ui_event_comp_AMSViewComponent_onButton1Click(lv_event_t *e)
     if (event_code == LV_EVENT_CLICKED)
     {
         printf("ui_event_comp_AMSViewComponent_onButton1Click\n");
-        onMoveNozzleScreen(e);
+        onMoveUtilNozzleChangeScreen(e);
     }
 }
 

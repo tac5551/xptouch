@@ -45,8 +45,9 @@ extern "C"
   void ui_optionalScreen_screen_init(void);
   void ui_characterScreen_screen_init(void);
 
-  void ui_nozzleScreen_screen_init(void);
   void ui_utilScreen_screen_init(void);
+  void ui_utilCalibrationScreen_screen_init(void);
+  void ui_utilNozzleChangeScreen_screen_init(void);
 
 
   lv_obj_t *introScreen;
@@ -99,10 +100,12 @@ extern "C"
   lv_obj_t *ui_characterScreen;
   lv_obj_t *ui_characterComponent;
 
-  lv_obj_t *ui_nozzleScreen;
-  lv_obj_t *ui_nozzleComponent;
   lv_obj_t *ui_utilScreen;
   lv_obj_t *ui_utilComponent;
+  lv_obj_t *ui_utilNozzleChangeScreen;
+  lv_obj_t *ui_utilNozzleChagneComponent;
+  lv_obj_t *ui_utilCalibrationScreen;
+  lv_obj_t *ui_utilCalibrationComponent;
 
   lv_obj_t *ui_confirmComponent; // layertop
   lv_obj_t *ui_lightingComponent; // layertop

@@ -93,7 +93,7 @@ lv_obj_t *ui_optionalComponent_create(lv_obj_t *comp_parent)
 {
 
     lv_obj_t *cui_optionalComponent;
-    cui_optionalComponent = lv_obj_create(ui_optionalScreen);
+    cui_optionalComponent = lv_obj_create(comp_parent);
     lv_obj_set_height(cui_optionalComponent, lv_pct(100));
     lv_obj_set_flex_grow(cui_optionalComponent, 1);
     lv_obj_set_x(cui_optionalComponent, 385);

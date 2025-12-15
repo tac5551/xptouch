@@ -82,23 +82,7 @@ void ui_sidebarComponent_set_active(int index)
     uint32_t targetIndex = indexes[index];
     lv_obj_add_state(ui_comp_get_child(ui_sidebarComponent, targetIndex), LV_STATE_CHECKED);
 }
-
-void ui_sidebarComponent_onAMSBitsSlot(lv_event_t *e)
-{
-    lv_obj_t *target = lv_event_get_target(e);
-
-    if (bambuStatus.ams_exist_bits == 0)
-    {
-        lv_obj_add_flag(target, LV_OBJ_FLAG_HIDDEN);
-    }
-    else
-    {
-        lv_obj_clear_flag(target, LV_OBJ_FLAG_HIDDEN);
-    }
-}
-
 // COMPONENT sidebarComponent
-
 lv_obj_t *ui_sidebarComponent_create(lv_obj_t *comp_parent)
 {
 
@@ -365,7 +349,6 @@ lv_obj_t *ui_sidebarComponent_create(lv_obj_t *comp_parent)
     lv_obj_add_event_cb(cui_sidebarSettingsButton, ui_event_comp_sidebarComponent_sidebarSettingsButton, LV_EVENT_ALL, children);
     ui_comp_sidebarComponent_create_hook(cui_sidebarComponent);
 
-    lv_obj_add_event_cb(cui_sidebarAmsViewButton, ui_sidebarComponent_onAMSBitsSlot, LV_EVENT_MSG_RECEIVED, NULL);
     lv_msg_subsribe_obj(XTOUCH_ON_AMS_BITS, cui_sidebarAmsViewButton, NULL);
 
     struct XTOUCH_MESSAGE_DATA eventData;

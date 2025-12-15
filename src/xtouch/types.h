@@ -176,9 +176,11 @@ extern "C"
 
         bool xTouchChamberSensorEnabled;
         int xTouchChamberSensorReadingDiff;
+        int xTouchUtilCalibrationBitmask;
     } XTouchConfig;
 
     XTouchConfig xTouchConfig;
+    
 
     /* HMS */
 

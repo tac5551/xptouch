@@ -64,7 +64,9 @@ extern "C"
 
     void onTouchStackChan(lv_event_t *e);
 
-    void onMoveNozzleScreen(lv_event_t *e);
+    void onMoveUtilNozzleChangeScreen(lv_event_t *e);
+    void onMoveUtilCalibrationScreen(lv_event_t *e);
+    
     void onMoveHomeScreen(lv_event_t *e);
     void onMoveAmsViewScreen(lv_event_t *e);
 
@@ -79,6 +81,7 @@ extern "C"
     void onFilamentUnload(lv_event_t *e);
 
     void onAmsSlotLoad(lv_event_t *e, int slot);
+    void onCalibrationConfirm( lv_event_t *e,uint8_t bitmask);
 
     /* pre heat */
     void onPreHeatPLA(lv_event_t *e);

@@ -216,7 +216,7 @@ lv_obj_t *ui_settingsComponent_create(lv_obj_t *comp_parent)
 {
 
     lv_obj_t *cui_settingsComponent;
-    cui_settingsComponent = lv_obj_create(ui_settingsScreen);
+    cui_settingsComponent = lv_obj_create(comp_parent);
     lv_obj_set_height(cui_settingsComponent, lv_pct(100));
     lv_obj_set_flex_grow(cui_settingsComponent, 1);
     lv_obj_set_x(cui_settingsComponent, 385);

@@ -406,7 +406,7 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
 {
 
     lv_obj_t *cui_homeComponent;
-    cui_homeComponent = lv_obj_create(ui_homeScreen);
+    cui_homeComponent = lv_obj_create(comp_parent);
     //    lv_obj_set_width(cui_homeComponent, lv_pct(100));
     lv_obj_set_height(cui_homeComponent, lv_pct(100));
     lv_obj_set_flex_grow(cui_homeComponent, 1);

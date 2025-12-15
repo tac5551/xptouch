@@ -96,12 +96,16 @@ void loadScreen(int screen)
         lv_disp_load_scr(ui_characterScreen);
         break;
     case 10:
-        ui_nozzleScreen_screen_init();
-        lv_disp_load_scr(ui_nozzleScreen);
+        ui_utilNozzleChangeScreen_screen_init();
+        lv_disp_load_scr(ui_utilNozzleChangeScreen);
         break;
     case 11:
         ui_utilScreen_screen_init();
         lv_disp_load_scr(ui_utilScreen);
+        break;
+    case 12:
+        ui_utilCalibrationScreen_screen_init();
+        lv_disp_load_scr(ui_utilCalibrationScreen);
         break;
     }
     fillScreenData(screen);
@@ -114,11 +118,12 @@ void loadScreen(int screen)
     case 1: sidebar_index = 1; break; // Temp
     case 2: sidebar_index = 2; break; // Control
     case 3: sidebar_index = 3; break; // Nozzle
-    case 7: sidebar_index = 4; break; // AMS View
-    case 10: sidebar_index = 4; break; // Nozzle
+    case 7: sidebar_index = 4; break; // Util Ams View
+    case 10: sidebar_index = 4; break; // Util Nozzle Change
+    case 12: sidebar_index = 4; break; // Util Calibration
     case 11: sidebar_index = 4; break; // Util
     case 4: sidebar_index = 5; break; // Settings
-    case 8: sidebar_index = 5; break; // OptionalSettings
+    case 8: sidebar_index = 5; break; // Settings Optional
     default: break;
     }
     if (sidebar_index >= 0)

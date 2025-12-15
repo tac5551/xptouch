@@ -9,7 +9,17 @@ void ui_event_comp_UtilComponent_onButton1Click(lv_event_t *e)
     if (event_code == LV_EVENT_CLICKED)
     {
         printf("ui_event_comp_UtilComponent_onButton1Click\n");
-        onMoveNozzleScreen(e);
+        onMoveUtilNozzleChangeScreen(e);
+    }
+}
+
+void ui_event_comp_UtilComponent_onButton2Click(lv_event_t *e)
+{
+    lv_event_code_t event_code = lv_event_get_code(e);
+    if (event_code == LV_EVENT_CLICKED)
+    {
+        printf("ui_event_comp_UtilComponent_onButton2Click\n");
+        onMoveUtilCalibrationScreen(e);
     }
 }
 
@@ -264,10 +274,10 @@ lv_obj_t *ui_utilComponent_create(lv_obj_t *comp_parent)
     
     // for NozzleSelect
     lv_obj_add_event_cb(button1, ui_event_comp_UtilComponent_onButton1Click, LV_EVENT_ALL, children);
+    lv_obj_add_event_cb(button2, ui_event_comp_UtilComponent_onButton2Click, LV_EVENT_ALL, children);
     lv_obj_add_event_cb(button3, ui_event_comp_UtilComponent_onButton3Click, LV_EVENT_ALL, children);
 
- lv_obj_add_event_cb(cui_utilComponent, onXTouchUtilPrintStatus, LV_EVENT_MSG_RECEIVED, children);
-
+    lv_obj_add_event_cb(cui_utilComponent, onXTouchUtilPrintStatus, LV_EVENT_MSG_RECEIVED, children);
 
     ui_comp_utilComponent_create_hook(cui_utilComponent);
 

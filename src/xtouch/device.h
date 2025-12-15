@@ -548,6 +548,24 @@ void xtouch_device_onSetaccessoriesNozzleCommand(lv_msg_t *m)
     xtouch_device_pushall();
 }
 
+void xtouch_device_onSetUtilCalibrationCommand(lv_msg_t *m)
+{
+    uint8_t bitmask = xTouchConfig.xTouchUtilCalibrationBitmask;
+    printf("xtouch_device_onSetUtilCalibrationCommand: bitmask=%d\n", bitmask);
+
+    DynamicJsonDocument json(256);
+    json["print"]["sequence_id"] = xtouch_device_next_sequence();
+    json["print"]["command"] = "calibration";
+    json["print"]["option"] = bitmask;
+    String result;
+    serializeJson(json, result);
+    xtouch_device_publish(result);
+
+    delay(10);
+    xtouch_device_pushall();
+}
+
+
 void xtouch_device_onPreHeatPLACommand(lv_msg_t *m)
 {
     printf("xtouch_device_onPreHeatPLACommand\n");

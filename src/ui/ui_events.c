@@ -134,10 +134,12 @@ void onMoveAmsViewScreen(lv_event_t *e)
     loadScreen(7);
 }
 
-
-
-void onMoveNozzleScreen(lv_event_t *e) { 
+void onMoveUtilNozzleChangeScreen(lv_event_t *e) { 
     loadScreen(10); 
+}
+
+void onMoveUtilCalibrationScreen(lv_event_t *e) { 
+    loadScreen(12);
 }
 
 void onMoveHomeScreen(lv_event_t *e) { 
@@ -262,6 +264,13 @@ void onAmsSlotLoad(lv_event_t *e, int slot)
 {
     _slot = slot;
     ui_confirmPanel_show(LV_SYMBOL_PLAY " Load new Filament\nfrom AMS Slot\n" LV_SYMBOL_PLAY " into the Printer\n\n" LV_SYMBOL_OK " Tap YES to continue", onAmsSlotLoadConfirm);
+}
+
+
+void onCalibrationConfirm( lv_event_t *e, uint8_t bitmask)
+{
+    lv_msg_send(XTOUCH_COMMAND_SET_UTIL_CALIBRATION, (void *)bitmask);
+
 }
 
 void onPreHeatPLA(lv_event_t *e)

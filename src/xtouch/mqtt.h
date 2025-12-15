@@ -978,7 +978,8 @@ void xtouch_mqtt_setup()
     lv_msg_subscribe(XTOUCH_COMMAND_EXTRUDE_UP, (lv_msg_subscribe_cb_t)xtouch_device_onNozzleUp, NULL);
     lv_msg_subscribe(XTOUCH_COMMAND_EXTRUDE_DOWN, (lv_msg_subscribe_cb_t)xtouch_device_onNozzleDown, NULL);
 
-    lv_msg_subscribe(XTOUCH_COMMAND_SET_ACCESSORIES_NOZZLE, (lv_msg_subscribe_cb_t)xtouch_device_onSetaccessoriesNozzleCommand, NULL);
+    lv_msg_subscribe(XTOUCH_COMMAND_SET_UTIL_NOZZLE_CHANGE, (lv_msg_subscribe_cb_t)xtouch_device_onSetaccessoriesNozzleCommand, NULL);
+    lv_msg_subscribe(XTOUCH_COMMAND_SET_UTIL_CALIBRATION, (lv_msg_subscribe_cb_t)xtouch_device_onSetUtilCalibrationCommand, NULL);
 
 
     delay(2000);

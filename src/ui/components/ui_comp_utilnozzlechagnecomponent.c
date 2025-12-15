@@ -2,23 +2,23 @@
 #include "../ui.h"
 #include "../ui_msgs.h"
 #include "ui_comp.h"
-// COMPONENT nozzleComponent
+// COMPONENT utilNozzleChagneComponent
 
-void ui_event_comp_nozzleComponent_nozzleTypeDropDown(lv_event_t *e)
+void ui_event_comp_utilNozzleChagneComponent_nozzleTypeDropDown(lv_event_t *e)
 {
     lv_event_code_t event_code = lv_event_get_code(e);
     lv_obj_t *target = lv_event_get_target(e);
-    lv_obj_t **comp_nozzleComponent = lv_event_get_user_data(e);
+    lv_obj_t **comp_utilNozzleChagneComponent = lv_event_get_user_data(e);
 
     if (event_code == LV_EVENT_VALUE_CHANGED)
     {
         // 選択されたインデックスを取得
         uint16_t selected_index = lv_dropdown_get_selected(target);
         
-        printf("ui_event_comp_nozzleComponent_nozzleTypeDropDown: selected_index=%d\n", selected_index);
+        printf("ui_event_comp_utilNozzleChagneComponent_nozzleTypeDropDown: selected_index=%d\n", selected_index);
 
         // 選択された値に基づいて条件分岐
-        lv_obj_t *child = ui_comp_get_child(ui_nozzleComponent, UI_COMP_NOZZLECOMPONENT_NOZZLEDEMILITER_DROPDOWN);
+        lv_obj_t *child = ui_comp_get_child(ui_utilNozzleChagneComponent, UI_COMP_UTILNOZZLECHANGECOMPONENT_NOZZLEDEMILITER_DROPDOWN);
         
         // 現在選択されているノズル径の文字列を取得
         char current_diameter_str[64];
@@ -73,31 +73,31 @@ void ui_event_comp_nozzleComponent_nozzleTypeDropDown(lv_event_t *e)
     }
 }
 
-void ui_event_comp_nozzleComponentt_nozzleDemiliterDropDown(lv_event_t *e)
+void ui_event_comp_utilNozzleChagneComponentt_nozzleDemiliterDropDown(lv_event_t *e)
 {
     lv_event_code_t event_code = lv_event_get_code(e);
     lv_obj_t *target = lv_event_get_target(e);
-    lv_obj_t **comp_nozzleComponent = lv_event_get_user_data(e);
+    lv_obj_t **comp_utilNozzleChagneComponent = lv_event_get_user_data(e);
 
     if (event_code == LV_EVENT_VALUE_CHANGED)
     {
         // 選択されたインデックスを取得
         uint16_t selected_index = lv_dropdown_get_selected(target);
         
-        printf("ui_event_comp_nozzleComponent_nozzleDemiliterDropDown: selected_index=%d\n", selected_index);
+        printf("ui_event_comp_utilNozzleChagneComponent_nozzleDemiliterDropDown: selected_index=%d\n", selected_index);
 
     }
 }
 
-void ui_event_comp_nozzleComponent_onSaveButtonClick(lv_event_t *e)
+void ui_event_comp_utilNozzleChagneComponent_onSaveButtonClick(lv_event_t *e)
 {
     lv_event_code_t event_code = lv_event_get_code(e);
     if (event_code == LV_EVENT_CLICKED)
     {
-        printf("ui_event_comp_nozzleComponent_onSaveButtonClick\n");
+        printf("ui_event_comp_utilNozzleChagneComponent_onSaveButtonClick\n");
  
-        lv_obj_t *NozzleDemiliter = ui_comp_get_child(ui_nozzleComponent, UI_COMP_NOZZLECOMPONENT_NOZZLEDEMILITER_DROPDOWN);
-        lv_obj_t *NozzleType = ui_comp_get_child(ui_nozzleComponent, UI_COMP_NOZZLECOMPONENT_NOZZLETYPE_DROPDOWN);
+        lv_obj_t *NozzleDemiliter = ui_comp_get_child(ui_utilNozzleChagneComponent, UI_COMP_UTILNOZZLECHANGECOMPONENT_NOZZLEDEMILITER_DROPDOWN);
+        lv_obj_t *NozzleType = ui_comp_get_child(ui_utilNozzleChagneComponent, UI_COMP_UTILNOZZLECHANGECOMPONENT_NOZZLETYPE_DROPDOWN);
 
         // Typeの選択値を取得してbambuStatusに設定
         uint16_t type_index = lv_dropdown_get_selected(NozzleType);
@@ -143,36 +143,36 @@ void ui_event_comp_nozzleComponent_onSaveButtonClick(lv_event_t *e)
         printf("Setting: nozzle_type=%s, nozzle_diameter=%.1f\n", bambuStatus.nozzle_type, bambuStatus.nozzle_diameter);
 
         // メッセージを送信
-        lv_msg_send(XTOUCH_COMMAND_SET_ACCESSORIES_NOZZLE, NULL);
+        lv_msg_send(XTOUCH_COMMAND_SET_UTIL_NOZZLE_CHANGE, NULL);
         onMoveHomeScreen(e);
     }
 }
 
-lv_obj_t *ui_nozzleComponent_create(lv_obj_t *comp_parent)
+lv_obj_t *ui_utilNozzleChagneComponent_create(lv_obj_t *comp_parent)
 {
 
-    lv_obj_t *cui_nozzleComponent;
-    cui_nozzleComponent = lv_obj_create(ui_nozzleScreen);
-    lv_obj_set_height(cui_nozzleComponent, lv_pct(100));
-    lv_obj_set_flex_grow(cui_nozzleComponent, 1);
-    lv_obj_set_x(cui_nozzleComponent, 385);
-    lv_obj_set_y(cui_nozzleComponent, 178);
-    lv_obj_set_flex_flow(cui_nozzleComponent, LV_FLEX_FLOW_COLUMN);
-    lv_obj_set_flex_align(cui_nozzleComponent, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_START);
-    lv_obj_set_style_radius(cui_nozzleComponent, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_border_width(cui_nozzleComponent, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_left(cui_nozzleComponent, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_right(cui_nozzleComponent, 16, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_top(cui_nozzleComponent, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_bottom(cui_nozzleComponent, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_row(cui_nozzleComponent, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_column(cui_nozzleComponent, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_color(cui_nozzleComponent, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_opa(cui_nozzleComponent, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_scrollbar_mode(cui_nozzleComponent, LV_SCROLLBAR_MODE_ACTIVE);
+    lv_obj_t *cui_utilNozzleChagneComponent;
+    cui_utilNozzleChagneComponent = lv_obj_create(comp_parent);
+    lv_obj_set_height(cui_utilNozzleChagneComponent, lv_pct(100));
+    lv_obj_set_flex_grow(cui_utilNozzleChagneComponent, 1);
+    lv_obj_set_x(cui_utilNozzleChagneComponent, 385);
+    lv_obj_set_y(cui_utilNozzleChagneComponent, 178);
+    lv_obj_set_flex_flow(cui_utilNozzleChagneComponent, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_flex_align(cui_utilNozzleChagneComponent, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_START);
+    lv_obj_set_style_radius(cui_utilNozzleChagneComponent, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(cui_utilNozzleChagneComponent, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_left(cui_utilNozzleChagneComponent, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(cui_utilNozzleChagneComponent, 16, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_top(cui_utilNozzleChagneComponent, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_bottom(cui_utilNozzleChagneComponent, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_row(cui_utilNozzleChagneComponent, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_column(cui_utilNozzleChagneComponent, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_color(cui_utilNozzleChagneComponent, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_opa(cui_utilNozzleChagneComponent, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_scrollbar_mode(cui_utilNozzleChagneComponent, LV_SCROLLBAR_MODE_ACTIVE);
 
     lv_obj_t *cui_nozzleTitle;
-    cui_nozzleTitle = lv_label_create(cui_nozzleComponent);
+    cui_nozzleTitle = lv_label_create(cui_utilNozzleChagneComponent);
     lv_obj_set_width(cui_nozzleTitle, lv_pct(100));
     lv_obj_set_height(cui_nozzleTitle, LV_SIZE_CONTENT); /// 40
     lv_label_set_text_fmt(cui_nozzleTitle, LV_SYMBOL_SETTINGS " NOZZLE SELECT");
@@ -189,7 +189,7 @@ lv_obj_t *ui_nozzleComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_text_color(cui_nozzleTitle, lv_color_hex(0x000), LV_PART_MAIN | LV_STATE_DEFAULT);
 
     lv_obj_t *cui_nozzleTypeSelect;
-    cui_nozzleTypeSelect = lv_obj_create(cui_nozzleComponent);
+    cui_nozzleTypeSelect = lv_obj_create(cui_utilNozzleChagneComponent);
     lv_obj_set_width(cui_nozzleTypeSelect, lv_pct(100));
     lv_obj_set_height(cui_nozzleTypeSelect, 100); /// 50
     lv_obj_set_flex_grow(cui_nozzleTypeSelect, 1);
@@ -344,21 +344,21 @@ lv_obj_t *ui_nozzleComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_pad_bottom(cui_saveNozzleButton, 16, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_color(cui_saveNozzleButton, lv_color_hex(0x000), LV_PART_MAIN | LV_STATE_DEFAULT);
 
-    lv_obj_t **children = lv_mem_alloc(sizeof(lv_obj_t *) * _UI_COMP_NOZZLECOMPONENT_NUM);
-    children[UI_COMP_NOZZLECOMPONENT_NOZZLECOMPONENT] = cui_nozzleComponent;
-    children[UI_COMP_NOZZLECOMPONENT_NOZZLETYPE] = cui_nozzleTypeSelect;
-    children[UI_COMP_NOZZLECOMPONENT_NOZZLETYPE_DROPDOWN] = cui_nozzleTypeSelectDropDown;
-    children[UI_COMP_NOZZLECOMPONENT_NOZZLEDEMILITER_DROPDOWN] = cui_nozzleDemiliterSelectDropDown;
-    children[UI_COMP_NOZZLECOMPONENT_NOZZLE_SAVE] = cui_saveNozzleButton;
+    lv_obj_t **children = lv_mem_alloc(sizeof(lv_obj_t *) * _UI_COMP_UTILNOZZLECHANGECOMPONENT_NUM);
+    children[UI_COMP_UTILNOZZLECHANGECOMPONENT_UTILNOZZLECHANGECOMPONENT] = cui_utilNozzleChagneComponent;
+    children[UI_COMP_UTILNOZZLECHANGECOMPONENT_NOZZLETYPE] = cui_nozzleTypeSelect;
+    children[UI_COMP_UTILNOZZLECHANGECOMPONENT_NOZZLETYPE_DROPDOWN] = cui_nozzleTypeSelectDropDown;
+    children[UI_COMP_UTILNOZZLECHANGECOMPONENT_NOZZLEDEMILITER_DROPDOWN] = cui_nozzleDemiliterSelectDropDown;
+    children[UI_COMP_UTILNOZZLECHANGECOMPONENT_NOZZLE_SAVE] = cui_saveNozzleButton;
 
-    lv_obj_add_event_cb(cui_nozzleComponent, get_component_child_event_cb, LV_EVENT_GET_COMP_CHILD, children);
-    lv_obj_add_event_cb(cui_nozzleComponent, del_component_child_event_cb, LV_EVENT_DELETE, children);
+    lv_obj_add_event_cb(cui_utilNozzleChagneComponent, get_component_child_event_cb, LV_EVENT_GET_COMP_CHILD, children);
+    lv_obj_add_event_cb(cui_utilNozzleChagneComponent, del_component_child_event_cb, LV_EVENT_DELETE, children);
 
-    lv_obj_add_event_cb(cui_saveNozzleButton, ui_event_comp_nozzleComponent_onSaveButtonClick, LV_EVENT_ALL, children);
+    lv_obj_add_event_cb(cui_saveNozzleButton, ui_event_comp_utilNozzleChagneComponent_onSaveButtonClick, LV_EVENT_ALL, children);
 
-    lv_obj_add_event_cb(cui_nozzleTypeSelectDropDown, ui_event_comp_nozzleComponent_nozzleTypeDropDown, LV_EVENT_ALL, children);
-    lv_obj_add_event_cb(cui_nozzleDemiliterSelectDropDown, ui_event_comp_nozzleComponentt_nozzleDemiliterDropDown, LV_EVENT_ALL, children);
+    lv_obj_add_event_cb(cui_nozzleTypeSelectDropDown, ui_event_comp_utilNozzleChagneComponent_nozzleTypeDropDown, LV_EVENT_ALL, children);
+    lv_obj_add_event_cb(cui_nozzleDemiliterSelectDropDown, ui_event_comp_utilNozzleChagneComponentt_nozzleDemiliterDropDown, LV_EVENT_ALL, children);
 
-    ui_comp_nozzleComponent_create_hook(cui_nozzleComponent);
-    return cui_nozzleComponent;
+    ui_comp_utilNozzleChagneComponent_create_hook(cui_utilNozzleChagneComponent);
+    return cui_utilNozzleChagneComponent;
 }
