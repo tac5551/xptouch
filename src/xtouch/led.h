@@ -35,13 +35,6 @@ void xtouch_led_init(void)
         led_green = 16;
         led_blue = 17;
     }
-    else if (board == lgfx::boards::board_t::board_ESP32_ESP32E)
-    {
-        ConsoleDebug.println("LED GPIO 22, 16, 17");
-        led_red = 22;
-        led_green = 16;
-        led_blue = 17;
-    }
 #endif
     ConsoleDebug.println("XTOUCH_LED_RED: " + String(led_red) + " GREEN: " + String(led_green) + " BLUE: " + String(led_blue));
 

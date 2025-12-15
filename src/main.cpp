@@ -63,15 +63,15 @@ void setup()
 #else
   lgfx::boards::board_t board = tft.getBoard();
 
-  if (board == lgfx::boards::board_t::board_Sunton_ESP32_3248S035C){
+  if (board == lgfx::boards::board_t::board_Sunton_ESP32_3248S035C ||
+      board == lgfx::boards::board_t::board_Sunton_ESP32_3248S035R)
+  {
+    ConsoleDebug.println("Found Sunton_ESP32_3248S035C or Sunton_ESP32_3248S035R");
     lv_font_small_set(&lv_font_montserrat_24);
     lv_font_middle_set(&lv_font_montserrat_28);
     lv_font_big_set(&lv_font_montserrat_32);
   }
 #endif
-
-
-
   xtouch_intro_show();
   while (!xtouch_sdcard_setup())
     ;
@@ -119,16 +119,17 @@ void setup()
 
 
 #if defined(__XTOUCH_SCREEN_28__)
-  if (board == lgfx::boards::board_t::board_ESP32_ESP32E)
-      return;
-
   ConsoleDebug.println("XTOUCH_NEO_PIXEL_INIT");
-  if (board == lgfx::boards::board_t::board_Guition_ESP32_2432W328R || board == lgfx::boards::board_t::board_Guition_ESP32_2432W328C|| board == lgfx::boards::board_t::board_Sunton_ESP32_3248S035C)
+  if (board == lgfx::boards::board_t::board_Guition_ESP32_2432W328R || 
+      board == lgfx::boards::board_t::board_Guition_ESP32_2432W328C || 
+      board == lgfx::boards::board_t::board_Sunton_ESP32_3248S035C ||
+      board == lgfx::boards::board_t::board_Sunton_ESP32_3248S035R)
   {
     ConsoleDebug.println("LED 21");
     xTouchConfig.xTouchNeoPixelPinValue = 21;
   }
-  else if (board == lgfx::boards::board_t::board_Sunton_ESP32_2432S028_7789 || board == lgfx::boards::board_t::board_Sunton_ESP32_2432S028_9341)
+  else if (board == lgfx::boards::board_t::board_Sunton_ESP32_2432S028_7789 ||
+           board == lgfx::boards::board_t::board_Sunton_ESP32_2432S028_9341 )
   {
     ConsoleDebug.println("LED 27");
     xTouchConfig.xTouchNeoPixelPinValue = 27;
