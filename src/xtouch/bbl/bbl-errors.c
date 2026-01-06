@@ -1,7 +1,7 @@
 #include <pgmspace.h>
 
 // Non-optimized HMS errors (legacy format)
-int hms_error_length = 119;
+int hms_error_length = 120;
 
 const char *hms_error_keys[] PROGMEM = {
   "0C00040000010025",
@@ -50,10 +50,10 @@ const char *hms_error_keys[] PROGMEM = {
   "0500010000030005",
   "0500050000010001",
   "0500030000010008",
-  "0300200000010002",
   "0C00010000010001",
   "0300940000020003",
   "03001B0000010002",
+  "0500010000030004",
   "050003000001000A",
   "0500040000010001",
   "0500050000030002",
@@ -97,6 +97,7 @@ const char *hms_error_keys[] PROGMEM = {
   "0500030000010006",
   "0300900000010010",
   "030001000001000C",
+  "0300200000010002",
   "0300410000010001",
   "0500030000010021",
   "0300900000010004",
@@ -158,12 +159,12 @@ const char *hms_error_values[] PROGMEM = {
   "Wireless hardware error: please turn off/on WiFi or restart the device.",
   "The print file is unauthorized.",
   "Chamber temperature setting value exceed the limit, the boundary value will be set.",
-  "The current firmware is abnormal. Please go to the “Firmware” page to update.",
+  "The current firmware version is abnormal and printing cannot start. Please ensure the printer is connected to the network and go to the “Firmware” page to update.",
   "Failed to calibrate Micro Lidar. Please make sure the calibration chart is clean and not obscured. Then, run machine calibration again.",
   "Your printer seems to be printing without extruding.",
   "The media pipeline is malfunctioning. Please restart the printer. If multiple attempts fail, please contact customer support.",
   "The Z axis motor seems to be stuck when moving. Please check if there is any foreign matter on the Z sliders or Z timing belt wheels.",
-  "Unable to record time-lapse photography without MicroSD card inserted.",
+  "No MicroSD card detected. The liveview camera cannot record a time-lapse.",
   "Micro SD Card capacity is insufficient to cache print files.",
   "Nozzle height seems to be too high. Please check if there is residual filament attached to the nozzle.",
   "Heatbed homing failed. The environmental vibration is too great.",
@@ -172,10 +173,10 @@ const char *hms_error_values[] PROGMEM = {
   "The Micro SD card is in Read-Only mode. Video recording and Timelapse recording cannot be performed. Please refer to the Wiki for assistance.",
   "The factory data of the AP board is abnormal; please replace the AP board with a new one.",
   "A system hang occurred. Please restart the device.",
-  "Y-axis homing abnormal: please check if the toolhead is stuck or the Y carriage has too much resistance.",
   "Micro Lidar is offline. Please check the hardware connection.",
   "Chamber failed to reach the desired temperature. The machine will stop waiting for the chamber temperature.",
   "External disturbance was detected on the heatbed acceleeration sensor. The sensor signal wire may not be affixed.",
+  "Not enough space on MicroSD Card. Video recording and timelapse recording cannot be performed. Please clear some space.",
   "System state is abnormal; please restore to factory settings.",
   "Failed to download print job; please check your network connection.",
   "The device is in the engineering state; please pay attention to information security related matters.",
@@ -219,6 +220,7 @@ const char *hms_error_values[] PROGMEM = {
   "A system panic occurred. Please restart the device.",
   "The communication of chamber temperature controller is abnormal.",
   "The heatbed has worked at full load for a long time. The temperature control system may be abnormal.",
+  "Y-axis homing abnormal: please check if the toolhead is stuck or the Y carriage has too much resistance.",
   "The system voltage is unstable. Triggering the power failure protection function.",
   "Hardware incompatible; please check the Micro Lidar.",
   "Chamber heating failed. The speed of the heating fan is too low.",
@@ -248,7 +250,7 @@ const char *hms_error_values[] PROGMEM = {
 };
 
 // Non-optimized Device errors (legacy format)
-int device_error_length = 120;
+int device_error_length = 129;
 
 const char *device_error_keys[] PROGMEM = {
   "07004001",
@@ -370,7 +372,16 @@ const char *device_error_keys[] PROGMEM = {
   "0502C014",
   "0502C024",
   "0502C026",
-  "05004057"
+  "05004057",
+  "05024027",
+  "0500C04F",
+  "0500C04D",
+  "0500C04B",
+  "0500C04C",
+  "0500C04A",
+  "0500C04E",
+  "05004095",
+  "0502C028"
 };
 
 const char *device_error_values[] PROGMEM = {
@@ -416,7 +427,7 @@ const char *device_error_values[] PROGMEM = {
   "Please observe the nozzle. If the filament has been extruded, select \"Done\"; if not, please push the filament forward slightly, and then select \"Retry\".",
   "Nozzle temperature malfunction",
   "The time-lapse mode is set to Traditional in the slicing file. This may cause surface defects. Would you like to enable it?",
-  "No build plate is placed.",
+  "Build plate not detected. Please ensure there are no bulges or debris on the plate and that the nozzle is clean.",
   "The AMS firmware does not match the printer. Please upgrade it on the \"Firmware\" page.",
   "Printing paused due to the pause command added to the printing file.",
   "Calibration of motion precision failed.",
@@ -484,14 +495,23 @@ const char *device_error_values[] PROGMEM = {
   "AMS is initializing and cannot be upgraded at the moment. Please try again later.",
   "AMS is drying and cannot be upgraded at the moment. Please try again later.",
   "The printer is loading or unloading filament and cannot be upgraded at the moment. Please try again later.",
-  "AMS(or AMS lite) C communication is abnormal. Please reconnect the module cable or restart the printer.",
-  "AMS(or AMS lite) B communication is abnormal. Please reconnect the module cable or restart the printer.",
-  "AMS(or AMS lite) A communication is abnormal. Please reconnect the module cable or restart the printer.",
-  "AMS(or AMS lite) D communication is abnormal. Please reconnect the module cable or restart the printer.",
+  "AMS(or AMS Lite) C communication is abnormal. Please reconnect the module cable or restart the printer.",
+  "AMS(or AMS Lite) B communication is abnormal. Please reconnect the module cable or restart the printer.",
+  "AMS(or AMS Lite) A communication is abnormal. Please reconnect the module cable or restart the printer.",
+  "AMS(or AMS Lite) D communication is abnormal. Please reconnect the module cable or restart the printer.",
   "The filament in hotend is too cold. Extrusion may damage the extruder. Still feeding in/out the filament?",
   "Toolhead front cover is detached. Moving the toolhead may damage the printer. Do you want to continue?",
   "The AMS Remaining Filament Estimation is enabled by default and cannot be disabled.",
   "The flow dynamic calibration records have exceeded the storage limit. Please delete some historical records in the slicer software before adding new calibration data.",
   "The device is busy with the current task and cannot perform this operation for now. Please try again later.",
-  "The filament selected in the slicer requires a harder nozzle. Please replace the nozzle or adjust the filament settings before reprinting."
+  "The filament selected in the slicer requires a harder nozzle. Please replace the nozzle or adjust the filament settings before reprinting.",
+  "The current AMS does not support drying while printing. Please connect to the network and update the AMS firmware on the “Firmware” page.",
+  "The AMS is drying and cannot perform this operation at the moment.",
+  "The device is currently in laser or cutting mode and cannot start drying. Please do not initiate the drying process.",
+  "Filament in AMS outlet, the high drying temperature may cause AMS blockage. Drying cannot be started. Please unload the filament first.",
+  "The AMS is currently drying. Please do not start the process again.",
+  "AMS is calibrating, reading RFID or loading/unloading material, unable to initiate drying process, please wait.",
+  "Please connect a power adapter to the AMS-HT before starting the drying process.",
+  "No print plate detected. Please place it correctly and recalibrate.",
+  "The filament currently loaded in the extruder does not support manual feeding."
 };

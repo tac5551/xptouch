@@ -11,12 +11,10 @@ int NeoPixelCount = PIXEL_COUNT;
 #include <Adafruit_NeoPixel.h>
 #if defined(__XTOUCH_SCREEN_28__)
 #include "devices/2.8/screen.h"
-Adafruit_NeoPixel strip  = Adafruit_NeoPixel(PIXEL_COUNT, 22, NEO_GRB + NEO_KHZ800);
 #elif defined(__XTOUCH_SCREEN_50__)
 #include "devices/5.0/screen.h"
-Adafruit_NeoPixel strip  = Adafruit_NeoPixel(PIXEL_COUNT, 17, NEO_GRB + NEO_KHZ800);
 #endif
-
+Adafruit_NeoPixel strip  = Adafruit_NeoPixel(PIXEL_COUNT, 17, NEO_GRB + NEO_KHZ800);
 
 void xtouch_neo_pixel_timer_init(int pin);
 void xtouch_neo_pixel_init(int pin);
