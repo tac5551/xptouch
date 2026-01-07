@@ -225,6 +225,7 @@ void xtouch_device_onNeoPixelToggleCommand(lv_msg_t *m)
 {
     printf("xtouch_device_onNeoPixelToggleCommand\n");
     neopixel_enabled = !neopixel_enabled;
+    print_gcode_action_changed = true;
     struct XTOUCH_MESSAGE_DATA eventData;
     eventData.data = neopixel_enabled;
     lv_msg_send(XTOUCH_ON_NEOPIXEL_REPORT, &eventData);

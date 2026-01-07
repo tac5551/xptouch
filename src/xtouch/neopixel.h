@@ -62,8 +62,14 @@ const int timer_tick = 5;
 
 void xtouch_neo_pixel_control_timer_create()
 {
-
-
+    // 既存のタイマーが存在する場合は削除してから新しいタイマーを作成
+    // これにより、複数のタイマーが同時に動作することを防ぐ
+    if (xtouch_neo_pixel_control_timer != NULL)
+    {
+        lv_timer_del(xtouch_neo_pixel_control_timer);
+        xtouch_neo_pixel_control_timer = NULL;
+    }
+    
     xtouch_neo_pixel_control_timer = lv_timer_create(xtouch_neo_pixel_control_timer_handler, timer_tick, NULL);
     lv_timer_set_repeat_count(xtouch_neo_pixel_control_timer, -1); // 無限ループ
 }
@@ -80,7 +86,10 @@ void xtouch_neo_pixel_control_timer_start(int pin)
 
 void xtouch_neo_pixel_control_timer_stop()
 {
-    lv_timer_pause(xtouch_neo_pixel_control_timer);
+    if (xtouch_neo_pixel_control_timer != NULL)
+    {
+        lv_timer_pause(xtouch_neo_pixel_control_timer);
+    }
 }
 
 void xtouch_neo_pixel_timer_init(int pin)
