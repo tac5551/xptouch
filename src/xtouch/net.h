@@ -12,6 +12,8 @@ int downloadFileToSDCard(const char *url, const char *fileName, void (*onProgres
 
     WiFiClientSecure wifiClient;
     wifiClient.setCACert(xperiments_in);
+    // WiFiClientSecureのタイムアウトも延長
+    wifiClient.setTimeout(60000); // 60秒
 
     HTTPClient http;
 
@@ -20,6 +22,9 @@ int downloadFileToSDCard(const char *url, const char *fileName, void (*onProgres
 
     // Begin the HTTP request
     http.begin(wifiClient, forceHttpsUrl);
+    
+    // タイムアウトを延長（デフォルト5秒 → 60秒）
+    http.setTimeout(60000); // 60秒
 
     int httpCode = http.GET();
 
