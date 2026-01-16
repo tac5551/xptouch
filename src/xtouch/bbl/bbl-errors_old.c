@@ -345,6 +345,11 @@ const char *hms_error_keys[] PROGMEM = {
   "050002000003000B",
   "0500030000020019",
   "0500030000020051",
+  "0707100000010001",
+  "1806940000010001",
+  "0706220000020019",
+  "1806210000010086",
+  "0705210000020020",
   "0701210000010084",
   "0701200000020014",
   "0700310000010004",
@@ -1635,11 +1640,6 @@ const char *hms_error_keys[] PROGMEM = {
   "1802620000020001",
   "1807230000010084",
   "1806200000020006",
-  "0707920000020002",
-  "0702220000020008",
-  "0700800000010001",
-  "1805210000020017",
-  "0704230000020008",
   "1800120000010001",
   "1803220000020024",
   "1801230000020017",
@@ -3199,11 +3199,11 @@ const char *hms_error_keys[] PROGMEM = {
   "0704210000020007",
   "0500040000020010",
   "1804200000020020",
-  "0707100000010001",
-  "1806940000010001",
-  "0706220000020019",
-  "1806210000010086",
-  "0705210000020020",
+  "0707920000020002",
+  "0702220000020008",
+  "0700800000010001",
+  "1805210000020017",
+  "0704230000020008",
   "0707200000010084",
   "0702810000010004",
   "1800010000020007",
@@ -4251,7 +4251,7 @@ const char *hms_error_values[] PROGMEM = {
   "Temperature sensor 2 on the AMS C heater has malfunctioned, resulting in abnormal temperature readings.",
   "Temperature sensor 2 on the AMS H heater has malfunctioned, resulting in abnormal temperature readings.",
   "Temperature sensor 1 on the AMS H heater has malfunctioned, resulting in abnormal temperature readings.",
-  "A new version of the Timelapse Kit is available. Please connect to CyberBrick App to update this accessory separately.",
+  "",
   "Temperature sensor 2 on the AMS-HT C heater has malfunctioned, resulting in abnormal temperature readings.",
   "Temperature sensor 2 on the AMS D heater has malfunctioned, resulting in abnormal temperature readings.",
   "Temperature sensor 1 on the AMS-HT A heater has malfunctioned, resulting in abnormal temperature readings.",
@@ -4268,6 +4268,11 @@ const char *hms_error_values[] PROGMEM = {
   "",
   "",
   "",
+  "The AMS H slot 1 motor has slipped. The extrusion wheel may be malfunctioning, or the filament may be too thin.",
+  "AMS-HT G The temperature sensor of heater 1 is offline, which may be due to poor connector contact.",
+  "AMS G slot 3 assist motor is stalled，due to excessive resistance in the tube between AMS and the filament buffer.",
+  "Failed to read the filament information from AMS-HT G slot 2. The RFID tag cannot rotate due to a jam during the filament loading or unloading. Please pull out the filament and try again.",
+  "AMS F slot 2 assist motor is stalled，due to excessive resistance in the tube near the filament buffer。",
   "Failed to read the filament information from AMS B slot 2. The RFID tag may be damaged or positioned at the edge of the RFID detection device. Please remove 5cm filament and try again.",
   "AMS B slot 1 filament odometer has no signal, which may be due to poor contact in the odometer connector or a odometer fault.",
   "Encryption chip failure",
@@ -5558,11 +5563,6 @@ const char *hms_error_values[] PROGMEM = {
   "The AMS-HT C Slot 3 is overloaded. The filament may be tangled or the filament buffer may be stuck.",
   "Failed to read the filament information from AMS-HT H slot 4. The RFID tag may be damaged or positioned at the edge of the RFID detection device. Please remove 5cm filament and try again.",
   "AMS-HT G has detected a breakage of the PTFE tube during filament loading. Please check whether the PTFE tubes inside and outside the AMS have fallen off or been damaged.",
-  "AMS H The cooling fan speed of heater 1 is too low, which could be due to excessive fan resistance.",
-  "AMS C Slot 3 feed-in Hall sensor is disconnected, which may be due to poor connector contact.",
-  "AMS A Heater 1, heater malfunction or abnormal current sensor detected.",
-  "AMS-HT F slot 2 assist motor is stalled，due to excessive resistance in the tube between AMS and the printer.",
-  "AMS E Slot 4 feed-in Hall sensor is disconnected, which may be due to poor connector contact.",
   "The AMS-HT A slot 3 motor has slipped. The extrusion wheel may be malfunctioning, or the filament may be too thin.",
   "AMS-HT D slot 3 failed to rotate the filament spool when pulling filament back to AMS.",
   "AMS-HT B slot 4 assist motor is stalled，due to excessive resistance in the tube between AMS and the printer.",
@@ -7122,11 +7122,11 @@ const char *hms_error_values[] PROGMEM = {
   "AMS E Slot 2 feed-out Hall sensor is disconnected. The connector may have poor contact.",
   "The RFID-tag on AMS A Slot1 cannot be identified.",
   "AMS-HT E slot 1 assist motor is stalled，due to excessive resistance in the tube near the filament buffer。",
-  "The AMS H slot 1 motor has slipped. The extrusion wheel may be malfunctioning, or the filament may be too thin.",
-  "AMS-HT G The temperature sensor of heater 1 is offline, which may be due to poor connector contact.",
-  "AMS G slot 3 assist motor is stalled，due to excessive resistance in the tube between AMS and the filament buffer.",
-  "Failed to read the filament information from AMS-HT G slot 2. The RFID tag cannot rotate due to a jam during the filament loading or unloading. Please pull out the filament and try again.",
-  "AMS F slot 2 assist motor is stalled，due to excessive resistance in the tube near the filament buffer。",
+  "AMS H The cooling fan speed of heater 1 is too low, which could be due to excessive fan resistance.",
+  "AMS C Slot 3 feed-in Hall sensor is disconnected, which may be due to poor connector contact.",
+  "AMS A Heater 1, heater malfunction or abnormal current sensor detected.",
+  "AMS-HT F slot 2 assist motor is stalled，due to excessive resistance in the tube between AMS and the printer.",
+  "AMS E Slot 4 feed-in Hall sensor is disconnected, which may be due to poor connector contact.",
   "Failed to read the filament information from AMS H slot 1. The RFID tag may be damaged or positioned at the edge of the RFID detection device. Please remove 5cm filament and try again.",
   "AMS C The heater 2 is heating abnormally.",
   "AMS-HT A The assist motor encoder wires are not connected. The assist motor connector may have poor contact.",
@@ -7850,7 +7850,7 @@ const char *hms_error_values[] PROGMEM = {
 };
 
 // All Device errors (no optimization)
-int device_error_length = 498;
+int device_error_length = 500;
 
 const char *device_error_keys[] PROGMEM = {
   "07038012",
@@ -8350,7 +8350,9 @@ const char *device_error_keys[] PROGMEM = {
   "0500C04A",
   "0500C04E",
   "05004095",
-  "0502C028"
+  "0502C028",
+  "050040C0",
+  "05008057"
 };
 
 const char *device_error_values[] PROGMEM = {
@@ -8851,7 +8853,9 @@ const char *device_error_values[] PROGMEM = {
   "AMS is calibrating, reading RFID or loading/unloading material, unable to initiate drying process, please wait.",
   "Please connect a power adapter to the AMS-HT before starting the drying process.",
   "No print plate detected. Please place it correctly and recalibrate.",
-  "The filament currently loaded in the extruder does not support manual feeding."
+  "The filament currently loaded in the extruder does not support manual feeding.",
+  "Communication error detected with AMS, AMS Lite or AMS HT. Please reconnect the module cable or restart the printer when it is idle.",
+  "The filament hardness selected in the slicer exceeds the current nozzle hardness. Continuing the print may cause nozzle wear, leading to leakage and unstable flow. Please proceed with caution."
 };
 
 // Retry and Done message arrays
@@ -8862,6 +8866,7 @@ const char *message_containing_retry[] PROGMEM = {
   "07FF700000020008",
   "07FE700000020008",
   "18FE700000020008",
+  "1806210000010086",
   "0701210000010084",
   "0702700000020008",
   "1804230000020016",
@@ -9066,7 +9071,6 @@ const char *message_containing_retry[] PROGMEM = {
   "1806200000010084",
   "1804210000010084",
   "1800230000010084",
-  "1806210000010086",
   "0707200000010084",
   "0700200000010084",
   "1804220000010084",

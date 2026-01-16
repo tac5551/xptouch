@@ -34,6 +34,11 @@ const error_pattern_t hms_error_patterns[] PROGMEM = {
     {"0500040000010049", "Communication error detected with AMS, AMS Lite or AMS_DEVICE_AT. Please reconnect the module cable or restart the printer when it is idle.", {"AMS_DEVICE_A"}, 1},
     {"1802940000010002", "Temperature sensor 1 on the AMS_DEVICE_A heater has malfunctioned, resulting in abnormal temperature readings.", {"AMS_DEVICE_A"}, 1},
     {"0704950000010002", "Temperature sensor 2 on the AMS_DEVICE_A heater has malfunctioned, resulting in abnormal temperature readings.", {"AMS_DEVICE_A"}, 1},
+    {"0707100000010001", "The AMS_DEVICE_A slot 1 motor has slipped. The extrusion wheel may be malfunctioning, or the filament may be too thin.", {"AMS_DEVICE_A"}, 1},
+    {"1806940000010001", "AMS_DEVICE_A The temperature sensor of HEATER_1 is offline, which may be due to poor connector contact.", {"AMS_DEVICE_A", "HEATER_1"}, 2},
+    {"0706220000020019", "AMS_DEVICE_A slot 3 assist motor is stalled，due to excessive resistance in the tube between AMS and the filament buffer.", {"AMS_DEVICE_A"}, 1},
+    {"1806210000010086", "RFID_TAG_CANNOT_ROTATE due to a jam during the filament loading or unloading. Please pull out the filament and try again.", {"AMS_DEVICE_A", "COMMON_PHRASE_RFID_TAG_CANNOT_ROTATE"}, 2},
+    {"0705210000020020", "AMS_DEVICE_A slot 2 assist motor is stalled，due to excessive resistance in the tube near the filament buffer。", {"AMS_DEVICE_A"}, 1},
     {"0701210000010084", "RFID_TAG_DAMAGED or positioned at the edge of the RFID detection device. Please remove 5cm filament and try again.", {"AMS_DEVICE_A", "COMMON_PHRASE_RFID_TAG_DAMAGED"}, 2},
     {"0701200000020014", "AMS_DEVICE_A slot 1 ODOMETER_NO_SIGNAL, which may be due to poor contact in the odometer connector or a odometer fault.", {"AMS_DEVICE_A", "COMMON_PHRASE_ODOMETER_NO_SIGNAL"}, 2},
     {"0700310000010004", "Encryption chip failure", {}, 0},
@@ -64,7 +69,6 @@ const error_pattern_t hms_error_patterns[] PROGMEM = {
     {"1801230000020007", "AMS_DEVICE_A SLOT_4 feed-out Hall sensor is disconnected. The connector may have poor contact.", {"AMS_DEVICE_A", "SLOT_4"}, 2},
     {"0706810000010001", "AMS_DEVICE_A HEATER_2, heater malfunction or abnormal current sensor detected.", {"AMS_DEVICE_A", "HEATER_2"}, 2},
     {"1801010000020011", "AMS_DEVICE_A The motor assist parameter is lost. Please pull out the filament from the filament hub and then restart the AMS.", {"AMS_DEVICE_A"}, 1},
-    {"0700220000020019", "AMS_DEVICE_A slot 3 assist motor is stalled，due to excessive resistance in the tube between AMS and the filament buffer.", {"AMS_DEVICE_A"}, 1},
     {"0705230000020005", "AMS_DEVICE_A SLOT_4 filament has run out, and purging the old filament went abnormally; please check whether the filament is stuck in the tool head.", {"AMS_DEVICE_A", "SLOT_4"}, 2},
     {"0700220000020014", "AMS_DEVICE_A slot 3 ODOMETER_NO_SIGNAL, which may be due to poor contact in the odometer connector or a odometer fault.", {"AMS_DEVICE_A", "COMMON_PHRASE_ODOMETER_NO_SIGNAL"}, 2},
     {"0700210000020016", "AMS_DEVICE_A slot 2 ASSIST_MOTOR_SLIPPED. FILAMENT_CUT_INSTRUCTIONS.", {"AMS_DEVICE_A", "COMMON_PHRASE_ASSIST_MOTOR_SLIPPED", "COMMON_PHRASE_FILAMENT_CUT_INSTRUCTIONS"}, 3},
@@ -108,7 +112,6 @@ const error_pattern_t hms_error_patterns[] PROGMEM = {
     {"1805010000020010", "AMS_DEVICE_A The assist motor resistance is abnormal. The assist motor may be faulty.", {"AMS_DEVICE_A"}, 1},
     {"0700100000010003", "The AMS_DEVICE_A slot 1 motor torque control is malfunctioning. The current sensor may be faulty.", {"AMS_DEVICE_A"}, 1},
     {"0700010000010005", "AMS_DEVICE_A The current sensor of assist motor may be faulty.", {"AMS_DEVICE_A"}, 1},
-    {"1804220000010086", "RFID_TAG_CANNOT_ROTATE due to a jam during the filament loading or unloading. Please pull out the filament and try again.", {"AMS_DEVICE_A", "COMMON_PHRASE_RFID_TAG_CANNOT_ROTATE"}, 2},
     {"1807200000020021", "AMS_DEVICE_A slot 1 assist motor is stalled，due to excessive resistance in the tube between the filament buffer and the toolhead.", {"AMS_DEVICE_A"}, 1},
     {"0500040000020017", "RFID_TAG_CANNOT_IDENTIFY.", {"AMS_DEVICE_A", "COMMON_PHRASE_RFID_TAG_CANNOT_IDENTIFY"}, 2},
     {"1805200000020022", "AMS_DEVICE_A slot 1 assist motor is stalled，due to excessive resistance in the tube near the toolhead.", {"AMS_DEVICE_A"}, 1},
@@ -138,7 +141,6 @@ const error_pattern_t hms_error_patterns[] PROGMEM = {
     {"0706110000010001", "The AMS_DEVICE_A slot 2 motor has slipped. The extrusion wheel may be malfunctioning, or the filament may be too thin.", {"AMS_DEVICE_A"}, 1},
     {"0700810000010004", "AMS_DEVICE_A The HEATER_2 is heating abnormally.", {"AMS_DEVICE_A", "HEATER_2"}, 2},
     {"0700200000020001", "AMS_DEVICE_A SLOT_1 filament has run out. Please insert a new filament.", {"AMS_DEVICE_A", "SLOT_1"}, 2},
-    {"1803210000020020", "AMS_DEVICE_A slot 2 assist motor is stalled，due to excessive resistance in the tube near the filament buffer。", {"AMS_DEVICE_A"}, 1},
     {"0702220000020020", "AMS_DEVICE_A slot 3 assist motor is stalled，due to excessive resistance in the tube near the filament buffer。", {"AMS_DEVICE_A"}, 1},
     {"0703230000020019", "AMS_DEVICE_A slot 4 assist motor is stalled，due to excessive resistance in the tube between AMS and the filament buffer.", {"AMS_DEVICE_A"}, 1},
     {"0700810000010002", "AMS_DEVICE_A The HEATER_2 is disconnected, which may be due to poor connector contact.", {"AMS_DEVICE_A", "HEATER_2"}, 2},
@@ -185,7 +187,6 @@ const error_pattern_t hms_error_patterns[] PROGMEM = {
     {"0707200000020015", "AMS_DEVICE_A slot 1 FILAMENT_STATUS_ABNORMAL, which may be due to a filament breakage inside the AMS.", {"AMS_DEVICE_A", "COMMON_PHRASE_FILAMENT_STATUS_ABNORMAL"}, 2},
     {"0702210000020003", "AMS_DEVICE_A SLOT_2's filament may be broken in AMS.", {"AMS_DEVICE_A", "SLOT_2"}, 2},
     {"1803230000020003", "AMS_DEVICE_A SLOT_4's filament may be broken in AMS-HT.", {"AMS_DEVICE_A", "SLOT_4"}, 2},
-    {"0700100000010001", "The AMS_DEVICE_A slot 1 motor has slipped. The extrusion wheel may be malfunctioning, or the filament may be too thin.", {"AMS_DEVICE_A"}, 1},
     {"0703010000020008", "AMS_DEVICE_A The assist motor phase winding has an open circuit. The assist motor may be faulty.", {"AMS_DEVICE_A"}, 1},
     {"03000D000001000C", "The heatbed leveling data is abnormal. Please check whether there are any foreign objects on the heatbed and Z slider. If so, please remove them and try again.", {}, 0},
     {"1801900000010002", "AMS_DEVICE_A The coil resistance of exhaust VALVE_1 is abnormal, which may be due to abnormal wiring or damage.", {"AMS_DEVICE_A", "VALVE_1"}, 2},
@@ -199,7 +200,6 @@ const error_pattern_t hms_error_patterns[] PROGMEM = {
     {"1804230000020002", "AMS_DEVICE_A SLOT_4 is empty; please insert a new filament.", {"AMS_DEVICE_A", "SLOT_4"}, 2},
     {"0700620000020001", "The AMS_DEVICE_A SLOT_3 is overloaded. The filament may be tangled or the filament buffer may be stuck.", {"AMS_DEVICE_A", "SLOT_3"}, 2},
     {"1803120000010003", "The AMS_DEVICE_A slot 3 motor torque control is malfunctioning. The current sensor may be faulty.", {"AMS_DEVICE_A"}, 1},
-    {"0702940000010001", "AMS_DEVICE_A The temperature sensor of HEATER_1 is offline, which may be due to poor connector contact.", {"AMS_DEVICE_A", "HEATER_1"}, 2},
     {"1803700000020005", "Failed to feed the filament outside the AMS-HT. Please clip the end of the filament flat and check to see if the spool is stuck.", {}, 0},
     {"07FF200000020004", "Please pull the external filament from the extruder.", {}, 0},
     {"0C00020000020009", "LASER_NOT_BRIGHT_ENOUGH", {"COMMON_PHRASE_LASER_NOT_BRIGHT_ENOUGH"}, 1},
@@ -277,7 +277,7 @@ const error_pattern_t hms_error_patterns[] PROGMEM = {
 };
 
 // Normalized Device error patterns
-int device_error_patterns_length = 50;
+int device_error_patterns_length = 51;
 
 const error_pattern_t device_error_patterns[] PROGMEM = {
     {"07038012", "Failed to get AMS mapping table; please select \"Resume\" to retry.", {}, 0},
@@ -329,7 +329,8 @@ const error_pattern_t device_error_patterns[] PROGMEM = {
     {"18018006", "FEED_FILAMENT_FAILED. This could be due to an entangled filament or a stuck spool. If not, please check if the AMS-HT PTFE tube is connected.", {"COMMON_PHRASE_FEED_FILAMENT_FAILED"}, 1},
     {"07048006", "FEED_FILAMENT_FAILED. This could be due to an entangled filament or a stuck spool. If not, please check if the AMS PTFE tube is connected.", {"COMMON_PHRASE_FEED_FILAMENT_FAILED"}, 1},
     {"058440A2", "AMS_DEVICE_A communication is abnormal. Please reconnect the module cable or restart the printer.", {"AMS_DEVICE_A"}, 1},
-    {"0500803C", "The current nozzle setting does not match the slicing file. Continuing to print may affect print quality. It is recommended to re-slice before starting the print.", {}, 0}
+    {"0500803C", "The current nozzle setting does not match the slicing file. Continuing to print may affect print quality. It is recommended to re-slice before starting the print.", {}, 0},
+    {"050040C0", "Communication error detected with AMS, AMS Lite or AMS_DEVICE_AT. Please reconnect the module cable or restart the printer when it is idle.", {"AMS_DEVICE_A"}, 1}
 };
 
 // Retry and Done message arrays (for backward compatibility)
@@ -340,6 +341,7 @@ const char *message_containing_retry[] PROGMEM = {
   "07FF700000020008",
   "07FE700000020008",
   "18FE700000020008",
+  "1806210000010086",
   "0701210000010084",
   "0702700000020008",
   "1804230000020016",
@@ -544,7 +546,6 @@ const char *message_containing_retry[] PROGMEM = {
   "1806200000010084",
   "1804210000010084",
   "1800230000010084",
-  "1806210000010086",
   "0707200000010084",
   "0700200000010084",
   "1804220000010084",

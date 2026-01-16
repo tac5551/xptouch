@@ -1,7 +1,7 @@
 #include <pgmspace.h>
 
 // Non-optimized HMS errors (legacy format)
-int hms_error_length = 120;
+int hms_error_length = 119;
 
 const char *hms_error_keys[] PROGMEM = {
   "0C00040000010025",
@@ -13,7 +13,6 @@ const char *hms_error_keys[] PROGMEM = {
   "0501040000030001",
   "0501040000030002",
   "0500050000010021",
-  "0500050000020023",
   "050005000001000F",
   "0C0003000002000E",
   "0500020000020002",
@@ -136,7 +135,6 @@ const char *hms_error_values[] PROGMEM = {
   "Carbon rods need cleaning now.",
   "Threaded rods need lubrication now.",
   "Time-lapse kit communication error. Please reconnect the cable or restart the printer.",
-  "A new version of the Timelapse Kit is available. Please connect to CyberBrick App to update this accessory separately.",
   "The accessory firmware does not match the printer. Please upgrade it on the \"Firmware\" page.",
   "Your nozzle seems to be covered with jammed or clogged material.",
   "Device login failed; please check your account information.",
@@ -250,7 +248,7 @@ const char *hms_error_values[] PROGMEM = {
 };
 
 // Non-optimized Device errors (legacy format)
-int device_error_length = 129;
+int device_error_length = 130;
 
 const char *device_error_keys[] PROGMEM = {
   "07004001",
@@ -381,7 +379,8 @@ const char *device_error_keys[] PROGMEM = {
   "0500C04A",
   "0500C04E",
   "05004095",
-  "0502C028"
+  "0502C028",
+  "05008057"
 };
 
 const char *device_error_values[] PROGMEM = {
@@ -513,5 +512,6 @@ const char *device_error_values[] PROGMEM = {
   "AMS is calibrating, reading RFID or loading/unloading material, unable to initiate drying process, please wait.",
   "Please connect a power adapter to the AMS-HT before starting the drying process.",
   "No print plate detected. Please place it correctly and recalibrate.",
-  "The filament currently loaded in the extruder does not support manual feeding."
+  "The filament currently loaded in the extruder does not support manual feeding.",
+  "The filament hardness selected in the slicer exceeds the current nozzle hardness. Continuing the print may cause nozzle wear, leading to leakage and unstable flow. Please proceed with caution."
 };
