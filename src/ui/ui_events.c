@@ -269,7 +269,10 @@ void onAmsSlotLoad(lv_event_t *e, int slot)
 
 void onCalibrationConfirm( lv_event_t *e, uint8_t bitmask)
 {
-    lv_msg_send(XTOUCH_COMMAND_SET_UTIL_CALIBRATION, (void *)bitmask);
+    // 静的変数を使用してbitmaskを保存し、ポインタとして渡す
+    static uint8_t calibration_bitmask;
+    calibration_bitmask = bitmask;
+    lv_msg_send(XTOUCH_COMMAND_SET_UTIL_CALIBRATION, (void *)&calibration_bitmask);
 
 }
 

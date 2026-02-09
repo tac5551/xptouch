@@ -136,8 +136,15 @@ def post_build_copy_ota_fw(version):
 def post_build_merge_bin(version):
 
     web_usb_fw = f"../../../../xptouch-bin/2.8/webusb/xptouch.web.{version}.bin"
+    
+    # PlatformIOのesptool.pyのパスを取得
+    home = os.path.expanduser("~")
+    esptool_py = os.path.join(home, ".platformio", "packages", "tool-esptoolpy", "esptool.py")
+    
+    # Pythonでesptool.pyを実行
     esptool_cmd = [
-        'esptool',
+        sys.executable,
+        esptool_py,
         '--chip', 'ESP32',
         'merge_bin',
         '-o', web_usb_fw,
