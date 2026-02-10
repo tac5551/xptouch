@@ -111,7 +111,7 @@ void xtouch_webserver_begin()
             DeserializationError error = deserializeJson(jsonDoc, data, len);
             serializeJsonPretty(jsonDoc, Serial);
 
-            xtouch_filesystem_writeJson(SD, xtouch_paths_config, jsonDoc);
+            xtouch_filesystem_writeJson(SD, xtouch_paths_provisioning, jsonDoc);
 
             request->send(200, "application/json", "{\"status\":\"ok\"}");
 

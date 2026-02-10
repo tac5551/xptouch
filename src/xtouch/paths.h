@@ -3,15 +3,20 @@
 
 const char *xtouch_paths_eeprom = "/eeprom.bin";
 const char *xtouch_paths_root = "/xtouch";
-const char *xtouch_paths_config = "/provisioning.json";
-const char *xtouch_paths_timezones = "/timezones.json";
 
+// for lan only mode
+const char *xtouch_paths_config = "/xtouch.json";
+
+//for global settings
 const char *xtouch_paths_settings = "/xtouch/settings.json";
-const char *xtouch_paths_printers = "/xtouch/printer.json";
-const char *xtouch_paths_pair = "/xtouch/printer-pair.json";
 const char *xtouch_paths_touch = "/xtouch/touch.json";
 
+//for cloud
+const char *xtouch_paths_provisioning = "/provisioning.json";
+const char *xtouch_paths_printers = "/xtouch/printer.json";
+const char *xtouch_paths_pair = "/xtouch/printer-pair.json";
 
+//for OTA Update
 const char *xtouch_paths_firmware_ota_json = "/xtouch/ota.json";
 #ifdef __XTOUCH_SCREEN_50__
 const char *xtouch_paths_firmware_ota_file = "https://tac-lab.tech/xptouch-bin/5.0/ota/ota.json";
@@ -20,6 +25,7 @@ const char *xtouch_paths_firmware_ota_file = "https://tac-lab.tech/xptouch-bin/2
 #endif
 const char *xtouch_paths_firmware_ota_fw = "/firmware.bin";
 
+//for HMS
 const char *xtouch_paths_hms_key_db = "/xtouch/device_hms.key.db";
 const char *xtouch_paths_hms_value_db = "/xtouch/device_hms.value.db";
 

@@ -90,7 +90,7 @@ public:
   String getUsername() const
   {
     // cloud-username
-    DynamicJsonDocument config = xtouch_filesystem_readJson(SD, xtouch_paths_config, false, 2048);
+    DynamicJsonDocument config = xtouch_filesystem_readJson(SD, xtouch_paths_provisioning, false, 2048);
     return config["cloud-username"].as<String>();
   }
 
@@ -273,9 +273,9 @@ public:
   }
   void clearTokens()
   {
-    DynamicJsonDocument config = xtouch_filesystem_readJson(SD, xtouch_paths_config, false, 2048);
+    DynamicJsonDocument config = xtouch_filesystem_readJson(SD, xtouch_paths_provisioning, false, 2048);
     config["cloud-authToken"] = "";
-    xtouch_filesystem_writeJson(SD, xtouch_paths_config, config);
+    xtouch_filesystem_writeJson(SD, xtouch_paths_provisioning, config);
   }
 
   void unpair()
@@ -289,18 +289,18 @@ public:
 
   void saveAuthTokens()
   {
-    DynamicJsonDocument config = xtouch_filesystem_readJson(SD, xtouch_paths_config);
+    DynamicJsonDocument config = xtouch_filesystem_readJson(SD, xtouch_paths_provisioning);
     config["cloud-authToken"] = _auth_token;
-    xtouch_filesystem_writeJson(SD, xtouch_paths_config, config, false, 2048);
+    xtouch_filesystem_writeJson(SD, xtouch_paths_provisioning, config, false, 2048);
     ESP.restart();
   }
 
   void loadAuthTokens()
   {
     ConsoleLog.println(ESP.getFreeHeap());
-    DynamicJsonDocument config = xtouch_filesystem_readJson(SD, xtouch_paths_config, false, 2048);
+    DynamicJsonDocument config = xtouch_filesystem_readJson(SD, xtouch_paths_provisioning, false, 2048);
     _auth_token = config["cloud-authToken"].as<String>();
-    DynamicJsonDocument wifiConfig = xtouch_filesystem_readJson(SD, xtouch_paths_config);
+    DynamicJsonDocument wifiConfig = xtouch_filesystem_readJson(SD, xtouch_paths_provisioning);
     _region = wifiConfig["cloud-region"].as<const char *>();
     _email = wifiConfig["cloud-email"].as<String>();
     loggedIn = true;
@@ -308,11 +308,11 @@ public:
 
   bool hasAuthTokens()
   {
-    if (!xtouch_filesystem_exist(SD, xtouch_paths_config))
+    if (!xtouch_filesystem_exist(SD, xtouch_paths_provisioning))
     {
       return false;
     }
-    DynamicJsonDocument config = xtouch_filesystem_readJson(SD, xtouch_paths_config, false, 2048);
+    DynamicJsonDocument config = xtouch_filesystem_readJson(SD, xtouch_paths_provisioning, false, 2048);
     return config["cloud-authToken"].as<String>() != "";
   }
 };
