@@ -246,6 +246,14 @@ xptouchではWifi経由でBambuCloudに接続する為、Wifiの接続設定とB
 
 **Chrome拡張機能をする場合、事前に[bambulab.com](https://www.bambulab.com)または[bambulab.cn](https://www.bambulab.cn)にログインしている必要があります。**
 
+クラウド接続を行う場合以下のバージョンのBambu Labプリンターファームウェアと互換性があります
+
+P1P/S: 01.08.01.00
+X1C --> 01.08.02.00
+X1E --> 01.01.02.00
+A1 --> 01.04.00.00
+A1 Mini --> 01.04.00.00
+
 ---
 
 ### 初回プロビジョニング
@@ -301,6 +309,26 @@ Chrome拡張機能を初めて開く際は、以下の手順に従ってくだ�
 5. **自動再起動**
 
    - 数秒以内に、xptouchスクリーンは新しい設定を適用するために自動的に再起動します。
+---
+
+### LAN Only Mode
+Lan Only Modeをサポートしました。
+
+[設定ページ](https://tac-lab.tech/xptouch-bin/localOnly.html)でxtouch.jsonを作成してください
+※互換性のためxtouch.jsonであることに注意してください。
+
+以下のバージョンのBambu Labプリンターファームウェアより新しい物を使用する場合
+プリンタでLAN Only Modeに設定し、開発者モードを有効にしてください。
+ステータスは取得できますが、操作ができなくなります。
+
+P1P/S: 01.08.01.00
+X1C --> 01.08.02.00
+X1E --> 01.01.02.00
+A1 --> 01.04.00.00
+A1 Mini --> 01.04.00.00
+
+LAN Only モードと、Cloudモードは排他利用となっています。
+LAN Only モードを利用する場合SDカードからProvisioning.jsonを削除してください。
 
 ---
 

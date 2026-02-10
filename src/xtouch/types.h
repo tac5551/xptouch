@@ -154,6 +154,7 @@ extern "C"
         bool xTouchOTAEnabled;
         bool xTouchTFTFlip;
         bool xTouchTFTInvert;
+        char xTouchHost[16];
         char xTouchAccessCode[9];
         char xTouchSerialNumber[16];
         char xTouchPrinterModel[32];
@@ -177,6 +178,8 @@ extern "C"
         bool xTouchChamberSensorEnabled;
         int xTouchChamberSensorReadingDiff;
         int xTouchUtilCalibrationBitmask;
+        bool xTouchLanOnlyMode;
+        bool xTouchProvisioningMode;
     } XTouchConfig;
 
     XTouchConfig xTouchConfig;

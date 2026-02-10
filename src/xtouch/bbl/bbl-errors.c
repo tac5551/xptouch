@@ -1,7 +1,7 @@
 #include <pgmspace.h>
 
 // Non-optimized HMS errors (legacy format)
-int hms_error_length = 119;
+int hms_error_length = 122;
 
 const char *hms_error_keys[] PROGMEM = {
   "0C00040000010025",
@@ -13,6 +13,10 @@ const char *hms_error_keys[] PROGMEM = {
   "0501040000030001",
   "0501040000030002",
   "0500050000010021",
+  "0500040000030057",
+  "0300900000010007",
+  "0700520000030001",
+  "030001000001000C",
   "050005000001000F",
   "0C0003000002000E",
   "0500020000020002",
@@ -95,7 +99,6 @@ const char *hms_error_keys[] PROGMEM = {
   "0300050000010001",
   "0500030000010006",
   "0300900000010010",
-  "030001000001000C",
   "0300200000010002",
   "0300410000010001",
   "0500030000010021",
@@ -135,6 +138,10 @@ const char *hms_error_values[] PROGMEM = {
   "Carbon rods need cleaning now.",
   "Threaded rods need lubrication now.",
   "Time-lapse kit communication error. Please reconnect the cable or restart the printer.",
+  "The print job has been completed. Automatic air purification is in progress.",
+  "High chamber temperature detected. If the hotend is overheating or emitting smoke, immediately power off the printer. Please refer to the Wiki for detailed troubleshooting instructions.",
+  "Abnormal number or type of connected AMS units detected. Please refer to the Wiki for supported AMS combinations and adjust the current connection.",
+  "The heatbed has worked at full load for a long time. The temperature control system may be abnormal.",
   "The accessory firmware does not match the printer. Please upgrade it on the \"Firmware\" page.",
   "Your nozzle seems to be covered with jammed or clogged material.",
   "Device login failed; please check your account information.",
@@ -217,7 +224,6 @@ const char *hms_error_values[] PROGMEM = {
   "The motor driver is overheating. Its radiator may be loose, or its cooling fan may be damaged.",
   "A system panic occurred. Please restart the device.",
   "The communication of chamber temperature controller is abnormal.",
-  "The heatbed has worked at full load for a long time. The temperature control system may be abnormal.",
   "Y-axis homing abnormal: please check if the toolhead is stuck or the Y carriage has too much resistance.",
   "The system voltage is unstable. Triggering the power failure protection function.",
   "Hardware incompatible; please check the Micro Lidar.",
@@ -228,7 +234,7 @@ const char *hms_error_values[] PROGMEM = {
   "Chamber temperature is abnormal. The temperature sensor at power supply may have an open circuit.",
   "Heatbed homing abnormal: there may be a bulge on the heatbed or the nozzle tip may not be clean.",
   "The Micro Lidar LED may be broken.",
-  "Possible spaghetti defects were detected. Please check the print quality and decide if the job should be stopped.",
+  "A possible spaghetti failure has been detected. Please check the print quality and decide whether to stop the job. Cleaning the build plate or drying the filament can effectively reduce the risk of spaghetti failure.",
   "The door seems to be open.",
   "Detected that the extruder may not be extruding normally. Please check and decide if printing should be stopped.",
   "Streaming function error. Please check the network and try again. You can restart or update the printer if the issue persists.",
@@ -248,7 +254,7 @@ const char *hms_error_values[] PROGMEM = {
 };
 
 // Non-optimized Device errors (legacy format)
-int device_error_length = 130;
+int device_error_length = 134;
 
 const char *device_error_keys[] PROGMEM = {
   "07004001",
@@ -380,7 +386,11 @@ const char *device_error_keys[] PROGMEM = {
   "0500C04E",
   "05004095",
   "0502C028",
-  "05008057"
+  "05008057",
+  "050040A6",
+  "0500809B",
+  "050040A8",
+  "0300806E"
 };
 
 const char *device_error_values[] PROGMEM = {
@@ -412,7 +422,7 @@ const char *device_error_values[] PROGMEM = {
   "External filament has run out; please load a new filament.",
   "The accessory firmware does not match the printer. Please upgrade it on the \"Firmware\" page.",
   "Timelapse is not supported as Spiral Vase mode is enabled in slicing presets.",
-  "Spaghetti defects were detected by the AI Print Monitoring. Please check the quality of the printed model before continuing your print.",
+  "Spaghetti defects were detected by the AI Print Monitoring. Please check the quality of the printed model before continuing your print. Cleaning the build plate or drying the filament can effectively reduce the risk of spaghetti failure.",
   "Failed to connect to the router, which may be caused by wireless interference or being too far away from the router. Please try again or move the printer closer to the router and try again.",
   "Device login has expired; please try to bind again.",
   "The build plate marker was not detected. Please confirm the build plate is correctly positioned on the heatbed with all four corners aligned, and the marker is visible.",
@@ -442,7 +452,7 @@ const char *device_error_values[] PROGMEM = {
   "Timelapse is not supported as the Print sequence is set to \"By object\".",
   "Resume failed after power loss.",
   "Heatbed temperature malfunction",
-  "Possible spaghetti failure was detected.",
+  "Possible spaghetti failure was detected. Cleaning the build plate or drying the filament can effectively reduce the risk of spaghetti failure.",
   "Current filament will be used in this print job. Settings cannot be changed.",
   "The nozzle diameter in sliced file is not consistent with the current nozzle setting. This file can't be printed.",
   "Possible defects were detected in the first layer.",
@@ -476,7 +486,7 @@ const char *device_error_values[] PROGMEM = {
   "Printing and calibration cannot be performed while the AMS is drying. Please stop the drying process or connect a power adapter to any AMS unit not used for the current print, then try again.",
   "Starting printing failed; please power cycle the printer and resend the print job.",
   "MicroSD Card read/write exception: please reinsert or replace the MicroSD Card.",
-  "Skipped step detected: auto-recover complete; please resume print and check if there are any layer shift problems.",
+  "Multiple motion steps lost detected. Please check if the toolhead is blocked by obstructions or making abnormal noise. You may continue printing to observe. If the print shows layer shifting, refer to the Wiki for maintenance.",
   "System exception",
   "Internal communication exception",
   "The printer timed out waiting for the nozzle to cool down before homing.",
@@ -511,7 +521,11 @@ const char *device_error_values[] PROGMEM = {
   "The AMS is currently drying. Please do not start the process again.",
   "AMS is calibrating, reading RFID or loading/unloading material, unable to initiate drying process, please wait.",
   "Please connect a power adapter to the AMS-HT before starting the drying process.",
-  "No print plate detected. Please place it correctly and recalibrate.",
+  "No print plate detected. Please place it correctly and recalibrate on the device.",
   "The filament currently loaded in the extruder does not support manual feeding.",
-  "The filament hardness selected in the slicer exceeds the current nozzle hardness. Continuing the print may cause nozzle wear, leading to leakage and unstable flow. Please proceed with caution."
+  "The filament hardness selected in the slicer exceeds the current nozzle hardness. Continuing the print may cause nozzle wear, leading to leakage and unstable flow. Please proceed with caution.",
+  "File download failed due to missing certificates. Please check the Fleet Hub certificate configuration and restart the printer before trying again",
+  "Build plate not properly positioned, may collide with the waste chute. Please reposition build plate and align with heatbed.",
+  "The device firmware requires a repair upgrade, and the current operation cannot be performed. Please upgrade it on the \"Firmware\" page.",
+  "Abnormal nozzle temperature control detected; the heating module may be damaged. Please disconnect the power immediately and stop using the device."
 };

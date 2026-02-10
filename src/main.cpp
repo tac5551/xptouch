@@ -92,30 +92,37 @@ void setup()
   xtouch_screen_setupScreenTimer();
   xtouch_screen_setupLEDOffTimer();
   xtouch_setupGlobalEvents();
+    if(xtouch_filesystem_exist(SD, xtouch_paths_provisioning)){
+        ConsoleDebug.println("Provisioning mode initialize");
+        xTouchConfig.xTouchProvisioningMode = true;
+        if (!cloud.hasAuthTokens()) 
+        {
+          xtouch_webserver_begin();
+          String gotoCode = "Provision at " + WiFi.localIP().toString();
+          lv_label_set_text(introScreenCaption, gotoCode.c_str());
+          lv_obj_set_style_text_color(introScreenCaption, lv_color_hex(0x00FF00), LV_PART_MAIN | LV_STATE_DEFAULT);
+          lv_timer_handler();
+        }
+        else
+        {
+          cloud.loadAuthTokens();
 
+          if (!cloud.isPaired())
+          {
+            cloud.selectPrinter();
+          }
+          else
+          {
+            cloud.loadPair();
+          }
+          xtouch_cloud_mqtt_setup();
+        }
 
-  if (!cloud.hasAuthTokens())
-  {
-    xtouch_webserver_begin();
-    String gotoCode = "Provision at " + WiFi.localIP().toString();
-    lv_label_set_text(introScreenCaption, gotoCode.c_str());
-    lv_obj_set_style_text_color(introScreenCaption, lv_color_hex(0x00FF00), LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_timer_handler();
-  }
-  else
-  {
-    cloud.loadAuthTokens();
-
-    if (!cloud.isPaired())
-    {
-      cloud.selectPrinter();
+    }else if(xtouch_filesystem_exist(SD, xtouch_paths_config)){
+        ConsoleDebug.println("Lan only mode initialize");
+        xTouchConfig.xTouchLanOnlyMode = true;
+        xtouch_local_mqtt_setup();
     }
-    else
-    {
-      cloud.loadPair();
-    }
-    xtouch_mqtt_setup();
-  }
 
 
 #if defined(__XTOUCH_SCREEN_28__)
@@ -148,8 +155,9 @@ void loop()
 {
   lv_timer_handler();
   lv_task_handler();
-  if (cloud.loggedIn)
-    xtouch_mqtt_loop();
+  if (xTouchConfig.xTouchLanOnlyMode ||cloud.loggedIn)
+    xtouch_cloud_mqtt_loop();
+
   if (xtouch_ota_update_flag)
   {
     xtouch_ota_update_flag = false;
