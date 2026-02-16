@@ -260,6 +260,11 @@ void xtouch_neo_pixel_control_timer_handler(lv_timer_t *timer)
                 xtouch_neo_pixel_set_led_color(128, 30, 0); // オレンジ色
                 xtouch_neo_pixel_set_pettern(3);
             }
+            else if (bambuStatus.print_gcode_action == 3) // 3	振動補正 vibration compensation
+            {
+                xtouch_neo_pixel_set_led_color(128, 50, 0); // オレンジ色
+                xtouch_neo_pixel_set_pettern(4);
+            }
             else if (bambuStatus.print_gcode_action == 8) // 8	draw extrinsic para cali pain
             {
                 xtouch_neo_pixel_set_led_color(128, 65, 0); // オレンジ色
@@ -273,6 +278,16 @@ void xtouch_neo_pixel_control_timer_handler(lv_timer_t *timer)
             else if (bambuStatus.print_gcode_action == 14) // 14	nozzle wipe
             {
                 xtouch_neo_pixel_set_led_color(128, 75, 0); // オレンジ色
+                xtouch_neo_pixel_set_pettern(4);
+            }
+            else if (bambuStatus.print_gcode_action == 18) // 18	MicroRider calibration
+            {
+                xtouch_neo_pixel_set_led_color(128, 78, 0); // オレンジ色
+                xtouch_neo_pixel_set_pettern(4);
+            }
+            else if (bambuStatus.print_gcode_action == 25 || bambuStatus.print_gcode_action == 48) // 25, 48	motor noise cancelling
+            {
+                xtouch_neo_pixel_set_led_color(128, 80, 0); // オレンジ色
                 xtouch_neo_pixel_set_pettern(4);
             }
             else if (bambuStatus.print_gcode_action == 255) // 255	unknown

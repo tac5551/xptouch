@@ -25,7 +25,7 @@ void ui_confirmPanel_show_with_no(const char *title, void (*onYES)(void), void (
 
 void ui_confirmPanel_hide()
 {
-    printf("ui_confirmPanel_hide\n");
+    //printf("ui_confirmPanel_hide\n");
     lv_obj_add_flag(ui_confirmComponent, LV_OBJ_FLAG_HIDDEN); /// Flags
 }
 

@@ -1131,6 +1131,8 @@ void xtouch_local_mqtt_setup()
     delay(2000);
 }
 
+#define XTOUCH_MQTT_PUSHALL_INTERVAL_MS 5000
+
 void xtouch_cloud_mqtt_loop()
 {
     xtouch_pubSubClient.loop();
@@ -1144,6 +1146,14 @@ void xtouch_cloud_mqtt_loop()
         }
 
         return;
+    }
+
+    static unsigned long lastPushAll = 0;
+    unsigned long now = millis();
+    if (now - lastPushAll >= XTOUCH_MQTT_PUSHALL_INTERVAL_MS)
+    {
+        lastPushAll = now;
+        xtouch_device_pushall();
     }
 }
 

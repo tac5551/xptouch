@@ -341,10 +341,51 @@ void onXTouchPrintStatus(lv_event_t *e)
     lv_obj_t **comp_homeComponent = lv_event_get_user_data(e);
 
     ui_confirmPanel_hide(); // hide confirm panel if new data comes
+printf("[xPTouch][LED] print_status : %d print_gcode_action : %d print_real_action : %d percent : %d layer : %d/%d mc_print_sub_stage : %d mc_print_stage : %d\n", bambuStatus.print_status, bambuStatus.print_gcode_action, bambuStatus.print_real_action, bambuStatus.mc_print_percent, bambuStatus.current_layer, bambuStatus.total_layers, bambuStatus.mc_print_sub_stage, bambuStatus.mc_print_stage);
 
-    char layerText[32];
-    sprintf(layerText, "%d/%d", bambuStatus.current_layer, bambuStatus.total_layers);
-    lv_label_set_text(comp_homeComponent[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPLAYER_MAINSCREENCONTROLLER2_MAINSCREENLAYER], layerText);
+    switch (bambuStatus.print_gcode_action)
+    {
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+    case 8:
+    case 13:
+    case 14:
+    case 18:
+    case 25:
+    case 48:
+    {
+        const char *msg = "Unknown";
+        switch (bambuStatus.print_gcode_action)
+        {
+        case 0:  msg = "Wait heating"; break;
+        case 1:  msg = "Bed leveling"; break;
+        case 2:  msg = "Heatbed preheat"; break;
+        case 3:  msg = "Vibration compensation"; break;
+        case 8:  msg = "Calibration"; break;
+        case 13: msg = "Head Homing"; break;
+        case 14: msg = "Nozzle wipe"; break;
+        case 18: msg = "Micro Rider Calibration"; break;
+        case 25: msg = "Motor noise cancelling"; break;
+        case 48: msg = "Motor noise cancelling"; break;
+        default: break;
+        }
+        lv_label_set_text(comp_homeComponent[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPLAYER_MAINSCREENCONTROLLER2_MAINSCREENLAYER], msg);
+        break;
+    }
+    case 255:
+        /* keep previous label text, do not update */
+        break;
+    default:
+    {
+        /* other: show layer count */
+        char layerText[32];
+        sprintf(layerText, "%d/%d", bambuStatus.current_layer, bambuStatus.total_layers);
+        lv_label_set_text(comp_homeComponent[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPLAYER_MAINSCREENCONTROLLER2_MAINSCREENLAYER], layerText);
+        break;
+    }
+    }
     lv_slider_set_value(comp_homeComponent[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPLAYER_MAINSCREENPROGRESSBAR], bambuStatus.mc_print_percent, LV_ANIM_ON);
 
     char remainingTimeText[48];
@@ -875,7 +916,7 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_height(cui_mainScreenLayer, LV_SIZE_CONTENT); /// 1
     lv_obj_set_align(cui_mainScreenLayer, LV_ALIGN_CENTER);
     lv_label_set_long_mode(cui_mainScreenLayer, LV_LABEL_LONG_CLIP);
-    lv_label_set_text(cui_mainScreenLayer, "100/255");
+    lv_label_set_text(cui_mainScreenLayer, "0/0");
     lv_obj_clear_flag(cui_mainScreenLayer, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN); /// Flags
     lv_obj_set_scrollbar_mode(cui_mainScreenLayer, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_style_text_font(cui_mainScreenLayer, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);

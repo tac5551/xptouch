@@ -254,7 +254,7 @@ const char *hms_error_values[] PROGMEM = {
 };
 
 // Non-optimized Device errors (legacy format)
-int device_error_length = 134;
+int device_error_length = 136;
 
 const char *device_error_keys[] PROGMEM = {
   "07004001",
@@ -390,7 +390,9 @@ const char *device_error_keys[] PROGMEM = {
   "050040A6",
   "0500809B",
   "050040A8",
-  "0300806E"
+  "0300806E",
+  "0502C032",
+  "0502C031"
 };
 
 const char *device_error_values[] PROGMEM = {
@@ -527,5 +529,7 @@ const char *device_error_values[] PROGMEM = {
   "File download failed due to missing certificates. Please check the Fleet Hub certificate configuration and restart the printer before trying again",
   "Build plate not properly positioned, may collide with the waste chute. Please reposition build plate and align with heatbed.",
   "The device firmware requires a repair upgrade, and the current operation cannot be performed. Please upgrade it on the \"Firmware\" page.",
-  "Abnormal nozzle temperature control detected; the heating module may be damaged. Please disconnect the power immediately and stop using the device."
+  "Abnormal nozzle temperature control detected; the heating module may be damaged. Please disconnect the power immediately and stop using the device.",
+  "Please check and remove any printed parts or debris from the heatbed surface and underside before continuing the drying process.",
+  "Please check and remove any printed parts or debris from the heatbed surface before continuing the cold pull."
 };
