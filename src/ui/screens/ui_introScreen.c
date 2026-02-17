@@ -22,6 +22,9 @@ void ui_introScreen_screen_init()
     lv_obj_clear_flag(introScreenIcon, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN); /// Flags
     lv_obj_set_scrollbar_mode(introScreenIcon, LV_SCROLLBAR_MODE_OFF);
     lv_img_set_src(introScreenIcon, &img_logo);
+#ifdef __XTOUCH_SCREEN_50__
+    lv_img_set_zoom(introScreenIcon, 384);
+#endif
 
     introScreenCaption = lv_label_create(introScreen);
     lv_obj_set_width(introScreenCaption, LV_SIZE_CONTENT);  /// 100
@@ -35,7 +38,6 @@ void ui_introScreen_screen_init()
 
 #ifdef __XTOUCH_SCREEN_50__
     lv_obj_set_style_pad_top(introScreenCaption, 88, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_img_set_zoom(introScreenIcon, 384);
 #else
     lv_obj_set_style_pad_top(introScreenCaption, 68, LV_PART_MAIN | LV_STATE_DEFAULT);
 #endif
