@@ -14,13 +14,31 @@ void ui_temperatureScreen_screen_init(void)
     lv_obj_set_style_pad_row(ui_temperatureScreen, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_column(ui_temperatureScreen, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-    ui_sidebarComponent = ui_sidebarComponent_create(ui_homeScreen);
+    ui_sidebarComponent = ui_sidebarComponent_create(ui_temperatureScreen);
     lv_obj_set_x(ui_sidebarComponent, 387);
     lv_obj_set_y(ui_sidebarComponent, 178);
 
-    ui_temperatureComponent = ui_temperatureComponent_create(ui_temperatureScreen);
-    lv_obj_set_x(ui_temperatureComponent, 385);
-    lv_obj_set_y(ui_temperatureComponent, 178);
+    lv_obj_t *content_col = lv_obj_create(ui_temperatureScreen);
+    lv_obj_set_width(content_col, lv_pct(90));
+    lv_obj_set_height(content_col, lv_pct(100));
+    lv_obj_set_flex_grow(content_col, 1);
+    lv_obj_set_flex_flow(content_col, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_flex_align(content_col, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
+    lv_obj_clear_flag(content_col, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_style_pad_left(content_col, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(content_col, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_top(content_col, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_bottom(content_col, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(content_col, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(content_col, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    ui_utilTabbarComponent_create(content_col, UI_UTILTABBAR_TAB_TEMP);
+
+    ui_temperatureComponent = ui_temperatureComponent_create(content_col);
+    lv_obj_set_width(ui_temperatureComponent, lv_pct(100));
+    lv_obj_set_flex_grow(ui_temperatureComponent, 1);
+    lv_obj_set_x(ui_temperatureComponent, 0);
+    lv_obj_set_y(ui_temperatureComponent, 0);
 #ifdef __XTOUCH_SCREEN_28__
     lv_obj_set_width(ui_sidebarComponent, 48);
 #endif

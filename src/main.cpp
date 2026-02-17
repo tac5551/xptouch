@@ -48,6 +48,7 @@ void setup()
 
 #if XTOUCH_USE_SERIAL == true || XTOUCH_DEBUG_ERROR == true || XTOUCH_DEBUG_DEBUG == true || XTOUCH_DEBUG_INFO == true
   Serial.begin(115200);
+  ConsoleDebug.println("Serial started");
 #endif
 
   xtouch_eeprom_setup();
@@ -59,7 +60,6 @@ void setup()
   lv_font_middle_set(&lv_font_montserrat_32);
   lv_font_big_set(&lv_font_montserrat_48);
   lv_icon_font_small_set(&ui_font_xlcd48);
-  lv_icon_font_big_set(&ui_font_xperiments);
 #else
   lgfx::boards::board_t board = tft.getBoard();
 

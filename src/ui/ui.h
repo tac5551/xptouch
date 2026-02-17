@@ -129,28 +129,24 @@ extern "C"
 #endif
 
   LV_FONT_DECLARE(ui_font_xlcdmin);
-  LV_FONT_DECLARE(ui_font_xperiments);
 
   // 関数の宣言
   const lv_font_t *lv_font_small(void);
   const lv_font_t *lv_font_middle(void);
   const lv_font_t *lv_font_big(void);
   const lv_font_t *lv_icon_font_small(void);
-  const lv_font_t *lv_icon_font_big(void);
 
   // 切り替え用のsetter関数
   void lv_font_small_set(const lv_font_t *font);
   void lv_font_middle_set(const lv_font_t *font);
   void lv_font_big_set(const lv_font_t *font);
   void lv_icon_font_small_set(const lv_font_t *font);
-  void lv_icon_font_big_set(const lv_font_t *font);
 
   // マクロで変数アクセスを関数呼び出しに置き換え（既存コードとの互換性のため）
   #define lv_font_small (lv_font_small())
   #define lv_font_middle (lv_font_middle())
   #define lv_font_big (lv_font_big())
   #define lv_icon_font_small (lv_icon_font_small())
-  #define lv_icon_font_big (lv_icon_font_big())
   extern lv_img_dsc_t img_logo;
   extern lv_img_dsc_t img_logo2;
   void ui_init(void);

@@ -110,20 +110,20 @@ void loadScreen(int screen)
     }
     fillScreenData(screen);
 
-    // サイドバーのハイライトを画面番号に応じて設定
+    // サイドバーのハイライトを画面番号に応じて設定 (0=Home, 1=Temp/タブ, 2=AMS, 3=Settings)
     int sidebar_index = -1;
     switch (screen)
     {
     case 0: sidebar_index = 0; break; // Home
-    case 1: sidebar_index = 1; break; // Temp
-    case 2: sidebar_index = 2; break; // Control
-    case 3: sidebar_index = 3; break; // Nozzle
-    case 7: sidebar_index = 4; break; // Util Ams View
-    case 10: sidebar_index = 4; break; // Util Nozzle Change
-    case 12: sidebar_index = 4; break; // Util Calibration
-    case 11: sidebar_index = 4; break; // Util
-    case 4: sidebar_index = 5; break; // Settings
-    case 8: sidebar_index = 5; break; // Settings Optional
+    case 1: sidebar_index = 1; break; // Temp (タブ画面)
+    case 2: sidebar_index = 1; break; // Control (タブ画面)
+    case 3: sidebar_index = 1; break; // Nozzle/Filament (タブ画面)
+    case 11: sidebar_index = 1; break; // Util (タブ画面)
+    case 7: sidebar_index = 2; break; // AMS
+    case 10: sidebar_index = 2; break; // Util Nozzle Change
+    case 12: sidebar_index = 2; break; // Util Calibration
+    case 4: sidebar_index = 3; break; // Settings
+    case 8: sidebar_index = 3; break; // Settings Optional
     default: break;
     }
     if (sidebar_index >= 0)

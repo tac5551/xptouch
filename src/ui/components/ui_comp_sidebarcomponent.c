@@ -20,27 +20,6 @@ void ui_event_comp_sidebarComponent_sidebarTempButton(lv_event_t *e)
         onSidebarTemp(e);
     }
 }
-void ui_event_comp_sidebarComponent_sidebarControlButton(lv_event_t *e)
-{
-    lv_event_code_t event_code = lv_event_get_code(e);
-    lv_obj_t *target = lv_event_get_target(e);
-    lv_obj_t **comp_sidebarComponent = lv_event_get_user_data(e);
-    if (event_code == LV_EVENT_CLICKED)
-    {
-        onSidebarControl(e);
-    }
-}
-void ui_event_comp_sidebarComponent_sidebarNozzleButton(lv_event_t *e)
-{
-    lv_event_code_t event_code = lv_event_get_code(e);
-    lv_obj_t *target = lv_event_get_target(e);
-    lv_obj_t **comp_sidebarComponent = lv_event_get_user_data(e);
-    if (event_code == LV_EVENT_CLICKED)
-    {
-        onSidebarNozzle(e);
-    }
-}
-
 void ui_event_comp_sidebarComponent_sidebarAmsViewButton(lv_event_t *e)
 {
     lv_event_code_t event_code = lv_event_get_code(e);
@@ -66,21 +45,22 @@ void ui_event_comp_sidebarComponent_sidebarSettingsButton(lv_event_t *e)
 void ui_sidebarComponent_set_active(int index)
 {
     lv_obj_t *target;
-    uint32_t indexes[6] = {
+    uint32_t indexes[4] = {
         UI_COMP_SIDEBARCOMPONENT_SIDEBARHOMEBUTTON,
         UI_COMP_SIDEBARCOMPONENT_SIDEBARTEMPBUTTON,
-        UI_COMP_SIDEBARCOMPONENT_SIDEBARCONTROLBUTTON,
-        UI_COMP_SIDEBARCOMPONENT_SIDEBARNOZZLEBUTTON,
         UI_COMP_SIDEBARCOMPONENT_SIDEBARAMSVIEWBUTTON,
         UI_COMP_SIDEBARCOMPONENT_SIDEBARSETTINGSBUTTON};
 
-    for (int i = 0; i < 6; i++)
+    for (int i = 0; i < 4; i++)
     {
         target = ui_comp_get_child(ui_sidebarComponent, indexes[i]);
         lv_obj_clear_state(target, LV_STATE_CHECKED);
     }
-    uint32_t targetIndex = indexes[index];
-    lv_obj_add_state(ui_comp_get_child(ui_sidebarComponent, targetIndex), LV_STATE_CHECKED);
+    if (index >= 0 && index < 4)
+    {
+        uint32_t targetIndex = indexes[index];
+        lv_obj_add_state(ui_comp_get_child(ui_sidebarComponent, targetIndex), LV_STATE_CHECKED);
+    }
 }
 // COMPONENT sidebarComponent
 lv_obj_t *ui_sidebarComponent_create(lv_obj_t *comp_parent)
@@ -181,78 +161,6 @@ lv_obj_t *ui_sidebarComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_scrollbar_mode(cui_sidebarTempButtonIcon, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_style_text_font(cui_sidebarTempButtonIcon, lv_icon_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-    lv_obj_t *cui_sidebarControlButton;
-    cui_sidebarControlButton = lv_obj_create(cui_sidebarComponent);
-    lv_obj_set_width(cui_sidebarControlButton, lv_pct(100));
-    lv_obj_set_flex_grow(cui_sidebarControlButton, 1);
-    lv_obj_set_x(cui_sidebarControlButton, 386);
-    lv_obj_set_y(cui_sidebarControlButton, 178);
-    lv_obj_set_flex_flow(cui_sidebarControlButton, LV_FLEX_FLOW_ROW);
-    lv_obj_set_flex_align(cui_sidebarControlButton, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);                                                                                                                                                     /// States
-    lv_obj_clear_flag(cui_sidebarControlButton, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN); /// Flags
-    lv_obj_set_scrollbar_mode(cui_sidebarControlButton, LV_SCROLLBAR_MODE_OFF);
-    lv_obj_set_style_radius(cui_sidebarControlButton, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_bg_color(cui_sidebarControlButton, lv_color_hex(0x2aff00), LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_bg_opa(cui_sidebarControlButton, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_border_width(cui_sidebarControlButton, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_left(cui_sidebarControlButton, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_right(cui_sidebarControlButton, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_top(cui_sidebarControlButton, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_bottom(cui_sidebarControlButton, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_row(cui_sidebarControlButton, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_column(cui_sidebarControlButton, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_color(cui_sidebarControlButton, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_opa(cui_sidebarControlButton, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_color(cui_sidebarControlButton, lv_color_hex(0x2aff00), LV_PART_MAIN | LV_STATE_CHECKED);
-    lv_obj_set_style_text_opa(cui_sidebarControlButton, 255, LV_PART_MAIN | LV_STATE_CHECKED);
-    lv_obj_set_style_bg_color(cui_sidebarControlButton, lv_color_hex(0x008800), LV_PART_MAIN | LV_STATE_PRESSED);
-    lv_obj_set_style_bg_opa(cui_sidebarControlButton, 255, LV_PART_MAIN | LV_STATE_PRESSED);
-
-    lv_obj_t *cui_sidebarControlButtonIcon;
-    cui_sidebarControlButtonIcon = lv_label_create(cui_sidebarControlButton);
-    lv_obj_set_width(cui_sidebarControlButtonIcon, LV_SIZE_CONTENT);  /// 100
-    lv_obj_set_height(cui_sidebarControlButtonIcon, LV_SIZE_CONTENT); /// 24
-    lv_label_set_text(cui_sidebarControlButtonIcon, "c");
-    lv_obj_clear_flag(cui_sidebarControlButtonIcon, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN); /// Flags
-    lv_obj_set_scrollbar_mode(cui_sidebarControlButtonIcon, LV_SCROLLBAR_MODE_OFF);
-    lv_obj_set_style_text_font(cui_sidebarControlButtonIcon, lv_icon_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
-
-    lv_obj_t *cui_sidebarNozzleButton;
-    cui_sidebarNozzleButton = lv_obj_create(cui_sidebarComponent);
-    lv_obj_set_width(cui_sidebarNozzleButton, lv_pct(100));
-    lv_obj_set_flex_grow(cui_sidebarNozzleButton, 1);
-    lv_obj_set_x(cui_sidebarNozzleButton, 386);
-    lv_obj_set_y(cui_sidebarNozzleButton, 178);
-    lv_obj_set_flex_flow(cui_sidebarNozzleButton, LV_FLEX_FLOW_ROW);
-    lv_obj_set_flex_align(cui_sidebarNozzleButton, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
-    lv_obj_clear_flag(cui_sidebarNozzleButton, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN); /// Flags
-    lv_obj_set_scrollbar_mode(cui_sidebarNozzleButton, LV_SCROLLBAR_MODE_OFF);
-    lv_obj_set_style_radius(cui_sidebarNozzleButton, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_bg_color(cui_sidebarNozzleButton, lv_color_hex(0x2aff00), LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_bg_opa(cui_sidebarNozzleButton, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_border_width(cui_sidebarNozzleButton, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_left(cui_sidebarNozzleButton, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_right(cui_sidebarNozzleButton, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_top(cui_sidebarNozzleButton, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_bottom(cui_sidebarNozzleButton, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_row(cui_sidebarNozzleButton, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_column(cui_sidebarNozzleButton, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_color(cui_sidebarNozzleButton, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_opa(cui_sidebarNozzleButton, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_color(cui_sidebarNozzleButton, lv_color_hex(0x2aff00), LV_PART_MAIN | LV_STATE_CHECKED);
-    lv_obj_set_style_text_opa(cui_sidebarNozzleButton, 255, LV_PART_MAIN | LV_STATE_CHECKED);
-    lv_obj_set_style_bg_color(cui_sidebarNozzleButton, lv_color_hex(0x008800), LV_PART_MAIN | LV_STATE_PRESSED);
-    lv_obj_set_style_bg_opa(cui_sidebarNozzleButton, 255, LV_PART_MAIN | LV_STATE_PRESSED);
-
-    lv_obj_t *cui_sidebarNozzleButtonIcon;
-    cui_sidebarNozzleButtonIcon = lv_label_create(cui_sidebarNozzleButton);
-    lv_obj_set_width(cui_sidebarNozzleButtonIcon, LV_SIZE_CONTENT);  /// 100
-    lv_obj_set_height(cui_sidebarNozzleButtonIcon, LV_SIZE_CONTENT); /// 24
-    lv_label_set_text(cui_sidebarNozzleButtonIcon, "p");
-    lv_obj_clear_flag(cui_sidebarNozzleButtonIcon, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN); /// Flags
-    lv_obj_set_scrollbar_mode(cui_sidebarNozzleButtonIcon, LV_SCROLLBAR_MODE_OFF);
-    lv_obj_set_style_text_font(cui_sidebarNozzleButtonIcon, lv_icon_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
-
     lv_obj_t *cui_sidebarAmsViewButton;
     cui_sidebarAmsViewButton = lv_obj_create(cui_sidebarComponent);
     lv_obj_set_width(cui_sidebarAmsViewButton, lv_pct(100));
@@ -331,10 +239,6 @@ lv_obj_t *ui_sidebarComponent_create(lv_obj_t *comp_parent)
     children[UI_COMP_SIDEBARCOMPONENT_SIDEBARHOMEBUTTON_SIDEBARHOMEBUTTONICON] = cui_sidebarHomeButtonIcon;
     children[UI_COMP_SIDEBARCOMPONENT_SIDEBARTEMPBUTTON] = cui_sidebarTempButton;
     children[UI_COMP_SIDEBARCOMPONENT_SIDEBARTEMPBUTTON_SIDEBARTEMPBUTTONICON] = cui_sidebarTempButtonIcon;
-    children[UI_COMP_SIDEBARCOMPONENT_SIDEBARCONTROLBUTTON] = cui_sidebarControlButton;
-    children[UI_COMP_SIDEBARCOMPONENT_SIDEBARCONTROLBUTTON_SIDEBARCONTROLBUTTONICON] = cui_sidebarControlButtonIcon;
-    children[UI_COMP_SIDEBARCOMPONENT_SIDEBARNOZZLEBUTTON] = cui_sidebarNozzleButton;
-    children[UI_COMP_SIDEBARCOMPONENT_SIDEBARNOZZLEBUTTON_SIDEBARNOZZLEBUTTONICON] = cui_sidebarNozzleButtonIcon;
     children[UI_COMP_SIDEBARCOMPONENT_SIDEBARAMSVIEWBUTTON] = cui_sidebarAmsViewButton;
     children[UI_COMP_SIDEBARCOMPONENT_SIDEBARAMSVIEWBUTTON_SIDEBARAMSVIEWBUTTONICON] = cui_sidebarAmsViewButtonIcon;
     children[UI_COMP_SIDEBARCOMPONENT_SIDEBARSETTINGSBUTTON] = cui_sidebarSettingsButton;
@@ -343,8 +247,6 @@ lv_obj_t *ui_sidebarComponent_create(lv_obj_t *comp_parent)
     lv_obj_add_event_cb(cui_sidebarComponent, del_component_child_event_cb, LV_EVENT_DELETE, children);
     lv_obj_add_event_cb(cui_sidebarHomeButton, ui_event_comp_sidebarComponent_sidebarHomeButton, LV_EVENT_ALL, children);
     lv_obj_add_event_cb(cui_sidebarTempButton, ui_event_comp_sidebarComponent_sidebarTempButton, LV_EVENT_ALL, children);
-    lv_obj_add_event_cb(cui_sidebarControlButton, ui_event_comp_sidebarComponent_sidebarControlButton, LV_EVENT_ALL, children);
-    lv_obj_add_event_cb(cui_sidebarNozzleButton, ui_event_comp_sidebarComponent_sidebarNozzleButton, LV_EVENT_ALL, children);
     lv_obj_add_event_cb(cui_sidebarAmsViewButton, ui_event_comp_sidebarComponent_sidebarAmsViewButton, LV_EVENT_ALL, children);
     lv_obj_add_event_cb(cui_sidebarSettingsButton, ui_event_comp_sidebarComponent_sidebarSettingsButton, LV_EVENT_ALL, children);
     ui_comp_sidebarComponent_create_hook(cui_sidebarComponent);

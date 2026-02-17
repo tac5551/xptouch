@@ -14,7 +14,7 @@ void ui_optionalScreen_screen_init(void)
     lv_obj_set_style_pad_row(ui_optionalScreen, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_column(ui_optionalScreen, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-    ui_sidebarComponent = ui_sidebarComponent_create(ui_homeScreen);
+    ui_sidebarComponent = ui_sidebarComponent_create(ui_optionalScreen);
     lv_obj_set_x(ui_sidebarComponent, 387);
     lv_obj_set_y(ui_sidebarComponent, 178);
 

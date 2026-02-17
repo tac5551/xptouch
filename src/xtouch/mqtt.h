@@ -5,6 +5,7 @@
 #include <WiFiClientSecure.h>
 #include <PubSubClient.h>
 #include <ArduinoJson.h>
+#include <esp_task_wdt.h>
 #include "ui/ui_msgs.h"
 #include "types.h"
 #include "autogrowstream.h"
@@ -816,23 +817,25 @@ const char *xtouch_mqtt_generateRandomKey(int keyLength)
     return key;
 }
 
+/* 起動後はじめて MQTT 接続できたときだけホームへ。再接続では画面を変えない（不定期にロード画面に戻るのを防ぐ） */
+static bool xtouch_mqtt_has_ever_connected = false;
 void xtouch_mqtt_onMqttReady()
 {
-    if (!xtouch_mqtt_firstConnectionDone)
+    if (!xtouch_mqtt_has_ever_connected)
     {
+        xtouch_mqtt_has_ever_connected = true;
         loadScreen(0);
     }
     xtouch_mqtt_firstConnectionDone = true;
 }
 
-void xtouch_cloud_mqtt_connect()
+static void xtouch_mqtt_connect(const char *username, const char *password, const char *introCaption, bool clear_cloud_on_unauthorized)
 {
-
     ConsoleInfo.println(F("[xPTouch][MQTT] Connecting"));
 
     if (!xtouch_mqtt_firstConnectionDone)
     {
-        lv_label_set_text(introScreenCaption, LV_SYMBOL_CHARGE " Connecting to Cloud MQTT");
+        lv_label_set_text(introScreenCaption, introCaption);
         lv_timer_handler();
         lv_task_handler();
         delay(32);
@@ -843,7 +846,7 @@ void xtouch_cloud_mqtt_connect()
     while (!xtouch_pubSubClient.connected())
     {
         String clientId = "XTouch-CLIENT-" + String(xtouch_mqtt_generateRandomKey(16));
-        if (xtouch_pubSubClient.connect(clientId.c_str(), cloud.getUsername().c_str(), cloud.getAuthToken().c_str()))
+        if (xtouch_pubSubClient.connect(clientId.c_str(), username, password))
         {
             ConsoleInfo.println(F("[xPTouch][MQTT] ---- CONNECTED ----"));
 
@@ -860,7 +863,6 @@ void xtouch_cloud_mqtt_connect()
 
             switch (xtouch_pubSubClient.state())
             {
-
             case -4: // MQTT_CONNECTION_TIMEOUT
                 xtouch_mqtt_connection_timeout_count--;
                 if (xtouch_mqtt_connection_timeout_count == 0)
@@ -869,29 +871,24 @@ void xtouch_cloud_mqtt_connect()
                 }
                 break;
             case -2: // MQTT_CONNECT_FAILED
-
                 if (!xtouch_mqtt_firstConnectionDone)
                 {
                     xtouch_mqtt_connection_fail_count--;
                     if (xtouch_mqtt_connection_fail_count == 0)
                     {
-                        if (!xtouch_mqtt_firstConnectionDone)
-                        {
-                            lv_label_set_text(introScreenCaption, LV_SYMBOL_WARNING " MQTT ERROR");
-                            lv_timer_handler();
-                            lv_task_handler();
-                            delay(3000);
-                            lv_label_set_text(introScreenCaption, LV_SYMBOL_REFRESH " REBOOTING");
-                            lv_timer_handler();
-                            lv_task_handler();
-                        }
+                        lv_label_set_text(introScreenCaption, LV_SYMBOL_WARNING " MQTT ERROR");
+                        lv_timer_handler();
+                        lv_task_handler();
+                        delay(3000);
+                        lv_label_set_text(introScreenCaption, LV_SYMBOL_REFRESH " REBOOTING");
+                        lv_timer_handler();
+                        lv_task_handler();
                         ESP.restart();
                     }
                 }
                 break;
             case -3: // MQTT_CONNECTION_LOST
             case -1: // MQTT_DISCONNECTED
-
                 break;
             case 1: // MQTT BAD_PROTOCOL
             case 2: // MQTT BAD_CLIENT_ID
@@ -908,114 +905,95 @@ void xtouch_cloud_mqtt_connect()
                     lv_timer_handler();
                     lv_task_handler();
                 }
-                cloud.clearDeviceList();
-                cloud.clearPairList();
-                cloud.clearTokens();
+                if (clear_cloud_on_unauthorized)
+                {
+                    cloud.clearDeviceList();
+                    cloud.clearPairList();
+                    cloud.clearTokens();
+                }
                 ESP.restart();
-
                 break;
-            };
+            }
         }
         lv_timer_handler();
         lv_task_handler();
         delay(32);
+        /* 接続待ちで長時間ブロックするため WDT をリセット（再起動してロード画面に戻るのを防ぐ） */
+        esp_task_wdt_reset();
     }
+}
+
+void xtouch_cloud_mqtt_connect()
+{
+    xtouch_mqtt_connect(cloud.getUsername().c_str(), cloud.getAuthToken().c_str(),
+                        LV_SYMBOL_CHARGE " Connecting to Cloud MQTT", true);
 }
 
 void xtouch_local_mqtt_connect()
 {
+    xtouch_mqtt_connect("bblp", xTouchConfig.xTouchAccessCode,
+                        LV_SYMBOL_CHARGE " Connecting to Printer", false);
+}
 
-    ConsoleInfo.println(F("[XTouch][MQTT] Connecting"));
+static void xtouch_mqtt_configure_client(const char *host)
+{
+    xtouch_wiFiClientSecure.flush();
+    xtouch_wiFiClientSecure.stop();
+    xtouch_wiFiClientSecure.setInsecure();
 
-    if (!xtouch_mqtt_firstConnectionDone)
+    xtouch_pubSubClient.setServer(host, 8883);
+    xtouch_pubSubClient.setBufferSize(2048);
+    xtouch_pubSubClient.setStream(stream);
+    xtouch_pubSubClient.setCallback(xtouch_pubSubClient_streamCallback);
+    xtouch_pubSubClient.setKeepAlive(10);
+}
+
+static void xtouch_mqtt_subscribe_commands(bool for_cloud)
+{
+    if (for_cloud)
     {
-        lv_label_set_text(introScreenCaption, LV_SYMBOL_CHARGE " Connecting to Cloud MQTT");
-        lv_timer_handler();
-        lv_task_handler();
-        delay(32);
+        lv_msg_subscribe(XTOUCH_SIDEBAR_HOME, (lv_msg_subscribe_cb_t)xtouch_device_onSidebarHomeCommand, NULL);
+        lv_msg_subscribe(XTOUCH_COMMAND_LIGHT_RESET, (lv_msg_subscribe_cb_t)xtouch_device_onLightResetCommand, NULL);
+        lv_msg_subscribe(XTOUCH_COMMAND_LCD_TOGGLE, (lv_msg_subscribe_cb_t)xtouch_device_onLCDToggleCommand, NULL);
     }
+    lv_msg_subscribe(XTOUCH_COMMAND_LIGHT_TOGGLE, (lv_msg_subscribe_cb_t)xtouch_device_onLightToggleCommand, NULL);
+    lv_msg_subscribe(XTOUCH_COMMAND_STOP, (lv_msg_subscribe_cb_t)xtouch_device_onStopCommand, NULL);
+    lv_msg_subscribe(XTOUCH_COMMAND_PAUSE, (lv_msg_subscribe_cb_t)xtouch_device_onPauseCommand, NULL);
+    lv_msg_subscribe(XTOUCH_COMMAND_RESUME, (lv_msg_subscribe_cb_t)xtouch_device_onResumeCommand, NULL);
 
-    xtouch_mqtt_firstConnectionDone = false;
-
-    while (!xtouch_pubSubClient.connected())
+    lv_msg_subscribe(XTOUCH_COMMAND_HOME, (lv_msg_subscribe_cb_t)xtouch_device_onHomeCommand, NULL);
+    lv_msg_subscribe(XTOUCH_COMMAND_LEFT, (lv_msg_subscribe_cb_t)xtouch_device_onLeftCommand, NULL);
+    lv_msg_subscribe(XTOUCH_COMMAND_RIGHT, (lv_msg_subscribe_cb_t)xtouch_device_onRightCommand, NULL);
+    lv_msg_subscribe(XTOUCH_COMMAND_UP, (lv_msg_subscribe_cb_t)xtouch_device_onUpCommand, NULL);
+    lv_msg_subscribe(XTOUCH_COMMAND_DOWN, (lv_msg_subscribe_cb_t)xtouch_device_onDownCommand, NULL);
+    if (for_cloud)
     {
-        String clientId = "XTOUCH-CLIENT-" + String(xtouch_mqtt_generateRandomKey(16));
-        if (xtouch_pubSubClient.connect("clientId.c_str()", "bblp", xTouchConfig.xTouchAccessCode))
-        {
-            ConsoleInfo.println(F("[XTouch][MQTT] ---- CONNECTED ----"));
+        lv_msg_subscribe(XTOUCH_COMMAND_BED_UP, (lv_msg_subscribe_cb_t)xtouch_device_onBedUpCommand, NULL);
+        lv_msg_subscribe(XTOUCH_COMMAND_BED_DOWN, (lv_msg_subscribe_cb_t)xtouch_device_onBedDownCommand, NULL);
+    }
+    lv_msg_subscribe(XTOUCH_COMMAND_BED_TARGET_TEMP, (lv_msg_subscribe_cb_t)xtouch_device_onBedTargetTempCommand, NULL);
+    lv_msg_subscribe(XTOUCH_COMMAND_NOZZLE_TARGET_TEMP, (lv_msg_subscribe_cb_t)xtouch_device_onNozzleTargetCommand, NULL);
+    lv_msg_subscribe(XTOUCH_COMMAND_PART_FAN_SPEED, (lv_msg_subscribe_cb_t)xtouch_device_onPartSpeedCommand, NULL);
+    lv_msg_subscribe(XTOUCH_COMMAND_AUX_FAN_SPEED, (lv_msg_subscribe_cb_t)xtouch_device_onAuxSpeedCommand, NULL);
+    lv_msg_subscribe(XTOUCH_COMMAND_CHAMBER_FAN_SPEED, (lv_msg_subscribe_cb_t)xtouch_device_onChamberSpeedCommand, NULL);
+    lv_msg_subscribe(XTOUCH_COMMAND_PRINT_SPEED, (lv_msg_subscribe_cb_t)xtouch_device_onPrintSpeedCommand, NULL);
+    lv_msg_subscribe(XTOUCH_COMMAND_UNLOAD_FILAMENT, (lv_msg_subscribe_cb_t)xtouch_device_onUnloadFilament, NULL);
+    lv_msg_subscribe(XTOUCH_COMMAND_LOAD_FILAMENT, (lv_msg_subscribe_cb_t)xtouch_device_onLoadFilament, NULL);
+    lv_msg_subscribe(XTOUCH_COMMAND_AMS_CONTROL, (lv_msg_subscribe_cb_t)xtouch_device_command_ams_control, NULL);
+    if (for_cloud)
+    {
+        lv_msg_subscribe(XTOUCH_COMMAND_AMS_LOAD_SLOT, (lv_msg_subscribe_cb_t)xtouch_device_command_ams_load, NULL);
+        lv_msg_subscribe(XTOUCH_COMMAND_AMS_UNLOAD_SLOT, (lv_msg_subscribe_cb_t)xtouch_device_command_ams_unload, NULL);
+    }
+    lv_msg_subscribe(XTOUCH_COMMAND_CLEAN_PRINT_ERROR, (lv_msg_subscribe_cb_t)xtouch_device_command_clean_print_error, NULL);
 
-            xtouch_pubSubClient.subscribe(xtouch_mqtt_report_topic.c_str());
-            xtouch_device_pushall();
-            xtouch_device_get_version();
-            xtouch_mqtt_onMqttReady();
-            xtouch_mqtt_lastPushStatus = millis();
-            break;
-        }
-        else
-        {
-            ConsoleError.printf("[XTouch][MQTT] ---- CONNECTION FAIL ----: %d\n", xtouch_pubSubClient.state());
+    lv_msg_subscribe(XTOUCH_COMMAND_EXTRUDE_UP, (lv_msg_subscribe_cb_t)xtouch_device_onNozzleUp, NULL);
+    lv_msg_subscribe(XTOUCH_COMMAND_EXTRUDE_DOWN, (lv_msg_subscribe_cb_t)xtouch_device_onNozzleDown, NULL);
 
-            switch (xtouch_pubSubClient.state())
-            {
-
-            case -4: // MQTT_CONNECTION_TIMEOUT
-                xtouch_mqtt_connection_timeout_count--;
-                if (xtouch_mqtt_connection_timeout_count == 0)
-                {
-                    ESP.restart();
-                }
-                break;
-            case -2: // MQTT_CONNECT_FAILED
-
-                if (!xtouch_mqtt_firstConnectionDone)
-                {
-                    xtouch_mqtt_connection_fail_count--;
-                    if (xtouch_mqtt_connection_fail_count == 0)
-                    {
-                        if (!xtouch_mqtt_firstConnectionDone)
-                        {
-                            lv_label_set_text(introScreenCaption, LV_SYMBOL_WARNING " MQTT ERROR");
-                            lv_timer_handler();
-                            lv_task_handler();
-                            delay(3000);
-                            lv_label_set_text(introScreenCaption, LV_SYMBOL_REFRESH " REBOOTING");
-                            lv_timer_handler();
-                            lv_task_handler();
-                        }
-                        ESP.restart();
-                    }
-                }
-                break;
-            case -3: // MQTT_CONNECTION_LOST
-            case -1: // MQTT_DISCONNECTED
-
-                break;
-            case 1: // MQTT BAD_PROTOCOL
-            case 2: // MQTT BAD_CLIENT_ID
-            case 3: // MQTT UNAVAILABLE
-            case 4: // MQTT BAD_CREDENTIALS
-            case 5: // MQTT UNAUTHORIZED
-                if (!xtouch_mqtt_firstConnectionDone)
-                {
-                    lv_label_set_text(introScreenCaption, LV_SYMBOL_WARNING " MQTT ERROR");
-                    lv_timer_handler();
-                    lv_task_handler();
-                    delay(3000);
-                    lv_label_set_text(introScreenCaption, LV_SYMBOL_REFRESH " REBOOTING");
-                    lv_timer_handler();
-                    lv_task_handler();
-                }
-                // cloud.clearDeviceList();
-                // cloud.clearPairList();
-                // cloud.clearTokens();
-                ESP.restart();
-
-                break;
-            };
-        }
-        lv_timer_handler();
-        lv_task_handler();
-        delay(32);
+    if (for_cloud)
+    {
+        lv_msg_subscribe(XTOUCH_COMMAND_SET_UTIL_NOZZLE_CHANGE, (lv_msg_subscribe_cb_t)xtouch_device_onSetaccessoriesNozzleCommand, NULL);
+        lv_msg_subscribe(XTOUCH_COMMAND_SET_UTIL_CALIBRATION, (lv_msg_subscribe_cb_t)xtouch_device_onSetUtilCalibrationCommand, NULL);
     }
 }
 
@@ -1027,60 +1005,12 @@ void xtouch_cloud_mqtt_setup()
     delay(32);
 
     xtouch_mqtt_topic_setup();
-
-    xtouch_wiFiClientSecure.flush();
-    xtouch_wiFiClientSecure.stop();
-
-    // xtouch_wiFiClientSecure.setCACert(cloud.getRegion() == "China" ? cn_mqtt_bambulab_com : us_mqtt_bambulab_com);
-    xtouch_wiFiClientSecure.setInsecure();
-
-    xtouch_pubSubClient.setServer(cloud.getMqttCloudHost(), 8883);
-    xtouch_pubSubClient.setBufferSize(2048); // 2KB for mqtt message JWT output
-    xtouch_pubSubClient.setStream(stream);
-    xtouch_pubSubClient.setCallback(xtouch_pubSubClient_streamCallback);
-    xtouch_pubSubClient.setKeepAlive(10);
-
-    /* home */
-    lv_msg_subscribe(XTOUCH_SIDEBAR_HOME, (lv_msg_subscribe_cb_t)xtouch_device_onSidebarHomeCommand, NULL);
-    lv_msg_subscribe(XTOUCH_COMMAND_LIGHT_RESET, (lv_msg_subscribe_cb_t)xtouch_device_onLightResetCommand, NULL);
-    lv_msg_subscribe(XTOUCH_COMMAND_LIGHT_TOGGLE, (lv_msg_subscribe_cb_t)xtouch_device_onLightToggleCommand, NULL);
-    lv_msg_subscribe(XTOUCH_COMMAND_LCD_TOGGLE, (lv_msg_subscribe_cb_t)xtouch_device_onLCDToggleCommand, NULL);
-
-    lv_msg_subscribe(XTOUCH_COMMAND_STOP, (lv_msg_subscribe_cb_t)xtouch_device_onStopCommand, NULL);
-    lv_msg_subscribe(XTOUCH_COMMAND_PAUSE, (lv_msg_subscribe_cb_t)xtouch_device_onPauseCommand, NULL);
-    lv_msg_subscribe(XTOUCH_COMMAND_RESUME, (lv_msg_subscribe_cb_t)xtouch_device_onResumeCommand, NULL);
-
-    /* control */
-    lv_msg_subscribe(XTOUCH_COMMAND_HOME, (lv_msg_subscribe_cb_t)xtouch_device_onHomeCommand, NULL);
-    lv_msg_subscribe(XTOUCH_COMMAND_LEFT, (lv_msg_subscribe_cb_t)xtouch_device_onLeftCommand, NULL);
-    lv_msg_subscribe(XTOUCH_COMMAND_RIGHT, (lv_msg_subscribe_cb_t)xtouch_device_onRightCommand, NULL);
-    lv_msg_subscribe(XTOUCH_COMMAND_UP, (lv_msg_subscribe_cb_t)xtouch_device_onUpCommand, NULL);
-    lv_msg_subscribe(XTOUCH_COMMAND_DOWN, (lv_msg_subscribe_cb_t)xtouch_device_onDownCommand, NULL);
-    lv_msg_subscribe(XTOUCH_COMMAND_BED_UP, (lv_msg_subscribe_cb_t)xtouch_device_onBedUpCommand, NULL);
-    lv_msg_subscribe(XTOUCH_COMMAND_BED_DOWN, (lv_msg_subscribe_cb_t)xtouch_device_onBedDownCommand, NULL);
-    lv_msg_subscribe(XTOUCH_COMMAND_BED_TARGET_TEMP, (lv_msg_subscribe_cb_t)xtouch_device_onBedTargetTempCommand, NULL);
-    lv_msg_subscribe(XTOUCH_COMMAND_NOZZLE_TARGET_TEMP, (lv_msg_subscribe_cb_t)xtouch_device_onNozzleTargetCommand, NULL);
-    lv_msg_subscribe(XTOUCH_COMMAND_PART_FAN_SPEED, (lv_msg_subscribe_cb_t)xtouch_device_onPartSpeedCommand, NULL);
-    lv_msg_subscribe(XTOUCH_COMMAND_AUX_FAN_SPEED, (lv_msg_subscribe_cb_t)xtouch_device_onAuxSpeedCommand, NULL);
-    lv_msg_subscribe(XTOUCH_COMMAND_CHAMBER_FAN_SPEED, (lv_msg_subscribe_cb_t)xtouch_device_onChamberSpeedCommand, NULL);
-    lv_msg_subscribe(XTOUCH_COMMAND_PRINT_SPEED, (lv_msg_subscribe_cb_t)xtouch_device_onPrintSpeedCommand, NULL);
-    lv_msg_subscribe(XTOUCH_COMMAND_UNLOAD_FILAMENT, (lv_msg_subscribe_cb_t)xtouch_device_onUnloadFilament, NULL);
-    lv_msg_subscribe(XTOUCH_COMMAND_LOAD_FILAMENT, (lv_msg_subscribe_cb_t)xtouch_device_onLoadFilament, NULL);
-    lv_msg_subscribe(XTOUCH_COMMAND_AMS_CONTROL, (lv_msg_subscribe_cb_t)xtouch_device_command_ams_control, NULL);
-    lv_msg_subscribe(XTOUCH_COMMAND_AMS_LOAD_SLOT, (lv_msg_subscribe_cb_t)xtouch_device_command_ams_load, NULL);
-    lv_msg_subscribe(XTOUCH_COMMAND_AMS_UNLOAD_SLOT, (lv_msg_subscribe_cb_t)xtouch_device_command_ams_unload, NULL);
-    lv_msg_subscribe(XTOUCH_COMMAND_CLEAN_PRINT_ERROR, (lv_msg_subscribe_cb_t)xtouch_device_command_clean_print_error, NULL);
-
-    /* filament */
-    lv_msg_subscribe(XTOUCH_COMMAND_EXTRUDE_UP, (lv_msg_subscribe_cb_t)xtouch_device_onNozzleUp, NULL);
-    lv_msg_subscribe(XTOUCH_COMMAND_EXTRUDE_DOWN, (lv_msg_subscribe_cb_t)xtouch_device_onNozzleDown, NULL);
-
-    lv_msg_subscribe(XTOUCH_COMMAND_SET_UTIL_NOZZLE_CHANGE, (lv_msg_subscribe_cb_t)xtouch_device_onSetaccessoriesNozzleCommand, NULL);
-    lv_msg_subscribe(XTOUCH_COMMAND_SET_UTIL_CALIBRATION, (lv_msg_subscribe_cb_t)xtouch_device_onSetUtilCalibrationCommand, NULL);
-
+    xtouch_mqtt_configure_client(cloud.getMqttCloudHost());
+    xtouch_mqtt_subscribe_commands(true);
 
     delay(2000);
 }
+
 void xtouch_local_mqtt_setup()
 {
     lv_label_set_text(introScreenCaption, LV_SYMBOL_CHARGE " Connecting Printer");
@@ -1089,50 +1019,14 @@ void xtouch_local_mqtt_setup()
     delay(32);
 
     xtouch_mqtt_topic_setup();
-
-    xtouch_wiFiClientSecure.flush();
-    xtouch_wiFiClientSecure.stop();
-
-    xtouch_wiFiClientSecure.setInsecure();
-
-    xtouch_pubSubClient.setServer(xTouchConfig.xTouchHost, 8883);
-    xtouch_pubSubClient.setBufferSize(2048); // 2KB for mqtt message JWT output
-    xtouch_pubSubClient.setStream(stream);
-    xtouch_pubSubClient.setCallback(xtouch_pubSubClient_streamCallback);
-    xtouch_pubSubClient.setKeepAlive(10);
-
-    /* home */
-    lv_msg_subscribe(XTOUCH_COMMAND_LIGHT_TOGGLE, (lv_msg_subscribe_cb_t)xtouch_device_onLightToggleCommand, NULL);
-    lv_msg_subscribe(XTOUCH_COMMAND_STOP, (lv_msg_subscribe_cb_t)xtouch_device_onStopCommand, NULL);
-    lv_msg_subscribe(XTOUCH_COMMAND_PAUSE, (lv_msg_subscribe_cb_t)xtouch_device_onPauseCommand, NULL);
-    lv_msg_subscribe(XTOUCH_COMMAND_RESUME, (lv_msg_subscribe_cb_t)xtouch_device_onResumeCommand, NULL);
-
-    /* control */
-    lv_msg_subscribe(XTOUCH_COMMAND_HOME, (lv_msg_subscribe_cb_t)xtouch_device_onHomeCommand, NULL);
-    lv_msg_subscribe(XTOUCH_COMMAND_LEFT, (lv_msg_subscribe_cb_t)xtouch_device_onLeftCommand, NULL);
-    lv_msg_subscribe(XTOUCH_COMMAND_RIGHT, (lv_msg_subscribe_cb_t)xtouch_device_onRightCommand, NULL);
-    lv_msg_subscribe(XTOUCH_COMMAND_UP, (lv_msg_subscribe_cb_t)xtouch_device_onUpCommand, NULL);
-    lv_msg_subscribe(XTOUCH_COMMAND_DOWN, (lv_msg_subscribe_cb_t)xtouch_device_onDownCommand, NULL);
-    lv_msg_subscribe(XTOUCH_COMMAND_BED_TARGET_TEMP, (lv_msg_subscribe_cb_t)xtouch_device_onBedTargetTempCommand, NULL);
-    lv_msg_subscribe(XTOUCH_COMMAND_NOZZLE_TARGET_TEMP, (lv_msg_subscribe_cb_t)xtouch_device_onNozzleTargetCommand, NULL);
-    lv_msg_subscribe(XTOUCH_COMMAND_PART_FAN_SPEED, (lv_msg_subscribe_cb_t)xtouch_device_onPartSpeedCommand, NULL);
-    lv_msg_subscribe(XTOUCH_COMMAND_AUX_FAN_SPEED, (lv_msg_subscribe_cb_t)xtouch_device_onAuxSpeedCommand, NULL);
-    lv_msg_subscribe(XTOUCH_COMMAND_CHAMBER_FAN_SPEED, (lv_msg_subscribe_cb_t)xtouch_device_onChamberSpeedCommand, NULL);
-    lv_msg_subscribe(XTOUCH_COMMAND_PRINT_SPEED, (lv_msg_subscribe_cb_t)xtouch_device_onPrintSpeedCommand, NULL);
-    lv_msg_subscribe(XTOUCH_COMMAND_UNLOAD_FILAMENT, (lv_msg_subscribe_cb_t)xtouch_device_onUnloadFilament, NULL);
-    lv_msg_subscribe(XTOUCH_COMMAND_LOAD_FILAMENT, (lv_msg_subscribe_cb_t)xtouch_device_onLoadFilament, NULL);
-    lv_msg_subscribe(XTOUCH_COMMAND_AMS_CONTROL, (lv_msg_subscribe_cb_t)xtouch_device_command_ams_control, NULL);
-    lv_msg_subscribe(XTOUCH_COMMAND_CLEAN_PRINT_ERROR, (lv_msg_subscribe_cb_t)xtouch_device_command_clean_print_error, NULL);
-
-    /* filament */
-    lv_msg_subscribe(XTOUCH_COMMAND_EXTRUDE_UP, (lv_msg_subscribe_cb_t)xtouch_device_onNozzleUp, NULL);
-    lv_msg_subscribe(XTOUCH_COMMAND_EXTRUDE_DOWN, (lv_msg_subscribe_cb_t)xtouch_device_onNozzleDown, NULL);
+    xtouch_mqtt_configure_client(xTouchConfig.xTouchHost);
+    xtouch_mqtt_subscribe_commands(false);
 
     delay(2000);
 }
 
-#define XTOUCH_MQTT_PUSHALL_INTERVAL_MS 5000
-
+// #define XTOUCH_MQTT_PUSHALL_INTERVAL_MS 5000
+// static unsigned long lastPushAll = 0;
 void xtouch_cloud_mqtt_loop()
 {
     xtouch_pubSubClient.loop();
@@ -1148,13 +1042,16 @@ void xtouch_cloud_mqtt_loop()
         return;
     }
 
-    static unsigned long lastPushAll = 0;
-    unsigned long now = millis();
-    if (now - lastPushAll >= XTOUCH_MQTT_PUSHALL_INTERVAL_MS)
-    {
-        lastPushAll = now;
-        xtouch_device_pushall();
-    }
+    // unsigned long now = millis();
+    // /* オーバーフロー対策: millis() は約49日で巻き戻る。そのときは基準をリセット */
+    // if (now < lastPushAll)
+    //     lastPushAll = now;
+    // if (now - lastPushAll >= XTOUCH_MQTT_PUSHALL_INTERVAL_MS)
+    // {
+    //     Serial.println("lastPushAll: " + String(lastPushAll) + " now: " + String(now) + " interval: " + String(now - lastPushAll) + " interval: " + String(XTOUCH_MQTT_PUSHALL_INTERVAL_MS));
+    //     lastPushAll = now;
+    //     xtouch_device_pushall();
+    // }
 }
 
 #endif

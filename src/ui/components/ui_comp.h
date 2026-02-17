@@ -14,6 +14,7 @@ extern "C"
     lv_obj_t *ui_comp_get_child(lv_obj_t *comp, uint32_t child_idx);
     extern uint32_t LV_EVENT_GET_COMP_CHILD;
 #include "ui_comp_sidebarcomponent.h"
+#include "ui_comp_utilTabbarcomponent.h"
 #include "ui_comp_controlcomponent.h"
 #include "ui_comp_homecomponent.h"
 #include "ui_comp_temperaturecomponent.h"

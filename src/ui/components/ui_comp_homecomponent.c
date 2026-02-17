@@ -341,7 +341,7 @@ void onXTouchPrintStatus(lv_event_t *e)
     lv_obj_t **comp_homeComponent = lv_event_get_user_data(e);
 
     ui_confirmPanel_hide(); // hide confirm panel if new data comes
-printf("[xPTouch][LED] print_status : %d print_gcode_action : %d print_real_action : %d percent : %d layer : %d/%d mc_print_sub_stage : %d mc_print_stage : %d\n", bambuStatus.print_status, bambuStatus.print_gcode_action, bambuStatus.print_real_action, bambuStatus.mc_print_percent, bambuStatus.current_layer, bambuStatus.total_layers, bambuStatus.mc_print_sub_stage, bambuStatus.mc_print_stage);
+    printf("[xPTouch][LED] print_status : %d print_gcode_action : %d print_real_action : %d percent : %d layer : %d/%d mc_print_sub_stage : %d mc_print_stage : %d\n", bambuStatus.print_status, bambuStatus.print_gcode_action, bambuStatus.print_real_action, bambuStatus.mc_print_percent, bambuStatus.current_layer, bambuStatus.total_layers, bambuStatus.mc_print_sub_stage, bambuStatus.mc_print_stage);
 
     switch (bambuStatus.print_gcode_action)
     {
