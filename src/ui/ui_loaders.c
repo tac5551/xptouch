@@ -40,6 +40,9 @@ void fillScreenData(int screen)
                 break;
     case 7:
         sendMqttMsg(XTOUCH_ON_AMS, bambuStatus.ams);
+        sendMqttMsg(XTOUCH_ON_AMS_BITS, 0);
+        sendMqttMsg(XTOUCH_ON_AMS_SLOT_UPDATE, 0);
+        sendMqttMsg(XTOUCH_ON_AMS_HUMIDITY_UPDATE, 0);
         break;
     }
 }

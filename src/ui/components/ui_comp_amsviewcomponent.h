@@ -8,6 +8,13 @@ extern "C"
 {
 #endif
 
+/* AMS selector: 0=EXT, 1=AMS1, 2=AMS2, 3=AMS3, 4=AMS4 */
+#define UI_AMS_SELECTOR_EXT   0
+#define UI_AMS_SELECTOR_AMS1  1
+#define UI_AMS_SELECTOR_AMS2  2
+#define UI_AMS_SELECTOR_AMS3  3
+#define UI_AMS_SELECTOR_AMS4  4
+
 enum AmsViewComponents
 {
 UI_COMP_AMSVIEWCOMPONENT_AMSVIEWCOMPONENT,

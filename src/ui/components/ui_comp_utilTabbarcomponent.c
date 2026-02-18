@@ -36,6 +36,7 @@ static lv_obj_t *create_tab_button(lv_obj_t *parent, const char *label, int inde
     lv_obj_t *lbl = lv_label_create(btn);
     lv_label_set_text(lbl, label);
     lv_obj_center(lbl);
+    lv_obj_set_style_text_font(lbl, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     lv_obj_add_event_cb(btn, on_tab_click, LV_EVENT_CLICKED, (void *)(intptr_t)index);
     return btn;

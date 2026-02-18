@@ -1,6 +1,7 @@
 #ifndef _XLCD_CONNECTION
 #define _XLCD_CONNECTION
 
+#include <WiFi.h>
 #include "mbedtls/base64.h"
 #include <ArduinoJson.h>
 #include "filesystem.h"
@@ -9,7 +10,9 @@
 bool xtouch_wifi_setup()
 {
     DynamicJsonDocument wifiConfig(1024);
+    bool cloud_mode = false;
     if(xtouch_filesystem_exist(SD, xtouch_paths_provisioning)){
+        cloud_mode = true;
         lv_label_set_text(introScreenCaption, wifiConfig.isNull() ? LV_SYMBOL_SD_CARD "provisioning mode" : LV_SYMBOL_WARNING " Inaccurate provisioning.json and xtouch.json");
         lv_obj_set_style_text_color(introScreenCaption, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_timer_handler();
@@ -115,6 +118,12 @@ bool xtouch_wifi_setup()
 
     WiFi.setTxPower(WIFI_POWER_19_5dBm); // https://github.com/G6EJD/ESP32-8266-Adjust-WiFi-RF-Power-Output/blob/main/README.md
 
+    /* Cloudモードのときだけ DNS を 1.1.1.1 に固定（us.mqtt.bambulab.com 解決用） */
+    if (cloud_mode)
+    {
+        WiFi.config(WiFi.localIP(), WiFi.gatewayIP(), WiFi.subnetMask(), IPAddress(1, 1, 1, 1));
+    }
+
     delay(1000);
     lv_label_set_text(introScreenCaption, LV_SYMBOL_WIFI " Connected");
     lv_timer_handler();
@@ -122,6 +131,8 @@ bool xtouch_wifi_setup()
     delay(1000);
     ConsoleInfo.print(F("[xPTouch][CONNECTION] Connected to the WiFi network with IP: "));
     ConsoleInfo.println(WiFi.localIP());
+    ConsoleInfo.print(F("[xPTouch][CONNECTION] DNS: "));
+    ConsoleInfo.println(WiFi.dnsIP());
 
     return true;
 }

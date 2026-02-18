@@ -35,6 +35,11 @@ void ui_temperatureComponent_hide_keypad()
     lv_obj_clear_flag(temps, LV_OBJ_FLAG_HIDDEN);
     lv_obj_clear_flag(fans, LV_OBJ_FLAG_HIDDEN);
     lv_obj_clear_flag(ui_sidebarComponent, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_t *content_col = lv_obj_get_parent(ui_temperatureComponent);
+    if (content_col && lv_obj_get_child_cnt(content_col) > 0)
+    {
+        lv_obj_clear_flag(lv_obj_get_child(content_col, 0), LV_OBJ_FLAG_HIDDEN);
+    }
     lv_obj_add_flag(keyboard, LV_OBJ_FLAG_HIDDEN);
 
     lv_obj_clear_state(bed, LV_STATE_CHECKED);
@@ -62,7 +67,6 @@ void ui_temperatureComponent_show_keypad(int type, int index)
     lv_obj_t *keyboard = ui_comp_get_child(ui_temperatureComponent, UI_COMP_TEMPERATURECOMPONENT_TEMPERATURECOMPONENTKEYBOARD);
     lv_obj_t *temps = ui_comp_get_child(ui_temperatureComponent, UI_COMP_TEMPERATURECOMPONENT_TEMPERATURECOMPONENTTEMPS);
     lv_obj_t *fans = ui_comp_get_child(ui_temperatureComponent, UI_COMP_TEMPERATURECOMPONENT_TEMPERATURECOMPONENTFANS);
-    lv_obj_add_flag(ui_sidebarComponent, LV_OBJ_FLAG_HIDDEN);
     if (type == 0)
     {
 

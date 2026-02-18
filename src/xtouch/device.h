@@ -9,36 +9,35 @@
 
 char ams_gcode_buffer[2048];
 
-const char *ams_load_gcode = "M620 S%d\n"           //AMSを有効にする
-                             "M106 S255\n"             //フィラメントを排出
-                             "M104 S250\n"             //ノズルを250度に加熱　slicerではここから始まる
-                             "M17 S\n"                 //S軸を有効にする　　　　もともとはない
-                             "M17 X0.5 Y0.5\n"        //X軸, Y軸を0.5mmに移動　もともとはない
-                             "G91\n"                //相対位置
-                             "G1 Y-5 F1200\n"       //すこし逃がす
-                             "G1 Z3\n"               //Z軸を3mm上げる
-                             "G90\n"                 //絶対位置
-                             "G28 X\n"               //X軸を原点に戻す
-                             "M17 R\n"                //R軸をリセット
-                             "G1 X70 F21000\n"         //X軸を70mmに移動（X軸移動速度1200mm/min）
-                             "G1 Y245\n"                //Y軸を245mmに移動    
-                             "G1 Y265 F3000\n"          //Y軸を265mmに移動 パージエリア
-                             "G4\n"                     //ウェイト
-                             "M106 S0\n"                //フィラメントを排出    
-                             "M109 S250\n"             //ノズルを250度に加熱    
-                             "G1 X90\n"                 //X軸を90mmに移動
-                             "G1 Y255\n"                //Y軸を255mmに移動
-                             "G1 X120\n"                 //X軸を120mmに移動
-                             "G1 X20 Y50 F21000\n"      //X軸を20mm, Y軸を50mmに移動（X軸移動速度1200mm/min）
-                             "G1 Y-3\n"                 //Y軸を-3mmに移動
-                             "T%d\n"                    //ツールの選択（ツール番号）
-                             "G1 X54 F12000\n"                 //X軸を54mmに移動
-                             "G1 Y265\n"                //Y軸を265mmに移動
-                            // M400         //一時停止
-                             "G92 E0\n"                 //E軸を0にリセット
-                             "G1 E40 F180\n"            //E軸を40mmに移動（E軸移動速度180mm/min）
+const char *ams_load_gcode = "M620 S%d\n"           // トレイ番号（0始まり）。M621 S と一致必須
+                             "M106 S255\n"             // フィラメントを排出
+                             "M104 S250\n"             // ノズルを250度に加熱
+                             "M17 S\n"                 // ステッパー有効（T実行前に必須・仕様）
+                             "M17 X0.5 Y0.5\n"        // X/Y 微小移動
+                             "G91\n"
+                             "G1 Y-5 F1200\n"
+                             "G1 Z3\n"
+                             "G90\n"
+                             "G28 X\n"
+                             "M17 R\n"
+                             "G1 X70 F21000\n"
+                             "G1 Y245\n"
+                             "G1 Y265 F3000\n"
                              "G4\n"
-                             "M104 S%d\n"
+                             "M106 S0\n"
+                             "M109 S250\n"             // 250度まで待機
+                             "G1 X90\n"
+                             "G1 Y255\n"
+                             "G1 X120\n"
+                             "G1 X20 Y50 F21000\n"
+                             "G1 Y-3\n"
+                             "T%d\n"                    // トレイ番号（M620 S と同じ）
+                             "G1 X54 F12000\n"
+                             "G1 Y265\n"
+                             "G92 E0\n"
+                             "G1 E40 F180\n"
+                             "G4\n"
+                             "M109 S%d\n"              // 材質温度まで待機（M104だと待たず進みフリーズの原因）
                              "G1 X70 F15000\n"
                              "G1 X76\n"
                              "G1 X65\n"
@@ -59,7 +58,8 @@ const char *ams_load_gcode = "M620 S%d\n"           //AMSを有効にする
                              "G91\n"
                              "G1 Z-3 F1200\n"
                              "G90\n"
-                             "M621 S%d\n";
+                             "M621 S%d\n"             // トレイ番号（M620 S と同じ）
+                             "M104 S0\n";             // ロード完了後ヒーターオフ
 
 const char *ams_unload_gcode = "M620 S255\n"
                                "M106 P1 S255\n"
@@ -140,6 +140,9 @@ void xtouch_device_set_print_state(String state)
 
 void xtouch_device_publish(String request)
 {
+#ifdef XTOUCH_DEBUG_GCODE
+    Serial.println(F("[GCODE] MQTT publish request"));
+#endif
     // Serial.println(request);
     xtouch_pubSubClient.publish(xtouch_mqtt_request_topic.c_str(), request.c_str());
     delay(10);
@@ -183,6 +186,11 @@ void xtouch_device_set_printing_speed(int lvl)
 
 void xtouch_device_gcode_line(String line)
 {
+#ifdef XTOUCH_DEBUG_GCODE
+    Serial.println(F("[GCODE send]"));
+    Serial.println(line);
+    Serial.println(F("---"));
+#endif
     DynamicJsonDocument json(line.length() + 256);
     json["print"]["command"] = "gcode_line";
     json["print"]["sequence_id"] = xtouch_device_next_sequence();
@@ -465,35 +473,50 @@ void xtouch_device_command_ams_control(void *s, lv_msg_t *m)
 
 void xtouch_device_command_ams_load(void *s, lv_msg_t *m)
 {
-    uint16_t slot = *((uint16_t *)&m->payload) - 1;
+    const void *payload = m->payload;
+    uint16_t slot = payload ? (uint16_t)(unsigned long)payload - 1 : 0;
+    uint8_t tmp_ams_id = slot / 100;
+    uint8_t tmp_slot_id = slot % 100;
+    uint16_t tray_index = (uint16_t)tmp_ams_id * 4 + tmp_slot_id;
 
-    if (bambuStatus.m_tray_now == slot)
+    Serial.printf("[AMS load] command_ams_load slot=%u tray_index=%u m_tray_now=%u\n", (unsigned)slot, (unsigned)tray_index, (unsigned)bambuStatus.m_tray_now);
+
+    if (bambuStatus.m_tray_now == tray_index)
     {
+        Serial.println(F("[AMS load] skip: already on tray"));
         return;
     }
 
-    uint8_t tmp_ams_id = slot / 100;
-    uint8_t tmp_slot_id = slot % 100;
-
     uint16_t slot_id = tmp_slot_id + 1;
-    if (strcmp(get_tray_type(tmp_ams_id, slot_id), "null") == 0)
+    const char *tray_type = get_tray_type(tmp_ams_id, slot_id);
+    if (!tray_type || strcmp(tray_type, "null") == 0)
     {
+        Serial.println(F("[AMS load] skip: tray_type null"));
         xtouch_device_pushall();
         return;
     }
 
+    Serial.println(F("[AMS load] sending unload+load gcode"));
     bambuStatus.ams_status_main = AMS_STATUS_MAIN_FILAMENT_CHANGE;
     struct XTOUCH_MESSAGE_DATA eventData;
     eventData.data = 0;
     lv_msg_send(XTOUCH_ON_AMS_SLOT_UPDATE, &eventData);
     lv_msg_send(XTOUCH_ON_AMS_STATE_UPDATE, &eventData);
 
-    if (bambuStatus.m_tray_now != 254)
+    /* フィラメントがロードされているときだけアンロードを実行。0-15=AMS, 254=手動ロード, 255=未ロード */
+    bool filament_loaded = (bambuStatus.m_tray_now >= 0 && bambuStatus.m_tray_now <= 15) || (bambuStatus.m_tray_now == 254);
+    if (filament_loaded)
     {
         xtouch_device_gcode_line(ams_unload_gcode);
     }
+    /* トレイ材質温度。未取得(0)や異常に低い値のときは 0（ノズルOFF） */
+    uint16_t load_temp = get_tray_temp(tmp_ams_id, tmp_slot_id);
+    if (load_temp < 100)
+    {
+        load_temp = 0;
+    }
     memset(ams_gcode_buffer, 0, 700);
-    sprintf(ams_gcode_buffer, ams_load_gcode, tmp_ams_id, tmp_slot_id, get_tray_temp(tmp_ams_id, tmp_slot_id), tmp_slot_id);
+    sprintf(ams_gcode_buffer, ams_load_gcode, tray_index, tray_index, load_temp, tray_index);
     xtouch_device_gcode_line(ams_gcode_buffer);
 }
 

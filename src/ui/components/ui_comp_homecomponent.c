@@ -965,6 +965,7 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_bg_color(cui_mainScreenSpeedDropDown, lv_color_hex(0x444444), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(cui_mainScreenSpeedDropDown, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_width(cui_mainScreenSpeedDropDown, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(cui_mainScreenSpeedDropDown, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_dropdown_set_selected(cui_mainScreenSpeedDropDown, 1);
 
     lv_obj_set_style_text_color(cui_mainScreenSpeedDropDown, lv_color_hex(0x2aff00), LV_PART_INDICATOR | LV_STATE_DEFAULT);

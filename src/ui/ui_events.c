@@ -257,7 +257,10 @@ void onFilamentLoad(lv_event_t *e)
 int _slot = 255;
 void onAmsSlotLoadConfirm()
 {
-    lv_msg_send(XTOUCH_COMMAND_AMS_LOAD_SLOT, (void *)_slot);
+#ifdef XTOUCH_DEBUG_GCODE
+    printf("[AMS load] YES tapped, sending _slot=%d\n", _slot);
+#endif
+    lv_msg_send(XTOUCH_COMMAND_AMS_LOAD_SLOT, (void *)(unsigned long)_slot);
     _slot = 255;
 }
 void onAmsSlotLoad(lv_event_t *e, int slot)

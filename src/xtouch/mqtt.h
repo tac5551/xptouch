@@ -531,6 +531,12 @@ void xtouch_mqtt_processPushStatus(JsonDocument &incomingJson)
             if (incomingJson["print"]["ams"].containsKey("tray_now"))
             {
                 bambuStatus.m_tray_now = incomingJson["print"]["ams"]["tray_now"].as<int>();
+                /* ロード完了: tray_now が 0-15 または 254 なら IDLE に戻す（プリンターが ams_status を送らない場合の保険） */
+                if ((bambuStatus.m_tray_now >= 0 && bambuStatus.m_tray_now <= 15) || bambuStatus.m_tray_now == 254)
+                {
+                    if (bambuStatus.ams_status_main == AMS_STATUS_MAIN_FILAMENT_CHANGE)
+                        bambuStatus.ams_status_main = AMS_STATUS_MAIN_IDLE;
+                }
             }
             if (incomingJson["print"]["ams"].containsKey("ams"))
             {
@@ -980,11 +986,9 @@ static void xtouch_mqtt_subscribe_commands(bool for_cloud)
     lv_msg_subscribe(XTOUCH_COMMAND_UNLOAD_FILAMENT, (lv_msg_subscribe_cb_t)xtouch_device_onUnloadFilament, NULL);
     lv_msg_subscribe(XTOUCH_COMMAND_LOAD_FILAMENT, (lv_msg_subscribe_cb_t)xtouch_device_onLoadFilament, NULL);
     lv_msg_subscribe(XTOUCH_COMMAND_AMS_CONTROL, (lv_msg_subscribe_cb_t)xtouch_device_command_ams_control, NULL);
-    if (for_cloud)
-    {
-        lv_msg_subscribe(XTOUCH_COMMAND_AMS_LOAD_SLOT, (lv_msg_subscribe_cb_t)xtouch_device_command_ams_load, NULL);
-        lv_msg_subscribe(XTOUCH_COMMAND_AMS_UNLOAD_SLOT, (lv_msg_subscribe_cb_t)xtouch_device_command_ams_unload, NULL);
-    }
+    /* ローカル/クラウドどちらでも AMS ロード・アンロードは gcode_line で送るため常に購読 */
+    lv_msg_subscribe(XTOUCH_COMMAND_AMS_LOAD_SLOT, (lv_msg_subscribe_cb_t)xtouch_device_command_ams_load, NULL);
+    lv_msg_subscribe(XTOUCH_COMMAND_AMS_UNLOAD_SLOT, (lv_msg_subscribe_cb_t)xtouch_device_command_ams_unload, NULL);
     lv_msg_subscribe(XTOUCH_COMMAND_CLEAN_PRINT_ERROR, (lv_msg_subscribe_cb_t)xtouch_device_command_clean_print_error, NULL);
 
     lv_msg_subscribe(XTOUCH_COMMAND_EXTRUDE_UP, (lv_msg_subscribe_cb_t)xtouch_device_onNozzleUp, NULL);
