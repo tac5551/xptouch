@@ -158,9 +158,87 @@ async function fetchCookies() {
         const authToken = filteredCookies[0].value;
         jsonData["cloud-authToken"] = authToken;
         $id("downloadJson").style.display = "inline-block";
+        $id("downloadFilamentJson").style.display = "inline-block";
       }
     });
   }
+}
+
+function filamentMatchesPrinter(name, printer) {
+  if (printer === "all") return true;
+  if (name.indexOf("@BBL") < 0) return true;
+  if (printer === "P1" && name.indexOf("@BBL P1P") >= 0) return true;
+  if (printer === "X1" && name.indexOf("@BBL X1C") >= 0) return true;
+  if (printer === "A1" && name.indexOf("@BBL A1") >= 0) return true;
+  return false;
+}
+
+function normalizeBrand(brand) {
+  if (brand.startsWith("Generic")) return "Generic";
+  if (brand.startsWith("Bambu")) return "Bambu Lab";
+  return brand;
+}
+
+function buildPublicFilamentsFromSlicer(slicerJson, printer) {
+  const filament = slicerJson.filament;
+  if (!filament) return null;
+  const pub = filament.public || [];
+  const priv = filament.private || [];
+  const brandsSet = new Set();
+  const typesByBrand = {};
+  function processOne(entry) {
+    const name = entry.name || "";
+    const sid = entry.setting_id || "";
+    if (!name) return;
+    if (!filamentMatchesPrinter(name, printer)) return;
+    const atPos = name.indexOf(" @");
+    const head = atPos >= 0 ? name.substring(0, atPos).trim() : name.trim();
+    const sp = head.indexOf(" ");
+    let brand = sp >= 0 ? head.substring(0, sp) : head;
+    let type = sp >= 0 ? head.substring(sp + 1) : "";
+    if (brand === "Bambu") {
+      brand = "Bambu Lab";
+      if (type.startsWith("Lab ")) type = type.substring(4);
+    } else {
+      brand = normalizeBrand(brand);
+    }
+    if (!brand) brand = "Other";
+    if (!type) type = "Other";
+    brandsSet.add(brand);
+    if (!typesByBrand[brand]) typesByBrand[brand] = [];
+    typesByBrand[brand].push({ id: sid, n: name, t: type });
+  }
+  pub.forEach(processOne);
+  priv.forEach(processOne);
+  return { brands: Array.from(brandsSet), items: typesByBrand };
+}
+
+async function downloadFilamentJson() {
+  const token = jsonData["cloud-authToken"];
+  if (!token) return;
+  const host = jsonData["cloud-region"] === "China" ? "https://api.bambulab.cn" : "https://api.bambulab.com";
+  const printer = $id("filamentPrinter").value;
+  $id("downloadFilamentJson").disabled = true;
+  $id("downloadFilamentJson").textContent = "Fetching...";
+  try {
+    const res = await fetch(host + "/v1/iot-service/api/slicer/setting?version=2.0.0.0", {
+      headers: { Authorization: "Bearer " + token },
+    });
+    if (!res.ok) throw new Error(res.status + " " + res.statusText);
+    const slicerJson = await res.json();
+    const out = buildPublicFilamentsFromSlicer(slicerJson, printer);
+    if (!out) throw new Error("No filament data");
+    const blob = new Blob([JSON.stringify(out, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "public_filaments.json";
+    a.click();
+    a.remove();
+  } catch (e) {
+    alert("Failed: " + e.message);
+  }
+  $id("downloadFilamentJson").disabled = false;
+  $id("downloadFilamentJson").textContent = "Download public_filaments.json";
 }
 
 // Function to toggle visibility of main containers
@@ -295,6 +373,7 @@ function main() {
 
 document.addEventListener("DOMContentLoaded", () => {
   $id("downloadJson").addEventListener("click", downloadJsonData);
+  $id("downloadFilamentJson").addEventListener("click", downloadFilamentJson);
   $id("provisionDevice-button").addEventListener("click", provisionDevice);
 
   $id("region-china").addEventListener("click", () => {
