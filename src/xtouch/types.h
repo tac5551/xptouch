@@ -126,7 +126,8 @@ extern "C"
         int m_tray_pre; // tray_now : "0" ~ "15" or "254", "255"
         int m_humidity; // humidity : "1" ~ "5"
         int m_tray_tar; // tray_tar : "0" ~ "15" or "255",
-        char image_url[512]; // image_url 
+        char image_url[512]; // image_url
+        int has_public_filaments; 
     } XTouchBambuStatus;
 
     XTouchBambuStatus bambuStatus;

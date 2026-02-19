@@ -224,6 +224,7 @@ void xtouch_mqtt_processPushStatus(JsonDocument &incomingJson)
         if (incomingJson["print"].containsKey("gcode_state"))
         {
             xtouch_device_set_print_state(incomingJson["print"]["gcode_state"].as<String>());
+            xtouch_mqtt_sendMsg(XTOUCH_ON_PRINT_STATUS); /* ポーズ等の状態変更をすぐUIへ */
         }
 
         if (incomingJson["print"].containsKey("queue_number"))
@@ -989,6 +990,7 @@ static void xtouch_mqtt_subscribe_commands(bool for_cloud)
     /* ローカル/クラウドどちらでも AMS ロード・アンロードは gcode_line で送るため常に購読 */
     lv_msg_subscribe(XTOUCH_COMMAND_AMS_LOAD_SLOT, (lv_msg_subscribe_cb_t)xtouch_device_command_ams_load, NULL);
     lv_msg_subscribe(XTOUCH_COMMAND_AMS_UNLOAD_SLOT, (lv_msg_subscribe_cb_t)xtouch_device_command_ams_unload, NULL);
+    lv_msg_subscribe(XTOUCH_COMMAND_AMS_REFRESH, (lv_msg_subscribe_cb_t)xtouch_device_command_ams_refresh, NULL);
     lv_msg_subscribe(XTOUCH_COMMAND_CLEAN_PRINT_ERROR, (lv_msg_subscribe_cb_t)xtouch_device_command_clean_print_error, NULL);
 
     lv_msg_subscribe(XTOUCH_COMMAND_EXTRUDE_UP, (lv_msg_subscribe_cb_t)xtouch_device_onNozzleUp, NULL);

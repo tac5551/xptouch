@@ -1,6 +1,8 @@
 #ifndef _XLCD_PATHS
 #define _XLCD_PATHS
 
+/* Constants only. No functions here. */
+
 const char *xtouch_paths_eeprom = "/eeprom.bin";
 const char *xtouch_paths_root = "/xtouch";
 
@@ -32,5 +34,6 @@ const char *xtouch_paths_hms_value_db = "/xtouch/device_hms.value.db";
 const char *xtouch_paths_public_filaments = "/xtouch/public_filaments.json";
 const char *xtouch_paths_private_filaments = "/xtouch/private_filaments.json";
 const char *xtouch_paths_private_filaments_flat = "/xtouch/private_filaments_flat.json";
+const char *xtouch_paths_slicer_setting = "/xtouch/slicer_setting.json";
 
 #endif
