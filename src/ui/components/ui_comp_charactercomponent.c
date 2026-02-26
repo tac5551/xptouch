@@ -1,5 +1,3 @@
-
-#include "ui_comp_charactercomponent.h"
 #include "../ui.h"
 
 // 関数宣言
