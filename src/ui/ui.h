@@ -124,6 +124,7 @@ extern "C"
   lv_obj_t *ui_amsEditScreen;
   lv_obj_t *ui_amsEditComponent;
   lv_obj_t *ui_amsEditColorScreen;
+  lv_obj_t *ui_amsEditColorComponent;
 
   void ui_event____initial_actions0(lv_event_t *e);
   lv_obj_t *ui____initial_actions0;

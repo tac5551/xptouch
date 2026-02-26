@@ -29,5 +29,7 @@ const char *xtouch_paths_firmware_ota_fw = "/firmware.bin";
 
 /** Filament lists per printer+nozzle (e.g. X1C_filaments_02.txt). Load from SD at runtime. */
 const char *xtouch_paths_nozzle_dir = "/xtouch/nozzle";
+/** GFL99 等 → b/t 逆引き。Chrome 拡張で生成。 */
+const char *xtouch_paths_filaments_rev = "/xtouch/nozzle/filaments_rev.json";
 
 #endif

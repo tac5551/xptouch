@@ -36,6 +36,7 @@
 #include "xtouch/globals.h"
 #include "xtouch/filaments.h"
 #include "xtouch/ams_edit_temp.h"
+#include "xtouch/filaments_rev.h"
 
 void xtouch_debug_log_ams_save(const char *id_buf, const char *fetched_id, int id_match, int fetched_min, int fetched_max, int payload_min, int payload_max)
 {

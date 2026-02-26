@@ -93,24 +93,29 @@ void xtouch_public_filaments_get_selected_id_n(int brand_display_index, int type
     xtouch_filaments_get_id_n_for_brand_type_index(brand_display_index, type_display_index, id_buf, id_len, n_buf, n_len, type_buf, type_len, out_nozzle_temp_min, out_nozzle_temp_max);
 }
 
-/** type_str（例: "PLA", "ABS"）に一致する Brand/Type の表示インデックスを返す。見つかれば 1、なければ 0。 */
-int xtouch_public_filaments_find_indices_by_type(const char *type_str, int *out_brand_idx, int *out_type_idx)
+/** brand_str と type_str（例: "Bambu Lab", "ABS"）に一致する表示インデックスを返す。見つかれば 1、なければ 0。 */
+int xtouch_public_filaments_find_indices_by_brand_and_type(const char *brand_str, const char *type_str, int *out_brand_idx, int *out_type_idx)
 {
-    if (!type_str || type_str[0] == '\0' || !out_brand_idx || !out_type_idx)
+    if (!brand_str || !type_str || brand_str[0] == '\0' || type_str[0] == '\0' || !out_brand_idx || !out_type_idx)
         return 0;
     xtouch_filaments_ensure_brands_loaded();
     if (!bambuStatus.has_public_filaments || xtouch_filament_num_brands <= 0)
         return 0;
-    char id_buf[16];
+    char brand_buf[16];
     char type_buf[16];
-    for (int bi = 0; bi < xtouch_filament_num_brands; bi++) {
-        for (int ti = 0; ti < 128; ti++) {
-            id_buf[0] = '\0';
+    for (int bi = 0; bi < xtouch_filament_num_brands; bi++)
+    {
+        xtouch_filaments_get_brand_name_at_index(bi, brand_buf, sizeof(brand_buf));
+        if (strcmp(brand_buf, brand_str) != 0)
+            continue;
+        for (int ti = 0; ti < 128; ti++)
+        {
             type_buf[0] = '\0';
-            xtouch_filaments_get_id_n_for_brand_type_index(bi, ti, id_buf, sizeof(id_buf), NULL, 0, type_buf, sizeof(type_buf), NULL, NULL);
-            if (id_buf[0] == '\0')
+            xtouch_filaments_get_id_n_for_brand_type_index(bi, ti, NULL, 0, NULL, 0, type_buf, sizeof(type_buf), NULL, NULL);
+            if (type_buf[0] == '\0')
                 break;
-            if (strcmp(type_buf, type_str) == 0) {
+            if (strcmp(type_buf, type_str) == 0)
+            {
                 *out_brand_idx = bi;
                 *out_type_idx = ti;
                 return 1;

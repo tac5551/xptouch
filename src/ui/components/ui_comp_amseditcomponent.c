@@ -8,9 +8,12 @@
 
 static lv_obj_t *s_dd_brand;
 static lv_obj_t *s_dd_type;
+static lv_obj_t *s_lbl_temp_min;
+static lv_obj_t *s_lbl_temp_max;
 static lv_timer_t *s_ams_edit_sd_timer = NULL;
 
 static void schedule_fetch_for_current_selection(void);
+static void update_temp_display(void);
 
 /** SD 読みを非同期で実行。完了後に Brand / Type を更新。保存済み選択（色画面から戻ったとき）があれば復元、なければトレイ種別から設定。 */
 static void ams_edit_sd_load_timer_cb(lv_timer_t *t)
@@ -42,25 +45,33 @@ static void ams_edit_sd_load_timer_cb(lv_timer_t *t)
     }
     else
     {
-        /* 初回表示: 編集スロットの tray_type から選択。MQTT は tray_idx+1、External は (0,0)。 */
+        /* 初回表示: setting_id 逆引き優先、なければ tray_type で選択。tray_id は 0–3。 */
         uint8_t aid = (ams_edit_current_ams_id == 255) ? 0 : (uint8_t)ams_edit_current_ams_id;
-        uint8_t tid = (ams_edit_current_ams_id == 255) ? 0 : (uint8_t)(ams_edit_current_tray_id + 1);
+        uint8_t tray_index = (ams_edit_current_ams_id == 255) ? 0 : (uint8_t)ams_edit_current_tray_id;
+        int bi = 0, ti = 0;
+        int set = 0;
         if (aid < 8)
         {
-            char *tray_type = get_tray_type(aid, tid);
-            if (tray_type && tray_type[0] != '\0')
+            const char *setting_id = get_tray_setting_id(aid, tray_index);
+            if (setting_id && setting_id[0] != '\0')
             {
-                int bi = 0, ti = 0;
-                if (xtouch_public_filaments_find_indices_by_type(tray_type, &bi, &ti))
+                char brand_buf[24], type_buf[24];
+                brand_buf[0] = type_buf[0] = '\0';
+                if (xtouch_public_filaments_rev_lookup(setting_id, brand_buf, sizeof(brand_buf), type_buf, sizeof(type_buf)))
                 {
-                    lv_dropdown_set_selected(s_dd_brand, bi);
-                    buf[0] = '\0';
-                    xtouch_public_filaments_get_type_options_by_display_index(bi, buf, sizeof(buf));
-                    if (s_dd_type)
-                        lv_dropdown_set_options(s_dd_type, buf[0] ? buf : "—");
-                    lv_dropdown_set_selected(s_dd_type, ti);
+                    if (xtouch_public_filaments_find_indices_by_brand_and_type(brand_buf, type_buf, &bi, &ti))
+                        set = 1;
                 }
             }
+        }
+        if (set)
+        {
+            lv_dropdown_set_selected(s_dd_brand, bi);
+            buf[0] = '\0';
+            xtouch_public_filaments_get_type_options_by_display_index(bi, buf, sizeof(buf));
+            if (s_dd_type)
+                lv_dropdown_set_options(s_dd_type, buf[0] ? buf : "—");
+            lv_dropdown_set_selected(s_dd_type, ti);
         }
     }
     /* 現在の選択を保存（色画面から戻ったときに復元するため） */
@@ -70,6 +81,7 @@ static void ams_edit_sd_load_timer_cb(lv_timer_t *t)
     if (ams_edit_current_type_index < 0) ams_edit_current_type_index = 0;
 
     schedule_fetch_for_current_selection();
+    update_temp_display();
     lv_timer_del(t);
     s_ams_edit_sd_timer = NULL;
 }
@@ -88,6 +100,42 @@ static void schedule_fetch_for_current_selection(void)
     xtouch_public_filaments_get_selected_id_n(brand_idx, type_idx, id_buf, sizeof(id_buf), NULL, 0, NULL, 0, NULL, NULL);
     if (id_buf[0] != '\0')
         lv_msg_send(XTOUCH_COMMAND_AMS_FETCH_SLICER_TEMP, id_buf);
+}
+
+static void on_fetched_temp_msg(lv_event_t *e)
+{
+    if (lv_event_get_code(e) != LV_EVENT_MSG_RECEIVED)
+        return;
+    update_temp_display();
+}
+
+/** Min/Max 温度表示を現在の選択と fetched 値に応じて更新 */
+static void update_temp_display(void)
+{
+    if (!s_lbl_temp_min || !s_lbl_temp_max)
+        return;
+    int min_val = 0, max_val = 0;
+    if (s_dd_brand && s_dd_type)
+    {
+        int brand_idx = (int)lv_dropdown_get_selected(s_dd_brand);
+        int type_idx = (int)lv_dropdown_get_selected(s_dd_type);
+        if (brand_idx < 0) brand_idx = 0;
+        if (type_idx < 0) type_idx = 0;
+        char id_buf[16];
+        id_buf[0] = '\0';
+        xtouch_public_filaments_get_selected_id_n(brand_idx, type_idx, id_buf, sizeof(id_buf), NULL, 0, NULL, 0, &min_val, &max_val);
+        int id_match = (id_buf[0] != '\0' && strcmp(id_buf, ams_edit_fetched_setting_id) == 0);
+        if (id_match && (ams_edit_fetched_min > 0 || ams_edit_fetched_max > 0))
+        {
+            min_val = ams_edit_fetched_min;
+            max_val = ams_edit_fetched_max;
+        }
+    }
+    static char buf_min[24], buf_max[24];
+    snprintf(buf_min, sizeof(buf_min), "Min:%d", min_val);
+    snprintf(buf_max, sizeof(buf_max), "Max:%d", max_val);
+    lv_label_set_text(s_lbl_temp_min, buf_min);
+    lv_label_set_text(s_lbl_temp_max, buf_max);
 }
 
 static void on_back_clicked(lv_event_t *e)
@@ -201,6 +249,7 @@ static void on_filament_selection_changed(lv_event_t *e)
         if (ams_edit_current_type_index < 0) ams_edit_current_type_index = 0;
     }
     schedule_fetch_for_current_selection();
+    update_temp_display();
 }
 
 static void on_brand_changed(lv_event_t *e)
@@ -219,6 +268,7 @@ static void on_brand_changed(lv_event_t *e)
     xtouch_public_filaments_get_type_options_by_display_index(idx, buf, sizeof(buf));
     lv_dropdown_set_options(dd_type, buf[0] ? buf : "—");
     lv_dropdown_set_selected(dd_type, 0);
+    update_temp_display();
     if (s_dd_brand && s_dd_type)
     {
         ams_edit_current_brand_index = (int)lv_dropdown_get_selected(s_dd_brand);
@@ -278,6 +328,7 @@ lv_obj_t *ui_amsEditComponent_create(lv_obj_t *comp_parent)
     lv_obj_t *row1 = lv_obj_create(content);
     lv_obj_set_width(row1, lv_pct(100));
     lv_obj_set_height(row1, LV_SIZE_CONTENT);
+    lv_obj_set_style_bg_color(row1, lv_color_hex(0xFF0000), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_flex_flow(row1, LV_FLEX_FLOW_ROW);
     lv_obj_set_flex_align(row1, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_START);
     lv_obj_set_style_bg_opa(row1, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -285,6 +336,8 @@ lv_obj_t *ui_amsEditComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_pad_column(row1, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_t *dd_brand = lv_dropdown_create(row1);
     s_dd_brand = dd_brand;
+    lv_obj_set_width(dd_brand, lv_pct(100));
+    lv_obj_set_height(dd_brand, LV_SIZE_CONTENT);
     // {
     //     char buf[AMSEDIT_OPTS_BUF_SIZE];
     //     buf[0] = '\0';
@@ -292,14 +345,8 @@ lv_obj_t *ui_amsEditComponent_create(lv_obj_t *comp_parent)
     //     lv_dropdown_set_options(dd_brand, buf[0] ? buf : "—");
     //     lv_dropdown_set_selected(dd_brand, 0);
     // }
-    lv_dropdown_set_options(dd_brand, "—");
+    lv_dropdown_set_options(dd_brand, "-");
     lv_dropdown_set_selected(dd_brand, 0);
-    lv_obj_set_flex_grow(dd_brand, 1);
-    lv_obj_set_height(dd_brand, 36);
-    lv_obj_set_style_pad_right(dd_brand, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_top(dd_brand, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_bottom(dd_brand, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_row(dd_brand, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(dd_brand, lv_color_hex(0x555555), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(dd_brand, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_font(dd_brand, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -310,6 +357,7 @@ lv_obj_t *ui_amsEditComponent_create(lv_obj_t *comp_parent)
     lv_obj_t *row2 = lv_obj_create(content);
     lv_obj_set_width(row2, lv_pct(100));
     lv_obj_set_height(row2, LV_SIZE_CONTENT);
+    lv_obj_set_style_bg_color(row2, lv_color_hex(0x00FF00), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_flex_flow(row2, LV_FLEX_FLOW_ROW);
     lv_obj_set_flex_align(row2, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_START);
     lv_obj_set_style_bg_opa(row2, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -317,10 +365,10 @@ lv_obj_t *ui_amsEditComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_pad_column(row2, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_t *dd_type = lv_dropdown_create(row2);
     s_dd_type = dd_type;
-    lv_dropdown_set_options(dd_type, "—");
+    lv_obj_set_width(dd_type, lv_pct(100));
+    lv_obj_set_height(dd_type, LV_SIZE_CONTENT);
+    lv_dropdown_set_options(dd_type, "-");
     lv_dropdown_set_selected(dd_type, 0);
-    lv_obj_set_flex_grow(dd_type, 1);
-    lv_obj_set_height(dd_type, 36);
     lv_obj_set_style_bg_color(dd_type, lv_color_hex(0x555555), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(dd_type, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_font(dd_type, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -368,6 +416,26 @@ lv_obj_t *ui_amsEditComponent_create(lv_obj_t *comp_parent)
     lv_label_set_text(lbl_color, LV_SYMBOL_EDIT);
     lv_obj_center(lbl_color);
     lv_obj_add_event_cb(btn_color, on_color_btn_clicked, LV_EVENT_CLICKED, NULL);
+
+    /* 色選択の右: Min/Max 温度を2段表示 */
+    lv_obj_t *temp_col = lv_obj_create(row3);
+    lv_obj_set_width(temp_col, LV_SIZE_CONTENT);
+    lv_obj_set_height(temp_col, 48);
+    lv_obj_set_flex_flow(temp_col, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_flex_align(temp_col, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_START);
+    lv_obj_set_style_bg_opa(temp_col, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(temp_col, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_row(temp_col, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_column(temp_col, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    s_lbl_temp_min = lv_label_create(temp_col);
+    lv_label_set_text(s_lbl_temp_min, "Min:0");
+    lv_obj_set_style_text_font(s_lbl_temp_min, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
+    s_lbl_temp_max = lv_label_create(temp_col);
+    lv_label_set_text(s_lbl_temp_max, "Max:0");
+    lv_obj_set_style_text_font(s_lbl_temp_max, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
+    update_temp_display();
+    lv_obj_add_event_cb(content, on_fetched_temp_msg, LV_EVENT_MSG_RECEIVED, NULL);
+    lv_msg_subsribe_obj(XTOUCH_AMS_EDIT_FETCHED_TEMP, content, NULL);
 
     /* Footer: Back, Reset, Save */
     lv_obj_t *footer = lv_obj_create(cui_amsEditComponent);

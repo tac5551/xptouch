@@ -1,6 +1,8 @@
 #ifndef _XLCD_TYPES
 #define _XLCD_TYPES
 
+#include <stddef.h>
+
 #define XTOUCH_LCD_MIN_SLEEP_TIME 5
 #define XTOUCH_LIGHT_MIN_SLEEP_TIME 5
 
@@ -282,8 +284,10 @@ extern "C"
     void xtouch_filaments_get_id_n_for_brand_type_index(int brand_display_index, int type_display_index, char *id_buf, unsigned int id_len, char *n_buf, unsigned int n_len, char *type_buf, unsigned int type_len, int *out_nozzle_temp_min, int *out_nozzle_temp_max);
     /** 選択中の Brand/Type の setting_id / name / type / 温度を取得。Save 実装用。 */
     void xtouch_public_filaments_get_selected_id_n(int brand_display_index, int type_display_index, char *id_buf, unsigned int id_len, char *n_buf, unsigned int n_len, char *type_buf, unsigned int type_len, int *out_nozzle_temp_min, int *out_nozzle_temp_max);
-    /** type_str（例: "PLA"）に一致する Brand/Type の表示インデックスを返す。見つかれば 1、なければ 0。 */
-    int xtouch_public_filaments_find_indices_by_type(const char *type_str, int *out_brand_idx, int *out_type_idx);
+    /** filaments_rev.json で filament_id → b/t 逆引き。見つかれば 1、なければ 0。 */
+    int xtouch_public_filaments_rev_lookup(const char *filament_id, char *out_brand, size_t out_brand_len, char *out_type, size_t out_type_len);
+    /** brand_str と type_str に一致する表示インデックスを返す。見つかれば 1、なければ 0。 */
+    int xtouch_public_filaments_find_indices_by_brand_and_type(const char *brand_str, const char *type_str, int *out_brand_idx, int *out_type_idx);
 
 #ifdef __cplusplus
 } /*extern "C"*/

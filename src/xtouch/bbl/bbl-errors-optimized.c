@@ -277,7 +277,7 @@ const error_pattern_t hms_error_patterns[] PROGMEM = {
 };
 
 // Normalized Device error patterns
-int device_error_patterns_length = 52;
+int device_error_patterns_length = 53;
 
 const error_pattern_t device_error_patterns[] PROGMEM = {
     {"07038012", "Failed to get AMS mapping table; please select \"Resume\" to retry.", {}, 0},
@@ -329,13 +329,14 @@ const error_pattern_t device_error_patterns[] PROGMEM = {
     {"18018006", "FEED_FILAMENT_FAILED. This could be due to an entangled filament or a stuck spool. If not, please check if the AMS-HT PTFE tube is connected.", {"COMMON_PHRASE_FEED_FILAMENT_FAILED"}, 1},
     {"07048006", "FEED_FILAMENT_FAILED. This could be due to an entangled filament or a stuck spool. If not, please check if the AMS PTFE tube is connected.", {"COMMON_PHRASE_FEED_FILAMENT_FAILED"}, 1},
     {"058440A2", "AMS_DEVICE_A communication is abnormal. Please reconnect the module cable or restart the printer.", {"AMS_DEVICE_A"}, 1},
+    {"07FF8030", "The filament specified in the slicer has been used up. Printing is paused. Please go to the machine to replace the material and resume printing.", {}, 0},
     {"0500803C", "The current nozzle setting does not match the slicing file. Continuing to print may affect print quality. It is recommended to re-slice before starting the print.", {}, 0},
     {"050040C0", "Communication error detected with AMS, AMS Lite or AMS_DEVICE_AT. Please reconnect the module cable or restart the printer when it is idle.", {"AMS_DEVICE_A"}, 1},
     {"05024030", "Printing stopped because the printer was unable to parse the 3mf file. Please resend your print job.", {}, 0}
 };
 
 // Retry and Done message arrays (for backward compatibility)
-int message_containing_retry_total = 395;
+int message_containing_retry_total = 397;
 
 const char *message_containing_retry[] PROGMEM = {
   "18FF700000020008",
@@ -731,6 +732,8 @@ const char *message_containing_retry[] PROGMEM = {
   "0500400F",
   "05004010",
   "05004011",
+  "07FF8030",
+  "07FE8030",
   "05008040",
   "0502C026"
 };

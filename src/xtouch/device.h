@@ -552,6 +552,7 @@ static void xtouch_ams_fetch_slicer_timer_cb(lv_timer_t *t)
         ams_edit_set_fetched_temps(s_ams_fetch_pending_id, min_val, max_val, filament_buf[0] ? filament_buf : nullptr);
     else
         ams_edit_set_fetched_temps(s_ams_fetch_pending_id, 0, 0, nullptr);
+    lv_msg_send(XTOUCH_AMS_EDIT_FETCHED_TEMP, NULL);
     lv_timer_del(t);
 }
 

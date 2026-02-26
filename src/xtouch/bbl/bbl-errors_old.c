@@ -7868,7 +7868,7 @@ const char *hms_error_values[] PROGMEM = {
 };
 
 // All Device errors (no optimization)
-int device_error_length = 510;
+int device_error_length = 512;
 
 const char *device_error_keys[] PROGMEM = {
   "07038012",
@@ -8349,9 +8349,11 @@ const char *device_error_keys[] PROGMEM = {
   "050140A3",
   "050040A3",
   "050340A3",
+  "07FF8030",
   "058140A2",
   "058040A2",
   "058340A2",
+  "07FE8030",
   "05008041",
   "05008040",
   "0502C014",
@@ -8862,9 +8864,11 @@ const char *device_error_values[] PROGMEM = {
   "AMS(or AMS Lite) B communication is abnormal. Please reconnect the module cable or restart the printer.",
   "AMS(or AMS Lite) A communication is abnormal. Please reconnect the module cable or restart the printer.",
   "AMS(or AMS Lite) D communication is abnormal. Please reconnect the module cable or restart the printer.",
+  "The filament specified in the slicer has been used up. Printing is paused. Please go to the machine to replace the material and resume printing.",
   "AMS-HT B communication is abnormal. Please reconnect the module cable or restart the printer.",
   "AMS-HT A communication is abnormal. Please reconnect the module cable or restart the printer.",
   "AMS-HT D communication is abnormal. Please reconnect the module cable or restart the printer.",
+  "The filament specified in the slicer has been used up. Printing is paused. Please go to the machine to replace the material and resume printing.",
   "The filament in hotend is too cold. Extrusion may damage the extruder. Still feeding in/out the filament?",
   "Toolhead front cover is detached. Moving the toolhead may damage the printer. Do you want to continue?",
   "The AMS Remaining Filament Estimation is enabled by default and cannot be disabled.",
@@ -8897,7 +8901,7 @@ const char *device_error_values[] PROGMEM = {
 };
 
 // Retry and Done message arrays
-int message_containing_retry_total = 395;
+int message_containing_retry_total = 397;
 
 const char *message_containing_retry[] PROGMEM = {
   "18FF700000020008",
@@ -9293,6 +9297,8 @@ const char *message_containing_retry[] PROGMEM = {
   "0500400F",
   "05004010",
   "05004011",
+  "07FF8030",
+  "07FE8030",
   "05008040",
   "0502C026"
 };
