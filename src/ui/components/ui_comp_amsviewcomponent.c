@@ -1,6 +1,4 @@
 #include "../ui.h"
-#include "../../xtouch/trays.h"
-#include "../../ui/ui_msgs.h"
 
 #define AMS_COUNT 4
 #define SLOT_COUNT 5
@@ -100,7 +98,8 @@ static void ui_event_comp_amsViewComponent_onAmsUpdateBySlotIndex(lv_event_t *e)
     uint8_t tmp_tray_id = slot_index + 1;
 
     uint32_t tray_status = get_tray_status(tmp_ams_id, tmp_tray_id);
-    uint16_t tray_id = ((tray_status >> 4) & 0x0F);
+    uint16_t tray_id = (uint16_t)((tray_status >> 4) & 0x0F);
+    uint16_t loaded = (uint16_t)(tray_status & 0x01);
     char *tray_type = get_tray_type(tmp_ams_id, tmp_tray_id);
 
     if (tmp_tray_id == tray_id)
@@ -108,10 +107,12 @@ static void ui_event_comp_amsViewComponent_onAmsUpdateBySlotIndex(lv_event_t *e)
         lv_color_t color = lv_color_hex(tray_status >> 8);
         lv_color_t color_inv = lv_color_hex((0xFFFFFF - (tray_status >> 8)) & 0xFFFFFF);
 
-        if (tray_type && tray_type[0] != '\0' && strcmp(tray_type, "null") != 0)
+        if (!loaded)
+            lv_label_set_text(target, "X");
+        else if (tray_type && tray_type[0] != '\0' && strcmp(tray_type, "null") != 0)
             lv_label_set_text(target, tray_type);
         else
-            lv_label_set_text(target, "x");
+            lv_label_set_text(target, "-");
 
         if (tray_id == 0)
             tray_id = 254 + 1;
@@ -272,8 +273,8 @@ void ui_event_comp_amsViewComponent_onAmsUpdate(lv_event_t *e)
     uint8_t tmp_tray_id = user_data % 100;
 
     uint32_t tray_status = get_tray_status(tmp_ams_id, tmp_tray_id);
-    uint16_t tray_id = ((tray_status >> 4) & 0x0F);
-    uint16_t loaded = ((tray_status) & 0x01);
+    uint16_t tray_id = (uint16_t)((tray_status >> 4) & 0x0F);
+    uint16_t loaded = (uint16_t)(tray_status & 0x01);
     char *tray_type = get_tray_type(tmp_ams_id, tmp_tray_id);
     // printf("onAmsUpdate %d %d %d %d\n", tmp_ams_id, tmp_tray_id, tray_id, loaded);
 
@@ -298,12 +299,12 @@ void ui_event_comp_amsViewComponent_onAmsUpdate(lv_event_t *e)
         lv_color_t color = lv_color_hex(tray_status >> 8);
         lv_color_t color_inv = lv_color_hex((0xFFFFFF - (tray_status >> 8)) & 0xFFFFFF);
 
-        // tray_typeがnullポインタでなく、空文字列でもなく、文字列"null"でもない場合、その文字列を設定（優先）
-        if (tray_type[0] != '\0' && strcmp(tray_type, "null") != 0) {
+        if (!loaded)
+            lv_label_set_text(target, "X");
+        else if (tray_type && tray_type[0] != '\0' && strcmp(tray_type, "null") != 0)
             lv_label_set_text(target, tray_type);
-        } else {
-            lv_label_set_text(target, "x");
-        }
+        else
+            lv_label_set_text(target, "-");
 
         // printf(" tray_now: %d, tray_tar: %d, slot: %d, color: %06llX \n", bambuStatus.m_tray_now, bambuStatus.m_tray_tar, tray_id, message->data >> 8);
 
@@ -341,11 +342,48 @@ static void on_ams_btn_unload(lv_event_t *e)
         return;
     lv_msg_send(XTOUCH_COMMAND_AMS_UNLOAD_SLOT, 0);
 }
+/** loadScreen(13) を遅延実行。fetch を先に発火してヒープが荒れる前に SSL を試すため。 */
+static void deferred_load_ams_edit_cb(lv_timer_t *t)
+{
+    loadScreen(13);
+    lv_timer_del(t);
+}
+
 static void on_ams_btn_edit(lv_event_t *e)
 {
     if (lv_event_get_code(e) != LV_EVENT_CLICKED)
         return;
-    loadScreen(3);
+    int slot_index = (int)(uintptr_t)lv_event_get_user_data(e); /* 0-3 */
+    int ams_id, tray_id;
+    if (s_ams_view_selector == UI_AMS_SELECTOR_EXT) {
+        ams_id = 255;
+        tray_id = 254; /* External 用 */
+    } else {
+        ams_id = (int)s_ams_view_selector - 1; /* 1-4=AMS1..4 → 0-3 */
+        tray_id = slot_index;                  /* 0-3 */
+    }
+    ams_edit_set_editing_slot(ams_id, tray_id);
+    /* 現在設定済みの色をロード（MQTT は tray_idx+1 で保存。External は vt_tray で (0,0)。） */
+    if (ams_id == 255)
+    {
+        const char *color = get_tray_color(0, 0);
+        if (color && color[0] != '\0')
+            ams_edit_set_tray_color(color);
+    }
+    else
+    {
+        const char *color = get_tray_color((uint8_t)ams_id, (uint8_t)tray_id);
+        if (color && color[0] != '\0')
+            ams_edit_set_tray_color(color);
+    }
+    /* 編集中スロットの setting_id で fetch（_ を含むときだけ API 取得）。 */
+    if (ams_id != 255 && ams_id >= 0)
+    {
+        const char *id = get_tray_setting_id((uint8_t)ams_id, (uint8_t)tray_id);
+        if (id && id[0] != '\0' && strchr(id, '_') != NULL)
+            lv_msg_send(XTOUCH_COMMAND_AMS_FETCH_SLICER_TEMP, id);
+    }
+    lv_timer_create(deferred_load_ams_edit_cb, 100, NULL);
 }
 
 void ui_event_comp_AMSViewComponent_onAMSSlot1_1Click(lv_event_t *e)
@@ -903,10 +941,11 @@ lv_obj_t *ui_amsViewComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_bg_opa(row2_1, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_width(row2_1, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     {
+        /* 左端ダミー（湿度列と揃える）。sp も flex_grow(2) で 1 列分の幅を確保 */
         lv_obj_t *sp = lv_obj_create(row2_1);
         lv_obj_set_width(sp, 0);
         lv_obj_set_height(sp, lv_pct(100));
-        lv_obj_set_flex_grow(sp, 0);
+        lv_obj_set_flex_grow(sp, 1);
         lv_obj_set_style_bg_opa(sp, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_border_width(sp, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_clear_flag(sp, LV_OBJ_FLAG_CLICKABLE);
@@ -939,13 +978,16 @@ lv_obj_t *ui_amsViewComponent_create(lv_obj_t *comp_parent)
                 lv_obj_set_style_pad_left(btn, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
                 lv_obj_set_style_pad_right(btn, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
                 lv_obj_set_style_pad_top(btn, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
-                lv_obj_set_style_pad_bottom(btn, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+                lv_obj_set_style_pad_bottom(btn, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
                 lv_obj_t *lbl = lv_label_create(btn);
                 lv_label_set_text(lbl, b == 0 ? "EDIT" : "LOAD");
                 lv_obj_center(lbl);
                 lv_obj_set_style_text_font(lbl, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
                 if (b == 0)
-                    lv_obj_add_event_cb(btn, on_ams_btn_edit, LV_EVENT_CLICKED, NULL);
+                {
+                    lv_obj_add_event_cb(btn, on_ams_btn_edit, LV_EVENT_CLICKED, (void *)(uintptr_t)i);
+                    /* EDIT は AMS Edit 画面へ遷移。スロット i を渡す */
+                }
                 else
                     lv_obj_add_event_cb(btn, onAmsSlotClickUnified, LV_EVENT_CLICKED, (void *)(uintptr_t)i);
             }
@@ -987,8 +1029,6 @@ lv_obj_t *ui_amsViewComponent_create(lv_obj_t *comp_parent)
     lv_obj_add_event_cb(cui_amsViewComponent, ui_amsViewComponent_onAMSBitsSyncDropdown, LV_EVENT_MSG_RECEIVED, NULL);
     lv_msg_subsribe_obj(XTOUCH_ON_AMS_BITS, cui_amsViewComponent, NULL);
 
-    /* スロットクリック: 選択子＋slot_indexでLOAD */
-    lv_obj_add_event_cb(cui_AmsSlot1_1, onAmsSlotClickUnified, LV_EVENT_CLICKED, (void *)0);
     lv_obj_add_event_cb(cui_AmsSlot1_2, onAmsSlotClickUnified, LV_EVENT_CLICKED, (void *)1);
     lv_obj_add_event_cb(cui_AmsSlot1_3, onAmsSlotClickUnified, LV_EVENT_CLICKED, (void *)2);
     lv_obj_add_event_cb(cui_AmsSlot1_4, onAmsSlotClickUnified, LV_EVENT_CLICKED, (void *)3);
