@@ -205,12 +205,9 @@ void onXTouchAMSUpdate(lv_event_t *e)
     lv_label_set_text(target, "");
     if (user_data == tray_id)
     {
-        // カラーコードは下位32ビットのビット8-31にある（24ビット）
         uint32_t color_code = (uint32_t)((tray_status >> 8) & 0xFFFFFF);
-        lv_color_t color = lv_color_hex(color_code);
-        lv_color_t color_inv = lv_color_hex((0xFFFFFF - color_code) & 0xFFFFFF);
-
-        //printf(" tray_now: %d, tray_tar: %d, slot: %d, color: %06X loaded: %d tray_type: %s\n", bambuStatus.m_tray_now, bambuStatus.m_tray_tar, tray_id, color_code, loaded, tray_type);
+        lv_color_t color = (color_code != 0) ? lv_color_hex(color_code) : lv_color_hex(0x444444);
+        lv_color_t color_inv = (color_code != 0) ? lv_color_hex((0xFFFFFF - color_code) & 0xFFFFFF) : lv_color_hex(0xFFFFFF);
 
         lv_obj_set_style_bg_color(target, color, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_text_color(target, color_inv, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -220,19 +217,19 @@ void onXTouchAMSUpdate(lv_event_t *e)
 
         lv_obj_set_style_border_color(target, color, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_border_width(target, AMS_BORDER, LV_PART_MAIN | LV_STATE_DEFAULT);
-        // tray_typeがnullポインタでなく、空文字列でもなく、文字列"null"でもない場合、その文字列を設定（優先）
-        if (tray_type[0] != '\0' && strcmp(tray_type, "null") != 0) {
+        /* AMS View と共通: フィラメント無し→X、入ってるが未設定→-、設定済み→tray_type */
+        if (!loaded)
+            lv_label_set_text(target, "X");
+        else if (tray_type && tray_type[0] != '\0' && strcmp(tray_type, "null") != 0)
             lv_label_set_text(target, tray_type);
-        } else {
-            lv_label_set_text(target, "x");
-        }
+        else
+            lv_label_set_text(target, "-");
 
-        if (bambuStatus.m_tray_now + 1 == tray_id) // if tray is now loaded
+        if (bambuStatus.m_tray_now + 1 == tray_id)
         {
             lv_obj_set_style_border_color(target, color_inv, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_border_width(target, AMS_BORDER, LV_PART_MAIN | LV_STATE_DEFAULT);
         }
-
     }
 }
 
@@ -343,6 +340,14 @@ void onXTouchPrintStatus(lv_event_t *e)
     ui_confirmPanel_hide(); // hide confirm panel if new data comes
     //printf("[xPTouch][LED] print_status : %d print_gcode_action : %d print_real_action : %d percent : %d layer : %d/%d mc_print_sub_stage : %d mc_print_stage : %d\n", bambuStatus.print_status, bambuStatus.print_gcode_action, bambuStatus.print_real_action, bambuStatus.mc_print_percent, bambuStatus.current_layer, bambuStatus.total_layers, bambuStatus.mc_print_sub_stage, bambuStatus.mc_print_stage);
 
+    /* RUNNING/PAUSED のときは常にレイヤー数を表示（Heating から切り替わる） */
+    if (bambuStatus.print_status == XTOUCH_PRINT_STATUS_RUNNING || bambuStatus.print_status == XTOUCH_PRINT_STATUS_PAUSED)
+    {
+        char layerText[32];
+        sprintf(layerText, "%d/%d", bambuStatus.current_layer, bambuStatus.total_layers);
+        lv_label_set_text(comp_homeComponent[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPLAYER_MAINSCREENCONTROLLER2_MAINSCREENLAYER], layerText);
+    }
+    else
     switch (bambuStatus.print_gcode_action)
     {
     case 0:
@@ -407,7 +412,11 @@ void onXTouchPrintStatus(lv_event_t *e)
         lv_obj_clear_flag(comp_homeComponent[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENCENTRAL], LV_OBJ_FLAG_HIDDEN);
         lv_obj_add_flag(comp_homeComponent[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENIDLE], LV_OBJ_FLAG_HIDDEN);
         lv_obj_clear_state(dropDown, LV_STATE_DISABLED);
-
+        {
+            lv_obj_t *statusCaption = ui_comp_get_child(ui_mainStatusComponent, UI_COMP_MAINSCREENSTATUS_MAINSCREENSTATUSCAPTION);
+            if (statusCaption)
+                lv_label_set_text(statusCaption, LV_SYMBOL_PAUSE " Paused");
+        }
         break;
     case XTOUCH_PRINT_STATUS_RUNNING:
 
@@ -958,7 +967,7 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
     lv_obj_t *cui_mainScreenSpeedDropDown;
     cui_mainScreenSpeedDropDown = lv_dropdown_create(cui_mainScreenCentral);
     lv_dropdown_set_options(cui_mainScreenSpeedDropDown, "Silent\nStandard\nSport\nLudicrous");
-    lv_obj_set_width(cui_mainScreenSpeedDropDown, 150);
+    lv_obj_set_width(cui_mainScreenSpeedDropDown, lv_pct(80));
     lv_obj_set_height(cui_mainScreenSpeedDropDown, LV_SIZE_CONTENT);           /// 1
     lv_obj_add_state(cui_mainScreenSpeedDropDown, LV_STATE_PRESSED);           /// States
     lv_obj_add_flag(cui_mainScreenSpeedDropDown, LV_OBJ_FLAG_SCROLL_ON_FOCUS); /// Flags
