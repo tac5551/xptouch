@@ -24,17 +24,6 @@ void ui_event_comp_UtilComponent_onButton2Click(lv_event_t *e)
 }
 
 
-void ui_event_comp_UtilComponent_onButton3Click(lv_event_t *e)
-{
-    lv_event_code_t event_code = lv_event_get_code(e);
-    if (event_code == LV_EVENT_CLICKED)
-    {
-        printf("ui_event_comp_UtilComponent_onButton3Click\n");
-        onMoveAmsViewScreen(e);
-    }
-}
-
-
 void onXTouchUtilPrintStatus(lv_event_t *e)
 {
     lv_obj_t *target = lv_event_get_target(e);
@@ -76,7 +65,7 @@ void onXTouchUtilPrintStatus(lv_event_t *e)
     case XTOUCH_PRINT_STATUS_FAILED:
         lv_obj_clear_state(button1, LV_STATE_DISABLED);
         lv_obj_clear_state(button2, LV_STATE_DISABLED);
-        lv_obj_clear_state(button3, LV_STATE_DISABLED);
+        /* button3 (Dummy3) は常時無効のまま */
         lv_obj_clear_state(button4, LV_STATE_DISABLED);
         break;
     }
@@ -212,8 +201,9 @@ lv_obj_t *ui_utilComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_height(button3, lv_pct(100));
     lv_obj_set_flex_grow(button3, 2);
     lv_obj_set_align(button3, LV_ALIGN_CENTER);
-    lv_label_set_text(button3, "AMS");
-    lv_obj_add_flag(button3, LV_OBJ_FLAG_CLICKABLE);                                                                                                                                                                                                      /// Flags
+    lv_label_set_text(button3, "Dummy3");
+    /* Dummy3: イベントなし・常時無効 */
+    lv_obj_add_state(button3, LV_STATE_DISABLED);
     lv_obj_clear_flag(button3, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN); /// Flags
     lv_obj_set_scrollbar_mode(button3, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_style_text_align(button3, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -275,7 +265,7 @@ lv_obj_t *ui_utilComponent_create(lv_obj_t *comp_parent)
     // for NozzleSelect
     lv_obj_add_event_cb(button1, ui_event_comp_UtilComponent_onButton1Click, LV_EVENT_ALL, children);
     lv_obj_add_event_cb(button2, ui_event_comp_UtilComponent_onButton2Click, LV_EVENT_ALL, children);
-    lv_obj_add_event_cb(button3, ui_event_comp_UtilComponent_onButton3Click, LV_EVENT_ALL, children);
+    /* button3 (Dummy3): イベントなし */
 
     lv_obj_add_event_cb(cui_utilComponent, onXTouchUtilPrintStatus, LV_EVENT_MSG_RECEIVED, children);
 
