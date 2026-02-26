@@ -9,6 +9,8 @@ extern "C"
 #endif
 
 #include "xtouch/types.h"
+#include "xtouch/ams_edit_temp.h"
+#include "xtouch/trays.h"
 
 #if defined __has_include
 #if __has_include("lvgl.h")
@@ -48,7 +50,8 @@ extern "C"
   void ui_utilScreen_screen_init(void);
   void ui_utilCalibrationScreen_screen_init(void);
   void ui_utilNozzleChangeScreen_screen_init(void);
-
+  void ui_amsEditScreen_screen_init(void);
+  void ui_amsEditColorScreen_screen_init(void);
 
   lv_obj_t *introScreen;
   lv_obj_t *introScreenIcon;
@@ -118,7 +121,9 @@ extern "C"
   lv_obj_t *ui_mainScreenChamberTempValue;
   lv_obj_t *ui_amsViewScreen;
   lv_obj_t *ui_amsViewComponent;
-
+  lv_obj_t *ui_amsEditScreen;
+  lv_obj_t *ui_amsEditComponent;
+  lv_obj_t *ui_amsEditColorScreen;
 
   void ui_event____initial_actions0(lv_event_t *e);
   lv_obj_t *ui____initial_actions0;

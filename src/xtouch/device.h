@@ -2,7 +2,10 @@
 #define _XLCD_DEVICE
 
 #include <Arduino.h>
+#include <cstring>
 #include "trays.h"
+#include "cloud.hpp"
+#include "ams_edit_temp.h"
 
 #define XTOUCH_DEVICE_CONTROL_MOVE_SPEED_XY 3000
 #define XTOUCH_DEVICE_CONTROL_MOVE_SPEED_Z 1500
@@ -121,7 +124,7 @@ void xtouch_device_set_print_state(String state)
         bambuStatus.print_status = XTOUCH_PRINT_STATUS_IDLE;
     else if (state == "RUNNING")
         bambuStatus.print_status = XTOUCH_PRINT_STATUS_RUNNING;
-    else if (state == "PAUSE")
+    else if (state == "PAUSE" || state == "Pause")
         bambuStatus.print_status = XTOUCH_PRINT_STATUS_PAUSED;
     else if (state == "FINISH")
         bambuStatus.print_status = XTOUCH_PRINT_STATUS_FINISHED;
@@ -140,7 +143,7 @@ void xtouch_device_set_print_state(String state)
 
 void xtouch_device_publish(String request)
 {
-#ifdef XTOUCH_DEBUG_GCODE
+#ifdef XTOUCH_DEBUG
     Serial.println(F("[GCODE] MQTT publish request"));
 #endif
     // Serial.println(request);
@@ -186,7 +189,7 @@ void xtouch_device_set_printing_speed(int lvl)
 
 void xtouch_device_gcode_line(String line)
 {
-#ifdef XTOUCH_DEBUG_GCODE
+#ifdef XTOUCH_DEBUG
     Serial.println(F("[GCODE send]"));
     Serial.println(line);
     Serial.println(F("---"));
@@ -535,6 +538,103 @@ void xtouch_device_command_ams_unload(void *s, lv_msg_t *m)
     lv_msg_send(XTOUCH_ON_AMS_STATE_UPDATE, &eventData);
 
     xtouch_device_gcode_line(ams_unload_gcode);
+}
+
+static char s_ams_fetch_pending_id[16];
+
+/** フィラメント選択時に UI から送られる。payload = (const char*) tray_info_idx。lv_timer で非同期に API 取得し ams_edit_* グローバルに保存。 */
+static void xtouch_ams_fetch_slicer_timer_cb(lv_timer_t *t)
+{
+    int min_val = 0, max_val = 0;
+    char filament_buf[16] = {0};
+    bool ok = (cloud.loggedIn && s_ams_fetch_pending_id[0] != '\0' && cloud.getSlicerSetting(s_ams_fetch_pending_id, &min_val, &max_val, filament_buf, sizeof(filament_buf)));
+    if (ok)
+        ams_edit_set_fetched_temps(s_ams_fetch_pending_id, min_val, max_val, filament_buf[0] ? filament_buf : nullptr);
+    else
+        ams_edit_set_fetched_temps(s_ams_fetch_pending_id, 0, 0, nullptr);
+    lv_timer_del(t);
+}
+
+void xtouch_device_command_ams_fetch_slicer_temp(void *s, lv_msg_t *m)
+{
+    if (m->payload == NULL)
+        return;
+    const char *id = (const char *)m->payload;
+    strncpy(s_ams_fetch_pending_id, id, 15);
+    s_ams_fetch_pending_id[15] = '\0';
+    lv_timer_create(xtouch_ams_fetch_slicer_timer_cb, 1, NULL);
+}
+
+/** Save 時に UI から送られる ams_filament_setting。payload = (const XTOUCH_AMS_FILAMENT_SETTING_PAYLOAD*)。温度は UI がグローバル or SD で設定済み。
+ * 送信後に extrusion_cali_sel を送らないと設定がキャンセルされるため、続けて送る。 */
+void xtouch_device_command_ams_filament_setting(void *s, lv_msg_t *m)
+{
+    if (m->payload == NULL)
+        return;
+    const struct XTOUCH_AMS_FILAMENT_SETTING_PAYLOAD *p = (const struct XTOUCH_AMS_FILAMENT_SETTING_PAYLOAD *)m->payload;
+    int slot_id = (p->ams_id == 255) ? 254 : (p->ams_id * 4 + p->tray_id); /* 0-3 per AMS, 254=External */
+    /* MQTT に送る温度は Cloud で取ってきた値（payload は UI で Cloud 取得分を優先して組み立て済み） */
+    DynamicJsonDocument json(512);
+    json["print"]["sequence_id"] = xtouch_device_next_sequence();
+    json["print"]["command"] = "ams_filament_setting";
+    json["print"]["ams_id"] = p->ams_id;
+    json["print"]["tray_id"] = p->tray_id;
+    json["print"]["slot_id"] = slot_id;
+    /* 純正同様: setting_id はフル（GFSB00_03）、tray_info_idx と filament_id は Cloud の filament_id（GFB00）。 */
+    const char *tray_info_val = (p->filament_id[0] != '\0') ? p->filament_id : p->tray_info_idx;
+    json["print"]["tray_info_idx"] = tray_info_val;
+    json["print"]["setting_id"] = p->tray_info_idx;
+    json["print"]["tray_color"] = p->tray_color;
+    json["print"]["nozzle_temp_min"] = p->nozzle_temp_min;
+    json["print"]["nozzle_temp_max"] = p->nozzle_temp_max;
+    json["print"]["tray_type"] = p->tray_type;
+    String result;
+    serializeJson(json, result);
+    xtouch_device_publish(result);
+
+    /* 設定を確定するため extrusion_cali_sel を送る（送らないとキャンセルされる）。
+       純正と同じく slot_id は AMS ごとに 0〜3 を使う（ams_filament_setting と揃える）。 */
+    int cali_slot_id = (p->ams_id == 255) ? 254 : (p->ams_id * 4 + p->tray_id);
+    char nozzle_d_buf[8];
+    if (bambuStatus.nozzle_diameter > 0.1f && bambuStatus.nozzle_diameter < 1.0f)
+        snprintf(nozzle_d_buf, sizeof(nozzle_d_buf), "%.1f", (double)bambuStatus.nozzle_diameter);
+    else
+        snprintf(nozzle_d_buf, sizeof(nozzle_d_buf), "0.4");
+    DynamicJsonDocument json2(384);
+    json2["print"]["sequence_id"] = xtouch_device_next_sequence();
+    json2["print"]["command"] = "extrusion_cali_sel";
+    json2["print"]["ams_id"] = p->ams_id;
+    json2["print"]["tray_id"] = p->tray_id;
+    json2["print"]["slot_id"] = cali_slot_id;
+    json2["print"]["filament_id"] = (p->filament_id[0] != '\0') ? p->filament_id : p->tray_info_idx;
+    json2["print"]["nozzle_diameter"] = nozzle_d_buf;
+    json2["print"]["cali_idx"] = -1;
+    String result2;
+    serializeJson(json2, result2);
+    xtouch_device_publish(result2);
+
+    /* extrusion_cali_sel が success した後、純正と同様に最小構成の ams_filament_setting を再送して確定させる。 */
+    DynamicJsonDocument json3(192);
+    json3["print"]["sequence_id"] = xtouch_device_next_sequence();
+    json3["print"]["command"] = "ams_filament_setting";
+    json3["print"]["ams_id"] = p->ams_id;
+    json3["print"]["tray_id"] = p->tray_id;
+    String result3;
+    serializeJson(json3, result3);
+    xtouch_device_publish(result3);
+}
+
+/** M620 R# で AMS をリフレッシュ（トレイ情報をプリンターから再取得）。payload = (void*)(uintptr_t)tray_index (0〜15) */
+void xtouch_device_command_ams_refresh(void *s, lv_msg_t *m)
+{
+    if (m->payload == NULL)
+        return;
+    uint16_t tray_index = (uint16_t)(uintptr_t)m->payload;
+    if (tray_index > 15)
+        return;
+    char buf[32];
+    snprintf(buf, sizeof(buf), "M620 R%d\n", tray_index);
+    xtouch_device_gcode_line(String(buf));
 }
 
 void xtouch_device_command_clean_print_error(void *s, lv_msg_t *m)

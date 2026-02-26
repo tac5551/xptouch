@@ -34,7 +34,14 @@
 #include "xtouch/coldboot.h"
 #include "xtouch/webserver.h"
 #include "xtouch/globals.h"
+#include "xtouch/filaments.h"
+#include "xtouch/ams_edit_temp.h"
 
+void xtouch_debug_log_ams_save(const char *id_buf, const char *fetched_id, int id_match, int fetched_min, int fetched_max, int payload_min, int payload_max)
+{
+  Serial.printf("[AMS Edit Save] id_buf=%s fetched_id=%s id_match=%d fetched_min=%d fetched_max=%d -> payload_min=%d payload_max=%d\n",
+    id_buf, fetched_id, id_match, fetched_min, fetched_max, payload_min, payload_max);
+}
 
 void xtouch_intro_show(void)
 {
@@ -151,6 +158,11 @@ void setup()
   xtouch_screen_startScreenTimer();
 }
 
+#ifdef XTOUCH_DEBUG
+static uint32_t s_last_heap_log_ms = 0;
+#define HEAP_LOG_INTERVAL_MS 5000
+#endif
+
 void loop()
 {
   lv_timer_handler();
@@ -166,6 +178,14 @@ void loop()
   
   // キャラクターアニメーション処理（millis()ベース、タイマー不要）
   xtouch_events_onCharacterAnimation();
-  
+
+#ifdef XTOUCH_DEBUG
+  if (millis() - s_last_heap_log_ms >= HEAP_LOG_INTERVAL_MS)
+  {
+    s_last_heap_log_ms = millis();
+    Serial.printf("[Heap] free=%u max_alloc=%u\n", (unsigned)ESP.getFreeHeap(), (unsigned)ESP.getMaxAllocHeap());
+  }
+#endif
+
   delay(10);
 }

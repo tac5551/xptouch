@@ -24,7 +24,7 @@ String xtouch_mqtt_report_topic;
 #include "trays.h"
 #define XTOUCH_MQTT_SERVER_TIMEOUT 20
 #define XTOUCH_MQTT_SERVER_PUSH_STATUS_TIMEOUT 1800
-#define XTOUCH_MQTT_SERVER_JSON_PARSE_SIZE 8192
+#define XTOUCH_MQTT_SERVER_JSON_PARSE_SIZE 4192
 
 /* ---------------------------------------------- */
 bool xtouch_mqtt_firstConnectionDone = false;
@@ -96,11 +96,13 @@ void xtouch_mqtt_processPushStatus(JsonDocument &incomingJson)
     {
 
         // #pragma region printing
+        // image_url 未使用のためコメントアウト。復元時は下記ブロックの /* と */ を削除し、types.h の image_url 宣言も復元すること
+        /*
         if (incomingJson["print"].containsKey("url"))
         {
             strcpy(bambuStatus.image_url, incomingJson["print"]["url"]);
         }
-
+        */
         // #pragma region printing
         if (incomingJson["print"].containsKey("print_gcode_action"))
         {
@@ -571,16 +573,74 @@ void xtouch_mqtt_processPushStatus(JsonDocument &incomingJson)
                     {
                         memset(color, 0, 16);
                         memset(traytype, 0, 16);
-                        trays[tray_idx]["tray_color"].as<String>().toCharArray(color, 16);
-                        trays[tray_idx]["tray_type"].as<String>().toCharArray(traytype, 16);
-
+                        /* cols が存在し要素があればフィラメントあり。無い or 空なら空スロット（id のみの payload）。 */
+                        int loaded = 0;
+                        if (trays[tray_idx].containsKey("cols") && trays[tray_idx]["cols"].is<JsonArray>())
+                        {
+                            JsonArray cols = trays[tray_idx]["cols"].as<JsonArray>();
+                            if (cols.size() > 0)
+                                loaded = 1;
+                        }
+                        if (!loaded)
+                        {
+                            xtouch_mqtt_parse_tray(ams_idx, tray_idx + 1, color, 0);
+                            set_tray_type(ams_idx, tray_idx + 1, traytype);
+                            set_tray_color(ams_idx, tray_idx + 1, color);
+                            set_tray_setting_id(ams_idx, tray_idx, "");
+                            continue;
+                        }
+                        if (trays[tray_idx].containsKey("tray_color"))
+                            trays[tray_idx]["tray_color"].as<String>().toCharArray(color, 16);
+                        if (trays[tray_idx].containsKey("tray_type"))
+                            trays[tray_idx]["tray_type"].as<String>().toCharArray(traytype, 16);
                         color[6] = 0;
-
-                        xtouch_mqtt_parse_tray(ams_idx, tray_idx + 1, color, trays[tray_idx]["n"].as<int>());
-
+                        xtouch_mqtt_parse_tray(ams_idx, tray_idx + 1, color, 1);
                         set_tray_type(ams_idx, tray_idx + 1, traytype);
+                        set_tray_color(ams_idx, tray_idx + 1, color);
+                        if (trays[tray_idx].containsKey("tray_info_idx"))
+                        {
+                            char sid[TRAY_SETTING_ID_LEN];
+                            memset(sid, 0, sizeof(sid));
+                            trays[tray_idx]["tray_info_idx"].as<String>().toCharArray(sid, TRAY_SETTING_ID_LEN);
+                            set_tray_setting_id(ams_idx, tray_idx, sid);
+                        }
 
-                        set_tray_temp(ams_idx, tray_idx + 1, (trays[tray_idx]["nozzle_temp_max"].as<int>() + trays[tray_idx]["nozzle_temp_min"].as<int>()) / 2);
+                        int nt_min = 0, nt_max = 0;
+                        if (trays[tray_idx].containsKey("nozzle_temp_min"))
+                            nt_min = trays[tray_idx]["nozzle_temp_min"].as<int>();
+                        if (trays[tray_idx].containsKey("nozzle_temp_max"))
+                            nt_max = trays[tray_idx]["nozzle_temp_max"].as<int>();
+                        if (nt_min == 0 && trays[tray_idx].containsKey("nozzle_temperature_range_low"))
+                        {
+                            JsonVariant v = trays[tray_idx]["nozzle_temperature_range_low"];
+                            if (v.is<JsonArray>() && v.as<JsonArray>().size() > 0)
+                            {
+                                JsonVariant first = v.as<JsonArray>()[0];
+                                nt_min = first.is<int>() ? first.as<int>() : first.as<String>().toInt();
+                            }
+                            else
+                                nt_min = v.as<int>();
+                        }
+                        if (nt_max == 0 && trays[tray_idx].containsKey("nozzle_temperature_range_high"))
+                        {
+                            JsonVariant v = trays[tray_idx]["nozzle_temperature_range_high"];
+                            if (v.is<JsonArray>() && v.as<JsonArray>().size() > 0)
+                            {
+                                JsonVariant first = v.as<JsonArray>()[0];
+                                nt_max = first.is<int>() ? first.as<int>() : first.as<String>().toInt();
+                            }
+                            else
+                                nt_max = v.as<int>();
+                        }
+                        // Serial.printf("[MQTT parse] ams=%u tray=%u nozzle_temp_min=%d nozzle_temp_max=%d (keys: min=%d max=%d range_low=%d range_high=%d)\n",
+                        //     (unsigned)ams_idx, (unsigned)tray_idx,
+                        //     nt_min, nt_max,
+                        //     trays[tray_idx].containsKey("nozzle_temp_min") ? 1 : 0,
+                        //     trays[tray_idx].containsKey("nozzle_temp_max") ? 1 : 0,
+                        //     trays[tray_idx].containsKey("nozzle_temperature_range_low") ? 1 : 0,
+                        //     trays[tray_idx].containsKey("nozzle_temperature_range_high") ? 1 : 0);
+                        set_tray_temp(ams_idx, tray_idx + 1, (nt_max + nt_min) / 2);
+                        set_tray_temp_min_max(ams_idx, tray_idx + 1, (uint16_t)nt_min, (uint16_t)nt_max);
                     }
                 }
 
@@ -677,8 +737,8 @@ void xtouch_mqtt_processPushStatus(JsonDocument &incomingJson)
             incomingJson["print"]["vt_tray"]["tray_type"].as<String>().toCharArray(traytype, 16);
             color[6] = 0;
             xtouch_mqtt_parse_tray(0, (uint8_t)incomingJson["print"]["vt_tray"]["n"].as<int>(), color, 0);
-
             set_tray_type(0, 0, traytype);
+            set_tray_color(0, 0, color);
         }
         else
         {
@@ -991,6 +1051,8 @@ static void xtouch_mqtt_subscribe_commands(bool for_cloud)
     lv_msg_subscribe(XTOUCH_COMMAND_AMS_LOAD_SLOT, (lv_msg_subscribe_cb_t)xtouch_device_command_ams_load, NULL);
     lv_msg_subscribe(XTOUCH_COMMAND_AMS_UNLOAD_SLOT, (lv_msg_subscribe_cb_t)xtouch_device_command_ams_unload, NULL);
     lv_msg_subscribe(XTOUCH_COMMAND_AMS_REFRESH, (lv_msg_subscribe_cb_t)xtouch_device_command_ams_refresh, NULL);
+    lv_msg_subscribe(XTOUCH_COMMAND_AMS_FILAMENT_SETTING, (lv_msg_subscribe_cb_t)xtouch_device_command_ams_filament_setting, NULL);
+    lv_msg_subscribe(XTOUCH_COMMAND_AMS_FETCH_SLICER_TEMP, (lv_msg_subscribe_cb_t)xtouch_device_command_ams_fetch_slicer_temp, NULL);
     lv_msg_subscribe(XTOUCH_COMMAND_CLEAN_PRINT_ERROR, (lv_msg_subscribe_cb_t)xtouch_device_command_clean_print_error, NULL);
 
     lv_msg_subscribe(XTOUCH_COMMAND_EXTRUDE_UP, (lv_msg_subscribe_cb_t)xtouch_device_onNozzleUp, NULL);

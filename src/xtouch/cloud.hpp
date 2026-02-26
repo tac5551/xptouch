@@ -11,6 +11,68 @@
 
 bool xtouch_cloud_pair_loop_exit = false;
 #include <WiFiClientSecure.h>
+#include <cstring>
+
+/** JSON 文字列から key の直後の数値を1つ取り出す（"key":123 や "key":[230] に対応）。ヒープを使わない。 */
+static int cloud_parse_json_int_key(const char *json, size_t len, const char *key)
+{
+  char needle[80];
+  snprintf(needle, sizeof(needle), "\"%s\"", key);
+  const char *p = strstr(json, needle);
+  if (!p || (size_t)(p - json) >= len)
+    return 0;
+  p = (const char *)memchr(p, ':', len - (size_t)(p - json));
+  if (!p || (size_t)(p - json) >= len)
+    return 0;
+  p++;
+  while ((size_t)(p - json) < len && (*p == ' ' || *p == '\t' || *p == '\n' || *p == '\r'))
+    p++;
+  if ((size_t)(p - json) >= len)
+    return 0;
+  if (*p == '[')
+  {
+    p++;
+    while ((size_t)(p - json) < len && (*p == ' ' || *p == '\t' || *p == '\n' || *p == '\r' || *p == '"'))
+      p++;
+  }
+  int val = 0;
+  while ((size_t)(p - json) < len && *p >= '0' && *p <= '9')
+  {
+    val = val * 10 + (*p - '0');
+    p++;
+  }
+  return val;
+}
+
+/** JSON 文字列から key の直後の文字列値 "key":"value" を out にコピー。ヒープを使わない。 */
+static void cloud_parse_json_str_key(const char *json, size_t len, const char *key, char *out, size_t out_size)
+{
+  if (!out || out_size == 0)
+    return;
+  out[0] = '\0';
+  char needle[80];
+  snprintf(needle, sizeof(needle), "\"%s\"", key);
+  const char *p = strstr(json, needle);
+  if (!p || (size_t)(p - json) >= len)
+    return;
+  p = (const char *)memchr(p, ':', len - (size_t)(p - json));
+  if (!p || (size_t)(p - json) >= len)
+    return;
+  p++;
+  while ((size_t)(p - json) < len && (*p == ' ' || *p == '\t' || *p == '\n' || *p == '\r'))
+    p++;
+  if ((size_t)(p - json) >= len || *p != '"')
+    return;
+  p++;
+  const char *start = p;
+  while ((size_t)(p - json) < len && *p != '"')
+    p++;
+  size_t n = (size_t)(p - start);
+  if (n >= out_size)
+    n = out_size - 1;
+  memcpy(out, start, n);
+  out[n] = '\0';
+}
 
 class BambuCloud
 {
@@ -18,6 +80,15 @@ class BambuCloud
 private:
   String _region;
   String _auth_token;
+  /** getDeviceList / getSlicerSetting で共有。都度 new せずヒープを抑える。 */
+  WiFiClientSecure *_ssl_client = nullptr;
+
+  WiFiClientSecure &sslClient()
+  {
+    if (!_ssl_client)
+      _ssl_client = new WiFiClientSecure();
+    return *_ssl_client;
+  }
 
 public:
   String _email;
@@ -30,10 +101,12 @@ public:
     String url = _region == "China" ? "https://api.bambulab.cn/v1/iot-service/api/user/bind" : "https://api.bambulab.com/v1/iot-service/api/user/bind";
     String host = _region == "China" ? "api.bambulab.cn" : "api.bambulab.com";
 
-    WiFiClientSecure client;
+    WiFiClientSecure &client = sslClient();
+    client.stop();
     client.setTimeout(500);
     client.setInsecure();
-    String response = "";
+    static char response_buf[2048];
+    size_t response_len = 0;
     if (!client.connect(host.c_str(), 443))
       Serial1.println("Connection failed!");
     else
@@ -50,22 +123,39 @@ public:
       Serial.print(request);
       client.print(request);
 
-      while (client.connected())
+      /* ヘッダーは \r\n\r\n までバイト読みで捨てる（readStringUntil の String 確保を避ける） */
+      int state = 0;
+      while (client.connected() || client.available())
       {
-        String line = client.readStringUntil('\n');
-        if (line == "\r")
+        int b = client.read();
+        if (b < 0)
         {
-          Serial1.println("headers received");
-          break;
+          delay(1);
+          continue;
+        }
+        if (state == 0)
+          state = (b == '\r') ? 1 : 0;
+        else if (state == 1)
+          state = (b == '\n') ? 2 : (b == '\r') ? 1 : 0;
+        else if (state == 2)
+          state = (b == '\r') ? 3 : 0;
+        else if (state == 3)
+        {
+          if (b == '\n')
+            break;
+          state = (b == '\r') ? 1 : 0;
         }
       }
+      Serial1.println("headers received");
 
-      while (client.available())
+      while (client.available() && response_len < sizeof(response_buf) - 1)
       {
-        char c = client.read();
-        // Serial1.write(c);
-        response += c;
+        int b = client.read();
+        if (b < 0)
+          break;
+        response_buf[response_len++] = (char)b;
       }
+      response_buf[response_len] = '\0';
       Serial1.println("\ndata received");
 
       client.stop();
@@ -73,7 +163,7 @@ public:
     Serial1.println("Connection closed");
 
     doc = new DynamicJsonDocument(2048);
-    DeserializationError error = deserializeJson(*doc, response);
+    DeserializationError error = deserializeJson(*doc, response_buf);
     if (error)
     {
       Serial.print(F("deserializeJson() failed: "));
@@ -82,9 +172,50 @@ public:
     return true;
   }
 
-  JsonArray getPrivateFilaments()
+  /** GET /v1/iot-service/api/slicer/setting/{setting_id} で温度範囲を取得。共通 sslClient + HTTPClient。 */
+  bool getSlicerSetting(const char *setting_id, int *out_min, int *out_max, char *out_filament_id = nullptr, size_t out_filament_id_size = 0)
   {
-    return xtouch_filesystem_readJson(SD, xtouch_paths_private_filaments_flat, true).as<JsonArray>();
+    if (!setting_id || !*setting_id || !out_min || !out_max)
+      return false;
+    *out_min = 0;
+    *out_max = 0;
+    String host = _region == "China" ? "api.bambulab.cn" : "api.bambulab.com";
+    String path = String("/v1/iot-service/api/slicer/setting/") + setting_id;
+    String url = String("https://") + host + path;
+    WiFiClientSecure &c = sslClient();
+    c.stop();
+    c.setTimeout(8000);
+    c.setInsecure();
+
+    yield();
+    HTTPClient http;
+    http.begin(c, url);
+    char auth_buf[320];
+    snprintf(auth_buf, sizeof(auth_buf), "Bearer %s", _auth_token.c_str());
+    http.addHeader("Authorization", auth_buf);
+    http.setTimeout(8000);
+    int code = http.GET();
+    String response = (code == 200) ? http.getString() : "";
+    http.end();
+    if (response.length() == 0)
+      return false;
+    const char *raw = response.c_str();
+    size_t raw_len = response.length();
+#ifdef XTOUCH_DEBUG
+    Serial.printf("[Cloud getSlicerSetting] url=%s\n", url.c_str());
+    Serial.printf("[Cloud getSlicerSetting] id=%s raw_len=%u\n", setting_id, (unsigned)raw_len);
+    Serial.print("[Cloud getSlicerSetting] raw=");
+    for (size_t i = 0; i < raw_len; i++)
+      Serial.print(raw[i]);
+    Serial.println();
+#endif
+    if (response.length() == 0)
+      return false;
+    *out_min = cloud_parse_json_int_key(raw, raw_len, "nozzle_temperature_range_low");
+    *out_max = cloud_parse_json_int_key(raw, raw_len, "nozzle_temperature_range_high");
+    if (out_filament_id && out_filament_id_size > 0)
+      cloud_parse_json_str_key(raw, raw_len, "filament_id", out_filament_id, out_filament_id_size);
+    return (*out_min > 0 || *out_max > 0);
   }
 
   String getUsername() const

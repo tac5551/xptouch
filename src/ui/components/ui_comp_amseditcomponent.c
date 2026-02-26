@@ -272,7 +272,7 @@ lv_obj_t *ui_amsEditComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_pad_right(content, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_top(content, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_bottom(content, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_row(content, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_row(content, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     /* Row: フィラメント(ブランド) + Dropdown */
     lv_obj_t *row1 = lv_obj_create(content);
@@ -296,6 +296,10 @@ lv_obj_t *ui_amsEditComponent_create(lv_obj_t *comp_parent)
     lv_dropdown_set_selected(dd_brand, 0);
     lv_obj_set_flex_grow(dd_brand, 1);
     lv_obj_set_height(dd_brand, 36);
+    lv_obj_set_style_pad_right(dd_brand, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_top(dd_brand, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_bottom(dd_brand, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_row(dd_brand, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(dd_brand, lv_color_hex(0x555555), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(dd_brand, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_font(dd_brand, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -378,10 +382,10 @@ lv_obj_t *ui_amsEditComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_pad_right(footer, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_bottom(footer, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_row(footer, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_column(footer, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_column(footer, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     lv_obj_t *btn_back = lv_btn_create(footer);
-    lv_obj_set_width(btn_back, lv_pct(30));
+    lv_obj_set_width(btn_back, lv_pct(25));
     lv_obj_set_height(btn_back, LV_SIZE_CONTENT);
     lv_obj_set_style_radius(btn_back, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(btn_back, lv_color_hex(0x555555), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -396,7 +400,7 @@ lv_obj_t *ui_amsEditComponent_create(lv_obj_t *comp_parent)
     lv_obj_center(lbl_back);
 
     lv_obj_t *btn_reset = lv_btn_create(footer);
-    lv_obj_set_width(btn_reset, lv_pct(30));
+    lv_obj_set_width(btn_reset, lv_pct(25));
     lv_obj_set_height(btn_reset, LV_SIZE_CONTENT);
     lv_obj_set_style_radius(btn_reset, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(btn_reset, lv_color_hex(0x555555), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -411,7 +415,7 @@ lv_obj_t *ui_amsEditComponent_create(lv_obj_t *comp_parent)
     lv_obj_center(lbl_reset);
 
     lv_obj_t *btn_save = lv_btn_create(footer);
-    lv_obj_set_width(btn_save, lv_pct(30));
+    lv_obj_set_width(btn_save, lv_pct(25));
     lv_obj_set_height(btn_save, LV_SIZE_CONTENT);
     lv_obj_set_style_radius(btn_save, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(btn_save, lv_color_hex(0x2A7C3E), LV_PART_MAIN | LV_STATE_DEFAULT);

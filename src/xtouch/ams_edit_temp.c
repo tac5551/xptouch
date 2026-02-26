@@ -57,7 +57,4 @@ void ams_edit_set_fetched_temps(const char *id, int min_val, int max_val, const 
     }
     else
         ams_edit_fetched_filament_id[0] = '\0';
-    /* #region agent log */
-    printf("[AMS set_fetched] id=%s min=%d max=%d\n", ams_edit_fetched_setting_id, ams_edit_fetched_min, ams_edit_fetched_max);
-    /* #endregion */
 }

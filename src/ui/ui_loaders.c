@@ -39,6 +39,7 @@ void fillScreenData(int screen)
         sendMqttMsg(XTOUCH_ON_NOZZLE_TEMP, bambuStatus.nozzle_temper);
                 break;
     case 7:
+    case 13:
         sendMqttMsg(XTOUCH_ON_AMS, bambuStatus.ams);
         sendMqttMsg(XTOUCH_ON_AMS_BITS, 0);
         sendMqttMsg(XTOUCH_ON_AMS_SLOT_UPDATE, 0);
@@ -110,6 +111,15 @@ void loadScreen(int screen)
         ui_utilCalibrationScreen_screen_init();
         lv_disp_load_scr(ui_utilCalibrationScreen);
         break;
+    case 13:
+        ui_amsEditScreen_screen_init();
+        ui_amsEditComponent_refresh_filament_options();
+        lv_disp_load_scr(ui_amsEditScreen);
+        break;
+    case 14:
+        ui_amsEditColorScreen_screen_init();
+        lv_disp_load_scr(ui_amsEditColorScreen);
+        break;
     }
     fillScreenData(screen);
 
@@ -122,9 +132,11 @@ void loadScreen(int screen)
     case 2: sidebar_index = 1; break; // Control (タブ画面)
     case 3: sidebar_index = 1; break; // Nozzle/Filament (タブ画面)
     case 11: sidebar_index = 1; break; // Util (タブ画面)
-    case 7: sidebar_index = 2; break; // AMS
+    case 7: sidebar_index = 2; break;  // AMS
     case 10: sidebar_index = 2; break; // Util Nozzle Change
     case 12: sidebar_index = 2; break; // Util Calibration
+    case 13: sidebar_index = 2; break; // AMS Edit
+    case 14: sidebar_index = 2; break; // AMS Edit 色選択
     case 4: sidebar_index = 3; break; // Settings
     case 8: sidebar_index = 3; break; // Settings Optional
     default: break;

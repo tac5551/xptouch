@@ -63,6 +63,9 @@ extern "C"
         XTOUCH_COMMAND_AMS_CONTROL,
         XTOUCH_COMMAND_AMS_LOAD_SLOT,
         XTOUCH_COMMAND_AMS_UNLOAD_SLOT,
+        XTOUCH_COMMAND_AMS_REFRESH,
+        XTOUCH_COMMAND_AMS_FILAMENT_SETTING,
+        XTOUCH_COMMAND_AMS_FETCH_SLICER_TEMP,
         XTOUCH_COMMAND_SET_UTIL_NOZZLE_CHANGE,
         XTOUCH_COMMAND_SET_UTIL_CALIBRATION,
 
@@ -107,6 +110,19 @@ extern "C"
     {
         unsigned long long data;
         unsigned long long data2;
+    };
+
+    /** Save 時に送る ams_filament_setting 用。tray_info_idx は setting_id（フル）。filament_id は Cloud の filament_id（例: GFB00）。 */
+    struct XTOUCH_AMS_FILAMENT_SETTING_PAYLOAD
+    {
+        int ams_id;
+        int tray_id;
+        char tray_info_idx[16];
+        char filament_id[16];
+        char tray_color[12];
+        int nozzle_temp_min;
+        int nozzle_temp_max;
+        char tray_type[16];
     };
 
 #ifdef __cplusplus
