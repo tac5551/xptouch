@@ -27,13 +27,7 @@ const char *xtouch_paths_firmware_ota_file = "https://tac-lab.tech/xptouch-bin/2
 #endif
 const char *xtouch_paths_firmware_ota_fw = "/firmware.bin";
 
-//for HMS
-const char *xtouch_paths_hms_key_db = "/xtouch/device_hms.key.db";
-const char *xtouch_paths_hms_value_db = "/xtouch/device_hms.value.db";
-
-const char *xtouch_paths_public_filaments = "/xtouch/public_filaments.json";
-const char *xtouch_paths_private_filaments = "/xtouch/private_filaments.json";
-const char *xtouch_paths_private_filaments_flat = "/xtouch/private_filaments_flat.json";
-const char *xtouch_paths_slicer_setting = "/xtouch/slicer_setting.json";
+/** Filament lists per printer+nozzle (e.g. X1C_filaments_02.txt). Load from SD at runtime. */
+const char *xtouch_paths_nozzle_dir = "/xtouch/nozzle";
 
 #endif

@@ -126,11 +126,40 @@ extern "C"
         int m_tray_pre; // tray_now : "0" ~ "15" or "254", "255"
         int m_humidity; // humidity : "1" ~ "5"
         int m_tray_tar; // tray_tar : "0" ~ "15" or "255",
-        char image_url[512]; // image_url
-        int has_public_filaments; 
+        // char image_url[512]; // image_url  /* 未使用のためコメントアウト。復元時はこの行のコメントを外す */
+        int has_public_filaments;
     } XTouchBambuStatus;
 
     XTouchBambuStatus bambuStatus;
+
+    /* Public filaments: 都度組み立て。SD から表示時に読み、オプション文字列と「現在ブランドの items」だけ保持。 */
+#define XTOUCH_FILAMENT_MAX_BRANDS 8
+#define XTOUCH_FILAMENT_MAX_ITEMS_PER_BRAND 20
+#define XTOUCH_FILAMENT_OPTS_BUF_SIZE 256
+    typedef struct
+    {
+        char id[12];  /* setting_id */
+        char n[24];   /* name */
+        char t[16];   /* type */
+    } XTouchFilamentItem;
+
+    /** 都度組み立て用: ブランド一覧オプション文字列 "B1\nB2\n" */
+    extern char xtouch_filament_brand_options[XTOUCH_FILAMENT_OPTS_BUF_SIZE];
+    /** 都度組み立て用: Type オプション文字列 "T1\nT2\n" */
+    extern char xtouch_filament_type_options[XTOUCH_FILAMENT_OPTS_BUF_SIZE];
+    extern int xtouch_filament_num_brands;
+    /** 最後に load_type_options したブランドの表示インデックス。−1 は未ロード。 */
+    extern int xtouch_filament_current_brand_index;
+    extern int xtouch_filament_current_type_count;
+    /** 1＝パイプバッファに _brands.txt が入っている（get_ith_brand で再読しない）。0＝ブランドファイル等が入っている。 */
+    extern int xtouch_filament_pipe_holds_brands;
+    /** 1＝ブランドは固定（Bambu Lab, Generic の2つのみ。_brands.txt は読まない）。 */
+    extern int xtouch_filament_use_fixed_brands;
+
+    /** パイプ形式テキスト用バッファ（SD /xtouch/nozzle/ から読み込み）。DRAM 節約のため 3064。 */
+#define XTOUCH_FILAMENTS_PIPE_BUF_SIZE 1024
+    extern char xTouchFilamentsPipeBuf[XTOUCH_FILAMENTS_PIPE_BUF_SIZE];
+    extern unsigned int xTouchFilamentsPipeLen;
 
     enum XTouchControlAxis
     {
@@ -234,6 +263,27 @@ extern "C"
         char subtask_id[32];
         int print_error;
     } ClearErrorMessage;
+
+    /** フィラメント Brand/Type ドロップダウン用。都度 SD から組み立てたオプション文字列を返す。実装は filaments_options.c。 */
+    void xtouch_public_filaments_get_brand_options(char *buf, unsigned int buf_len);
+    void xtouch_public_filaments_get_type_options(int brand_idx, char *buf, unsigned int buf_len);
+    void xtouch_public_filaments_get_type_options_by_name(const char *brand_name, char *buf, unsigned int buf_len);
+    /** 表示インデックス（Brand ドロップダウンの選択番号）で Type 候補を取得。get_brand_options と同じ並びで対応。 */
+    void xtouch_public_filaments_get_type_options_by_display_index(int display_index, char *buf, unsigned int buf_len);
+    /** ブランド一覧を SD から読んでオプション文字列を組み立てる。get_brand_options の前に呼ぶ。 */
+    void xtouch_filaments_ensure_brands_loaded(void);
+    /** 指定表示インデックスのブランドの Type 一覧を SD から読んで組み立てる。get_type_options_by_display_index の前に呼ぶ。 */
+    void xtouch_filaments_load_type_options_for_display_index(int display_index);
+    /** AMS 編集画面を開くときに呼ぶ（ensure_brands_loaded のエイリアス）。 */
+    void xtouch_filaments_load_for_current_printer_c(void);
+    /** i 番目のブランド名を _brands.txt から都度取得。buf に最大 buf_len-1 文字＋NUL。 */
+    void xtouch_filaments_get_brand_name_at_index(int index, char *buf, unsigned int buf_len);
+    /** 指定ブランド・Type の setting_id / name / type / 温度をファイルから取得。行は id|n|t または id|n|t|min|max。out_min/out_max は NULL 可。 */
+    void xtouch_filaments_get_id_n_for_brand_type_index(int brand_display_index, int type_display_index, char *id_buf, unsigned int id_len, char *n_buf, unsigned int n_len, char *type_buf, unsigned int type_len, int *out_nozzle_temp_min, int *out_nozzle_temp_max);
+    /** 選択中の Brand/Type の setting_id / name / type / 温度を取得。Save 実装用。 */
+    void xtouch_public_filaments_get_selected_id_n(int brand_display_index, int type_display_index, char *id_buf, unsigned int id_len, char *n_buf, unsigned int n_len, char *type_buf, unsigned int type_len, int *out_nozzle_temp_min, int *out_nozzle_temp_max);
+    /** type_str（例: "PLA"）に一致する Brand/Type の表示インデックスを返す。見つかれば 1、なければ 0。 */
+    int xtouch_public_filaments_find_indices_by_type(const char *type_str, int *out_brand_idx, int *out_type_idx);
 
 #ifdef __cplusplus
 } /*extern "C"*/

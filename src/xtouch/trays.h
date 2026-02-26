@@ -11,18 +11,30 @@ extern "C"
 {
 #endif
 #define max_ams 8
+#define TRAY_SETTING_ID_LEN 16
 
     char *get_tray_type(uint8_t ams_id, uint8_t tray_id);
 
     void set_tray_type(uint8_t ams_id, uint8_t tray_id, char *tray_type);
 
+    const char *get_tray_color(uint8_t ams_id, uint8_t tray_id);
+    void set_tray_color(uint8_t ams_id, uint8_t tray_id, const char *color);
+
     uint16_t get_tray_temp(uint8_t ams_id, uint8_t tray_id);
 
     void set_tray_temp(uint8_t ams_id, uint8_t tray_id, uint16_t tray_temp);
 
+    uint16_t get_tray_temp_min(uint8_t ams_id, uint8_t tray_id);
+    uint16_t get_tray_temp_max(uint8_t ams_id, uint8_t tray_id);
+    void set_tray_temp_min_max(uint8_t ams_id, uint8_t tray_id, uint16_t t_min, uint16_t t_max);
+
     uint64_t get_tray_status(uint8_t ams_id, uint8_t tray_id);
 
     void set_tray_status(uint8_t ams_id, uint8_t tray_id, uint64_t tray_state);
+
+    /** MQTT で取得した setting_id（tray_info_idx）。tray_id は 0=0番トレイ。空の場合は ""。 */
+    const char *get_tray_setting_id(uint8_t ams_id, uint8_t tray_id);
+    void set_tray_setting_id(uint8_t ams_id, uint8_t tray_id, const char *setting_id);
 
 #ifdef __cplusplus
 } /*extern "C"*/

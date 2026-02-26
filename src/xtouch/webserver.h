@@ -31,8 +31,9 @@ unsigned char h2int(char c)
 
 String urldecode(String str)
 {
-
+    /* 1 文字ずつ += すると再確保で断片化するため、事前に reserve して 1 ブロックで確保する */
     String encodedString = "";
+    encodedString.reserve(str.length());
     char c;
     char code0;
     char code1;
@@ -54,7 +55,6 @@ String urldecode(String str)
         }
         else
         {
-
             encodedString += c;
         }
 
