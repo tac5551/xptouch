@@ -158,19 +158,16 @@ async function fetchCookies() {
         const authToken = filteredCookies[0].value;
         jsonData["cloud-authToken"] = authToken;
         $id("downloadJson").style.display = "inline-block";
-        $id("downloadFilamentJson").style.display = "inline-block";
+        $id("downloadFilamentZip").style.display = "inline-block";
       }
     });
   }
 }
 
+/** printer は @BBL の直後のモデル名（P1P, X1C, A1, H2C, H2D など）。指定なし／all なら全件。 */
 function filamentMatchesPrinter(name, printer) {
-  if (printer === "all") return true;
-  if (name.indexOf("@BBL") < 0) return true;
-  if (printer === "P1" && name.indexOf("@BBL P1P") >= 0) return true;
-  if (printer === "X1" && name.indexOf("@BBL X1C") >= 0) return true;
-  if (printer === "A1" && name.indexOf("@BBL A1") >= 0) return true;
-  return false;
+  if (!printer || printer === "all") return true;
+  return name.indexOf("@BBL " + printer) >= 0;
 }
 
 function normalizeBrand(brand) {
@@ -179,6 +176,30 @@ function normalizeBrand(brand) {
   return brand;
 }
 
+function processOneEntry(entry, printer) {
+  const name = entry.name || "";
+  const sid = entry.setting_id || "";
+  const fid = entry.filament_id != null ? String(entry.filament_id) : sid;
+  if (!name) return null;
+  if (printer && printer !== "all" && !filamentMatchesPrinter(name, printer)) return null;
+  /* ノズルサイズは判定しない（まとめて1セット） */
+  const atPos = name.indexOf(" @");
+  const head = atPos >= 0 ? name.substring(0, atPos).trim() : name.trim();
+  const sp = head.indexOf(" ");
+  let brand = sp >= 0 ? head.substring(0, sp) : head;
+  let type = sp >= 0 ? head.substring(sp + 1) : "";
+  if (brand === "Bambu") {
+    brand = "Bambu Lab";
+    if (type.startsWith("Lab ")) type = type.substring(4);
+  } else {
+    brand = normalizeBrand(brand);
+  }
+  if (!brand) brand = "Other";
+  if (!type) type = "Other";
+  return { brand, filamentId: fid, entry: { id: sid, n: name, t: type } };
+}
+
+/** filament_id ごとに配列で最初に出現した setting_id のみ採用。ノズル判定なし・1セットにまとめる。 */
 function buildPublicFilamentsFromSlicer(slicerJson, printer) {
   const filament = slicerJson.filament;
   if (!filament) return null;
@@ -186,59 +207,85 @@ function buildPublicFilamentsFromSlicer(slicerJson, printer) {
   const priv = filament.private || [];
   const brandsSet = new Set();
   const typesByBrand = {};
-  function processOne(entry) {
-    const name = entry.name || "";
-    const sid = entry.setting_id || "";
-    if (!name) return;
-    if (!filamentMatchesPrinter(name, printer)) return;
-    const atPos = name.indexOf(" @");
-    const head = atPos >= 0 ? name.substring(0, atPos).trim() : name.trim();
-    const sp = head.indexOf(" ");
-    let brand = sp >= 0 ? head.substring(0, sp) : head;
-    let type = sp >= 0 ? head.substring(sp + 1) : "";
-    if (brand === "Bambu") {
-      brand = "Bambu Lab";
-      if (type.startsWith("Lab ")) type = type.substring(4);
-    } else {
-      brand = normalizeBrand(brand);
-    }
-    if (!brand) brand = "Other";
-    if (!type) type = "Other";
-    brandsSet.add(brand);
-    if (!typesByBrand[brand]) typesByBrand[brand] = [];
-    typesByBrand[brand].push({ id: sid, n: name, t: type });
-  }
-  pub.forEach(processOne);
-  priv.forEach(processOne);
+  const seenByBrand = {};
+  [].concat(pub, priv).forEach((entry) => {
+    const r = processOneEntry(entry, printer || "all");
+    if (!r) return;
+    if (!seenByBrand[r.brand]) seenByBrand[r.brand] = new Set();
+    if (seenByBrand[r.brand].has(r.filamentId)) return;
+    seenByBrand[r.brand].add(r.filamentId);
+    brandsSet.add(r.brand);
+    if (!typesByBrand[r.brand]) typesByBrand[r.brand] = [];
+    typesByBrand[r.brand].push(r.entry);
+  });
+  // 各ブランド内のみ ID（setting_id）順でソート（ブランドの並びは変更しない）
+  Object.keys(typesByBrand).forEach((brand) => {
+    const arr = typesByBrand[brand] || [];
+    arr.sort((a, b) => (a.id || "").localeCompare(b.id || "", undefined, { numeric: true }));
+  });
   return { brands: Array.from(brandsSet), items: typesByBrand };
 }
 
-async function downloadFilamentJson() {
+/** Build pipe format: brand1\nbrand2\n%%\nid|n|t\n... (per brand block). */
+function buildPipeFormat(data) {
+  if (!data || !data.brands || !data.items) return "";
+  const lines = data.brands.slice();
+  lines.push("%%");
+  data.brands.forEach((brand) => {
+    const arr = data.items[brand] || [];
+    arr.forEach((it) => lines.push([it.id || "", it.n || "", it.t || ""].join("|")));
+    lines.push("%%");
+  });
+  return lines.join("\n");
+}
+
+/** ブランド名をファイル名用に変換（スペース→アンダースコア、長さ制限）。ファームと一致させる。 */
+function sanitizeBrandForFilename(brand) {
+  if (!brand) return "Other";
+  const s = String(brand).replace(/\s+/g, "_").replace(/[^A-Za-z0-9_-]/g, "_");
+  return s.length > 20 ? s.slice(0, 20) : s;
+}
+
+async function downloadFilamentZip() {
+  if (typeof JSZip === "undefined") {
+    alert("JSZip を読み込めません。xtouch28 フォルダに jszip.min.js を置いてください。（https://unpkg.com/jszip@3.10.1/dist/jszip.min.js）");
+    return;
+  }
   const token = jsonData["cloud-authToken"];
   if (!token) return;
   const host = jsonData["cloud-region"] === "China" ? "https://api.bambulab.cn" : "https://api.bambulab.com";
-  const printer = $id("filamentPrinter").value;
-  $id("downloadFilamentJson").disabled = true;
-  $id("downloadFilamentJson").textContent = "Fetching...";
+  $id("downloadFilamentZip").disabled = true;
+  $id("downloadFilamentZip").textContent = "Fetching...";
   try {
     const res = await fetch(host + "/v1/iot-service/api/slicer/setting?version=2.0.0.0", {
       headers: { Authorization: "Bearer " + token },
     });
     if (!res.ok) throw new Error(res.status + " " + res.statusText);
     const slicerJson = await res.json();
-    const out = buildPublicFilamentsFromSlicer(slicerJson, printer);
-    if (!out) throw new Error("No filament data");
-    const blob = new Blob([JSON.stringify(out, null, 2)], { type: "application/json" });
+    const zip = new JSZip();
+    const folder = zip.folder("xtouch").folder("nozzle");
+    const out = buildPublicFilamentsFromSlicer(slicerJson, "all");
+    if (out && out.brands.length > 0) {
+      folder.file("filaments_brands.txt", out.brands.join("\n"));
+      out.brands.forEach((brand) => {
+        const arr = out.items[brand] || [];
+        const lines = arr.map((it) => [it.id || "", it.n || "", it.t || ""].join("|"));
+        const fname = "filaments_" + sanitizeBrandForFilename(brand) + ".txt";
+        folder.file(fname, lines.join("\n"));
+      });
+    }
+    const blob = await zip.generateAsync({ type: "blob" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = "public_filaments.json";
+    a.download = "xtouch_filaments_nozzle.zip";
     a.click();
+    URL.revokeObjectURL(a.href);
     a.remove();
   } catch (e) {
     alert("Failed: " + e.message);
   }
-  $id("downloadFilamentJson").disabled = false;
-  $id("downloadFilamentJson").textContent = "Download public_filaments.json";
+  $id("downloadFilamentZip").disabled = false;
+  $id("downloadFilamentZip").textContent = "Download filaments ZIP (xtouch/nozzle/)";
 }
 
 // Function to toggle visibility of main containers
@@ -373,7 +420,7 @@ function main() {
 
 document.addEventListener("DOMContentLoaded", () => {
   $id("downloadJson").addEventListener("click", downloadJsonData);
-  $id("downloadFilamentJson").addEventListener("click", downloadFilamentJson);
+  $id("downloadFilamentZip").addEventListener("click", downloadFilamentZip);
   $id("provisionDevice-button").addEventListener("click", provisionDevice);
 
   $id("region-china").addEventListener("click", () => {

@@ -310,24 +310,15 @@
             Download provisioning file
           </button>
 
-          <div class="form-group mt-3">
-            <label for="filamentPrinter" class="text-dark">Printer (for filament list)</label>
-            <select id="filamentPrinter" class="form-control form-control-custom">
-              <option value="P1">P1P / P1S</option>
-              <option value="X1">X1 / X1C</option>
-              <option value="A1">A1</option>
-              <option value="all">All</option>
-            </select>
-          </div>
           <button
-            id="downloadFilamentJson"
-            class="btn btn-custom btn-block font-weight-bold mb-2"
+            id="downloadFilamentZip"
+            class="btn btn-custom btn-block font-weight-bold mb-2 mt-3"
             style="display: none"
             type="button"
           >
-            Download public_filaments.json
+            Download filaments ZIP (xtouch/nozzle/)
           </button>
-          <small class="text-muted d-block mb-3">SD: /xtouch/public_filaments.json に保存すると端末のメモリ負荷を減らせます</small>
+          <small class="text-muted d-block mb-3">ZIP を解凍して SD のルートに置くと /xtouch/nozzle/ に機種・ノズル別ファイルが入ります。</small>
 
           <div id="provisionDevice">
             <div class="form-group">
@@ -362,6 +353,7 @@
         </form>
       </div>
     </div>
+    <script src="jszip.min.js"></script>
     <script src="popup.js" defer></script>
   </body>
 </html>
