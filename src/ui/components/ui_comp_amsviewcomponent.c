@@ -146,11 +146,17 @@ static void ui_amsViewComponent_onAmsLockSyncUnloadBtn(lv_event_t *e)
         lv_obj_clear_state(btn, LV_STATE_DISABLED);
 }
 
-/* ロック時は EDIT/LOAD も無効化。フィラメント未挿入スロットは EDIT/LOAD を非表示（opacity 0 でレイアウトは維持）。row2_1 に付け、MSG で全ボタンを更新 */
+/* ロック時は EDIT/LOAD も無効化。フィラメント未挿入スロットは EDIT/LOAD を非表示（opacity 0 でレイアウトは維持）。
+ * Brand ファイル無しのときは EDIT のみ非表示（LOAD は表示のまま）。row2_1 に付け、MSG で全ボタンを更新 */
 static void ui_amsViewComponent_onAmsLockSyncButtons(lv_event_t *e)
 {
     if (lv_event_get_code(e) != LV_EVENT_MSG_RECEIVED)
         return;
+    /* has_public_filaments を最新にする（ensure を走らせる） */
+    {
+        char ensure_buf[1];
+        xtouch_public_filaments_get_brand_options(ensure_buf, (unsigned int)sizeof(ensure_buf));
+    }
     lv_obj_t *row2 = lv_event_get_target(e);
     int global_disabled = (!(bambuStatus.ams_status_main == AMS_STATUS_MAIN_IDLE || bambuStatus.ams_status_main == AMS_STATUS_MAIN_ASSIST) || bambuStatus.print_status == XTOUCH_PRINT_STATUS_RUNNING) ? 1 : 0;
     uint32_t n = lv_obj_get_child_cnt(row2);
@@ -160,27 +166,37 @@ static void ui_amsViewComponent_onAmsLockSyncButtons(lv_event_t *e)
         uint32_t m = lv_obj_get_child_cnt(btn_row);
         if (m == 0)
             continue; /* spacer */
-        /* i>=1 がスロット 0..3 の btn_row。フィラメント有無で EDIT/LOAD を表示/非表示 */
+        /* i>=1 がスロット 0..3 の btn_row。フィラメント有無で EDIT/LOAD を表示/非表示。EDIT は Brand ファイルあり時のみ表示。EXT 時はフィラメント有無問わず表示 */
         int loaded = 0;
+        int is_ext_slot = 0;
         if (i >= 1)
         {
             uint8_t slot_index = (uint8_t)(i - 1);
             if (s_ams_view_selector == UI_AMS_SELECTOR_EXT)
-                loaded = (slot_index == 0) ? (int)((get_tray_status(0, 0) & 0x01) != 0) : 0;
+            {
+                is_ext_slot = (slot_index == 0) ? 1 : 0;
+                loaded = is_ext_slot ? (int)((get_tray_status(0, 0) & 0x01) != 0) : 0;
+            }
             else
                 loaded = (int)((get_tray_status((uint8_t)(s_ams_view_selector - 1), (uint8_t)(slot_index + 1)) & 0x01) != 0);
         }
         for (uint32_t j = 0; j < m; j++)
         {
             lv_obj_t *btn = lv_obj_get_child(btn_row, j);
-            int disabled = global_disabled || (i >= 1 && !loaded);
+            /* EDIT(j==0) は Brand ファイルあり時表示。LOAD(j==1) はフィラメントあり or EXT で表示 */
+            int show_edit = (i >= 1) && bambuStatus.has_public_filaments && (is_ext_slot || loaded);
+            int show_load = (i >= 1) && (is_ext_slot || loaded);
+            int disabled = global_disabled || (i >= 1 && (j == 0 ? !show_edit : !show_load));
             if (disabled)
                 lv_obj_add_state(btn, LV_STATE_DISABLED);
             else
                 lv_obj_clear_state(btn, LV_STATE_DISABLED);
-            /* フィラメント無しのスロットは EDIT/LOAD を透明で非表示（レイアウトは維持） */
+            /* フィラメント無しのスロットは EDIT/LOAD を透明。Brand ファイル無しのときは EDIT(j==0) のみ透明（レイアウトは維持） */
             if (i >= 1)
-                lv_obj_set_style_opa(btn, loaded ? LV_OPA_COVER : LV_OPA_TRANSP, LV_PART_MAIN | LV_STATE_DEFAULT);
+            {
+                lv_coord_t opa = (j == 0 ? show_edit : show_load) ? LV_OPA_COVER : LV_OPA_TRANSP;
+                lv_obj_set_style_opa(btn, opa, LV_PART_MAIN | LV_STATE_DEFAULT);
+            }
         }
     }
 }

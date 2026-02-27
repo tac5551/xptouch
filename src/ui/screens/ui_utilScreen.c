@@ -27,6 +27,8 @@ void ui_utilScreen_screen_init(void)  {
     lv_obj_set_style_pad_right(content_col, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_top(content_col, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_bottom(content_col, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_row(content_col, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_column(content_col, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(content_col, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_width(content_col, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
 

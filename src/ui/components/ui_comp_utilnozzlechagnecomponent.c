@@ -225,6 +225,7 @@ lv_obj_t *ui_utilNozzleChagneComponent_create(lv_obj_t *comp_parent)
 
     lv_obj_set_style_text_color(cui_nozzleTypeSelectDropDown, lv_color_hex(0x2aff00), LV_PART_INDICATOR | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(cui_nozzleTypeSelectDropDown, 255, LV_PART_INDICATOR | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(cui_nozzleTypeSelectDropDown, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     lv_obj_set_style_text_letter_space(lv_dropdown_get_list(cui_nozzleTypeSelectDropDown), 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_line_space(lv_dropdown_get_list(cui_nozzleTypeSelectDropDown), 32, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -304,6 +305,7 @@ lv_obj_t *ui_utilNozzleChagneComponent_create(lv_obj_t *comp_parent)
 
     lv_obj_set_style_text_color(cui_nozzleDemiliterSelectDropDown, lv_color_hex(0x2aff00), LV_PART_INDICATOR | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(cui_nozzleDemiliterSelectDropDown, 255, LV_PART_INDICATOR | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(cui_nozzleDemiliterSelectDropDown, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     lv_obj_set_style_text_letter_space(lv_dropdown_get_list(cui_nozzleDemiliterSelectDropDown), 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_line_space(lv_dropdown_get_list(cui_nozzleDemiliterSelectDropDown), 32, LV_PART_MAIN | LV_STATE_DEFAULT);

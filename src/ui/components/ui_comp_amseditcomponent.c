@@ -350,6 +350,7 @@ lv_obj_t *ui_amsEditComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_bg_color(dd_brand, lv_color_hex(0x555555), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(dd_brand, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_font(dd_brand, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(lv_dropdown_get_list(dd_brand), lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(lv_dropdown_get_list(dd_brand), lv_color_hex(0x666666), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(lv_dropdown_get_list(dd_brand), 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
@@ -372,6 +373,7 @@ lv_obj_t *ui_amsEditComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_bg_color(dd_type, lv_color_hex(0x555555), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(dd_type, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_font(dd_type, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(lv_dropdown_get_list(dd_type), lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(lv_dropdown_get_list(dd_type), lv_color_hex(0x666666), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(lv_dropdown_get_list(dd_type), 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 

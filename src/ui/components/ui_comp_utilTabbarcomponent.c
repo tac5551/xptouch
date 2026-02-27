@@ -18,7 +18,7 @@ static lv_obj_t *create_tab_button(lv_obj_t *parent, const char *label, int inde
 {
     lv_obj_t *btn = lv_obj_create(parent);
     lv_obj_set_flex_grow(btn, 1);
-    lv_obj_set_height(btn, 32);
+    lv_obj_set_height(btn, lv_pct(100));  /* 親の高さいっぱい */
     lv_obj_clear_flag(btn, LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM);
     lv_obj_set_style_radius(btn, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(btn, lv_color_hex(0x333333), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -63,17 +63,17 @@ lv_obj_t *ui_utilTabbarComponent_create(lv_obj_t *comp_parent, int active_tab_in
 {
     lv_obj_t *cui = lv_obj_create(comp_parent);
     lv_obj_set_width(cui, lv_pct(100));
-    lv_obj_set_height(cui, 36);
+    lv_obj_set_height(cui, lv_pct(15));
     lv_obj_set_flex_flow(cui, LV_FLEX_FLOW_ROW);
     lv_obj_set_flex_align(cui, LV_FLEX_ALIGN_SPACE_EVENLY, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
     lv_obj_clear_flag(cui, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_style_radius(cui, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_bg_color(cui, lv_color_hex(0x222222), LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_left(cui, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_right(cui, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_top(cui, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_bottom(cui, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_column(cui, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(cui, lv_color_hex(0x444444), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_left(cui, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(cui, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_top(cui, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_bottom(cui, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_column(cui, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     lv_obj_t **children = lv_mem_alloc(sizeof(lv_obj_t *) * _UI_COMP_UTILTABBARCOMPONENT_NUM);
     children[UI_COMP_UTILTABBARCOMPONENT_UTILTABBARCOMPONENT] = cui;
