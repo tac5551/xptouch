@@ -1,7 +1,7 @@
 #include <pgmspace.h>
 
 // All HMS errors (no optimization)
-int hms_error_length = 3929;
+int hms_error_length = 3954;
 
 const char *hms_error_keys[] PROGMEM = {
   "0704220000020025",
@@ -418,6 +418,37 @@ const char *hms_error_keys[] PROGMEM = {
   "0705210000020023",
   "0700200000020023",
   "0703230000020023",
+  "0702200000020057",
+  "1880200000020058",
+  "1882200000020058",
+  "0702230000020057",
+  "0700210000020057",
+  "1887200000020058",
+  "0700200000020057",
+  "0703230000020057",
+  "0700230000020057",
+  "0701230000020057",
+  "1884200000020058",
+  "0703200000020057",
+  "0703220000020057",
+  "0701210000020057",
+  "1885200000020058",
+  "1886200000020058",
+  "1881200000020058",
+  "0700220000020057",
+  "0702210000020057",
+  "0702220000020057",
+  "0701200000020057",
+  "0701220000020057",
+  "1883200000020058",
+  "0703210000020057",
+  "0300010000010005",
+  "0702220000020021",
+  "0700300000030003",
+  "1803200000020019",
+  "0703230000020024",
+  "0705200000020002",
+  "0707330000020002",
   "1801200000020012",
   "1802220000020024",
   "0700220000020007",
@@ -1693,11 +1724,6 @@ const char *hms_error_keys[] PROGMEM = {
   "0701220000020020",
   "0700200000020024",
   "1803220000020016",
-  "1807100000010001",
-  "1807200000010085",
-  "0700230000020001",
-  "1803130000020004",
-  "0702200000020002",
   "1800120000010001",
   "1803220000020024",
   "1801230000020017",
@@ -3172,12 +3198,11 @@ const char *hms_error_keys[] PROGMEM = {
   "1805200000020017",
   "0702210000010086",
   "0704200000020001",
-  "0702220000020021",
-  "0700300000030003",
-  "1803200000020019",
-  "0703230000020024",
-  "0705200000020002",
-  "0707330000020002",
+  "1807100000010001",
+  "1807200000010085",
+  "0700230000020001",
+  "1803130000020004",
+  "0702200000020002",
   "1801100000010001",
   "0701230000020024",
   "0700010000010011",
@@ -4350,6 +4375,37 @@ const char *hms_error_values[] PROGMEM = {
   "AMS F slot 2 the tube inside the AMS is broken, or feed-out hall sensor is faulty and cannot detect the filament.",
   "AMS A slot 1 the tube inside the AMS is broken, or feed-out hall sensor is faulty and cannot detect the filament.",
   "AMS D slot 4 the tube inside the AMS is broken, or feed-out hall sensor is faulty and cannot detect the filament.",
+  "The RFID-tag on AMS C Slot 1 cannot be identified.",
+  "The RFID-tag on AMS-HT A cannot be identified.",
+  "The RFID-tag on AMS-HT C cannot be identified.",
+  "The RFID-tag on AMS C Slot 4 cannot be identified.",
+  "The RFID-tag on AMS A Slot 2 cannot be identified.",
+  "The RFID-tag on AMS-HT H cannot be identified.",
+  "The RFID-tag on AMS A Slot 1 cannot be identified.",
+  "The RFID-tag on AMS D Slot 4 cannot be identified.",
+  "The RFID-tag on AMS A Slot 4 cannot be identified.",
+  "The RFID-tag on AMS B Slot 4 cannot be identified.",
+  "The RFID-tag on AMS-HT E cannot be identified.",
+  "The RFID-tag on AMS D Slot 1 cannot be identified.",
+  "The RFID-tag on AMS D Slot 3 cannot be identified.",
+  "The RFID-tag on AMS B Slot 2 cannot be identified.",
+  "The RFID-tag on AMS-HT F cannot be identified.",
+  "The RFID-tag on AMS-HT G cannot be identified.",
+  "The RFID-tag on AMS-HT B cannot be identified.",
+  "The RFID-tag on AMS A Slot 3 cannot be identified.",
+  "The RFID-tag on AMS C Slot 2 cannot be identified.",
+  "The RFID-tag on AMS C Slot 3 cannot be identified.",
+  "The RFID-tag on AMS B Slot 1 cannot be identified.",
+  "The RFID-tag on AMS B Slot 3 cannot be identified.",
+  "The RFID-tag on AMS-HT D cannot be identified.",
+  "The RFID-tag on AMS D Slot 2 cannot be identified.",
+  "A heatbed temperature control issue has been detected and the heating module may be damaged. Please power off the device immediately and follow the Wiki to replace the AC board.",
+  "AMS C slot 3 assist motor is stalled，due to excessive resistance in the tube between the filament buffer and the toolhead.",
+  "RFID cannot be read because of a hardware or structural error.",
+  "AMS-HT D slot 1 assist motor is stalled，due to excessive resistance in the tube between AMS and the filament buffer.",
+  "AMS D slot 4 failed to rotate the filament spool when pulling filament back to AMS.",
+  "AMS F Slot 1 is empty; please insert a new filament.",
+  "The RFID-tag on AMS H Slot4 is damaged, or its content cannot be identified.",
   "AMS-HT B slot 1 feeder unit motor is stalled, cannot rotate the spool.",
   "AMS-HT C slot 3 failed to rotate the filament spool when pulling filament back to AMS.",
   "AMS A Slot 3 feed-out Hall sensor is disconnected. The connector may have poor contact.",
@@ -5625,11 +5681,6 @@ const char *hms_error_values[] PROGMEM = {
   "AMS B slot 3 assist motor is stalled，due to excessive resistance in the tube near the filament buffer。",
   "AMS A slot 1 failed to rotate the filament spool when pulling filament back to AMS.",
   "AMS-HT D slot 3 assist motor has slipped. Please pull out the filament, cut off the worn part, and then try again.",
-  "The AMS-HT H slot 1 motor has slipped. The extrusion wheel may be malfunctioning, or the filament may be too thin.",
-  "Failed to read the filament information from AMS-HT H slot 1. RFID tag verification failed. You can try to use Bambu Lab filament.",
-  "AMS A Slot 4 filament has run out. Please insert a new filament.",
-  "AMS-HT D The brushed motor 4 has no signal, which may be due to poor contact in the motor connector or a motor fault.",
-  "AMS C Slot 1 is empty; please insert a new filament.",
   "The AMS-HT A slot 3 motor has slipped. The extrusion wheel may be malfunctioning, or the filament may be too thin.",
   "AMS-HT D slot 3 failed to rotate the filament spool when pulling filament back to AMS.",
   "AMS-HT B slot 4 assist motor is stalled，due to excessive resistance in the tube between AMS and the printer.",
@@ -7104,12 +7155,11 @@ const char *hms_error_values[] PROGMEM = {
   "AMS-HT F slot 1 assist motor is stalled，due to excessive resistance in the tube between AMS and the printer.",
   "Failed to read the filament information from AMS C slot 2. The RFID tag cannot rotate due to a jam during the filament loading or unloading. Please pull out the filament and try again.",
   "AMS E Slot 1 filament has run out. Please insert a new filament.",
-  "AMS C slot 3 assist motor is stalled，due to excessive resistance in the tube between the filament buffer and the toolhead.",
-  "RFID cannot be read because of a hardware or structural error.",
-  "AMS-HT D slot 1 assist motor is stalled，due to excessive resistance in the tube between AMS and the filament buffer.",
-  "AMS D slot 4 failed to rotate the filament spool when pulling filament back to AMS.",
-  "AMS F Slot 1 is empty; please insert a new filament.",
-  "The RFID-tag on AMS H Slot4 is damaged, or its content cannot be identified.",
+  "The AMS-HT H slot 1 motor has slipped. The extrusion wheel may be malfunctioning, or the filament may be too thin.",
+  "Failed to read the filament information from AMS-HT H slot 1. RFID tag verification failed. You can try to use Bambu Lab filament.",
+  "AMS A Slot 4 filament has run out. Please insert a new filament.",
+  "AMS-HT D The brushed motor 4 has no signal, which may be due to poor contact in the motor connector or a motor fault.",
+  "AMS C Slot 1 is empty; please insert a new filament.",
   "The AMS-HT B slot 1 motor has slipped. The extrusion wheel may be malfunctioning, or the filament may be too thin.",
   "AMS B slot 4 failed to rotate the filament spool when pulling filament back to AMS.",
   "AMS A The assist motor calibration parameter error. Please pull out the filament from the filament hub and then restart the AMS.",
@@ -7868,7 +7918,7 @@ const char *hms_error_values[] PROGMEM = {
 };
 
 // All Device errors (no optimization)
-int device_error_length = 512;
+int device_error_length = 513;
 
 const char *device_error_keys[] PROGMEM = {
   "07038012",
@@ -8382,7 +8432,8 @@ const char *device_error_keys[] PROGMEM = {
   "0502402E",
   "0300806E",
   "0502C032",
-  "0502C031"
+  "0502C031",
+  "0300806F"
 };
 
 const char *device_error_values[] PROGMEM = {
@@ -8897,7 +8948,8 @@ const char *device_error_values[] PROGMEM = {
   "Printing stopped because the printer was unable to parse the 3mf file. Please resend your print job.",
   "Abnormal nozzle temperature control detected; the heating module may be damaged. Please disconnect the power immediately and stop using the device.",
   "Please check and remove any printed parts or debris from the heatbed surface and underside before continuing the drying process.",
-  "Please check and remove any printed parts or debris from the heatbed surface before continuing the cold pull."
+  "Please check and remove any printed parts or debris from the heatbed surface before continuing the cold pull.",
+  "Abnormal temperature rise detected on the heatbed. The heating module may be damaged. Please power off the printer."
 };
 
 // Retry and Done message arrays

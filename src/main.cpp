@@ -37,6 +37,11 @@
 #include "xtouch/filaments.h"
 #include "xtouch/ams_edit_temp.h"
 #include "xtouch/filaments_rev.h"
+#include "ui/ui_events.h"
+
+#if defined(__XTOUCH_SCREEN_28__)
+#include "xtouch/m5Stack.h"
+#endif
 
 void xtouch_debug_log_ams_save(const char *id_buf, const char *fetched_id, int id_match, int fetched_min, int fetched_max, int payload_min, int payload_max)
 {
@@ -61,6 +66,7 @@ void setup()
 
   xtouch_eeprom_setup();
   xtouch_globals_init();
+  WiFi.onEvent(onWiFiEvent);
   xtouch_screen_setup();
 
 #ifdef __XTOUCH_SCREEN_50__
@@ -81,7 +87,14 @@ void setup()
   }
 #endif
   xtouch_intro_show();
-  while (!xtouch_sdcard_setup())
+  int8_t sd_cs_pin = -1;  
+  // 2.8": M5Stack のみ 4、それ以外は -1(デフォルト)
+#if defined(__XTOUCH_SCREEN_28__)
+  if (tft.getBoard() == (lgfx::boards::board_t)2) {
+      sd_cs_pin = 4;
+  }
+#endif
+  while (!xtouch_sdcard_setup(sd_cs_pin))
     ;
 
   xtouch_coldboot_check();
@@ -157,6 +170,10 @@ void setup()
   xtouch_neo_pixel_timer_init(xTouchConfig.xTouchNeoPixelPinValue);
   xtouch_chamber_timer_init();
   xtouch_screen_startScreenTimer();
+
+#if defined(__XTOUCH_SCREEN_28__)
+  xtouch_m5stack_buttons_setup((int)tft.getBoard());
+#endif
 }
 
 #ifdef XTOUCH_DEBUG
@@ -179,6 +196,10 @@ void loop()
   
   // キャラクターアニメーション処理（millis()ベース、タイマー不要）
   xtouch_events_onCharacterAnimation();
+
+#if defined(__XTOUCH_SCREEN_28__)
+  xtouch_m5stack_buttons_loop();
+#endif
 
 #ifdef XTOUCH_DEBUG
   if (millis() - s_last_heap_log_ms >= HEAP_LOG_INTERVAL_MS)

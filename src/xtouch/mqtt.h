@@ -884,6 +884,23 @@ const char *xtouch_mqtt_generateRandomKey(int keyLength)
     return key;
 }
 
+/** SSL(-76)/LOST_IP 後は見かけ上IPがあるが到達不能になるため、WiFi.reconnect() してから再試行する */
+static void xtouch_mqtt_wifi_reconnect_and_wait(int timeout_ms)
+{
+    ConsoleInfo.println(F("[xPTouch][MQTT] WiFi reconnect before retry..."));
+    WiFi.reconnect();
+    for (int i = 0; i < (timeout_ms / 100); i++)
+    {
+        if (WiFi.status() == WL_CONNECTED)
+            break;
+        delay(100);
+        lv_timer_handler();
+        lv_task_handler();
+        esp_task_wdt_reset();
+    }
+    delay(500);
+}
+
 /* 起動後はじめて MQTT 接続できたときだけホームへ。再接続では画面を変えない（不定期にロード画面に戻るのを防ぐ） */
 static bool xtouch_mqtt_has_ever_connected = false;
 void xtouch_mqtt_onMqttReady()
@@ -937,8 +954,11 @@ static void xtouch_mqtt_connect(const char *username, const char *password, cons
                     ESP.restart();
                 }
                 break;
-            case -2: // MQTT_CONNECT_FAILED
-                if (!xtouch_mqtt_firstConnectionDone)
+            case -2: // MQTT_CONNECT_FAILED (Host unreachable 等)
+            case -3: // MQTT_CONNECTION_LOST
+            case -1: // MQTT_DISCONNECTED
+                xtouch_mqtt_wifi_reconnect_and_wait(5000);
+                if (xtouch_pubSubClient.state() == -2 && !xtouch_mqtt_firstConnectionDone)
                 {
                     xtouch_mqtt_connection_fail_count--;
                     if (xtouch_mqtt_connection_fail_count == 0)
@@ -953,9 +973,6 @@ static void xtouch_mqtt_connect(const char *username, const char *password, cons
                         ESP.restart();
                     }
                 }
-                break;
-            case -3: // MQTT_CONNECTION_LOST
-            case -1: // MQTT_DISCONNECTED
                 break;
             case 1: // MQTT BAD_PROTOCOL
             case 2: // MQTT BAD_CLIENT_ID
@@ -1101,6 +1118,7 @@ void xtouch_cloud_mqtt_loop()
     if (!xtouch_pubSubClient.connected())
     {
         Serial.println("[xPTouch][MQTT] -----DISCONNECTED-----");
+        xtouch_mqtt_wifi_reconnect_and_wait(5000);
         if(xTouchConfig.xTouchLanOnlyMode){
             xtouch_local_mqtt_connect();
         }else{

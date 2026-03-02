@@ -1,7 +1,7 @@
 #include <pgmspace.h>
 
 // Non-optimized HMS errors (legacy format)
-int hms_error_length = 122;
+int hms_error_length = 123;
 
 const char *hms_error_keys[] PROGMEM = {
   "0C00040000010025",
@@ -16,6 +16,7 @@ const char *hms_error_keys[] PROGMEM = {
   "0500040000030057",
   "0300900000010007",
   "0700520000030001",
+  "0300010000010005",
   "030001000001000C",
   "050005000001000F",
   "0C0003000002000E",
@@ -141,6 +142,7 @@ const char *hms_error_values[] PROGMEM = {
   "The print job has been completed. Automatic air purification is in progress.",
   "High chamber temperature detected. If the hotend is overheating or emitting smoke, immediately power off the printer. Please refer to the Wiki for detailed troubleshooting instructions.",
   "Abnormal number or type of connected AMS units detected. Please refer to the Wiki for supported AMS combinations and adjust the current connection.",
+  "A heatbed temperature control issue has been detected and the heating module may be damaged. Please power off the device immediately and follow the Wiki to replace the AC board.",
   "The heatbed has worked at full load for a long time. The temperature control system may be abnormal.",
   "The accessory firmware does not match the printer. Please upgrade it on the \"Firmware\" page.",
   "Your nozzle seems to be covered with jammed or clogged material.",
@@ -254,7 +256,7 @@ const char *hms_error_values[] PROGMEM = {
 };
 
 // Non-optimized Device errors (legacy format)
-int device_error_length = 136;
+int device_error_length = 137;
 
 const char *device_error_keys[] PROGMEM = {
   "07004001",
@@ -392,7 +394,8 @@ const char *device_error_keys[] PROGMEM = {
   "050040A8",
   "0300806E",
   "0502C032",
-  "0502C031"
+  "0502C031",
+  "0300806F"
 };
 
 const char *device_error_values[] PROGMEM = {
@@ -531,5 +534,6 @@ const char *device_error_values[] PROGMEM = {
   "The device firmware requires a repair upgrade, and the current operation cannot be performed. Please upgrade it on the \"Firmware\" page.",
   "Abnormal nozzle temperature control detected; the heating module may be damaged. Please disconnect the power immediately and stop using the device.",
   "Please check and remove any printed parts or debris from the heatbed surface and underside before continuing the drying process.",
-  "Please check and remove any printed parts or debris from the heatbed surface before continuing the cold pull."
+  "Please check and remove any printed parts or debris from the heatbed surface before continuing the cold pull.",
+  "Abnormal temperature rise detected on the heatbed. The heating module may be damaged. Please power off the printer."
 };

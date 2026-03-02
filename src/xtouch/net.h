@@ -2,6 +2,16 @@
 #define _XLCD_NET
 
 #include <WiFi.h>
+#include "xtouch/debug.h"
+
+void onWiFiEvent(arduino_event_id_t event, arduino_event_info_t info)
+{
+    if (event == ARDUINO_EVENT_WIFI_STA_LOST_IP)
+    {
+        ConsoleInfo.println(F("[xPTouch][WiFi] STA LOST IP, reconnecting..."));
+        WiFi.reconnect();
+    }
+}
 #include <WiFiClient.h>
 #include <HTTPClient.h>
 #include <MD5Builder.h>
