@@ -66,7 +66,6 @@ void setup()
 
   xtouch_eeprom_setup();
   xtouch_globals_init();
-  WiFi.onEvent(onWiFiEvent);
   xtouch_screen_setup();
 
 #ifdef __XTOUCH_SCREEN_50__

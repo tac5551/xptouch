@@ -199,7 +199,8 @@ extern "C"
         int currentScreenIndex;
  
         bool xTouchStackChanEnabled;
- 
+        bool xTouchPreheatEnabled;
+
         int xTouchNeoPixelNumValue;
         int xTouchNeoPixelBlightnessValue;
         int xTouchNeoPixelPinValue;

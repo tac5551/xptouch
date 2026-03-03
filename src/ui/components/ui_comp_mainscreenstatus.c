@@ -233,6 +233,12 @@ lv_obj_t *ui_mainScreenStatus_create(lv_obj_t *comp_parent)
     lv_obj_add_event_cb(preHeatButton2, ui_event_comp_mainScreenStatusComponent_onPreHeatButton2Click, LV_EVENT_CLICKED, NULL);
     lv_obj_add_event_cb(preHeatButton3, ui_event_comp_mainScreenStatusComponent_onPreHeatButton3Click, LV_EVENT_CLICKED, NULL);
 
+    if (!xTouchConfig.xTouchPreheatEnabled)
+    {
+        lv_obj_add_flag(cui_preHeatBox1, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_add_flag(cui_preHeatBox2, LV_OBJ_FLAG_HIDDEN);
+    }
+
     lv_obj_add_event_cb(cui_mainScreenStatus, get_component_child_event_cb, LV_EVENT_GET_COMP_CHILD, children);
     lv_obj_add_event_cb(cui_mainScreenStatus, del_component_child_event_cb, LV_EVENT_DELETE, children);
     ui_comp_mainScreenStatus_create_hook(cui_mainScreenStatus);

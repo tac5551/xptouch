@@ -53,6 +53,7 @@ bool xtouch_wifi_setup()
     WiFi.mode(WIFI_STA);
     WiFi.begin(ssidB64String.c_str(), ssidPWDString.c_str());
     ConsoleInfo.println(F("[xPTouch][CONNECTION] Connecting to WiFi .."));
+    WiFi.onEvent(onWiFiEvent);
 
     lv_label_set_text(introScreenCaption, LV_SYMBOL_WIFI " Connecting");
     lv_obj_set_style_text_color(introScreenCaption, lv_color_hex(0x555555), LV_PART_MAIN | LV_STATE_DEFAULT);

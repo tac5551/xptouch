@@ -98,6 +98,7 @@ extern "C"
   lv_obj_t *ui_optionalAlarmTimeoutValue;
   lv_obj_t *ui_optional_chamberSensorSwitch;
   lv_obj_t *ui_optional_stackChanSwitch;
+  lv_obj_t *ui_optional_preheatSwitch;
   lv_obj_t *ui_optional_Idle_ledSwitch;
 
   lv_obj_t *ui_characterScreen;

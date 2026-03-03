@@ -422,7 +422,7 @@ lv_obj_t *ui_amsEditComponent_create(lv_obj_t *comp_parent)
     /* 色選択の右: Min/Max 温度を2段表示 */
     lv_obj_t *temp_col = lv_obj_create(row3);
     lv_obj_set_width(temp_col, LV_SIZE_CONTENT);
-    lv_obj_set_height(temp_col, 48);
+    lv_obj_set_height(temp_col, LV_SIZE_CONTENT);
     lv_obj_set_flex_flow(temp_col, LV_FLEX_FLOW_COLUMN);
     lv_obj_set_flex_align(temp_col, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_START);
     lv_obj_set_style_bg_opa(temp_col, 0, LV_PART_MAIN | LV_STATE_DEFAULT);

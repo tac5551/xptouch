@@ -196,6 +196,12 @@ void onOptionalStackChan(lv_event_t *e)
     lv_msg_send(XTOUCH_SETTINGS_SAVE, NULL);
 }
 
+void onOptionalPreheat(lv_event_t *e)
+{
+    xTouchConfig.xTouchPreheatEnabled = !xTouchConfig.xTouchPreheatEnabled;
+    lv_msg_send(XTOUCH_SETTINGS_SAVE, NULL);
+}
+
 void onOptionalIdleLED(lv_event_t *e)
 {
     xTouchConfig.xTouchIdleLEDEnabled = !xTouchConfig.xTouchIdleLEDEnabled;

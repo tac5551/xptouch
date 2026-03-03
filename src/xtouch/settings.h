@@ -14,6 +14,7 @@ void xtouch_settings_save(bool onlyRoot = false)
     doc["chamberTempDiff"] = xTouchConfig.xTouchChamberSensorReadingDiff;
 
     doc["stackChanEnabled"] = xTouchConfig.xTouchStackChanEnabled;
+    doc["preheatEnabled"] = xTouchConfig.xTouchPreheatEnabled;
     doc["neoPixelBlightness"]= xTouchConfig.xTouchNeoPixelBlightnessValue ;
     doc["neoPixelNum"]= xTouchConfig.xTouchNeoPixelNumValue;
     doc["neoPixelPin"] = xTouchConfig.xTouchNeoPixelPinValue;
@@ -51,6 +52,7 @@ void xtouch_settings_loadSettings()
         xTouchConfig.xTouchChamberSensorReadingDiff = 0;
 
         xTouchConfig.xTouchStackChanEnabled = false;
+        xTouchConfig.xTouchPreheatEnabled = true;
         xTouchConfig.xTouchNeoPixelBlightnessValue = 25;
         xTouchConfig.xTouchNeoPixelNumValue = 0;
         xTouchConfig.xTouchNeoPixelPinValue = 0;
@@ -72,6 +74,7 @@ void xtouch_settings_loadSettings()
     xTouchConfig.xTouchChamberSensorReadingDiff = settings.containsKey("chamberTempDiff") ? settings["chamberTempDiff"].as<int8_t>() : 0;
 
     xTouchConfig.xTouchStackChanEnabled = settings.containsKey("stackChanEnabled") ? settings["stackChanEnabled"].as<bool>() : true;
+    xTouchConfig.xTouchPreheatEnabled = settings.containsKey("preheatEnabled") ? settings["preheatEnabled"].as<bool>() : true;
     xTouchConfig.xTouchNeoPixelBlightnessValue = settings.containsKey("neoPixelBlightness") ? settings["neoPixelBlightness"].as<int>() : 128;
     xTouchConfig.xTouchNeoPixelNumValue = settings.containsKey("neoPixelNum") ? settings["neoPixelNum"].as<int>() : 10;
     xTouchConfig.xTouchNeoPixelPinValue = settings.containsKey("neoPixelPin") ? settings["neoPixelPin"].as<int>() : 0;
