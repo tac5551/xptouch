@@ -141,6 +141,88 @@ lv_obj_t *ui_mainScreenStatus_create(lv_obj_t *comp_parent)
     lv_obj_set_style_text_font(cui_mainScreenStatusCaption, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     lv_obj_t *preHeatButton1;
+    lv_obj_t *preHeatButton2;
+    lv_obj_t *preHeatButton3;
+#ifdef __XTOUCH_SCREEN_50__
+    /* 5 inch: wrap labels in flex container to center text vertically */
+    lv_obj_t *preHeatBtn1Cont = lv_obj_create(cui_preHeatBox1);
+    lv_obj_set_width(preHeatBtn1Cont, lv_pct(37));
+    lv_obj_set_height(preHeatBtn1Cont, lv_pct(100));
+    lv_obj_set_flex_grow(preHeatBtn1Cont, 2);
+    lv_obj_set_align(preHeatBtn1Cont, LV_ALIGN_CENTER);
+    lv_obj_set_flex_flow(preHeatBtn1Cont, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_flex_align(preHeatBtn1Cont, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_add_flag(preHeatBtn1Cont, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_clear_flag(preHeatBtn1Cont, LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN);
+    lv_obj_set_scrollbar_mode(preHeatBtn1Cont, LV_SCROLLBAR_MODE_OFF);
+    lv_obj_set_style_radius(preHeatBtn1Cont, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(preHeatBtn1Cont, lv_color_hex(0x007700), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(preHeatBtn1Cont, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DISABLED);
+    lv_obj_set_style_bg_opa(preHeatBtn1Cont, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(preHeatBtn1Cont, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_all(preHeatBtn1Cont, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(preHeatBtn1Cont, lv_color_hex(0x333333), LV_PART_MAIN | LV_STATE_PRESSED);
+    lv_obj_set_style_border_width(preHeatBtn1Cont, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+    preHeatButton1 = lv_label_create(preHeatBtn1Cont);
+    lv_obj_set_width(preHeatButton1, LV_SIZE_CONTENT);
+    lv_obj_set_height(preHeatButton1, LV_SIZE_CONTENT);
+    lv_label_set_text(preHeatButton1, "PLA");
+    lv_obj_set_style_text_align(preHeatButton1, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(preHeatButton1, lv_font_middle, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_color(preHeatButton1, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DISABLED);
+
+    lv_obj_t *preHeatBtn2Cont = lv_obj_create(cui_preHeatBox1);
+    lv_obj_set_width(preHeatBtn2Cont, lv_pct(37));
+    lv_obj_set_height(preHeatBtn2Cont, lv_pct(100));
+    lv_obj_set_flex_grow(preHeatBtn2Cont, 2);
+    lv_obj_set_align(preHeatBtn2Cont, LV_ALIGN_CENTER);
+    lv_obj_set_flex_flow(preHeatBtn2Cont, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_flex_align(preHeatBtn2Cont, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_add_flag(preHeatBtn2Cont, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_clear_flag(preHeatBtn2Cont, LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN);
+    lv_obj_set_scrollbar_mode(preHeatBtn2Cont, LV_SCROLLBAR_MODE_OFF);
+    lv_obj_set_style_radius(preHeatBtn2Cont, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(preHeatBtn2Cont, lv_color_hex(0x000077), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(preHeatBtn2Cont, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DISABLED);
+    lv_obj_set_style_bg_opa(preHeatBtn2Cont, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(preHeatBtn2Cont, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_all(preHeatBtn2Cont, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(preHeatBtn2Cont, lv_color_hex(0x333333), LV_PART_MAIN | LV_STATE_PRESSED);
+    lv_obj_set_style_border_width(preHeatBtn2Cont, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+    preHeatButton2 = lv_label_create(preHeatBtn2Cont);
+    lv_obj_set_width(preHeatButton2, LV_SIZE_CONTENT);
+    lv_obj_set_height(preHeatButton2, LV_SIZE_CONTENT);
+    lv_label_set_text(preHeatButton2, "ABS");
+    lv_obj_set_style_text_align(preHeatButton2, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(preHeatButton2, lv_font_middle, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_color(preHeatButton2, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DISABLED);
+
+    lv_obj_t *preHeatBtn3Cont = lv_obj_create(cui_preHeatBox2);
+    lv_obj_set_width(preHeatBtn3Cont, lv_pct(26));
+    lv_obj_set_height(preHeatBtn3Cont, lv_pct(100));
+    lv_obj_set_flex_grow(preHeatBtn3Cont, 2);
+    lv_obj_set_align(preHeatBtn3Cont, LV_ALIGN_CENTER);
+    lv_obj_set_flex_flow(preHeatBtn3Cont, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_flex_align(preHeatBtn3Cont, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_add_flag(preHeatBtn3Cont, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_clear_flag(preHeatBtn3Cont, LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN);
+    lv_obj_set_scrollbar_mode(preHeatBtn3Cont, LV_SCROLLBAR_MODE_OFF);
+    lv_obj_set_style_radius(preHeatBtn3Cont, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(preHeatBtn3Cont, lv_color_hex(0x777777), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(preHeatBtn3Cont, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DISABLED);
+    lv_obj_set_style_bg_opa(preHeatBtn3Cont, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(preHeatBtn3Cont, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_all(preHeatBtn3Cont, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(preHeatBtn3Cont, lv_color_hex(0x333333), LV_PART_MAIN | LV_STATE_PRESSED);
+    lv_obj_set_style_border_width(preHeatBtn3Cont, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+    preHeatButton3 = lv_label_create(preHeatBtn3Cont);
+    lv_obj_set_width(preHeatButton3, LV_SIZE_CONTENT);
+    lv_obj_set_height(preHeatButton3, LV_SIZE_CONTENT);
+    lv_label_set_text(preHeatButton3, "Off");
+    lv_obj_set_style_text_align(preHeatButton3, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(preHeatButton3, lv_font_middle, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_color(preHeatButton3, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DISABLED);
+#else
     preHeatButton1 = lv_label_create(cui_preHeatBox1);
     lv_obj_set_width(preHeatButton1, lv_pct(37));
     lv_obj_set_height(preHeatButton1, lv_pct(100));
@@ -166,7 +248,6 @@ lv_obj_t *ui_mainScreenStatus_create(lv_obj_t *comp_parent)
     lv_obj_set_style_bg_opa(preHeatButton1, 255, LV_PART_MAIN | LV_STATE_PRESSED);
     lv_obj_set_style_border_width(preHeatButton1, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-    lv_obj_t *preHeatButton2;
     preHeatButton2 = lv_label_create(cui_preHeatBox1);
     lv_obj_set_width(preHeatButton2, lv_pct(37));
     lv_obj_set_height(preHeatButton2, lv_pct(100));
@@ -192,7 +273,6 @@ lv_obj_t *ui_mainScreenStatus_create(lv_obj_t *comp_parent)
     lv_obj_set_style_bg_opa(preHeatButton2, 255, LV_PART_MAIN | LV_STATE_PRESSED);
     lv_obj_set_style_border_width(preHeatButton2, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-    lv_obj_t *preHeatButton3;
     preHeatButton3 = lv_label_create(cui_preHeatBox2);
     lv_obj_set_width(preHeatButton3, lv_pct(26));
     lv_obj_set_height(preHeatButton3, lv_pct(100));
@@ -217,6 +297,7 @@ lv_obj_t *ui_mainScreenStatus_create(lv_obj_t *comp_parent)
     lv_obj_set_style_bg_color(preHeatButton3, lv_color_hex(0x333333), LV_PART_MAIN | LV_STATE_PRESSED);
     lv_obj_set_style_bg_opa(preHeatButton3, 255, LV_PART_MAIN | LV_STATE_PRESSED);
     lv_obj_set_style_border_width(preHeatButton3, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+#endif
 
     lv_obj_t **children = lv_mem_alloc(sizeof(lv_obj_t *) * _UI_COMP_MAINSCREENSTATUS_NUM);
     children[UI_COMP_MAINSCREENSTATUS_MAINSCREENSTATUS] = cui_mainScreenStatus;
@@ -229,9 +310,15 @@ lv_obj_t *ui_mainScreenStatus_create(lv_obj_t *comp_parent)
     children[UI_COMP_MAINSCREENSTATUS_MAINSCREENPREHEATBUTTON2] = preHeatButton2;
     children[UI_COMP_MAINSCREENSTATUS_MAINSCREENPREHEATBUTTON3] = preHeatButton3;
 
+#ifdef __XTOUCH_SCREEN_50__
+    lv_obj_add_event_cb(preHeatBtn1Cont, ui_event_comp_mainScreenStatusComponent_onPreHeatButton1Click, LV_EVENT_CLICKED, NULL);
+    lv_obj_add_event_cb(preHeatBtn2Cont, ui_event_comp_mainScreenStatusComponent_onPreHeatButton2Click, LV_EVENT_CLICKED, NULL);
+    lv_obj_add_event_cb(preHeatBtn3Cont, ui_event_comp_mainScreenStatusComponent_onPreHeatButton3Click, LV_EVENT_CLICKED, NULL);
+#else
     lv_obj_add_event_cb(preHeatButton1, ui_event_comp_mainScreenStatusComponent_onPreHeatButton1Click, LV_EVENT_CLICKED, NULL);
     lv_obj_add_event_cb(preHeatButton2, ui_event_comp_mainScreenStatusComponent_onPreHeatButton2Click, LV_EVENT_CLICKED, NULL);
     lv_obj_add_event_cb(preHeatButton3, ui_event_comp_mainScreenStatusComponent_onPreHeatButton3Click, LV_EVENT_CLICKED, NULL);
+#endif
 
     if (!xTouchConfig.xTouchPreheatEnabled)
     {

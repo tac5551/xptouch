@@ -75,16 +75,6 @@ void ui_event_comp_controlComponent_controlScreenBedDown(lv_event_t *e)
         onControlBedDown(e);
     }
 }
-void ui_event_comp_controlComponent_controlScreenAxixToggle(lv_event_t *e)
-{
-    lv_event_code_t event_code = lv_event_get_code(e);
-    lv_obj_t *target = lv_event_get_target(e);
-    lv_obj_t **comp_controlComponent = lv_event_get_user_data(e);
-    if (event_code == LV_EVENT_CLICKED)
-    {
-        onControlAxis(e);
-    }
-}
 void ui_event_comp_controlComponent_controlScreenRight(lv_event_t *e)
 {
     lv_event_code_t event_code = lv_event_get_code(e);
@@ -106,34 +96,6 @@ void onXtouchRangeChange(lv_event_t *e)
         case 100: lv_label_set_text(target, "100");break;
     }
     
-}
-
-void onXTouchAxisChange(lv_event_t *e)
-{
-
-    lv_obj_t *target = lv_event_get_target(e);
-    controlMode.axis = controlMode.axis == 0 ? 1 : 0;
-    lv_label_set_text(target, controlMode.axis == 0 ? "l" : "m");
-
-    lv_obj_t *left = ui_comp_get_child(ui_controlComponent, UI_COMP_CONTROLCOMPONENT_CONTROLSCREENCOLA_CONTROLSCREENLEFT);
-    lv_obj_t *leftIcon = ui_comp_get_child(ui_controlComponent, UI_COMP_CONTROLCOMPONENT_CONTROLSCREENCOLA_CONTROLSCREENLEFT_CONTROLSCREENLEFTICON);
-    lv_obj_t *right = ui_comp_get_child(ui_controlComponent, UI_COMP_CONTROLCOMPONENT_CONTROLSCREENCOLC_CONTROLSCREENRIGHT);
-    lv_obj_t *rightIcon = ui_comp_get_child(ui_controlComponent, UI_COMP_CONTROLCOMPONENT_CONTROLSCREENCOLC_CONTROLSCREENRIGHT_CONTROLSCREENRIGHTICON);
-
-    if (controlMode.axis == 0)
-    {
-        lv_obj_clear_state(left, LV_STATE_DISABLED);
-        lv_obj_clear_state(right, LV_STATE_DISABLED);
-        lv_obj_clear_state(leftIcon, LV_STATE_DISABLED);
-        lv_obj_clear_state(rightIcon, LV_STATE_DISABLED);
-    }
-    else
-    {
-        lv_obj_add_state(left, LV_STATE_DISABLED);
-        lv_obj_add_state(right, LV_STATE_DISABLED);
-        lv_obj_add_state(leftIcon, LV_STATE_DISABLED);
-        lv_obj_add_state(rightIcon, LV_STATE_DISABLED);
-    }
 }
 
 // COMPONENT controlComponent

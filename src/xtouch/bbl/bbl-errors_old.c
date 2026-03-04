@@ -443,6 +443,9 @@ const char *hms_error_keys[] PROGMEM = {
   "1883200000020058",
   "0703210000020057",
   "0300010000010005",
+  "1805200000020017",
+  "0702210000010086",
+  "0704200000020001",
   "0702220000020021",
   "0700300000030003",
   "1803200000020019",
@@ -1721,9 +1724,6 @@ const char *hms_error_keys[] PROGMEM = {
   "0701250000020001",
   "0705220000010082",
   "03000D0000020007",
-  "0701220000020020",
-  "0700200000020024",
-  "1803220000020016",
   "1800120000010001",
   "1803220000020024",
   "1801230000020017",
@@ -3195,9 +3195,9 @@ const char *hms_error_keys[] PROGMEM = {
   "1801210000010084",
   "0703220000010083",
   "1805210000020004",
-  "1805200000020017",
-  "0702210000010086",
-  "0704200000020001",
+  "0701220000020020",
+  "0700200000020024",
+  "1803220000020016",
   "1807100000010001",
   "1807200000010085",
   "0700230000020001",
@@ -4400,6 +4400,9 @@ const char *hms_error_values[] PROGMEM = {
   "The RFID-tag on AMS-HT D cannot be identified.",
   "The RFID-tag on AMS D Slot 2 cannot be identified.",
   "A heatbed temperature control issue has been detected and the heating module may be damaged. Please power off the device immediately and follow the Wiki to replace the AC board.",
+  "AMS-HT F slot 1 assist motor is stalled，due to excessive resistance in the tube between AMS and the printer.",
+  "Failed to read the filament information from AMS C slot 2. The RFID tag cannot rotate due to a jam during the filament loading or unloading. Please pull out the filament and try again.",
+  "AMS E Slot 1 filament has run out. Please insert a new filament.",
   "AMS C slot 3 assist motor is stalled，due to excessive resistance in the tube between the filament buffer and the toolhead.",
   "RFID cannot be read because of a hardware or structural error.",
   "AMS-HT D slot 1 assist motor is stalled，due to excessive resistance in the tube between AMS and the filament buffer.",
@@ -5678,9 +5681,6 @@ const char *hms_error_values[] PROGMEM = {
   "AMS B uses printer power for drying during loading/printing. For better drying performance, please connect a power adapter.",
   "Failed to read the filament information from AMS F slot 3. A non-official RFID tag was detected. You can try to use Bambu Lab filament.",
   "The build plate may not be properly placed. If this message appears repeatedly, please check the Wiki for more explanations.",
-  "AMS B slot 3 assist motor is stalled，due to excessive resistance in the tube near the filament buffer。",
-  "AMS A slot 1 failed to rotate the filament spool when pulling filament back to AMS.",
-  "AMS-HT D slot 3 assist motor has slipped. Please pull out the filament, cut off the worn part, and then try again.",
   "The AMS-HT A slot 3 motor has slipped. The extrusion wheel may be malfunctioning, or the filament may be too thin.",
   "AMS-HT D slot 3 failed to rotate the filament spool when pulling filament back to AMS.",
   "AMS-HT B slot 4 assist motor is stalled，due to excessive resistance in the tube between AMS and the printer.",
@@ -7152,9 +7152,9 @@ const char *hms_error_values[] PROGMEM = {
   "Failed to read the filament information from AMS-HT B slot 2. The RFID tag may be damaged or positioned at the edge of the RFID detection device. Please remove 5cm filament and try again.",
   "Failed to read the filament information from AMS D slot 3. The RFID tag may be damaged.",
   "AMS-HT F Slot 2 filament may be broken in the tool head.",
-  "AMS-HT F slot 1 assist motor is stalled，due to excessive resistance in the tube between AMS and the printer.",
-  "Failed to read the filament information from AMS C slot 2. The RFID tag cannot rotate due to a jam during the filament loading or unloading. Please pull out the filament and try again.",
-  "AMS E Slot 1 filament has run out. Please insert a new filament.",
+  "AMS B slot 3 assist motor is stalled，due to excessive resistance in the tube near the filament buffer。",
+  "AMS A slot 1 failed to rotate the filament spool when pulling filament back to AMS.",
+  "AMS-HT D slot 3 assist motor has slipped. Please pull out the filament, cut off the worn part, and then try again.",
   "The AMS-HT H slot 1 motor has slipped. The extrusion wheel may be malfunctioning, or the filament may be too thin.",
   "Failed to read the filament information from AMS-HT H slot 1. RFID tag verification failed. You can try to use Bambu Lab filament.",
   "AMS A Slot 4 filament has run out. Please insert a new filament.",
@@ -7918,7 +7918,7 @@ const char *hms_error_values[] PROGMEM = {
 };
 
 // All Device errors (no optimization)
-int device_error_length = 513;
+int device_error_length = 515;
 
 const char *device_error_keys[] PROGMEM = {
   "07038012",
@@ -8433,7 +8433,9 @@ const char *device_error_keys[] PROGMEM = {
   "0300806E",
   "0502C032",
   "0502C031",
-  "0300806F"
+  "0300806F",
+  "07FEC030",
+  "07FFC030"
 };
 
 const char *device_error_values[] PROGMEM = {
@@ -8949,17 +8951,20 @@ const char *device_error_values[] PROGMEM = {
   "Abnormal nozzle temperature control detected; the heating module may be damaged. Please disconnect the power immediately and stop using the device.",
   "Please check and remove any printed parts or debris from the heatbed surface and underside before continuing the drying process.",
   "Please check and remove any printed parts or debris from the heatbed surface before continuing the cold pull.",
-  "Abnormal temperature rise detected on the heatbed. The heating module may be damaged. Please power off the printer."
+  "Abnormal temperature rise detected on the heatbed. The heating module may be damaged. Please power off the device immediately and stop using it.",
+  "The filament specified in the slicer has been used up. Printing is paused. Please go to the machine to replace the material and resume printing.",
+  "The filament specified in the slicer has been used up. Printing is paused. Please go to the machine to replace the material and resume printing."
 };
 
 // Retry and Done message arrays
-int message_containing_retry_total = 397;
+int message_containing_retry_total = 399;
 
 const char *message_containing_retry[] PROGMEM = {
   "18FF700000020008",
   "07FF700000020008",
   "07FE700000020008",
   "18FE700000020008",
+  "0702210000010086",
   "1806200000010084",
   "1804210000010084",
   "1800230000010084",
@@ -9069,7 +9074,6 @@ const char *message_containing_retry[] PROGMEM = {
   "0702200000010086",
   "1806210000010084",
   "1802700000020007",
-  "1803220000020016",
   "0703700000020008",
   "1801700000020008",
   "1805960000010003",
@@ -9161,7 +9165,7 @@ const char *message_containing_retry[] PROGMEM = {
   "0705230000010084",
   "0702230000020016",
   "1801210000010084",
-  "0702210000010086",
+  "1803220000020016",
   "0704230000020016",
   "1803200000020016",
   "1807230000010084",
@@ -9352,7 +9356,9 @@ const char *message_containing_retry[] PROGMEM = {
   "07FF8030",
   "07FE8030",
   "05008040",
-  "0502C026"
+  "0502C026",
+  "07FEC030",
+  "07FFC030"
 };
 
 int message_containing_done_total = 3;

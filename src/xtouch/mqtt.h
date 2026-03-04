@@ -1032,14 +1032,12 @@ static void xtouch_mqtt_configure_client(const char *host)
     xtouch_pubSubClient.setKeepAlive(10);
 }
 
-static void xtouch_mqtt_subscribe_commands(bool for_cloud)
+static void xtouch_mqtt_subscribe_commands(void)
 {
-    if (for_cloud)
-    {
-        lv_msg_subscribe(XTOUCH_SIDEBAR_HOME, (lv_msg_subscribe_cb_t)xtouch_device_onSidebarHomeCommand, NULL);
-        lv_msg_subscribe(XTOUCH_COMMAND_LIGHT_RESET, (lv_msg_subscribe_cb_t)xtouch_device_onLightResetCommand, NULL);
-        lv_msg_subscribe(XTOUCH_COMMAND_LCD_TOGGLE, (lv_msg_subscribe_cb_t)xtouch_device_onLCDToggleCommand, NULL);
-    }
+    /* サイドバー Home / Light Reset / LCD Toggle もクラウド・ローカル共通で購読する */
+    lv_msg_subscribe(XTOUCH_SIDEBAR_HOME, (lv_msg_subscribe_cb_t)xtouch_device_onSidebarHomeCommand, NULL);
+    lv_msg_subscribe(XTOUCH_COMMAND_LIGHT_RESET, (lv_msg_subscribe_cb_t)xtouch_device_onLightResetCommand, NULL);
+    lv_msg_subscribe(XTOUCH_COMMAND_LCD_TOGGLE, (lv_msg_subscribe_cb_t)xtouch_device_onLCDToggleCommand, NULL);
     lv_msg_subscribe(XTOUCH_COMMAND_LIGHT_TOGGLE, (lv_msg_subscribe_cb_t)xtouch_device_onLightToggleCommand, NULL);
     lv_msg_subscribe(XTOUCH_COMMAND_STOP, (lv_msg_subscribe_cb_t)xtouch_device_onStopCommand, NULL);
     lv_msg_subscribe(XTOUCH_COMMAND_PAUSE, (lv_msg_subscribe_cb_t)xtouch_device_onPauseCommand, NULL);
@@ -1050,11 +1048,9 @@ static void xtouch_mqtt_subscribe_commands(bool for_cloud)
     lv_msg_subscribe(XTOUCH_COMMAND_RIGHT, (lv_msg_subscribe_cb_t)xtouch_device_onRightCommand, NULL);
     lv_msg_subscribe(XTOUCH_COMMAND_UP, (lv_msg_subscribe_cb_t)xtouch_device_onUpCommand, NULL);
     lv_msg_subscribe(XTOUCH_COMMAND_DOWN, (lv_msg_subscribe_cb_t)xtouch_device_onDownCommand, NULL);
-    if (for_cloud)
-    {
-        lv_msg_subscribe(XTOUCH_COMMAND_BED_UP, (lv_msg_subscribe_cb_t)xtouch_device_onBedUpCommand, NULL);
-        lv_msg_subscribe(XTOUCH_COMMAND_BED_DOWN, (lv_msg_subscribe_cb_t)xtouch_device_onBedDownCommand, NULL);
-    }
+    /* Z 軸の Bed Up/Down はローカル／クラウド共通で常に購読する */
+    lv_msg_subscribe(XTOUCH_COMMAND_BED_UP, (lv_msg_subscribe_cb_t)xtouch_device_onBedUpCommand, NULL);
+    lv_msg_subscribe(XTOUCH_COMMAND_BED_DOWN, (lv_msg_subscribe_cb_t)xtouch_device_onBedDownCommand, NULL);
     lv_msg_subscribe(XTOUCH_COMMAND_BED_TARGET_TEMP, (lv_msg_subscribe_cb_t)xtouch_device_onBedTargetTempCommand, NULL);
     lv_msg_subscribe(XTOUCH_COMMAND_NOZZLE_TARGET_TEMP, (lv_msg_subscribe_cb_t)xtouch_device_onNozzleTargetCommand, NULL);
     lv_msg_subscribe(XTOUCH_COMMAND_PART_FAN_SPEED, (lv_msg_subscribe_cb_t)xtouch_device_onPartSpeedCommand, NULL);
@@ -1074,12 +1070,9 @@ static void xtouch_mqtt_subscribe_commands(bool for_cloud)
 
     lv_msg_subscribe(XTOUCH_COMMAND_EXTRUDE_UP, (lv_msg_subscribe_cb_t)xtouch_device_onNozzleUp, NULL);
     lv_msg_subscribe(XTOUCH_COMMAND_EXTRUDE_DOWN, (lv_msg_subscribe_cb_t)xtouch_device_onNozzleDown, NULL);
-
-    if (for_cloud)
-    {
-        lv_msg_subscribe(XTOUCH_COMMAND_SET_UTIL_NOZZLE_CHANGE, (lv_msg_subscribe_cb_t)xtouch_device_onSetaccessoriesNozzleCommand, NULL);
-        lv_msg_subscribe(XTOUCH_COMMAND_SET_UTIL_CALIBRATION, (lv_msg_subscribe_cb_t)xtouch_device_onSetUtilCalibrationCommand, NULL);
-    }
+    /* UTIL → Nozzle change / Calibration はローカル操作でも使うので常に購読する */
+    lv_msg_subscribe(XTOUCH_COMMAND_SET_UTIL_NOZZLE_CHANGE, (lv_msg_subscribe_cb_t)xtouch_device_onSetaccessoriesNozzleCommand, NULL);
+    lv_msg_subscribe(XTOUCH_COMMAND_SET_UTIL_CALIBRATION, (lv_msg_subscribe_cb_t)xtouch_device_onSetUtilCalibrationCommand, NULL);
 }
 
 void xtouch_cloud_mqtt_setup()
@@ -1091,7 +1084,7 @@ void xtouch_cloud_mqtt_setup()
 
     xtouch_mqtt_topic_setup();
     xtouch_mqtt_configure_client(cloud.getMqttCloudHost());
-    xtouch_mqtt_subscribe_commands(true);
+    xtouch_mqtt_subscribe_commands();
 
     delay(2000);
 }
@@ -1105,7 +1098,7 @@ void xtouch_local_mqtt_setup()
 
     xtouch_mqtt_topic_setup();
     xtouch_mqtt_configure_client(xTouchConfig.xTouchHost);
-    xtouch_mqtt_subscribe_commands(false);
+    xtouch_mqtt_subscribe_commands();
 
     delay(2000);
 }

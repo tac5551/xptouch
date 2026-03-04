@@ -108,7 +108,6 @@ void onControlUp(lv_event_t *e) { lv_msg_send(XTOUCH_COMMAND_UP, NULL); }
 void onControlDown(lv_event_t *e) { lv_msg_send(XTOUCH_COMMAND_DOWN, NULL); }
 void onControlBedUp(lv_event_t *e) { lv_msg_send(XTOUCH_COMMAND_BED_UP, NULL); }
 void onControlBedDown(lv_event_t *e) { lv_msg_send(XTOUCH_COMMAND_BED_DOWN, NULL); }
-void onControlAxis(lv_event_t *e) { lv_msg_send(XTOUCH_CONTROL_AXIS_SWITCH, NULL); }
 
 /* Settings */
 
@@ -122,11 +121,6 @@ void onSettingsOtaUpdateNowOnYES()
 void onSettingsOtaUpdateNow(lv_event_t *e)
 {
     ui_confirmPanel_show(LV_SYMBOL_WARNING " UPDATE", onSettingsOtaUpdateNowOnYES);
-}
-
-void onSettingsMoveOptional(lv_event_t *e)
-{
-    loadScreen(8);
 }
 
 void onMoveAmsViewScreen(lv_event_t *e)

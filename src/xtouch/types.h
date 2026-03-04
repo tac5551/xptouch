@@ -163,16 +163,9 @@ extern "C"
     extern char xTouchFilamentsPipeBuf[XTOUCH_FILAMENTS_PIPE_BUF_SIZE];
     extern unsigned int xTouchFilamentsPipeLen;
 
-    enum XTouchControlAxis
-    {
-        ControlAxisXY,
-        ControlAxisZ,
-    };
-
     typedef struct XTouchControlModeStruct
     {
         int inc;
-        int axis;
         int target_bed_temper;
         int target_nozzle_temper;
     } XtouchControlMode;

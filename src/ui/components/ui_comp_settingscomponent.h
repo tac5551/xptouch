@@ -38,26 +38,13 @@ extern "C"
         UI_COMP_SETTINGSCOMPONENT_LEDOFF_LABEL,
         UI_COMP_SETTINGSCOMPONENT_LEDOFF_SLIDER,
         UI_COMP_SETTINGSCOMPONENT_LEDOFF_VALUE,
-        // UI_COMP_SETTINGSCOMPONENT_NEOPIXEL,
-        // UI_COMP_SETTINGSCOMPONENT_NEOPIXEL_LABEL,
-        // UI_COMP_SETTINGSCOMPONENT_NEOPIXEL_SLIDER,
-        // UI_COMP_SETTINGSCOMPONENT_NEOPIXEL_VALUE,
-        UI_COMP_SETTINGSCOMPONENT_PAIR_TITLE,
-        UI_COMP_SETTINGSCOMPONENT_UNPAIRBUTTON,
-        UI_COMP_SETTINGSCOMPONENT_DEVICE_TITLE,
         UI_COMP_SETTINGSCOMPONENT_AUXFAN,
         UI_COMP_SETTINGSCOMPONENT_AUXFAN_LABEL,
         UI_COMP_SETTINGSCOMPONENT_AUXFAN_SWITCH,
         UI_COMP_SETTINGSCOMPONENT_CHAMBERFAN,
         UI_COMP_SETTINGSCOMPONENT_CHAMBERFAN_LABEL,
         UI_COMP_SETTINGSCOMPONENT_CHAMBERFAN_SWITCH,
-        // UI_COMP_SETTINGSCOMPONENT_CHAMBER_TEMP,
-        // UI_COMP_SETTINGSCOMPONENT_CHAMBER_TEMP_LABEL,
-        // UI_COMP_SETTINGSCOMPONENT_CHAMBER_TEMP_SWITCH,
-        UI_COMP_SETTINGSCOMPONENT_OTA,
-        UI_COMP_SETTINGSCOMPONENT_OTA_LABEL,
-        UI_COMP_SETTINGSCOMPONENT_OTA_SWITCH,
-        UI_COMP_SETTINGSCOMPONENT_RESETDEVICEBUTTON,
+        // System タブに移動: PAIR_TITLE, UNPAIRBUTTON, DEVICE_TITLE, OTA, RESETDEVICEBUTTON
         // UI_COMP_SETTINGSCOMPONENT_NEOPIXEL_NUM,
         // UI_COMP_SETTINGSCOMPONENT_NEOPIXEL_NUM_LABEL,
         // UI_COMP_SETTINGSCOMPONENT_NEOPIXEL_NUM_SLIDER,
@@ -68,6 +55,13 @@ extern "C"
     void ui_event_comp_settingsComponent_tftInvertInput(lv_event_t *e);
     void ui_event_comp_settingsComponent_resetTouchButton(lv_event_t *e);
     void ui_event_comp_settingsComponent_resetSettingsButton(lv_event_t *e);
+    /* System component から参照 */
+    void ui_event_comp_settingsComponent_unpairButton(lv_event_t *e);
+    void ui_event_comp_settingsComponent_OtaUpdateNowButton(lv_event_t *e);
+    void ui_event_comp_settingsComponent_resetDeviceButton(lv_event_t *e);
+    void ui_event_comp_settingsComponent_onAuxFan(lv_event_t *e);
+    void ui_event_comp_settingsComponent_onChamberFan(lv_event_t *e);
+    void ui_event_comp_settingsComponent_onOTA(lv_event_t *e);
 
 #ifdef __cplusplus
 } /*extern "C"*/

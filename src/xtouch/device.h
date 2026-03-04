@@ -298,30 +298,33 @@ void xtouch_device_onRightCommand(lv_msg_t *m)
 
 void xtouch_device_onUpCommand(lv_msg_t *m)
 {
+    // Always move Y+ in control screen (AXIS toggle廃止)
     String axis = "Y";
-    int multiplier = axis == "Y" ? 1 : -1;
-    xtouch_device_move_axis(axis, controlMode.inc * multiplier, axis == "Y" ? XTOUCH_DEVICE_CONTROL_MOVE_SPEED_XY : XTOUCH_DEVICE_CONTROL_MOVE_SPEED_Z);
+    int multiplier = 1;
+    xtouch_device_move_axis(axis, controlMode.inc * multiplier, XTOUCH_DEVICE_CONTROL_MOVE_SPEED_XY);
 }
 
 void xtouch_device_onDownCommand(lv_msg_t *m)
 {
+    // Always move Y- in control screen
     String axis = "Y";
-    int multiplier = axis == "Y" ? -1 : 1;
-    xtouch_device_move_axis(axis, controlMode.inc * multiplier, axis == "Y" ? XTOUCH_DEVICE_CONTROL_MOVE_SPEED_XY : XTOUCH_DEVICE_CONTROL_MOVE_SPEED_Z);
+    int multiplier = -1;
+    xtouch_device_move_axis(axis, controlMode.inc * multiplier, XTOUCH_DEVICE_CONTROL_MOVE_SPEED_XY);
 }
 
 void xtouch_device_onBedUpCommand(lv_msg_t *m)
 {
+    // Bed Up/Down は常に Z 軸専用
     String axis = "Z";
-    int multiplier = axis == "Y" ? 1 : -1;
-    xtouch_device_move_axis(axis, controlMode.inc * multiplier, axis == "Y" ? XTOUCH_DEVICE_CONTROL_MOVE_SPEED_XY : XTOUCH_DEVICE_CONTROL_MOVE_SPEED_Z);
+    int multiplier = 1;
+    xtouch_device_move_axis(axis, controlMode.inc * multiplier, XTOUCH_DEVICE_CONTROL_MOVE_SPEED_Z);
 }
 
 void xtouch_device_onBedDownCommand(lv_msg_t *m)
 {
     String axis = "Z";
-    int multiplier = axis == "Y" ? -1 : 1;
-    xtouch_device_move_axis(axis, controlMode.inc * multiplier, axis == "Y" ? XTOUCH_DEVICE_CONTROL_MOVE_SPEED_XY : XTOUCH_DEVICE_CONTROL_MOVE_SPEED_Z);
+    int multiplier = -1;
+    xtouch_device_move_axis(axis, controlMode.inc * multiplier, XTOUCH_DEVICE_CONTROL_MOVE_SPEED_Z);
 }
 
 void xtouch_device_onBedTargetTempCommand(lv_msg_t *m)

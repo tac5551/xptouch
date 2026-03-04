@@ -535,5 +535,5 @@ const char *device_error_values[] PROGMEM = {
   "Abnormal nozzle temperature control detected; the heating module may be damaged. Please disconnect the power immediately and stop using the device.",
   "Please check and remove any printed parts or debris from the heatbed surface and underside before continuing the drying process.",
   "Please check and remove any printed parts or debris from the heatbed surface before continuing the cold pull.",
-  "Abnormal temperature rise detected on the heatbed. The heating module may be damaged. Please power off the printer."
+  "Abnormal temperature rise detected on the heatbed. The heating module may be damaged. Please power off the device immediately and stop using it."
 };

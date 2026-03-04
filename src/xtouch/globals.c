@@ -19,5 +19,4 @@ int xtouch_filament_use_fixed_brands = 1;
 void xtouch_globals_init()
 {
     controlMode.inc = 10;
-    controlMode.axis = ControlAxisXY;
 } 

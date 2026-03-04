@@ -203,7 +203,7 @@ lv_obj_t *ui_optionalComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_width(cui_optional_preheatLabel, LV_SIZE_CONTENT);  /// 1
     lv_obj_set_height(cui_optional_preheatLabel, LV_SIZE_CONTENT); /// 1
     lv_obj_set_style_text_font(cui_optional_preheatLabel, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_label_set_text(cui_optional_preheatLabel, "Preheat");
+    lv_label_set_text(cui_optional_preheatLabel, "PreHeat button");
     lv_obj_set_scrollbar_mode(cui_optional_preheatLabel, LV_SCROLLBAR_MODE_OFF);
 
     ui_optional_preheatSwitch = lv_switch_create(cui_optional_preheat);
@@ -241,6 +241,24 @@ lv_obj_t *ui_optionalComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_border_width(cui_optionalneoPixelTitle, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_radius(cui_optionalneoPixelTitle, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_color(cui_optionalneoPixelTitle, lv_color_hex(0xffffff), LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    lv_obj_t *cui_optionalNeoPixelGpioHint;
+    cui_optionalNeoPixelGpioHint = lv_label_create(cui_optionalComponent);
+    lv_obj_set_width(cui_optionalNeoPixelGpioHint, lv_pct(100));
+    lv_obj_set_height(cui_optionalNeoPixelGpioHint, LV_SIZE_CONTENT);
+    {
+        int pin = xTouchConfig.xTouchNeoPixelPinValue;
+        if (pin <= 0)
+            pin = 17;
+        lv_label_set_text_fmt(cui_optionalNeoPixelGpioHint, "Connect to GPIO%d", pin);
+    }
+    lv_obj_set_scrollbar_mode(cui_optionalNeoPixelGpioHint, LV_SCROLLBAR_MODE_OFF);
+    lv_obj_set_style_text_font(cui_optionalNeoPixelGpioHint, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_left(cui_optionalNeoPixelGpioHint, 16, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(cui_optionalNeoPixelGpioHint, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_top(cui_optionalNeoPixelGpioHint, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_bottom(cui_optionalNeoPixelGpioHint, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_color(cui_optionalNeoPixelGpioHint, lv_color_hex(0xaaaaaa), LV_PART_MAIN | LV_STATE_DEFAULT);
 
     lv_obj_t *cui_optionalNeoPixelNumPanel;
     cui_optionalNeoPixelNumPanel = lv_obj_create(cui_optionalComponent);
@@ -453,6 +471,43 @@ lv_obj_t *ui_optionalComponent_create(lv_obj_t *comp_parent)
     }
     //---NEOPIXEL Idle LED End------------------------------
 
+    //--- DS18B20 Sensor (Option) Title --------------------
+    lv_obj_t *cui_optional_ds18b20Title;
+    cui_optional_ds18b20Title = lv_label_create(cui_optionalComponent);
+    lv_obj_set_width(cui_optional_ds18b20Title, lv_pct(100));
+    lv_obj_set_height(cui_optional_ds18b20Title, LV_SIZE_CONTENT); /// 40
+    lv_label_set_text(cui_optional_ds18b20Title, LV_SYMBOL_LIST " DS18B20 Sensor (Option)");
+    lv_obj_set_scrollbar_mode(cui_optional_ds18b20Title, LV_SCROLLBAR_MODE_OFF);
+    lv_obj_set_style_text_font(cui_optional_ds18b20Title, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_left(cui_optional_ds18b20Title, 16, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(cui_optional_ds18b20Title, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_top(cui_optional_ds18b20Title, 12, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_bottom(cui_optional_ds18b20Title, 12, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(cui_optional_ds18b20Title, lv_color_hex(0x333333), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(cui_optional_ds18b20Title, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(cui_optional_ds18b20Title, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_radius(cui_optional_ds18b20Title, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_color(cui_optional_ds18b20Title, lv_color_hex(0xffffff), LV_PART_MAIN | LV_STATE_DEFAULT);
+
+#if defined(__XTOUCH_SCREEN_50__)
+#define _UI_CHAMBER_TEMP_PIN 18
+#else
+#define _UI_CHAMBER_TEMP_PIN 22
+#endif
+    lv_obj_t *cui_optional_ds18b20GpioHint;
+    cui_optional_ds18b20GpioHint = lv_label_create(cui_optionalComponent);
+    lv_obj_set_width(cui_optional_ds18b20GpioHint, lv_pct(100));
+    lv_obj_set_height(cui_optional_ds18b20GpioHint, LV_SIZE_CONTENT);
+    lv_label_set_text_fmt(cui_optional_ds18b20GpioHint, "Connect to GPIO%d", _UI_CHAMBER_TEMP_PIN);
+    lv_obj_set_scrollbar_mode(cui_optional_ds18b20GpioHint, LV_SCROLLBAR_MODE_OFF);
+    lv_obj_set_style_text_font(cui_optional_ds18b20GpioHint, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_left(cui_optional_ds18b20GpioHint, 16, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(cui_optional_ds18b20GpioHint, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_top(cui_optional_ds18b20GpioHint, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_bottom(cui_optional_ds18b20GpioHint, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_color(cui_optional_ds18b20GpioHint, lv_color_hex(0xaaaaaa), LV_PART_MAIN | LV_STATE_DEFAULT);
+#undef _UI_CHAMBER_TEMP_PIN
+
     //--- Chamber Sersor Start --------------------
     lv_obj_t *cui_optional_chamberSensor;
     cui_optional_chamberSensor = lv_obj_create(cui_optionalComponent);
@@ -491,6 +546,8 @@ lv_obj_t *ui_optionalComponent_create(lv_obj_t *comp_parent)
 
     if (!xtouch_bblp_is_p1Series())
     {
+        lv_obj_add_flag(cui_optional_ds18b20Title, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_add_flag(cui_optional_ds18b20GpioHint, LV_OBJ_FLAG_HIDDEN);
         lv_obj_add_flag(cui_optional_chamberSensor, LV_OBJ_FLAG_HIDDEN);
     }
     else

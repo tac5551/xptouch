@@ -42,12 +42,10 @@ extern "C"
     void onControlDown(lv_event_t *e);
     void onControlBedUp(lv_event_t *e);
     void onControlBedDown(lv_event_t *e);
-    void onControlAxis(lv_event_t *e);
     void onControlRight(lv_event_t *e);
 
     /* Settings */
     void onSettingsOtaUpdateNow(lv_event_t *e);
-    void onSettingsMoveOptional(lv_event_t *e);
     void onSettingsResetDevice(lv_event_t *e);
     void onSettingsClearAccesCodeCache(lv_event_t *e);
     void onSettingsAuxFan(lv_event_t *e);

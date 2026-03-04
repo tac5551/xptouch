@@ -91,10 +91,6 @@ void loadScreen(int screen)
         ui_amsViewScreen_screen_init();
         lv_disp_load_scr(ui_amsViewScreen);
         break;
-    case 8:
-        ui_optionalScreen_screen_init();
-        lv_disp_load_scr(ui_optionalScreen);
-        break;
     case 9:
         ui_characterScreen_screen_init();
         lv_disp_load_scr(ui_characterScreen);
@@ -137,8 +133,7 @@ void loadScreen(int screen)
     case 12: sidebar_index = 2; break; // Util Calibration
     case 13: sidebar_index = 2; break; // AMS Edit
     case 14: sidebar_index = 2; break; // AMS Edit 色選択
-    case 4: sidebar_index = 3; break; // Settings
-    case 8: sidebar_index = 3; break; // Settings Optional
+    case 4: sidebar_index = 3; break; // Settings (General/Option タブ)
     default: break;
     }
     if (sidebar_index >= 0)

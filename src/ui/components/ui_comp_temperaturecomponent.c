@@ -364,7 +364,11 @@ lv_obj_t *ui_temperatureComponent_create(lv_obj_t *comp_parent)
     lv_obj_t *cui_temperatureComponentTemps;
     cui_temperatureComponentTemps = lv_obj_create(cui_temperatureComponent);
     lv_obj_set_height(cui_temperatureComponentTemps, lv_pct(100));
+#ifdef __XTOUCH_SCREEN_50__
+    lv_obj_set_flex_grow(cui_temperatureComponentTemps, 4); /* 5インチ: 表示側:テンキー=4:6、CHAMBER 折り返し防止 */
+#else
     lv_obj_set_flex_grow(cui_temperatureComponentTemps, 3);
+#endif
     lv_obj_set_x(cui_temperatureComponentTemps, 386);
     lv_obj_set_y(cui_temperatureComponentTemps, 178);
     lv_obj_set_flex_flow(cui_temperatureComponentTemps, LV_FLEX_FLOW_COLUMN);
@@ -532,7 +536,11 @@ lv_obj_t *ui_temperatureComponent_create(lv_obj_t *comp_parent)
     lv_obj_t *cui_temperatureComponentFans;
     cui_temperatureComponentFans = lv_obj_create(cui_temperatureComponent);
     lv_obj_set_height(cui_temperatureComponentFans, lv_pct(100));
+#ifdef __XTOUCH_SCREEN_50__
+    lv_obj_set_flex_grow(cui_temperatureComponentFans, 4); /* 5インチ: 表示側:テンキー=4:6 */
+#else
     lv_obj_set_flex_grow(cui_temperatureComponentFans, 3);
+#endif
     lv_obj_set_x(cui_temperatureComponentFans, 386);
     lv_obj_set_y(cui_temperatureComponentFans, 178);
     lv_obj_set_flex_flow(cui_temperatureComponentFans, LV_FLEX_FLOW_COLUMN);
@@ -822,7 +830,11 @@ lv_obj_t *ui_temperatureComponent_create(lv_obj_t *comp_parent)
     lv_obj_t *cui_temperatureComponentKeyboard;
     cui_temperatureComponentKeyboard = lv_obj_create(cui_temperatureComponent);
     lv_obj_set_height(cui_temperatureComponentKeyboard, lv_pct(100));
-    lv_obj_set_flex_grow(cui_temperatureComponentKeyboard, 7);
+#ifdef __XTOUCH_SCREEN_50__
+    lv_obj_set_flex_grow(cui_temperatureComponentKeyboard, 6); /* 5インチ: 表示側:テンキー=4:6、CHAMBER 折り返し防止 */
+#else
+    lv_obj_set_flex_grow(cui_temperatureComponentKeyboard, 7); /* 2.8インチ等: 表示側:テンキー=3:7 */
+#endif
     lv_obj_set_x(cui_temperatureComponentKeyboard, 386);
     lv_obj_set_y(cui_temperatureComponentKeyboard, 178);
     lv_obj_set_flex_flow(cui_temperatureComponentKeyboard, LV_FLEX_FLOW_ROW_WRAP);

@@ -45,7 +45,6 @@ enum ControlComponent {
     void ui_event_comp_controlComponent_controlScreenUp(lv_event_t *e);
     void ui_event_comp_controlComponent_controlScreenHome(lv_event_t *e);
     void ui_event_comp_controlComponent_controlScreenDown(lv_event_t *e);
-    void ui_event_comp_controlComponent_controlScreenAxixToggle(lv_event_t *e);
     void ui_event_comp_controlComponent_controlScreenRight(lv_event_t *e);
 
 #ifdef __cplusplus
