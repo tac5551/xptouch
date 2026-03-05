@@ -214,7 +214,7 @@ void xtouch_screen_setup()
 
     xtouch_screen_setupTFTFlip();
 
-    xtouch_screen_setBrightness(128);
+    xtouch_screen_setBrightness(255);
     xtouch_screen_touchFromPowerOff = false;
     
     lv_init();
