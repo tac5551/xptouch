@@ -51,6 +51,7 @@ bool xtouch_sdcard_setup(int8_t sd_cs_pin)
     uint64_t cardSize = SD.cardSize() / (1024 * 1024);
     ConsoleInfo.printf("[xPTouch][SD] SD Card Size: %lluMB\n", cardSize);
     xtouch_filesystem_mkdir(SD, xtouch_paths_root);
+    xtouch_filesystem_mkdir(SD, "/tmp");
 
     return true;
 }

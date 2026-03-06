@@ -364,7 +364,7 @@ void xtouch_neo_pixel_control_timer_handler(lv_timer_t *timer)
         print_status_changed = true;
     }
 
-    if (!neopixel_enabled)
+    if (!xtouch_neopixel_enabled)
     {
         xtouch_neo_pixel_set_led_color(0, 0, 0);
         xtouch_neo_pixel_set_pettern(0);

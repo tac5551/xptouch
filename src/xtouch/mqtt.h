@@ -48,6 +48,180 @@ void xtouch_mqtt_topic_setup()
     xtouch_mqtt_report_topic = xtouch_device_topic + String("/report");
 }
 
+#ifdef __XTOUCH_SCREEN_50__
+/** printer.json から選択中以外の dev_id を最大 XTOUCH_OTHER_PRINTERS_MAX 件取得し、other_printer_* を埋める。クラウド MQTT セットアップ時のみ呼ぶ。 */
+void xtouch_mqtt_load_other_printers()
+{
+    xtouch_other_printer_count = 0;
+    for (int i = 0; i < XTOUCH_OTHER_PRINTERS_MAX; i++)
+    {
+        otherPrinters[i].valid = 0;
+        xtouch_other_printer_dev_ids[i][0] = '\0';
+    }
+    DynamicJsonDocument printers = cloud.loadPrinters();
+    JsonObject obj = printers.as<JsonObject>();
+    int idx = 0;
+    for (JsonPair p : obj)
+    {
+        if (idx >= XTOUCH_OTHER_PRINTERS_MAX)
+            break;
+        const char *dev_id = p.key().c_str();
+        if (strcmp(dev_id, xTouchConfig.xTouchSerialNumber) == 0)
+            continue;
+        if (p.value().containsKey("dev_product_name"))
+        {
+            const char *product = p.value()["dev_product_name"].as<const char *>();
+            if (product && (strcmp(product, "H2C") == 0 || strcmp(product, "H2D") == 0 || strcmp(product, "H2S") == 0))
+                continue;
+        }
+        strncpy(xtouch_other_printer_dev_ids[idx], dev_id, 15);
+        xtouch_other_printer_dev_ids[idx][15] = '\0';
+        otherPrinters[idx].valid = 1;
+        strncpy(otherPrinters[idx].dev_id, dev_id, 15);
+        otherPrinters[idx].dev_id[15] = '\0';
+        otherPrinters[idx].print_status = XTOUCH_PRINT_STATUS_IDLE;
+        otherPrinters[idx].mc_print_percent = 0;
+        otherPrinters[idx].mc_left_time = 0;
+        otherPrinters[idx].subtask_name[0] = '\0';
+        otherPrinters[idx].image_url[0] = '\0';
+        otherPrinters[idx].current_layer = 0;
+        otherPrinters[idx].total_layers = 0;
+        if (p.value().containsKey("name"))
+        {
+            strncpy(otherPrinters[idx].name, p.value()["name"].as<const char *>(), 31);
+            otherPrinters[idx].name[31] = '\0';
+        }
+        else
+            otherPrinters[idx].name[0] = '\0';
+        idx++;
+    }
+    xtouch_other_printer_count = idx;
+}
+
+/** Printers 画面用: 指定 dev_id に pushall 要求を送信（device/{dev_id}/request）。 */
+static void xtouch_mqtt_pushall_for_dev(const char *dev_id)
+{
+    if (!dev_id || !dev_id[0])
+        return;
+    DynamicJsonDocument json(256);
+    json["pushing"]["command"] = "pushall";
+    json["pushing"]["version"] = 1;
+    json["pushing"]["push_target"] = 1;
+    json["pushing"]["sequence_id"] = xtouch_device_next_sequence();
+    json["user_id"] = "123456789";
+
+    String payload;
+    serializeJson(json, payload);
+    String topic = String("device/") + dev_id + "/request";
+    ConsoleDebug.print(F("[xPTouch][MQTT] PUSHALL dev_id="));
+    ConsoleDebug.print(dev_id);
+    ConsoleDebug.print(F(" topic="));
+    ConsoleDebug.print(topic);
+    ConsoleDebug.print(F(" payload="));
+    ConsoleDebug.println(payload);
+    xtouch_pubSubClient.publish(topic.c_str(), payload.c_str());
+}
+
+/** Printers 画面用: メイン＋他プリンタへ pushall を送る（毎回呼び出し可）。 */
+inline void xtouch_mqtt_pushall_all_printers_for_screen()
+{
+    xtouch_mqtt_pushall_for_dev(xTouchConfig.xTouchSerialNumber);
+    for (int i = 0; i < xtouch_other_printer_count; i++)
+    {
+        if (!otherPrinters[i].valid)
+            continue;
+        xtouch_mqtt_pushall_for_dev(xtouch_other_printer_dev_ids[i]);
+    }
+}
+
+/* C 側（ui_loaders.c など）から呼べるようにするラッパー。 */
+#ifdef __cplusplus
+extern "C" void xtouch_mqtt_pushall_all_printers_for_screen_c(void)
+{
+    xtouch_mqtt_pushall_all_printers_for_screen();
+}
+#endif
+
+/** gcode_state 文字列を XTouchPrintStatus に変換（他プリンター用、device.h のマッピングと同一） */
+static int xtouch_mqtt_gcode_state_to_status(const String &state)
+{
+    if (state == "IDLE")
+        return XTOUCH_PRINT_STATUS_IDLE;
+    if (state == "RUNNING")
+        return XTOUCH_PRINT_STATUS_RUNNING;
+    if (state == "PAUSE" || state == "Pause")
+        return XTOUCH_PRINT_STATUS_PAUSED;
+    if (state == "FINISH")
+        return XTOUCH_PRINT_STATUS_FINISHED;
+    if (state == "PREPARE")
+        return XTOUCH_PRINT_STATUS_PREPARE;
+    if (state == "FAILED")
+        return XTOUCH_PRINT_STATUS_FAILED;
+    return XTOUCH_PRINT_STATUS_IDLE;
+}
+
+void xtouch_mqtt_processPushStatusOther(int slot, JsonDocument &incomingJson)
+{
+    if (slot < 0 || slot >= xtouch_other_printer_count || !otherPrinters[slot].valid)
+        return;
+    if (!incomingJson.containsKey("print"))
+        return;
+    JsonObject print = incomingJson["print"].as<JsonObject>();
+    if (print.containsKey("gcode_state"))
+    {
+        otherPrinters[slot].print_status = xtouch_mqtt_gcode_state_to_status(print["gcode_state"].as<String>());
+    }
+    if (print.containsKey("mc_percent"))
+    {
+        if (print["mc_percent"].is<String>())
+            otherPrinters[slot].mc_print_percent = atoi(print["mc_percent"].as<String>().c_str());
+        else
+            otherPrinters[slot].mc_print_percent = print["mc_percent"].as<int>();
+    }
+    if (print.containsKey("mc_remaining_time"))
+    {
+        if (print["mc_remaining_time"].is<String>())
+            otherPrinters[slot].mc_left_time = atoi(print["mc_remaining_time"].as<String>().c_str()) * 60;
+        else
+            otherPrinters[slot].mc_left_time = print["mc_remaining_time"].as<int>() * 60;
+    }
+    if (print.containsKey("subtask_name"))
+    {
+        strncpy(otherPrinters[slot].subtask_name, print["subtask_name"].as<const char *>(), 31);
+        otherPrinters[slot].subtask_name[31] = '\0';
+    }
+    if (print.containsKey("task_id"))
+    {
+        const char *tid = print["task_id"].as<const char *>();
+        strncpy(otherPrinters[slot].task_id, tid, sizeof(otherPrinters[slot].task_id) - 1);
+        otherPrinters[slot].task_id[sizeof(otherPrinters[slot].task_id) - 1] = '\0';
+#ifdef XTOUCH_DEBUG
+        ConsoleDebug.print(F("[xPTouch][MQTT] other slot="));
+        ConsoleDebug.print(slot);
+        ConsoleDebug.print(F(" task_id="));
+        ConsoleDebug.println(tid);
+#endif
+    }
+    if (print.containsKey("url"))
+    {
+        const char *url_other = print["url"].as<const char *>();
+        strncpy(otherPrinters[slot].image_url, url_other, sizeof(otherPrinters[slot].image_url) - 1);
+        otherPrinters[slot].image_url[sizeof(otherPrinters[slot].image_url) - 1] = '\0';
+#ifdef XTOUCH_DEBUG
+        ConsoleDebug.print(F("[xPTouch][MQTT] URL other slot="));
+        ConsoleDebug.print(slot);
+        ConsoleDebug.print(F(" url="));
+        ConsoleDebug.println(url_other);
+#endif
+    }
+    if (print.containsKey("layer_num"))
+        otherPrinters[slot].current_layer = print["layer_num"].as<int>();
+    if (print.containsKey("total_layer_num"))
+        otherPrinters[slot].total_layers = print["total_layer_num"].as<int>();
+    xtouch_mqtt_sendMsg(XTOUCH_ON_OTHER_PRINTER_UPDATE, (unsigned long long)slot);
+}
+#endif
+
 void xtouch_mqtt_parse_tray(uint8_t ams_idx, uint8_t tray_idx, char *color, int loaded)
 {
 
@@ -236,7 +410,14 @@ void xtouch_mqtt_processPushStatus(JsonDocument &incomingJson)
 
         if (incomingJson["print"].containsKey("task_id"))
         {
-            strcpy(bambuStatus.task_id, incomingJson["print"]["task_id"]);
+            String new_tid_str = incomingJson["print"]["task_id"].as<String>();
+            const char *new_tid = new_tid_str.c_str();
+#ifdef __XTOUCH_SCREEN_50__
+            if (new_tid[0] && strcmp(bambuStatus.task_id, new_tid) != 0)
+                bambuStatus.image_url[0] = '\0';
+#endif
+            strncpy(bambuStatus.task_id, new_tid, sizeof(bambuStatus.task_id) - 1);
+            bambuStatus.task_id[sizeof(bambuStatus.task_id) - 1] = '\0';
         }
 
         if (incomingJson["print"].containsKey("gcode_file"))
@@ -279,7 +460,16 @@ void xtouch_mqtt_processPushStatus(JsonDocument &incomingJson)
             }
             xtouch_mqtt_update_slice_info(incomingJson["print"]["project_id"], incomingJson["print"]["profile_id"], incomingJson["print"]["subtask_id"], plate_index);
 
-            strcpy(bambuStatus.task_id, incomingJson["print"]["subtask_id"]);
+            {
+                String new_tid_str = incomingJson["print"]["subtask_id"].as<String>();
+                const char *new_tid = new_tid_str.c_str();
+#ifdef __XTOUCH_SCREEN_50__
+                if (new_tid[0] && strcmp(bambuStatus.task_id, new_tid) != 0)
+                    bambuStatus.image_url[0] = '\0';
+#endif
+                strncpy(bambuStatus.task_id, new_tid, sizeof(bambuStatus.task_id) - 1);
+                bambuStatus.task_id[sizeof(bambuStatus.task_id) - 1] = '\0';
+            }
         }
         // #pragma region print_task
 
@@ -785,6 +975,43 @@ void xtouch_mqtt_parseMessage(char *topic, byte *payload, unsigned int length, b
             xtouch_pubSubClient.disconnect();
         }
 
+#ifdef __XTOUCH_SCREEN_50__
+        /* トピックから dev_id を取得: device/XXXX/report */
+        char topic_dev_id[16] = {0};
+        if (topic && strncmp(topic, "device/", 7) == 0)
+        {
+            const char *rest = topic + 7;
+            const char *slash = strchr(rest, '/');
+            if (slash && strcmp(slash, "/report") == 0)
+            {
+                size_t len = (size_t)(slash - rest);
+                if (len >= sizeof(topic_dev_id))
+                    len = sizeof(topic_dev_id) - 1;
+                memcpy(topic_dev_id, rest, len);
+                topic_dev_id[len] = '\0';
+            }
+        }
+        if (topic_dev_id[0] != '\0' && strcmp(topic_dev_id, xTouchConfig.xTouchSerialNumber) != 0)
+        {
+            /* 他プリンターの report */
+            int slot = -1;
+            for (int i = 0; i < xtouch_other_printer_count; i++)
+            {
+                if (strcmp(xtouch_other_printer_dev_ids[i], topic_dev_id) == 0)
+                {
+                    slot = i;
+                    break;
+                }
+            }
+            if (slot >= 0 && incomingJson.containsKey("print") && incomingJson["print"].containsKey("command") &&
+                incomingJson["print"]["command"].as<String>() == "push_status")
+            {
+                xtouch_mqtt_processPushStatusOther(slot, incomingJson);
+            }
+            return;
+        }
+#endif
+
         if (incomingJson.containsKey("print") && incomingJson["print"].containsKey("command"))
         {
 
@@ -799,6 +1026,9 @@ void xtouch_mqtt_parseMessage(char *topic, byte *payload, unsigned int length, b
             if (command == "push_status")
             {
                 xtouch_mqtt_processPushStatus(incomingJson);
+#ifdef __XTOUCH_SCREEN_50__
+                xtouch_mqtt_sendMsg(XTOUCH_ON_OTHER_PRINTER_UPDATE, 0);
+#endif
             }
             if (command == "ams_change_filament")
             {
@@ -858,6 +1088,10 @@ void xtouch_mqtt_parseMessage(char *topic, byte *payload, unsigned int length, b
 
 void xtouch_pubSubClient_streamCallback(char *topic, byte *payload, unsigned int length)
 {
+    ConsoleDebug.print(F("[xPTouch][MQTT] RECV topic="));
+    ConsoleDebug.print(topic);
+    ConsoleDebug.print(F(" len="));
+    ConsoleDebug.println(length);
     // xtouch_mqtt_parseMessage(topic, (byte *)stream.get_buffer(), stream.current_length(), 0);
 
     // if (stream.includes("\"ams\""))
@@ -934,7 +1168,16 @@ static void xtouch_mqtt_connect(const char *username, const char *password, cons
         {
             ConsoleInfo.println(F("[xPTouch][MQTT] ---- CONNECTED ----"));
 
+            ESP_LOGI("mqtt", "subscribe self report topic: %s", xtouch_mqtt_report_topic.c_str());
             xtouch_pubSubClient.subscribe(xtouch_mqtt_report_topic.c_str());
+#ifdef __XTOUCH_SCREEN_50__
+            for (int i = 0; i < xtouch_other_printer_count; i++)
+            {
+                String other_report = String("device/") + xtouch_other_printer_dev_ids[i] + "/report";
+                ESP_LOGI("mqtt", "subscribe other report topic[%d]: %s", i, other_report.c_str());
+                xtouch_pubSubClient.subscribe(other_report.c_str());
+            }
+#endif
             xtouch_device_pushall();
             xtouch_device_get_version();
             xtouch_mqtt_onMqttReady();
@@ -1083,6 +1326,9 @@ void xtouch_cloud_mqtt_setup()
     delay(32);
 
     xtouch_mqtt_topic_setup();
+#ifdef __XTOUCH_SCREEN_50__
+    xtouch_mqtt_load_other_printers();
+#endif
     xtouch_mqtt_configure_client(cloud.getMqttCloudHost());
     xtouch_mqtt_subscribe_commands();
 

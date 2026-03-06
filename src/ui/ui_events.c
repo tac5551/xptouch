@@ -6,6 +6,9 @@ void initialActions(lv_event_t *e) {}
 
 /* -----------Sidebar-------------- */
 void onSidebarHome(lv_event_t *e) { loadScreen(0); }
+#ifdef __XTOUCH_SCREEN_50__
+void onSidebarPrinters(lv_event_t *e) { if (!xTouchConfig.xTouchLanOnlyMode) loadScreen(6); }
+#endif
 void onSidebarTemp(lv_event_t *e) { loadScreen(1); }
 void onSidebarControl(lv_event_t *e) { loadScreen(2); }
 void onSidebarNozzle(lv_event_t *e) { loadScreen(3); }

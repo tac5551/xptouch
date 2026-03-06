@@ -1,6 +1,9 @@
 #pragma once
 
 #include <set>
+#ifdef __XTOUCH_SCREEN_50__
+#include "esp_attr.h"
+#endif
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
@@ -8,6 +11,7 @@
 #include "types.h"
 // #include "date.h"
 #include "bbl-certs.h"
+#include "filesystem.h"
 
 bool xtouch_cloud_pair_loop_exit = false;
 #include <WiFiClientSecure.h>
@@ -240,6 +244,106 @@ public:
     return _region;
   }
 
+  /** GET /v1/iot-service/api/user/task/{task_id} から plates[0].thumbnail.url を取得する。 */
+  bool getTaskThumbnailUrl(const char *task_id, char *out_url, size_t out_size)
+  {
+    if (!task_id || !*task_id || !out_url || out_size == 0)
+      return false;
+    if (!loggedIn)
+      return false;
+
+    String host = _region == "China" ? "api.bambulab.cn" : "api.bambulab.com";
+    String path = String("/v1/iot-service/api/user/task/") + task_id;
+    String url = String("https://") + host + path;
+
+#ifdef XTOUCH_DEBUG
+    ConsoleDebug.print(F("[xPTouch][CLOUD] getTaskThumbnailUrl task_id="));
+    ConsoleDebug.print(task_id);
+    ConsoleDebug.print(F(" url="));
+    ConsoleDebug.println(url);
+#endif
+
+    WiFiClientSecure &c = sslClient();
+    c.stop();
+    c.setTimeout(8000);
+    c.setInsecure();
+
+    yield();
+    HTTPClient http;
+    http.begin(c, url);
+    char auth_buf[320];
+    snprintf(auth_buf, sizeof(auth_buf), "Bearer %s", _auth_token.c_str());
+    http.addHeader("Authorization", auth_buf);
+    http.setTimeout(8000);
+    int code = http.GET();
+#ifdef XTOUCH_DEBUG
+    ConsoleDebug.print(F("[xPTouch][CLOUD] getTaskThumbnailUrl code="));
+    ConsoleDebug.println(code);
+#endif
+    String response = http.getString();
+#ifdef XTOUCH_DEBUG
+    ConsoleDebug.print(F("[xPTouch][CLOUD] getTaskThumbnailUrl resp_len="));
+    ConsoleDebug.println(response.length());
+    if (code != 200)
+    {
+      ConsoleDebug.print(F("[xPTouch][CLOUD] getTaskThumbnailUrl non-200 body="));
+      ConsoleDebug.println(response);
+    }
+#endif
+    http.end();
+    if (response.length() == 0)
+      return false;
+
+#ifdef XTOUCH_DEBUG
+    /* デバッグ用に task レスポンス全体を SD に保存 */
+    char dump_path[64];
+    snprintf(dump_path, sizeof(dump_path), "/tmp/task_%s.json", task_id);
+    File dump = SD.open(dump_path, FILE_WRITE);
+    if (dump)
+    {
+      dump.print(response);
+      dump.close();
+      ConsoleDebug.print(F("[xPTouch][CLOUD] saved task JSON to "));
+      ConsoleDebug.println(dump_path);
+    }
+#endif
+
+    /* JSON 全体をパースせず、テキスト検索で context.plates[0].thumbnail.url を抜き出す */
+    const char *raw = response.c_str();
+    size_t raw_len = response.length();
+
+    /* "plates" の位置までスキップして、configs 以下の url を無視する */
+    const char *plates_pos = strstr(raw, "\"plates\"");
+    if (!plates_pos)
+    {
+#ifdef XTOUCH_DEBUG
+      ConsoleDebug.println(F("[xPTouch][CLOUD] getTaskThumbnailUrl no \"plates\" key"));
+#endif
+      return false;
+    }
+
+    /* S3 の署名付き URL 用 2KB。5inch(PSRAM あり)のときは PSRAM に配置。 */
+#if defined(__XTOUCH_SCREEN_50__) && defined(CONFIG_SPIRAM)
+    static EXT_RAM_ATTR char url_buf[2048];
+#else
+    static char url_buf[2048];
+#endif
+    url_buf[0] = '\0';
+    cloud_parse_json_str_key(plates_pos, raw_len - (size_t)(plates_pos - raw), "url", url_buf, sizeof(url_buf));
+    const char *url_c = url_buf;
+    if (!url_c || !url_c[0])
+    {
+#ifdef XTOUCH_DEBUG
+      ConsoleDebug.println(F("[xPTouch][CLOUD] getTaskThumbnailUrl thumbnail.url empty"));
+#endif
+      return false;
+    }
+
+    strncpy(out_url, url_c, out_size - 1);
+    out_url[out_size - 1] = '\0';
+    return true;
+  }
+
   void selectPrinter()
   {
 
@@ -262,8 +366,16 @@ public:
       return;
     }
 
+    // H2C/H2D/H2S は一覧・printer.json に出さない
+    auto isExcludedProduct = [](JsonVariant v) -> bool {
+      if (!v.containsKey("dev_product_name")) return false;
+      const char *product = v["dev_product_name"].as<const char *>();
+      return product && (strcmp(product, "H2C") == 0 || strcmp(product, "H2D") == 0 || strcmp(product, "H2S") == 0);
+    };
+
     for (JsonVariant v : devices)
     {
+      if (isExcludedProduct(v)) continue;
       Serial.println("\n===========================================");
       serializeJsonPretty(v, Serial);
       if (!printers.containsKey(v["dev_id"].as<String>()))
@@ -275,9 +387,18 @@ public:
     serializeJsonPretty(printers, Serial);
     xtouch_filesystem_writeJson(SD, xtouch_paths_printers, printers);
 
-    if (devices.size() == 0)
+    // 除外後で選択可能なデバイスだけにする
+    DynamicJsonDocument filteredDoc(4096);
+    JsonArray filtered = filteredDoc.to<JsonArray>();
+    for (JsonVariant v : devices)
     {
-      Serial.println("No devices found in Bambu Cloud");
+      if (isExcludedProduct(v)) continue;
+      filtered.add(v);
+    }
+
+    if (filtered.size() == 0)
+    {
+      Serial.println("No devices found in Bambu Cloud (or all excluded)");
 
       lv_label_set_text(introScreenCaption, LV_SYMBOL_CHARGE " No Cloud Registered Devices");
       lv_timer_handler();
@@ -287,19 +408,19 @@ public:
       return;
     }
 
-    if (devices.size() == 1)
+    if (filtered.size() == 1)
     {
       // auto select the only device
-      setCurrentDevice(devices[0]["dev_id"].as<String>());
-      setCurrentModel(devices[0]["dev_model_name"].as<String>());
-      setPrinterName(devices[0]["name"].as<String>());
+      setCurrentDevice(filtered[0]["dev_id"].as<String>());
+      setCurrentModel(filtered[0]["dev_model_name"].as<String>());
+      setPrinterName(filtered[0]["name"].as<String>());
 
       JsonObject currentPrinterSettings = loadPrinters()[xTouchConfig.xTouchSerialNumber]["settings"];
       xTouchConfig.xTouchChamberSensorEnabled = currentPrinterSettings.containsKey("chamberTemp") ? currentPrinterSettings["chamberTemp"].as<bool>() : false;
       xTouchConfig.xTouchAuxFanEnabled = currentPrinterSettings.containsKey("auxFan") ? currentPrinterSettings["auxFan"].as<bool>() : false;
       xTouchConfig.xTouchChamberFanEnabled = currentPrinterSettings.containsKey("chamberFan") ? currentPrinterSettings["chamberFan"].as<bool>() : false;
 
-      savePrinterPair(devices[0]["dev_id"].as<String>(), devices[0]["dev_model_name"].as<String>(), devices[0]["name"].as<String>());
+      savePrinterPair(filtered[0]["dev_id"].as<String>(), filtered[0]["dev_model_name"].as<String>(), filtered[0]["name"].as<String>());
 
       return;
     }
@@ -307,7 +428,7 @@ public:
     loadScreen(5);
 
     String output = "";
-    for (JsonVariant v : devices)
+    for (JsonVariant v : filtered)
     {
       Serial.println("\n===========================================");
       serializeJsonPretty(v, Serial);
@@ -326,16 +447,16 @@ public:
         lv_task_handler();
       }
       uint16_t currentIndex = lv_roller_get_selected(ui_printerPairScreenRoller);
-      setCurrentDevice(devices[currentIndex]["dev_id"].as<String>());
-      setCurrentModel(devices[currentIndex]["dev_model_name"].as<String>());
-      setPrinterName(devices[currentIndex]["name"].as<String>());
+      setCurrentDevice(filtered[currentIndex]["dev_id"].as<String>());
+      setCurrentModel(filtered[currentIndex]["dev_model_name"].as<String>());
+      setPrinterName(filtered[currentIndex]["name"].as<String>());
 
       JsonObject currentPrinterSettings = loadPrinters()[xTouchConfig.xTouchSerialNumber]["settings"];
       xTouchConfig.xTouchChamberSensorEnabled = currentPrinterSettings.containsKey("chamberTemp") ? currentPrinterSettings["chamberTemp"].as<bool>() : false;
       xTouchConfig.xTouchAuxFanEnabled = currentPrinterSettings.containsKey("auxFan") ? currentPrinterSettings["auxFan"].as<bool>() : false;
       xTouchConfig.xTouchChamberFanEnabled = currentPrinterSettings.containsKey("chamberFan") ? currentPrinterSettings["chamberFan"].as<bool>() : false;
 
-      savePrinterPair(devices[currentIndex]["dev_id"].as<String>(), devices[currentIndex]["dev_model_name"].as<String>(), devices[currentIndex]["name"].as<String>());
+      savePrinterPair(filtered[currentIndex]["dev_id"].as<String>(), filtered[currentIndex]["dev_model_name"].as<String>(), filtered[currentIndex]["name"].as<String>());
     }
     delete deviceListDocument; // 使い終わったら必ず解放する
     deviceListDocument = nullptr;

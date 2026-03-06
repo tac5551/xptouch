@@ -1423,7 +1423,7 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
     lv_msg_send(XTOUCH_ON_AMS_SLOT_UPDATE, &eventData);
     lv_msg_send(XTOUCH_ON_WIFI_SIGNAL, &eventData);
 
-    eventData.data = neopixel_enabled;
+    eventData.data = xtouch_neopixel_enabled;
     lv_msg_send(XTOUCH_ON_NEOPIXEL_REPORT, &eventData);
 
     return cui_homeComponent;

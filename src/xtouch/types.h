@@ -128,7 +128,7 @@ extern "C"
         int m_tray_pre; // tray_now : "0" ~ "15" or "254", "255"
         int m_humidity; // humidity : "1" ~ "5"
         int m_tray_tar; // tray_tar : "0" ~ "15" or "255",
-        // char image_url[512]; // image_url  /* 未使用のためコメントアウト。復元時はこの行のコメントを外す */
+        char image_url[1024]; /* 印刷サムネイル URL（S3 署名付きで長いので 1KB 確保） */
         int has_public_filaments;
     } XTouchBambuStatus;
 
@@ -259,6 +259,35 @@ extern "C"
         char subtask_id[32];
         int print_error;
     } ClearErrorMessage;
+
+#ifdef __XTOUCH_SCREEN_50__
+#define XTOUCH_MULTI_PRINTER_MAX 5
+#define XTOUCH_OTHER_PRINTERS_MAX (XTOUCH_MULTI_PRINTER_MAX - 1)
+
+    typedef struct
+    {
+        char dev_id[16];
+        char name[32];
+        int print_status;
+        int mc_print_percent;
+        int mc_left_time;
+        char subtask_name[32];
+        char image_url[1024]; /* 印刷サムネイル URL（S3 署名付きで長いので 1KB 確保） */
+        char task_id[32];    /* Cloud task 用 ID (/user/task/{id}) */
+        int current_layer;
+        int total_layers;
+        unsigned char valid;
+    } other_printer_status_t;
+
+    extern other_printer_status_t otherPrinters[XTOUCH_OTHER_PRINTERS_MAX];
+    extern char xtouch_other_printer_dev_ids[XTOUCH_OTHER_PRINTERS_MAX][16];
+    extern int xtouch_other_printer_count;
+
+    /** サムネイル表示用: スロット番号ごとの SD パス（"S:/tmp/pthumb_N.png"）。UI はこれを参照するだけ。xtouch が init で埋める。 */
+#define XTOUCH_THUMB_SLOT_MAX 5
+#define XTOUCH_THUMB_PATH_LEN 64
+    extern char xtouch_thumbnail_slot_path[XTOUCH_THUMB_SLOT_MAX][XTOUCH_THUMB_PATH_LEN];
+#endif
 
     /** フィラメント Brand/Type ドロップダウン用。都度 SD から組み立てたオプション文字列を返す。実装は filaments_options.c。 */
     void xtouch_public_filaments_get_brand_options(char *buf, unsigned int buf_len);

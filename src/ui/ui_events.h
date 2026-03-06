@@ -10,6 +10,9 @@ extern "C"
 
     /* sidebar */
     void onSidebarHome(lv_event_t *e);
+#ifdef __XTOUCH_SCREEN_50__
+    void onSidebarPrinters(lv_event_t *e);
+#endif
     void onSidebarTemp(lv_event_t *e);
     void onSidebarControl(lv_event_t *e);
     void onSidebarNozzle(lv_event_t *e);

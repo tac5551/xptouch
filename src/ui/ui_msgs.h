@@ -104,6 +104,16 @@ extern "C"
         XTOUCH_PREHEAT_BUTTON1,
         XTOUCH_PREHEAT_BUTTON2,
         XTOUCH_PREHEAT_BUTTON3,
+
+        XTOUCH_ON_OTHER_PRINTER_UPDATE,
+        /** Printers 画面でサムネイル全スロット取得をスケジュールせよ（コンポーネント表示時。購読は xtouch） */
+        XTOUCH_PRINTERS_SCHEDULE_THUMB_FETCH,
+        /** サムネイルタイマー開始（Printers 画面表示時。購読は xtouch） */
+        XTOUCH_PRINTERS_THUMB_TIMER_START,
+        /** サムネイルタイマー停止（Printers 画面離脱時。購読は xtouch） */
+        XTOUCH_PRINTERS_THUMB_TIMER_STOP,
+        /** Printers 一覧の表示を更新せよ（初期表示・再描画。購読は画面側） */
+        XTOUCH_PRINTERS_LIST_REFRESH,
     };
 
     struct XTOUCH_MESSAGE_DATA

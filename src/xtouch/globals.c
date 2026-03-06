@@ -1,10 +1,11 @@
 #include <stdbool.h>
+#include <stdio.h>
 #include "globals.h"
 
 /* グローバル変数の実際の定義（型は globals.h → types.h） */
 bool xtouch_mqtt_light_on = false;
 bool xtouch_ota_update_flag = false;
-bool neopixel_enabled = true;
+bool xtouch_neopixel_enabled = true;
 char xTouchFilamentsPipeBuf[XTOUCH_FILAMENTS_PIPE_BUF_SIZE];
 unsigned int xTouchFilamentsPipeLen = 0;
 char xtouch_filament_brand_options[XTOUCH_FILAMENT_OPTS_BUF_SIZE];
@@ -15,8 +16,19 @@ int xtouch_filament_current_type_count = 0;
 int xtouch_filament_pipe_holds_brands = 0;
 int xtouch_filament_use_fixed_brands = 1;
 
+#ifdef __XTOUCH_SCREEN_50__
+other_printer_status_t otherPrinters[XTOUCH_OTHER_PRINTERS_MAX];
+char xtouch_other_printer_dev_ids[XTOUCH_OTHER_PRINTERS_MAX][16];
+int xtouch_other_printer_count = 0;
+char xtouch_thumbnail_slot_path[XTOUCH_THUMB_SLOT_MAX][XTOUCH_THUMB_PATH_LEN];
+#endif
+
 // グローバル関数の実際の定義
 void xtouch_globals_init()
 {
     controlMode.inc = 10;
+#ifdef __XTOUCH_SCREEN_50__
+    for (int i = 0; i < XTOUCH_THUMB_SLOT_MAX; i++)
+        snprintf(xtouch_thumbnail_slot_path[i], XTOUCH_THUMB_PATH_LEN, "S:/tmp/pthumb_%d.png", i);
+#endif
 } 

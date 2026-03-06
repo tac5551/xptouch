@@ -145,8 +145,14 @@ void xtouch_device_publish(String request)
 {
 #ifdef XTOUCH_DEBUG
     Serial.println(F("[GCODE] MQTT publish request"));
+    ConsoleDebug.print(F("[xPTouch][MQTT] PUB topic="));
+    ConsoleDebug.print(xtouch_mqtt_request_topic);
+    ConsoleDebug.print(F(" len="));
+    ConsoleDebug.print(request.length());
+    ConsoleDebug.print(F(" payload="));
+    ConsoleDebug.println(request);
 #endif
-    // Serial.println(request);
+
     xtouch_pubSubClient.publish(xtouch_mqtt_request_topic.c_str(), request.c_str());
     delay(10);
 }
@@ -235,10 +241,10 @@ void xtouch_device_onLCDToggleCommand(lv_msg_t *m)
 void xtouch_device_onNeoPixelToggleCommand(lv_msg_t *m)
 {
     printf("xtouch_device_onNeoPixelToggleCommand\n");
-    neopixel_enabled = !neopixel_enabled;
+    xtouch_neopixel_enabled = !xtouch_neopixel_enabled;
     print_gcode_action_changed = true;
     struct XTOUCH_MESSAGE_DATA eventData;
-    eventData.data = neopixel_enabled;
+    eventData.data = xtouch_neopixel_enabled;
     lv_msg_send(XTOUCH_ON_NEOPIXEL_REPORT, &eventData);
 }
 
@@ -314,16 +320,16 @@ void xtouch_device_onDownCommand(lv_msg_t *m)
 
 void xtouch_device_onBedUpCommand(lv_msg_t *m)
 {
-    // Bed Up/Down は常に Z 軸専用
+    // Bed Up/Down は常に Z 軸専用（Z+ がノズル上方向の機種では Up=-1, Down=+1）
     String axis = "Z";
-    int multiplier = 1;
+    int multiplier = -1;
     xtouch_device_move_axis(axis, controlMode.inc * multiplier, XTOUCH_DEVICE_CONTROL_MOVE_SPEED_Z);
 }
 
 void xtouch_device_onBedDownCommand(lv_msg_t *m)
 {
     String axis = "Z";
-    int multiplier = -1;
+    int multiplier = 1;
     xtouch_device_move_axis(axis, controlMode.inc * multiplier, XTOUCH_DEVICE_CONTROL_MOVE_SPEED_Z);
 }
 

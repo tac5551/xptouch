@@ -15,6 +15,7 @@
 | `b` (0x62) | Temp |
 | `c` (0x63) | Control |
 | `d` (0x64) | Settings |
+| `e` (0x65) | Printers（5インチ左メニュー・他プリンター一覧） |
 | `n` (0x6E) | AMS |
 | `p` (0x70) | Nozzle（他で使用） |
 
@@ -40,8 +41,9 @@
    - 2 つ目 → `0x62` (b = Temp)
    - 3 つ目 → `0x63` (c = Control)
    - 4 つ目 → `0x64` (d = Settings)
-   - 5 つ目 → `0x6E` (n = AMS)
-   - 6 つ目 → `0x70` (p = Nozzle)
+   - 5 つ目 → `0x65` (e = Printers)
+   - 6 つ目 → `0x6E` (n = AMS)
+   - 7 つ目 → `0x70` (p = Nozzle)
    - その他も a～z / 0～4 に合わせて割り当て。
 5. **Export** → **Export Font** で .ttf をダウンロードし、`icomoon.ttf` として保存。
 

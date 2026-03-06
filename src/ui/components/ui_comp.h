@@ -33,6 +33,7 @@ extern "C"
 #include "ui_comp_utilnozzlechagnecomponent.h"
 #include "ui_comp_utilcomponent.h"
 #include "ui_comp_utilcalibrationcomponent.h"
+#include "ui_comp_printerscomponent.h"
 
 #ifdef __cplusplus
 } /*extern "C"*/

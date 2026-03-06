@@ -52,6 +52,9 @@ extern "C"
   void ui_utilNozzleChangeScreen_screen_init(void);
   void ui_amsEditScreen_screen_init(void);
   void ui_amsEditColorScreen_screen_init(void);
+#ifdef __XTOUCH_SCREEN_50__
+  void ui_printersScreen_screen_init(void);
+#endif
 
   lv_obj_t *introScreen;
   lv_obj_t *introScreenIcon;
@@ -126,6 +129,11 @@ extern "C"
   lv_obj_t *ui_amsEditComponent;
   lv_obj_t *ui_amsEditColorScreen;
   lv_obj_t *ui_amsEditColorComponent;
+#ifdef __XTOUCH_SCREEN_50__
+  lv_obj_t *ui_printersScreen;
+  lv_obj_t *ui_printersContentPanel;
+  extern lv_obj_t *ui_printersListContainer;
+#endif
 
   void ui_event____initial_actions0(lv_event_t *e);
   lv_obj_t *ui____initial_actions0;

@@ -3,6 +3,7 @@
 
 #include <WiFi.h>
 #include "xtouch/debug.h"
+#include <string.h>
 
 void onWiFiEvent(arduino_event_id_t event, arduino_event_info_t info)
 {
@@ -21,7 +22,15 @@ int downloadFileToSDCard(const char *url, const char *fileName, void (*onProgres
 {
 
     WiFiClientSecure wifiClient;
-    wifiClient.setCACert(xperiments_in);
+    /* サムネイルなど S3 向けは証明書を検証せずに取得する。それ以外は従来通り CA を使う。 */
+    if (fileName && strncmp(fileName, "/tmp/pthumb_", 12) == 0)
+    {
+        wifiClient.setInsecure();
+    }
+    else
+    {
+        wifiClient.setCACert(xperiments_in);
+    }
     // WiFiClientSecureのタイムアウトも延長
     wifiClient.setTimeout(60000); // 60秒
 
@@ -103,5 +112,171 @@ int downloadFileToSDCard(const char *url, const char *fileName, void (*onProgres
 
     return success;
 }
+
+#ifdef __XTOUCH_SCREEN_50__
+
+#include "esp_attr.h"
+#include "xtouch/types.h"
+#include "xtouch/globals.h"
+#include "esp_log.h"
+#include "xtouch/cloud.hpp"
+
+/** 指定スロット(0=メイン, 1..4=他機)のサムネイルを URL から取得し SD に保存。
+ *  @return ファイルを SD に保存できた場合 true、未DL・失敗時は false */
+inline bool downloadThumbnailForSlot(int slot)
+{
+    static const char *TAG = "thumbnail";
+
+    const char *url = nullptr;
+#if defined(__XTOUCH_SCREEN_50__) && defined(CONFIG_SPIRAM)
+    static EXT_RAM_ATTR char resolved_url[1024]; /* S3 署名付き URL 用。PSRAM に配置。 */
+#else
+    static char resolved_url[1024];
+#endif
+    if (slot == 0)
+    {
+        url = bambuStatus.image_url;
+        /* URL が MQTT から来ていない場合は Cloud task から取得を試みる */
+        if ((!url || !url[0]) && cloud.loggedIn && bambuStatus.task_id[0] && strcmp(bambuStatus.task_id, "0") != 0)
+        {
+#ifdef XTOUCH_DEBUG
+            ConsoleDebug.print(F("[xPTouch][THUMB] slot=0 resolve from task_id="));
+            ConsoleDebug.println(bambuStatus.task_id);
+#endif
+            if (cloud.getTaskThumbnailUrl(bambuStatus.task_id, resolved_url, sizeof(resolved_url)))
+            {
+                strncpy(bambuStatus.image_url, resolved_url, sizeof(bambuStatus.image_url) - 1);
+                bambuStatus.image_url[sizeof(bambuStatus.image_url) - 1] = '\0';
+                url = bambuStatus.image_url;
+            }
+            else
+            {
+                /* 取得に失敗したらこのセッションでは再試行しない */
+                bambuStatus.task_id[0] = '\0';
+                bambuStatus.image_url[0] = '\0';
+            }
+        }
+        if (!url || !url[0])
+        {
+#ifdef XTOUCH_DEBUG
+            ConsoleDebug.print(F("[xPTouch][THUMB] slot="));
+            ConsoleDebug.print(slot);
+            ConsoleDebug.println(F(" main: no image_url"));
+#endif
+            return false;
+        }
+    }
+    else
+    {
+        int idx = slot - 1;
+        if (idx < 0 || idx >= xtouch_other_printer_count || !otherPrinters[idx].valid)
+        {
+#ifdef XTOUCH_DEBUG
+            ConsoleDebug.print(F("[xPTouch][THUMB] slot="));
+            ConsoleDebug.print(slot);
+            ConsoleDebug.print(F(" other: invalid idx="));
+            ConsoleDebug.print(idx);
+            ConsoleDebug.print(F(" xtouch_other_printer_count="));
+            ConsoleDebug.println(xtouch_other_printer_count);
+#endif
+            return false;
+        }
+        url = otherPrinters[idx].image_url;
+        /* URL が MQTT から来ていない場合は Cloud task から取得を試みる */
+        if ((!url || !url[0]) && cloud.loggedIn && otherPrinters[idx].task_id[0] && strcmp(otherPrinters[idx].task_id, "0") != 0)
+        {
+#ifdef XTOUCH_DEBUG
+            ConsoleDebug.print(F("[xPTouch][THUMB] slot="));
+            ConsoleDebug.print(slot);
+            ConsoleDebug.print(F(" resolve from task_id="));
+            ConsoleDebug.println(otherPrinters[idx].task_id);
+#endif
+            if (cloud.getTaskThumbnailUrl(otherPrinters[idx].task_id, resolved_url, sizeof(resolved_url)))
+            {
+                strncpy(otherPrinters[idx].image_url, resolved_url, sizeof(otherPrinters[idx].image_url) - 1);
+                otherPrinters[idx].image_url[sizeof(otherPrinters[idx].image_url) - 1] = '\0';
+                url = otherPrinters[idx].image_url;
+            }
+            else
+            {
+                /* 取得に失敗したらこのセッションでは再試行しない */
+                otherPrinters[idx].task_id[0] = '\0';
+                otherPrinters[idx].image_url[0] = '\0';
+            }
+        }
+        if (!url || !url[0])
+        {
+#ifdef XTOUCH_DEBUG
+            ConsoleDebug.print(F("[xPTouch][THUMB] slot="));
+            ConsoleDebug.print(slot);
+            ConsoleDebug.print(F(" other idx="));
+            ConsoleDebug.print(idx);
+            ConsoleDebug.println(F(" no image_url"));
+#endif
+            return false;
+        }
+    }
+
+    char path[64];
+    snprintf(path, sizeof(path), "/tmp/pthumb_%d.png", slot);
+#ifdef XTOUCH_DEBUG
+    ConsoleDebug.print(F("[xPTouch][THUMB] slot="));
+    ConsoleDebug.print(slot);
+    ConsoleDebug.print(F(" download start url="));
+    ConsoleDebug.print(url);
+    ConsoleDebug.print(F(" -> path="));
+    ConsoleDebug.println(path);
+    /* URL が長くて一行ログが途中で切れる場合に備え、改行しながらフル URL も出力する */
+    ConsoleDebug.println(F("[xPTouch][THUMB] url full:"));
+    if (url)
+    {
+        for (size_t i = 0; url[i] != '\0'; ++i)
+        {
+            ConsoleDebug.print(url[i]);
+            if ((i + 1) % 80 == 0)
+                ConsoleDebug.println();
+        }
+        ConsoleDebug.println();
+    }
+#endif
+
+    int ok = downloadFileToSDCard(url, path);
+#ifdef XTOUCH_DEBUG
+    if (ok)
+    {
+        ConsoleDebug.print(F("[xPTouch][THUMB] slot="));
+        ConsoleDebug.print(slot);
+        ConsoleDebug.println(F(" download success"));
+    }
+    else
+    {
+        ConsoleDebug.print(F("[xPTouch][THUMB] slot="));
+        ConsoleDebug.print(slot);
+        ConsoleDebug.println(F(" download FAILED"));
+    }
+#endif
+    if (!ok)
+    {
+        /* ダウンロード失敗時も再試行しないよう、このスロットの URL / task_id をクリアする */
+        if (slot == 0)
+        {
+            bambuStatus.image_url[0] = '\0';
+            bambuStatus.task_id[0] = '\0';
+        }
+        else
+        {
+            int idx = slot - 1;
+            if (idx >= 0 && idx < xtouch_other_printer_count)
+            {
+                otherPrinters[idx].image_url[0] = '\0';
+                otherPrinters[idx].task_id[0] = '\0';
+            }
+        }
+        return false;
+    }
+    return true;
+}
+
+#endif
 
 #endif

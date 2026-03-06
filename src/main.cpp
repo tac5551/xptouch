@@ -28,6 +28,10 @@
 #include "xtouch/net.h"
 #include "xtouch/firmware.h"
 #include "xtouch/mqtt.h"
+#if defined(__XTOUCH_SCREEN_50__)
+#include "xtouch/thumbnail.h"
+#include "xtouch/lv_fs_arduino_sd.h"
+#endif
 #include "xtouch/sensors/chamber.h"
 #include "xtouch/events.h"
 #include "xtouch/connection.h"
@@ -95,6 +99,11 @@ void setup()
 #endif
   while (!xtouch_sdcard_setup(sd_cs_pin))
     ;
+
+#if defined(__XTOUCH_SCREEN_50__)
+  lv_fs_arduino_sd_init();  /* LVGL FS ドライバ: Arduino SD を 'S:' として登録 */
+  xtouch_thumbnail_subscribe_events();
+#endif
 
   xtouch_coldboot_check();
 

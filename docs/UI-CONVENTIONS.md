@@ -9,6 +9,19 @@
 
 - **外部ツールで生成し直すことがあるため、極力個別実装を追加しない。**
 - ui_comp_*.c / ui_*Screen.c 等は LVGL の自動生成やツールで再生成される可能性がある。カスタムロジックは最小限にし、必要な振る舞いはイベント経由で xtouch 側に寄せる。
+- **画面追加時には ui_comp 側に必ず実装する。** 新規画面の UI 構造・ウィジェット作成・レイアウトは ui_comp_*.c にまとめ、ui_*Screen.c は画面オブジェクトの作成とそのコンポーネントの配置・購読登録にとどめる。
+- **必ず既存の他画面を参照し、同様のルール・パターンで実装する。** 例: Printers 画面（ui_comp_printerscomponent.c / ui_printersScreen.c）、Home（ui_comp_homecomponent / ui_homeScreen）などの構成・イベントの送り方・購読の置き場所を踏襲する。
+
+## ui_*.h で宣言されるものは xptouch 側から呼ばれる
+
+- **ui.h / ui_*Screen まわり**: `ui_*Screen_screen_init()` などは **xptouch 側の画面切り替え**で呼ばれる。流れは main → `loadScreen()`（ui_loaders.c）→ `ui_*Screen_screen_init()`。つまり「画面の初期化」は xptouch から呼び出す入口になる。
+- **コールバック**: コールバック関数は UI（ui_*.c）で実装し、`lv_obj_add_event_cb` や `lv_msg_subsribe_obj` で LVGL に登録する。xptouch が直接その関数を呼ぶのではなく、**lv_msg_send などでメッセージを送る → それを契機に LVGL が登録済みコールバックを実行**する形。つまり「xptouch のアクションがきっかけで、UI に登録したコールバックが動く」。
+- **補足**: `ui_comp_*.h` の `ui_*Component_create()` は xptouch/main からは直接呼ばれない。呼び出し元は **ui_*Screen.c** の `ui_*Screen_screen_init()` 内（画面初期化の一環でコンポーネントを作る）。「xptouch から呼ばれる」のは画面の screen_init までで、コンポーネントの create は「画面初期化のなかでの UI 内呼び出し」。
+
+## xtouch と UI 間のデータのやり取りは types の構造体を経由する
+
+- **xtouch と UI 間で共有するデータは、types.h に定義した構造体・配列を経由して行う。** xtouch がそれらを更新し、UI は参照するだけにする。
+- 例: `bambuStatus`, `xTouchConfig`, `otherPrinters`, `xtouch_thumbnail_slot_path[]` など。新規に共有データが必要なときも types.h に型・extern を追加し、実体は globals 等で定義する。
 
 ## UI から xtouch の呼び出し
 
@@ -43,3 +56,18 @@
 - ✅ Main sets `bambuStatus.has_public_filaments = (file exists) ? 1 : 0` at startup; the UI reads `bambuStatus.has_public_filaments`
 
 Similarly, SD/file existence, settings read/write, etc. should be done on the **Main side**, and the result passed to the UI via **bambuStatus**, **xTouchConfig**, or similar.
+
+## 方針: コンポーネントで xtouch に依頼したいときは「イベント送信 → xtouch 側で購読して呼ぶ」
+
+**ui_comp_\*.c からは xtouch を include せず、呼び出しも行わない。** 代わりに次の形にする。
+
+1. **コンポーネント**: やりたいこと用のメッセージを ui_msgs.h に定義し、`lv_msg_send(メッセージID, &payload)` で送るだけにする。
+2. **xtouch 側**: mqtt.h の `xtouch_mqtt_subscribe_commands` のように、**xtouch の .h 内で** `lv_msg_subscribe(メッセージID, callback, NULL)` を登録し、コールバック内で `xtouch_*` を呼ぶ。main の setup でその購読登録関数を一度呼ぶ。
+
+こうすると、UI はイベントを送るだけで、**呼び出しは xtouch の購読に集約**され、ui.h に xtouch の宣言を並べる必要がない。**表示用データ（例: サムネイルのパス）は types.h の共有構造体・配列に xtouch が書き、UI はそれを参照するだけ**にし、`xtouch_*` の直接呼び出しは避ける。
+
+### 実例: Printers 画面のサムネイル全スロット取得
+
+- **メッセージ**: `XTOUCH_PRINTERS_SCHEDULE_THUMB_FETCH`（ui_msgs.h で定義）
+- **ui_comp_printerscomponent.c**: コンポーネント作成時に `lv_msg_send(XTOUCH_PRINTERS_SCHEDULE_THUMB_FETCH, &eventData)` のみ送信。`xtouch/thumbnail.h` は include しない。
+- **xtouch 側で購読**: mqtt.h の `xtouch_mqtt_subscribe_commands` と同様に、**xtouch/thumbnail.h** で `lv_msg_subscribe(XTOUCH_PRINTERS_SCHEDULE_THUMB_FETCH, callback, NULL)` を登録。main の setup で `xtouch_thumbnail_subscribe_events()` を一度呼ぶ。UI は送信だけし、**呼び出しは xtouch の購読コールバック**で行う（ui.h に宣言を並べず、イベント定義＋xtouch 側購読で完結）。

@@ -50,6 +50,16 @@ void fillScreenData(int screen)
 
 void loadScreen(int screen)
 {
+#ifdef __XTOUCH_SCREEN_50__
+    ui_printersListContainer = NULL;
+    if (screen != 6)
+    {
+        struct XTOUCH_MESSAGE_DATA eventData;
+        eventData.data = 0;
+        eventData.data2 = 0;
+        lv_msg_send(XTOUCH_PRINTERS_THUMB_TIMER_STOP, &eventData);
+    }
+#endif
     xTouchConfig.currentScreenIndex = screen;
     lv_obj_t *current = lv_scr_act();
     if (current != NULL)
@@ -87,6 +97,29 @@ void loadScreen(int screen)
         ui_printerPairScreen_screen_init();
         lv_disp_load_scr(ui_printerPairScreen);
         break;
+#ifdef __XTOUCH_SCREEN_50__
+    case 6:
+        if (xTouchConfig.xTouchLanOnlyMode) {
+            screen = 0;
+            xTouchConfig.currentScreenIndex = 0;
+            ui_homeScreen_screen_init();
+            lv_disp_load_scr(ui_homeScreen);
+        } else {
+            ui_printersScreen_screen_init();
+            lv_disp_load_scr(ui_printersScreen);
+            {
+                struct XTOUCH_MESSAGE_DATA eventData;
+                eventData.data = 0;
+                eventData.data2 = 0;
+                lv_msg_send(XTOUCH_PRINTERS_THUMB_TIMER_START, &eventData);
+            }
+            /* 全スロット取得スケジュールは Printers コンポーネント側でイベント送信 → xtouch が購読 */
+            /* 画面遷移時に一度だけ全プリンタへ pushall を投げる（ループ側のポーリングはしない） */
+            extern void xtouch_mqtt_pushall_all_printers_for_screen_c(void);
+            xtouch_mqtt_pushall_all_printers_for_screen_c();
+        }
+        break;
+#endif
     case 7:
         ui_amsViewScreen_screen_init();
         lv_disp_load_scr(ui_amsViewScreen);
@@ -119,23 +152,23 @@ void loadScreen(int screen)
     }
     fillScreenData(screen);
 
-    // サイドバーのハイライトを画面番号に応じて設定 (0=Home, 1=Temp/タブ, 2=AMS, 3=Settings)
+    // サイドバーのハイライト (5inch: 0=Home,1=Printers,2=Temp,3=AMS,4=Settings / 2.8: 0=Home,1=Temp,2=AMS,3=Settings)
     int sidebar_index = -1;
     switch (screen)
     {
-    case 0: sidebar_index = 0; break; // Home
-    case 1: sidebar_index = 1; break; // Temp (タブ画面)
-    case 2: sidebar_index = 1; break; // Control (タブ画面)
-    case 3: sidebar_index = 1; break; // Nozzle/Filament (タブ画面)
-    case 11: sidebar_index = 1; break; // Util (タブ画面)
-    case 7: sidebar_index = 2; break;  // AMS
-    case 10: sidebar_index = 2; break; // Util Nozzle Change
-    case 12: sidebar_index = 2; break; // Util Calibration
-    case 13: sidebar_index = 2; break; // AMS Edit
-    case 14: sidebar_index = 2; break; // AMS Edit 色選択
-    case 4: sidebar_index = 3; break; // Settings (General/Option タブ)
+    case 0: sidebar_index = 0; break;
+#ifdef __XTOUCH_SCREEN_50__
+    case 6: sidebar_index = 1; break;
+#endif
+    case 1: case 2: case 3: case 11: sidebar_index = 1; break; /* Temp/Control/Nozzle/Util タブ */
+    case 7: case 10: case 12: case 13: case 14: sidebar_index = 2; break; /* AMS 系 */
+    case 4: sidebar_index = 3; break; /* Settings */
     default: break;
     }
+#ifdef __XTOUCH_SCREEN_50__
+    if (sidebar_index >= 1 && screen != 6)
+        sidebar_index++;
+#endif
     if (sidebar_index >= 0)
     {
         ui_sidebarComponent_set_active(sidebar_index);
