@@ -23,7 +23,7 @@ int downloadFileToSDCard(const char *url, const char *fileName, void (*onProgres
 
     WiFiClientSecure wifiClient;
     /* サムネイルなど S3 向けは証明書を検証せずに取得する。それ以外は従来通り CA を使う。 */
-    if (fileName && strncmp(fileName, "/tmp/pthumb_", 12) == 0)
+    if (fileName && strstr(fileName, "/tmp/") && strstr(fileName, ".png"))
     {
         wifiClient.setInsecure();
     }
@@ -120,9 +120,42 @@ int downloadFileToSDCard(const char *url, const char *fileName, void (*onProgres
 #include "xtouch/globals.h"
 #include "esp_log.h"
 #include "xtouch/cloud.hpp"
+#include <SD.h>
 
-/** 指定スロット(0=メイン, 1..4=他機)のサムネイルを URL から取得し SD に保存。
- *  @return ファイルを SD に保存できた場合 true、未DL・失敗時は false */
+/** スロットの task_id をファイル名に使う。無効なら pthumb_N.png。buf に /tmp/XXX.png を書き、xtouch_thumbnail_slot_path[slot] も S: 付きで更新。 */
+inline void getThumbPathForSlot(int slot, char *buf, size_t len)
+{
+    const char *tid = nullptr;
+    if (slot == 0)
+        tid = (bambuStatus.task_id[0] && strcmp(bambuStatus.task_id, "0") != 0) ? bambuStatus.task_id : nullptr;
+    else if (slot >= 1 && slot - 1 < xtouch_other_printer_count && otherPrinters[slot - 1].valid)
+        tid = (otherPrinters[slot - 1].task_id[0] && strcmp(otherPrinters[slot - 1].task_id, "0") != 0) ? otherPrinters[slot - 1].task_id : nullptr;
+    if (tid && tid[0])
+    {
+        char safe[32];
+        size_t j = 0;
+        for (size_t i = 0; tid[i] != '\0' && j < sizeof(safe) - 1; i++)
+        {
+            char c = tid[i];
+            if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_')
+                safe[j++] = c;
+        }
+        safe[j] = '\0';
+        if (j > 0)
+        {
+            snprintf(buf, len, "/tmp/%.28s.png", safe);
+            if (slot >= 0 && slot < XTOUCH_THUMB_SLOT_MAX)
+                snprintf(xtouch_thumbnail_slot_path[slot], XTOUCH_THUMB_PATH_LEN, "S:%s", buf);
+            return;
+        }
+    }
+    snprintf(buf, len, "/tmp/pthumb_%d.png", slot);
+    if (slot >= 0 && slot < XTOUCH_THUMB_SLOT_MAX)
+        snprintf(xtouch_thumbnail_slot_path[slot], XTOUCH_THUMB_PATH_LEN, "S:%s", buf);
+}
+
+/** 指定スロット(0=メイン, 1..4=他機)のサムネイルを URL から取得し SD に保存。ファイル名は TaskID（既存なら DL しない）。
+ *  @return ファイルが既にある/保存できた場合 true、未DL・失敗時は false */
 inline bool downloadThumbnailForSlot(int slot)
 {
     static const char *TAG = "thumbnail";
@@ -218,7 +251,9 @@ inline bool downloadThumbnailForSlot(int slot)
     }
 
     char path[64];
-    snprintf(path, sizeof(path), "/tmp/pthumb_%d.png", slot);
+    getThumbPathForSlot(slot, path, sizeof(path));
+    if (SD.exists(path))
+        return true; /* 既に同じ TaskID のファイルがあれば DL しない */
 #ifdef XTOUCH_DEBUG
     ConsoleDebug.print(F("[xPTouch][THUMB] slot="));
     ConsoleDebug.print(slot);

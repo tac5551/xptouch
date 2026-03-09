@@ -28,6 +28,22 @@ const char *xtouch_device_get_print_state()
     }
 }
 
+#ifdef __XTOUCH_SCREEN_50__
+/* 5インチ: スロット0サムネ更新でホームのサムネ img を更新（Printers と同じ配列で描画） */
+static void ui_event_home_thumb_update(lv_event_t *e)
+{
+    if (lv_event_get_code(e) != LV_EVENT_MSG_RECEIVED)
+        return;
+    lv_msg_t *m = lv_event_get_msg(e);
+    if (!m || lv_msg_get_id(m) != XTOUCH_ON_OTHER_PRINTER_UPDATE)
+        return;
+    const void *p = lv_msg_get_payload(m);
+    if ((intptr_t)p != 1)
+        return; /* スロット0 のみ (送信側は +1 で 1) */
+    ui_thumb_set_img_src_from_slot(lv_event_get_target(e), 0);
+}
+#endif
+
 void ui_event_comp_homeComponent_mainScreenPlayPauseButton(lv_event_t *e)
 {
     lv_event_code_t event_code = lv_event_get_code(e);
@@ -186,6 +202,7 @@ void onXTouchNeoPixelMessage(lv_event_t *e)
 void onXTouchAMSUpdate(lv_event_t *e)
 {
 
+
     lv_obj_t *target = lv_event_get_target(e);
     lv_msg_t *m = lv_event_get_msg(e);
     uint16_t user_data = (uint16_t)(uintptr_t)lv_event_get_user_data(e);
@@ -231,6 +248,7 @@ void onXTouchAMSUpdate(lv_event_t *e)
             lv_obj_set_style_border_width(target, AMS_BORDER, LV_PART_MAIN | LV_STATE_DEFAULT);
         }
     }
+    (void)message;
 }
 
 void onXTouchBedTemp(lv_event_t *e)
@@ -758,6 +776,17 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_text_opa(cui_mainScreenController, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     lv_obj_t *cui_mainScreenNozzleIcon;
+#ifdef __XTOUCH_SCREEN_50__
+    /* 5インチのみ: 左に 150x150 の枠を用意し、非同期でサムネ描画（Printers と同じ slot 配列） */
+    cui_mainScreenNozzleIcon = lv_img_create(cui_mainScreenController);
+    lv_obj_set_width(cui_mainScreenNozzleIcon, 150);
+    lv_obj_set_height(cui_mainScreenNozzleIcon, 150);
+    lv_img_set_size_mode(cui_mainScreenNozzleIcon, LV_IMG_SIZE_MODE_REAL);
+    lv_obj_set_style_bg_color(cui_mainScreenNozzleIcon, lv_color_hex(0x333333), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(cui_mainScreenNozzleIcon, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_radius(cui_mainScreenNozzleIcon, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
+    ui_thumb_set_img_src_from_slot(cui_mainScreenNozzleIcon, 0);
+#else
     cui_mainScreenNozzleIcon = lv_label_create(cui_mainScreenController);
     lv_obj_set_width(cui_mainScreenNozzleIcon, LV_SIZE_CONTENT);  /// 50
     lv_obj_set_height(cui_mainScreenNozzleIcon, LV_SIZE_CONTENT); /// 24
@@ -765,11 +794,16 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
     lv_obj_clear_flag(cui_mainScreenNozzleIcon, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN); /// Flags
     lv_obj_set_scrollbar_mode(cui_mainScreenNozzleIcon, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_style_text_font(cui_mainScreenNozzleIcon, lv_icon_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
+#endif
 
     lv_obj_t *cui_mainScreenPlayPauseButton;
     cui_mainScreenPlayPauseButton = lv_label_create(cui_mainScreenController);
     lv_obj_set_height(cui_mainScreenPlayPauseButton, LV_SIZE_CONTENT); /// 48
+#ifdef __XTOUCH_SCREEN_50__
+    lv_obj_set_width(cui_mainScreenPlayPauseButton, 140);
+#else
     lv_obj_set_flex_grow(cui_mainScreenPlayPauseButton, 1);
+#endif
     lv_obj_set_align(cui_mainScreenPlayPauseButton, LV_ALIGN_CENTER);
     lv_label_set_text(cui_mainScreenPlayPauseButton, "0");
     lv_obj_add_flag(cui_mainScreenPlayPauseButton, LV_OBJ_FLAG_CLICKABLE);                                                                                                                                                                                                      /// Flags
@@ -793,7 +827,11 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
     lv_obj_t *cui_mainScreenStopButton;
     cui_mainScreenStopButton = lv_label_create(cui_mainScreenController);
     lv_obj_set_height(cui_mainScreenStopButton, LV_SIZE_CONTENT); /// 48
+#ifdef __XTOUCH_SCREEN_50__
+    lv_obj_set_width(cui_mainScreenStopButton, 140);
+#else
     lv_obj_set_flex_grow(cui_mainScreenStopButton, 1);
+#endif
     lv_obj_set_align(cui_mainScreenStopButton, LV_ALIGN_CENTER);
     lv_label_set_text(cui_mainScreenStopButton, "1");
     lv_obj_add_flag(cui_mainScreenStopButton, LV_OBJ_FLAG_CLICKABLE);                                                                                                                                                                                                      /// Flags
@@ -1327,6 +1365,10 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
     children[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPLAYER] = cui_mainScreenPlayer;
     children[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPLAYER_MAINSCREENCONTROLLER] = cui_mainScreenController;
     children[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPLAYER_MAINSCREENCONTROLLER_MAINSCREENNOZZLEICON] = cui_mainScreenNozzleIcon;
+#ifdef __XTOUCH_SCREEN_50__
+    lv_msg_subsribe_obj(XTOUCH_ON_OTHER_PRINTER_UPDATE, cui_mainScreenNozzleIcon, NULL);
+    lv_obj_add_event_cb(cui_mainScreenNozzleIcon, ui_event_home_thumb_update, LV_EVENT_MSG_RECEIVED, NULL);
+#endif
     children[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPLAYER_MAINSCREENCONTROLLER_MAINSCREENPLAYPAUSEBUTTON] = cui_mainScreenPlayPauseButton;
     children[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPLAYER_MAINSCREENCONTROLLER_MAINSCREENSTOPBUTTON] = cui_mainScreenStopButton;
     children[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPLAYER_MAINSCREENPROGRESSBAR] = cui_mainScreenProgressBar;

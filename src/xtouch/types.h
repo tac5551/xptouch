@@ -287,6 +287,8 @@ extern "C"
 #define XTOUCH_THUMB_SLOT_MAX 5
 #define XTOUCH_THUMB_PATH_LEN 64
     extern char xtouch_thumbnail_slot_path[XTOUCH_THUMB_SLOT_MAX][XTOUCH_THUMB_PATH_LEN];
+    /** LGFX デコード済みサムネイルの descriptor ポインタ（スロット毎）。UI は lv_img_set_src(img, (lv_img_dsc_t*)xtouch_thumbnail_slot_dsc[slot]) で表示。 */
+    extern void *xtouch_thumbnail_slot_dsc[XTOUCH_THUMB_SLOT_MAX];
 #endif
 
     /** フィラメント Brand/Type ドロップダウン用。都度 SD から組み立てたオプション文字列を返す。実装は filaments_options.c。 */

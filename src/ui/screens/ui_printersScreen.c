@@ -26,18 +26,21 @@ static const char *print_status_str(int s)
 
 #define PRINTERS_ROW_MAX 5
 
-/* 1行: row の子は [0]=左サムネイル用パネル(中にimg), [1]=右カラム(中に name, progress, layer)。
- * サムネイル画像はイベント通知時のみ set_src する（SD を参照しない）。 */
+/* 1行: row の子は [0]=左サムネイル, [1]=右カラム(name/progress/layer), [2]=ボタンエリア(pause/stop)。
+ * ボタンは印刷中(RUNNING/PAUSED/PREPARE)のみ表示、終了時は非表示（スペースは維持）。 */
 static void update_one_row(int slot, lv_obj_t *row)
 {
     lv_obj_t *leftBox = lv_obj_get_child(row, 0);
     lv_obj_t *rightCol = lv_obj_get_child(row, 1);
-    if (!leftBox || !rightCol)
+    lv_obj_t *btnArea = lv_obj_get_child(row, 2);
+    if (!leftBox || !rightCol || !btnArea)
         return;
     lv_obj_t *nameLabel = lv_obj_get_child(rightCol, 0);
     lv_obj_t *progressBar = lv_obj_get_child(rightCol, 1);
     lv_obj_t *layerLabel = lv_obj_get_child(rightCol, 2);
-    if (!nameLabel || !progressBar || !layerLabel)
+    lv_obj_t *pauseBtn = lv_obj_get_child(btnArea, 0);
+    lv_obj_t *stopBtn = lv_obj_get_child(btnArea, 1);
+    if (!nameLabel || !progressBar || !layerLabel || !pauseBtn || !stopBtn)
         return;
 
     const char *name = "-";
@@ -89,12 +92,25 @@ static void update_one_row(int slot, lv_obj_t *row)
     }
     lv_label_set_text(layerLabel, layerBuf);
     lv_obj_clear_flag(layerLabel, LV_OBJ_FLAG_HIDDEN);
+
+    /* 印刷中のみボタン表示、終了時は非表示（スペースはそのまま） */
+    if (status == XTOUCH_PRINT_STATUS_RUNNING ||
+        status == XTOUCH_PRINT_STATUS_PAUSED ||
+        status == XTOUCH_PRINT_STATUS_PREPARE)
+    {
+        lv_obj_clear_flag(pauseBtn, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_clear_flag(stopBtn, LV_OBJ_FLAG_HIDDEN);
+    }
+    else
+    {
+        lv_obj_add_flag(pauseBtn, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_add_flag(stopBtn, LV_OBJ_FLAG_HIDDEN);
+    }
 }
 
-/* 次の LVGL サイクルでサムネイルを set_src する（メッセージ配送中だと FS open が失敗しうるため遅延） */
-static void thumb_refresh_timer_cb(lv_timer_t *t)
+/* 指定スロットのサムネイル img を slot_dsc または path で即時描画 */
+static void thumb_refresh_slot(int slot)
 {
-    int slot = (int)(intptr_t)t->user_data;
     if (ui_printersListContainer == NULL || xTouchConfig.currentScreenIndex != 6)
         return;
     lv_obj_t *row = lv_obj_get_child(ui_printersListContainer, slot);
@@ -108,9 +124,16 @@ static void thumb_refresh_timer_cb(lv_timer_t *t)
         return;
     if (slot >= 0 && slot < XTOUCH_THUMB_SLOT_MAX)
     {
-        lv_img_set_src(img, xtouch_thumbnail_slot_path[slot]);
-        lv_obj_invalidate(img);
+        ui_thumb_set_img_src_from_slot(img, slot);
+        /* コールバック内で即反映させるため再描画を実行（次の DL ブロック前に画面更新） */
+        lv_timer_handler();
     }
+}
+
+static void thumb_refresh_timer_cb(lv_timer_t *t)
+{
+    int slot = (int)(intptr_t)t->user_data;
+    thumb_refresh_slot(slot);
 }
 
 void ui_printers_on_other_update(lv_msg_t *m, void *user_data)
@@ -119,7 +142,8 @@ void ui_printers_on_other_update(lv_msg_t *m, void *user_data)
     if (ui_printersListContainer == NULL || xTouchConfig.currentScreenIndex != 6)
         return;
 
-    /* サムネイルDL完了通知（XTOUCH_ON_OTHER_PRINTER_UPDATE）のときだけ payload をスロットとして使う */
+    /* サムネイルDL完了通知（XTOUCH_ON_OTHER_PRINTER_UPDATE）のとき payload のスロットを即描画。
+     * 遅延しない: 送信側で DL→LGFX デコード済みなので、ここで即 set_src して次のスロット DL ブロック前に描画する。 */
     if (m && lv_msg_get_id(m) == XTOUCH_ON_OTHER_PRINTER_UPDATE)
     {
         const void *p = lv_msg_get_payload(m);
@@ -127,11 +151,7 @@ void ui_printers_on_other_update(lv_msg_t *m, void *user_data)
         {
             int slot = (int)(intptr_t)p - 1;  /* 送信側で +1 しているので戻す */
             if (slot >= 0 && slot < PRINTERS_ROW_MAX)
-            {
-                /* 50ms 遅延: ダウンロード close 直後だと FS がまだ同期中の場合がある */
-                lv_timer_t *t = lv_timer_create(thumb_refresh_timer_cb, 50, (void *)(intptr_t)slot);
-                lv_timer_set_repeat_count(t, 1);
-            }
+                thumb_refresh_slot(slot);
         }
     }
 

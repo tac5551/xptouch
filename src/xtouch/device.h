@@ -157,6 +157,15 @@ void xtouch_device_publish(String request)
     delay(10);
 }
 
+void xtouch_device_publish_to_dev(const char *dev_id, String request)
+{
+    if (!dev_id || !dev_id[0])
+        return;
+    String topic = String("device/") + dev_id + "/request";
+    xtouch_pubSubClient.publish(topic.c_str(), request.c_str());
+    delay(10);
+}
+
 void xtouch_device_get_version()
 {
     DynamicJsonDocument json(256);
@@ -405,6 +414,48 @@ void xtouch_device_onResumeCommand(lv_msg_t *m)
     delay(10);
     xtouch_device_pushall();
 }
+
+#ifdef __XTOUCH_SCREEN_50__
+extern "C" void xtouch_mqtt_pushall_all_printers_for_screen_c(void);
+
+static void xtouch_device_print_action_to_slot(int slot, const char *action)
+{
+    const char *dev_id = (slot == 0) ? xTouchConfig.xTouchSerialNumber
+        : (slot - 1 < xtouch_other_printer_count && otherPrinters[slot - 1].valid)
+            ? otherPrinters[slot - 1].dev_id : nullptr;
+    if (!dev_id)
+        return;
+    xtouch_device_publish_to_dev(dev_id, xtouch_device_print_action(action));
+    xtouch_mqtt_pushall_all_printers_for_screen_c();
+}
+
+void xtouch_device_onPauseSlotCommand(lv_msg_t *m)
+{
+    const void *p = m ? lv_msg_get_payload(m) : nullptr;
+    if (!p)
+        return;
+    int slot = (int)(intptr_t)p;
+    xtouch_device_print_action_to_slot(slot, "pause");
+}
+
+void xtouch_device_onStopSlotCommand(lv_msg_t *m)
+{
+    const void *p = m ? lv_msg_get_payload(m) : nullptr;
+    if (!p)
+        return;
+    int slot = (int)(intptr_t)p;
+    xtouch_device_print_action_to_slot(slot, "stop");
+}
+
+void xtouch_device_onResumeSlotCommand(lv_msg_t *m)
+{
+    const void *p = m ? lv_msg_get_payload(m) : nullptr;
+    if (!p)
+        return;
+    int slot = (int)(intptr_t)p;
+    xtouch_device_print_action_to_slot(slot, "resume");
+}
+#endif
 
 void xtouch_device_onNozzleUp(lv_msg_t *m)
 {

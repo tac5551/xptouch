@@ -1,6 +1,7 @@
 #include "ui_comp_printerscomponent.h"
 #include "../ui_msgs.h"
 #include "../ui_helpers.h"
+#include "../ui_events.h"
 
 #ifdef __XTOUCH_SCREEN_50__
 
@@ -31,6 +32,8 @@ lv_obj_t *ui_printersComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_flex_flow(list, LV_FLEX_FLOW_COLUMN);
     lv_obj_set_scrollbar_mode(list, LV_SCROLLBAR_MODE_AUTO);
     lv_obj_set_style_pad_row(list, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_top(list, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_bottom(list, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_left(list, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_right(list, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(list, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -97,9 +100,52 @@ lv_obj_t *ui_printersComponent_create(lv_obj_t *comp_parent)
         lv_label_set_text(layerLabel, "Layer - | --");
         lv_obj_set_style_text_color(layerLabel, lv_color_hex(0xCCCCCC), LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_text_font(layerLabel, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
-        lv_obj_set_style_min_height(layerLabel, 22, LV_PART_MAIN | LV_STATE_DEFAULT);
-        lv_obj_set_height(layerLabel, 22);
-        lv_label_set_long_mode(layerLabel, LV_LABEL_LONG_CLIP);
+        lv_obj_set_height(layerLabel, LV_SIZE_CONTENT);
+        lv_label_set_long_mode(layerLabel, LV_LABEL_LONG_WRAP);
+
+        /* 右端: 一時停止・停止ボタン用エリア（スペース固定、印刷中のみボタン表示） */
+        lv_obj_t *btnArea = lv_obj_create(row);
+        lv_obj_set_width(btnArea, 120);
+        lv_obj_set_height(btnArea, LV_SIZE_CONTENT);
+        lv_obj_set_flex_flow(btnArea, LV_FLEX_FLOW_ROW);
+        lv_obj_set_flex_align(btnArea, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+        lv_obj_set_style_pad_column(btnArea, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_bg_opa(btnArea, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_border_width(btnArea, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_clear_flag(btnArea, LV_OBJ_FLAG_SCROLLABLE);
+
+        lv_obj_t *pauseBtn = lv_label_create(btnArea);
+        lv_obj_set_width(pauseBtn, 56);
+        lv_obj_set_height(pauseBtn, 40);
+        lv_label_set_text(pauseBtn, "0");
+        lv_obj_add_flag(pauseBtn, LV_OBJ_FLAG_CLICKABLE);
+        lv_obj_set_style_text_align(pauseBtn, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_text_font(pauseBtn, lv_icon_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_radius(pauseBtn, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_border_width(pauseBtn, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_border_color(pauseBtn, lv_color_hex(0x888888), LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_bg_color(pauseBtn, lv_color_hex(0x888888), LV_PART_MAIN | LV_STATE_PRESSED);
+        lv_obj_set_style_bg_opa(pauseBtn, 255, LV_PART_MAIN | LV_STATE_PRESSED);
+        lv_obj_set_user_data(pauseBtn, (void *)(intptr_t)i);
+        lv_obj_add_flag(pauseBtn, LV_OBJ_FLAG_HIDDEN);
+
+        lv_obj_t *stopBtn = lv_label_create(btnArea);
+        lv_obj_set_width(stopBtn, 56);
+        lv_obj_set_height(stopBtn, 40);
+        lv_label_set_text(stopBtn, "1");
+        lv_obj_add_flag(stopBtn, LV_OBJ_FLAG_CLICKABLE);
+        lv_obj_set_style_text_align(stopBtn, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_text_font(stopBtn, lv_icon_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_radius(stopBtn, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_border_width(stopBtn, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_border_color(stopBtn, lv_color_hex(0x888888), LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_bg_color(stopBtn, lv_color_hex(0xff682a), LV_PART_MAIN | LV_STATE_PRESSED);
+        lv_obj_set_style_bg_opa(stopBtn, 255, LV_PART_MAIN | LV_STATE_PRESSED);
+        lv_obj_set_user_data(stopBtn, (void *)(intptr_t)i);
+        lv_obj_add_flag(stopBtn, LV_OBJ_FLAG_HIDDEN);
+
+        lv_obj_add_event_cb(pauseBtn, onPrintersPause, LV_EVENT_CLICKED, NULL);
+        lv_obj_add_event_cb(stopBtn, onPrintersStop, LV_EVENT_CLICKED, NULL);
     }
 
     /* 購読・初期表示は画面側でイベント登録・送信。ここではサムネイル取得のみイベント送信 */

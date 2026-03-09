@@ -1,0 +1,37 @@
+---
+description: "[最重要] xptouch 開発で必ず守るルール - 新規インスタンスは最初にこれを読むこと"
+alwaysApply: true
+---
+
+# xptouch 最重要ルール（常に適用）
+
+**新規セッション・新インスタンスは、ここを最優先で守ること。**
+
+## 1. xtouch は .h のみ。cpp を新規作成しない
+
+- 実装は **.h に書く**。main.cpp が include して使い回す。
+- **thumbnail.cpp やその他 .cpp を増やさない**。.h に統合する方針。
+
+## 2. xtouch と UI 間のデータは types.h の構造体を経由する
+
+- **共有データは types.h に定義した構造体・配列（bambuStatus, xTouchConfig, otherPrinters, xtouch_thumbnail_slot_path 等）を経由する。** xtouch が更新し、UI は参照するだけ。`xtouch_*` を UI から呼んでデータを取らない。
+
+## 3. UI（ui_comp_*, ui/*.c）から xtouch を直接呼ばない
+
+- **ui_comp_*.c で `#include "xtouch/..."` や `xtouch_*()` の直接呼び出しをしない。**
+- UI がやりたいことは **イベント（lv_msg_send）で送るだけ**。**購読と xtouch_* の呼び出しは xtouch 側**（mqtt.h の `lv_msg_subscribe` のように）で行う。
+- 詳細は `docs/UI-CONVENTIONS.md` を参照。
+
+## 4. 画面追加時は ui_comp 側に実装する。必ず他画面を参照し同様のルールで実装する
+
+- 新規画面の UI 構造・ウィジェット・レイアウトは **ui_comp_*.c** にまとめる。ui_*Screen.c は画面オブジェクト作成とコンポーネント配置・購読登録にとどめる。
+- **必ず既存の他画面（例: ui_comp_printerscomponent.c / ui_printersScreen.c、ui_comp_homecomponent / ui_homeScreen）を参照し、同様のルール・パターンで実装すること。**
+
+## 5. ビルド・アップロードは Upload and Monitor をバックグラウンドで実行する
+
+- **`pio run`（ビルドのみ）は UI のビルドと競合するため実行しない。**
+- 確認が必要なときは **`pio run -t upload -e esp32-s3dev`** を **最初からバックグラウンド** で実行する（Upload and Monitor 相当）。
+
+---
+
+上記を破るとビルドエラー・結合の乱れ・仕様違反になる。不明なときは `docs/UI-CONVENTIONS.md` と `docs/multi-printer-status-spec.md` を確認すること。

@@ -28,7 +28,7 @@ extern int ams_edit_current_type_index;
 
 void ams_edit_set_fetched_temps(const char *id, int min_val, int max_val, const char *filament_id);
 void ams_edit_set_editing_slot(int ams_id, int tray_id);
-/** デバッグ: AMS Edit Save 時の温度ログ（C から呼ぶ。実体は C++） */
+/** デバッグ: AMS Edit Save 時の温度ログ */
 void xtouch_debug_log_ams_save(const char *id_buf, const char *fetched_id, int id_match, int fetched_min, int fetched_max, int payload_min, int payload_max);
 /** 色パレットで選択した色を保存。hex8 は "RRGGBBAA" または "RRGGBB"（6桁のときは末尾に "FF" を付与）。 */
 void ams_edit_set_tray_color(const char *hex8);

@@ -1285,6 +1285,11 @@ static void xtouch_mqtt_subscribe_commands(void)
     lv_msg_subscribe(XTOUCH_COMMAND_STOP, (lv_msg_subscribe_cb_t)xtouch_device_onStopCommand, NULL);
     lv_msg_subscribe(XTOUCH_COMMAND_PAUSE, (lv_msg_subscribe_cb_t)xtouch_device_onPauseCommand, NULL);
     lv_msg_subscribe(XTOUCH_COMMAND_RESUME, (lv_msg_subscribe_cb_t)xtouch_device_onResumeCommand, NULL);
+#ifdef __XTOUCH_SCREEN_50__
+    lv_msg_subscribe(XTOUCH_COMMAND_PAUSE_SLOT, (lv_msg_subscribe_cb_t)xtouch_device_onPauseSlotCommand, NULL);
+    lv_msg_subscribe(XTOUCH_COMMAND_STOP_SLOT, (lv_msg_subscribe_cb_t)xtouch_device_onStopSlotCommand, NULL);
+    lv_msg_subscribe(XTOUCH_COMMAND_RESUME_SLOT, (lv_msg_subscribe_cb_t)xtouch_device_onResumeSlotCommand, NULL);
+#endif
 
     lv_msg_subscribe(XTOUCH_COMMAND_HOME, (lv_msg_subscribe_cb_t)xtouch_device_onHomeCommand, NULL);
     lv_msg_subscribe(XTOUCH_COMMAND_LEFT, (lv_msg_subscribe_cb_t)xtouch_device_onLeftCommand, NULL);

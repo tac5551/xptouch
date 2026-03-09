@@ -52,7 +52,7 @@ void loadScreen(int screen)
 {
 #ifdef __XTOUCH_SCREEN_50__
     ui_printersListContainer = NULL;
-    if (screen != 6)
+    if (screen != 6 && screen != 0)
     {
         struct XTOUCH_MESSAGE_DATA eventData;
         eventData.data = 0;
@@ -76,6 +76,17 @@ void loadScreen(int screen)
     case 0:
         ui_homeScreen_screen_init();
         lv_disp_load_scr(ui_homeScreen);
+#ifdef __XTOUCH_SCREEN_50__
+        {
+            struct XTOUCH_MESSAGE_DATA eventData;
+            eventData.data = 0;
+            eventData.data2 = 0;
+            lv_msg_send(XTOUCH_PRINTERS_THUMB_TIMER_START, &eventData);
+            /* cleanup は送らない（Printers 入室時のみ）。pushall でメインプリンタの image_url/task_id を取得 */
+            extern void xtouch_mqtt_pushall_all_printers_for_screen_c(void);
+            xtouch_mqtt_pushall_all_printers_for_screen_c();
+        }
+#endif
         break;
     case 1:
        ui_temperatureScreen_screen_init();

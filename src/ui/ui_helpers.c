@@ -276,3 +276,16 @@ void _ui_seconds_to_timeleft(uint32_t seconds, char *ret)
       sprintf(ret, "%02dm", minutes);
    }
 }
+
+#ifdef __XTOUCH_SCREEN_50__
+void ui_thumb_set_img_src_from_slot(lv_obj_t *img, int slot)
+{
+   if (!img || slot < 0 || slot >= XTOUCH_THUMB_SLOT_MAX)
+      return;
+   if (xtouch_thumbnail_slot_dsc[slot] != NULL)
+      lv_img_set_src(img, (const lv_img_dsc_t *)xtouch_thumbnail_slot_dsc[slot]);
+   else
+      lv_img_set_src(img, xtouch_thumbnail_slot_path[slot]);
+   lv_obj_invalidate(img);
+}
+#endif

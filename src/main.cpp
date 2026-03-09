@@ -47,12 +47,6 @@
 #include "xtouch/m5Stack.h"
 #endif
 
-void xtouch_debug_log_ams_save(const char *id_buf, const char *fetched_id, int id_match, int fetched_min, int fetched_max, int payload_min, int payload_max)
-{
-  Serial.printf("[AMS Edit Save] id_buf=%s fetched_id=%s id_match=%d fetched_min=%d fetched_max=%d -> payload_min=%d payload_max=%d\n",
-    id_buf, fetched_id, id_match, fetched_min, fetched_max, payload_min, payload_max);
-}
-
 void xtouch_intro_show(void)
 {
   ui_introScreen_screen_init();

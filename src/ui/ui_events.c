@@ -131,6 +131,49 @@ void onMoveAmsViewScreen(lv_event_t *e)
     loadScreen(7);
 }
 
+#ifdef __XTOUCH_SCREEN_50__
+static int _printers_slot = 0;
+
+static void onPrintersPauseConfirm(void)
+{
+    lv_msg_send(XTOUCH_COMMAND_PAUSE_SLOT, (void *)(intptr_t)_printers_slot);
+}
+
+static void onPrintersStopConfirm(void)
+{
+    lv_msg_send(XTOUCH_COMMAND_STOP_SLOT, (void *)(intptr_t)_printers_slot);
+}
+
+void onPrintersPause(lv_event_t *e)
+{
+    lv_obj_t *target = lv_event_get_target(e);
+    int slot = (int)(intptr_t)lv_obj_get_user_data(target);
+    int status = XTOUCH_PRINT_STATUS_IDLE;
+    if (slot == 0)
+        status = bambuStatus.print_status;
+    else if (slot - 1 < xtouch_other_printer_count && otherPrinters[slot - 1].valid)
+        status = otherPrinters[slot - 1].print_status;
+
+    if (status == XTOUCH_PRINT_STATUS_PAUSED)
+    {
+        lv_msg_send(XTOUCH_COMMAND_RESUME_SLOT, (void *)(intptr_t)slot);
+        return;
+    }
+    if (status == XTOUCH_PRINT_STATUS_RUNNING || status == XTOUCH_PRINT_STATUS_PREPARE)
+    {
+        _printers_slot = slot;
+        ui_confirmPanel_show(LV_SYMBOL_WARNING " Pause Print?", onPrintersPauseConfirm);
+    }
+}
+
+void onPrintersStop(lv_event_t *e)
+{
+    lv_obj_t *target = lv_event_get_target(e);
+    _printers_slot = (int)(intptr_t)lv_obj_get_user_data(target);
+    ui_confirmPanel_show(LV_SYMBOL_WARNING " Cancel Print?", onPrintersStopConfirm);
+}
+#endif
+
 void onMoveUtilNozzleChangeScreen(lv_event_t *e) { 
     loadScreen(10); 
 }

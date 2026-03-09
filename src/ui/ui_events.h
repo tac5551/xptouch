@@ -68,9 +68,13 @@ extern "C"
 
     void onMoveUtilNozzleChangeScreen(lv_event_t *e);
     void onMoveUtilCalibrationScreen(lv_event_t *e);
-    
+
     void onMoveHomeScreen(lv_event_t *e);
     void onMoveAmsViewScreen(lv_event_t *e);
+#ifdef __XTOUCH_SCREEN_50__
+    void onPrintersPause(lv_event_t *e);
+    void onPrintersStop(lv_event_t *e);
+#endif
 
     /* -----------Confirm-------------- */
     void onConfirmPanelNO(lv_event_t *e);

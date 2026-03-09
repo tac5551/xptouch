@@ -109,6 +109,12 @@ extern "C"
     lv_color_t _ui_get_complementary_color(lv_color_t color);
 
     void _ui_seconds_to_timeleft(uint32_t seconds, char *ret);
+
+#ifdef __XTOUCH_SCREEN_50__
+    /** Printers/Home 共通: types の xtouch_thumbnail_slot_dsc/path を使って img にスロットのサムネを描画 */
+    void ui_thumb_set_img_src_from_slot(lv_obj_t *img, int slot);
+#endif
+
 #ifdef __cplusplus
 } /*extern "C"*/
 #endif
