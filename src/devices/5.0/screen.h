@@ -208,9 +208,9 @@ void xtouch_screen_setup()
 
     ConsoleInfo.println("[xPTouch][SCREEN] Setup");
 
-    xtouch_screen_sleep();
-
     tft.begin();
+
+    xtouch_screen_sleep();
 
     xtouch_screen_setupTFTFlip();
 
