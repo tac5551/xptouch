@@ -27,9 +27,12 @@ const char *xtouch_paths_firmware_ota_file = "https://tac-lab.tech/xptouch-bin/2
 #endif
 const char *xtouch_paths_firmware_ota_fw = "/firmware.bin";
 
-/** Filament lists per printer+nozzle (e.g. X1C_filaments_02.txt). Load from SD at runtime. */
-const char *xtouch_paths_nozzle_dir = "/xtouch/nozzle";
+/** フィラメント一覧・温度プリセット等。Chrome 拡張で生成。Load from SD at runtime. */
+const char *xtouch_paths_filament_dir = "/xtouch/filament";
 /** GFL99 等 → b/t 逆引き。Chrome 拡張で生成。 */
-const char *xtouch_paths_filaments_rev = "/xtouch/nozzle/filaments_rev.json";
+const char *xtouch_paths_filaments_rev = "/xtouch/filament/filaments_rev.json";
+
+/** フィラメント設定 JSON（Extention が生成）。/xtouch/filament/json/<setting_id>.json */
+const char *xtouch_paths_filament_json_dir = "/xtouch/filament/json";
 
 #endif

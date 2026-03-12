@@ -176,6 +176,168 @@ function normalizeBrand(brand) {
   return brand;
 }
 
+/** オブジェクトツリー内から最初に見つかった「数値っぽい」フィールドを再帰的に探す。
+ * 値は number / string / [..] のどれでもよい。最初に解釈できた数値を返す。
+ */
+function findNumberFieldDeep(obj, key) {
+  if (!obj || typeof obj !== "object") return null;
+  if (Object.prototype.hasOwnProperty.call(obj, key)) {
+    const v = obj[key];
+    // そのまま number
+    if (typeof v === "number" && Number.isFinite(v)) return v;
+    // 文字列の場合
+    if (typeof v === "string") {
+      const n = parseFloat(v);
+      if (Number.isFinite(n)) return n;
+    }
+    // 配列の場合（最初に解釈できた要素を使う）
+    if (Array.isArray(v)) {
+      for (const e of v) {
+        if (typeof e === "number" && Number.isFinite(e)) return e;
+        if (typeof e === "string") {
+          const n = parseFloat(e);
+          if (Number.isFinite(n)) return n;
+        }
+      }
+    }
+  }
+  for (const k in obj) {
+    if (!Object.prototype.hasOwnProperty.call(obj, k)) continue;
+    const v = obj[k];
+    if (v && typeof v === "object") {
+      const found = findNumberFieldDeep(v, key);
+      if (found !== null && found !== undefined) return found;
+    }
+  }
+  return null;
+}
+
+/** 詳細 API の detail から MQTT tray_type 用の文字列を取得（例: "PLA Matte"）。最大15文字。 */
+function getTrayTypeFromDetail(detail) {
+  if (!detail || typeof detail !== "object") return "";
+  let s = "";
+  if (detail.filament_type != null) {
+    if (typeof detail.filament_type === "string" && detail.filament_type.trim()) s = detail.filament_type.trim();
+    else if (Array.isArray(detail.filament_type) && detail.filament_type.length > 0) {
+      const first = detail.filament_type[0];
+      if (typeof first === "string" && first.trim()) s = first.trim();
+    }
+  }
+  if (!s && detail.setting && detail.setting.filament_type != null) {
+    if (typeof detail.setting.filament_type === "string" && detail.setting.filament_type.trim()) s = detail.setting.filament_type.trim();
+    else if (Array.isArray(detail.setting.filament_type) && detail.setting.filament_type.length > 0) {
+      const first = detail.setting.filament_type[0];
+      if (typeof first === "string" && first.trim()) s = first.trim();
+    }
+  }
+  if (!s && typeof detail.name === "string" && detail.name.trim()) {
+    const name = detail.name.trim();
+    const atPos = name.indexOf(" @");
+    const head = atPos >= 0 ? name.substring(0, atPos).trim() : name;
+    const sp = head.indexOf(" ");
+    s = sp >= 0 ? head.substring(sp + 1).trim() : head;
+    if (s === "Lab") s = "";
+  }
+  if (typeof s !== "string" || !s) return "";
+  return s.length > 15 ? s.substring(0, 15) : s;
+}
+
+/** slicer JSON の filament セクションから setting_id 一覧を集める。 */
+function collectSettingIdsFromSlicer(slicerJson) {
+  const filament = slicerJson.filament;
+  if (!filament) return [];
+  const pub = filament.public || [];
+  const priv = filament.private || [];
+  const ids = new Set();
+  [].concat(pub, priv).forEach((entry) => {
+    if (!entry) return;
+    const sid = entry.setting_id || entry.id;
+    if (!sid) return;
+    ids.add(String(sid));
+  });
+  return Array.from(ids);
+}
+
+/** 詳細API(GET /v1/iot-service/api/slicer/setting/{SETTING_ID})を叩いて、setting_id ごとの温度範囲マップを構築する。
+ *  tempsMap[sid] = { min, max, filament_id, tray_type } 形式。
+ *  settingIds: filaments_*.txt に含まれる setting_id の配列（この対象だけ JSON を作る）。
+ */
+async function buildTempsMapFromCloud(host, token, settingIds) {
+  if (!settingIds || settingIds.length === 0) return null;
+  const tempsBySettingId = {};
+  const total = settingIds.length;
+  const concurrency = Math.min(3, total); // レート制限回避のため一度に 3 本まで fetch
+  let nextIndex = 0;
+  let completed = 0;
+
+  const progressEl = document.getElementById("temps-progress");
+  const zipBtn = document.getElementById("downloadFilamentZip");
+  if (progressEl) {
+    progressEl.style.display = "block";
+    progressEl.textContent = `Temps: 0/${total}`;
+  }
+  if (zipBtn) {
+    zipBtn.textContent = `Fetching temps... (0/${total})`;
+  }
+
+  async function worker(workerId) {
+    while (true) {
+      const i = nextIndex++;
+      if (i >= total) break;
+      const sid = settingIds[i];
+      console.log(`[xtouch28] [w${workerId}] fetching setting detail ${i + 1}/${total}: ${sid}`);
+      try {
+        const res = await fetch(host + "/v1/iot-service/api/slicer/setting/" + encodeURIComponent(sid), {
+          headers: { Authorization: "Bearer " + token },
+        });
+        if (!res.ok) continue;
+        const detail = await res.json();
+        const low = findNumberFieldDeep(detail, "nozzle_temperature_range_low");
+        const high = findNumberFieldDeep(detail, "nozzle_temperature_range_high");
+        let min = typeof low === "number" ? low : 0;
+        let max = typeof high === "number" ? high : 0;
+        // 範囲がない場合は nozzle_temperature を単一値として使う
+        const single = findNumberFieldDeep(detail, "nozzle_temperature");
+        if (min <= 0 && max <= 0 && typeof single === "number") {
+          min = single;
+          max = single;
+        }
+        if (min <= 0 && max <= 0) continue;
+        const filamentId = detail.filament_id ? String(detail.filament_id) : "";
+        const trayType = getTrayTypeFromDetail(detail);
+        tempsBySettingId[sid] = { min, max, filament_id: filamentId, tray_type: trayType };
+      } catch (e) {
+        console.warn("[xtouch28] Failed to fetch setting detail for", sid, e);
+      } finally {
+        completed++;
+        if (completed % 10 === 0 || completed === total) {
+          console.log(`[xtouch28] temps progress: ${completed}/${total}`);
+          if (progressEl) {
+            progressEl.textContent = `Temps: ${completed}/${total}`;
+          }
+          if (zipBtn) {
+            zipBtn.textContent = `Fetching temps... (${completed}/${total})`;
+          }
+        }
+      }
+    }
+  }
+
+  const workers = [];
+  for (let w = 0; w < concurrency; w++) {
+    workers.push(worker(w + 1));
+  }
+  await Promise.all(workers);
+  console.log("[xtouch28] temps map built. entries:", Object.keys(tempsBySettingId).length);
+  if (progressEl) {
+    progressEl.textContent = `Temps: ${completed}/${total} (done)`;
+  }
+  if (zipBtn) {
+    zipBtn.textContent = "Download filaments ZIP (xtouch/filament/)";
+  }
+  return tempsBySettingId;
+}
+
 function processOneEntry(entry, printer) {
   const name = entry.name || "";
   const sid = entry.setting_id || "";
@@ -263,21 +425,41 @@ async function downloadFilamentZip() {
     if (!res.ok) throw new Error(res.status + " " + res.statusText);
     const slicerJson = await res.json();
     const zip = new JSZip();
-    const folder = zip.folder("xtouch").folder("nozzle");
+    const filamentFolder = zip.folder("xtouch").folder("filament");
+
+    // 既存: ブランド/フィラメント一覧（UI 用）
     const out = buildPublicFilamentsFromSlicer(slicerJson, "all");
     if (out && out.brands.length > 0) {
-      folder.file("filaments_brands.txt", out.brands.join("\n"));
+      filamentFolder.file("filaments_brands.txt", out.brands.join("\n"));
       out.brands.forEach((brand) => {
         const arr = out.items[brand] || [];
         const lines = arr.map((it) => [it.id || "", it.n || "", it.t || ""].join("|"));
         const fname = "filaments_" + sanitizeBrandForFilename(brand) + ".txt";
-        folder.file(fname, lines.join("\n"));
+        filamentFolder.file(fname, lines.join("\n"));
+      });
+    }
+
+    // filaments_*.txt に含めた setting_id だけ詳細取得して json フォルダに JSON を作る
+    const settingIdsForTemps = out && out.brands ? [...new Set(out.brands.flatMap((b) => (out.items[b] || []).map((it) => it.id).filter(Boolean)))] : [];
+    const tempsMap = await buildTempsMapFromCloud(host, token, settingIdsForTemps);
+    if (tempsMap && Object.keys(tempsMap).length > 0) {
+      const jsonFolder = filamentFolder.folder("json");
+      Object.keys(tempsMap).forEach((sid) => {
+        const t = tempsMap[sid] || {};
+        const obj = {
+          filament_id: typeof t.filament_id === "string" ? t.filament_id : "",
+          nozzle_min: typeof t.min === "number" ? t.min : 0,
+          nozzle_max: typeof t.max === "number" ? t.max : 0,
+          tray_type: typeof t.tray_type === "string" ? t.tray_type : "",
+        };
+        const json = JSON.stringify(obj, null, 2);
+        jsonFolder.file(sid + ".json", json);
       });
     }
     const blob = await zip.generateAsync({ type: "blob" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = "xtouch_filaments_nozzle.zip";
+    a.download = "xtouch_filaments.zip";
     a.click();
     URL.revokeObjectURL(a.href);
     a.remove();
@@ -285,7 +467,7 @@ async function downloadFilamentZip() {
     alert("Failed: " + e.message);
   }
   $id("downloadFilamentZip").disabled = false;
-  $id("downloadFilamentZip").textContent = "Download filaments ZIP (xtouch/nozzle/)";
+  $id("downloadFilamentZip").textContent = "Download filaments ZIP (xtouch/filament/)";
 }
 
 // Function to toggle visibility of main containers

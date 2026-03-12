@@ -320,7 +320,8 @@ lv_obj_t *ui_mainScreenStatus_create(lv_obj_t *comp_parent)
     lv_obj_add_event_cb(preHeatButton3, ui_event_comp_mainScreenStatusComponent_onPreHeatButton3Click, LV_EVENT_CLICKED, NULL);
 #endif
 
-    if (!xTouchConfig.xTouchPreheatEnabled)
+    /* P1S のときだけ Home に Preheat を表示（P1P は非表示）。設定でオフも可能 */
+    if (!xTouchConfig.xTouchPreheatEnabled || !xtouch_bblp_is_p1Series() || xtouch_bblp_is_p1p())
     {
         lv_obj_add_flag(cui_preHeatBox1, LV_OBJ_FLAG_HIDDEN);
         lv_obj_add_flag(cui_preHeatBox2, LV_OBJ_FLAG_HIDDEN);

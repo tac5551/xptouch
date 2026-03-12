@@ -100,7 +100,7 @@
 - プリンタ一覧取得ロジックがあるため、**Chrome 側**で同じ API を叩き、対象プリンタの request トピックに直接 publish する運用（Chrome が MQTT 送信）も可能。その場合は端末の Save を使わず Chrome が送る。
 
 ## SD 上のフィラメントファイル（メーカーごと・ノズル区別なし・1セット）
-- **パス**: `/xtouch/nozzle/`（機種名・ノズル径はファイル名に含めない）
+- **パス**: `/xtouch/filament/`（フィラメント情報。機種名・ノズル径はファイル名に含めない）
   - ブランド一覧: `filaments_brands.txt`
   - メーカー別タイプ一覧: `filaments_{Brand名}.txt`（例: `filaments_Bambu_Lab.txt`, `filaments_Generic.txt`）
 - **setting_id のルール**: API の filament セグメントは同一 `filament_id` で複数機種向けの `setting_id` が並ぶ。SD の各メーカー別 txt には **filament_id ごとに、配列で最初に出現した setting_id を 1 行で記載**する。

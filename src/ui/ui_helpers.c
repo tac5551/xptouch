@@ -284,8 +284,9 @@ void ui_thumb_set_img_src_from_slot(lv_obj_t *img, int slot)
       return;
    if (xtouch_thumbnail_slot_dsc[slot] != NULL)
       lv_img_set_src(img, (const lv_img_dsc_t *)xtouch_thumbnail_slot_dsc[slot]);
-   else
+   else if (xtouch_thumbnail_slot_path[slot][0] != '\0')
       lv_img_set_src(img, xtouch_thumbnail_slot_path[slot]);
+   /* パス未設定（起動直後など）は何もせず、getThumbPathForSlot で設定された後に再描画される */
    lv_obj_invalidate(img);
 }
 #endif

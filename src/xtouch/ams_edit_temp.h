@@ -14,8 +14,10 @@ extern int ams_edit_fetched_min;
 extern int ams_edit_fetched_max;
 /** Cloud getSlicerSetting から取得した filament_id（例: GFB00）。MQTT の tray_info_idx / filament_id に使う。 */
 extern char ams_edit_fetched_filament_id[16];
+/** ローカル JSON から取得した tray_type（例: PLA Matte）。MQTT の tray_type に使う。空のときは UI の type_buf を使用。 */
+extern char ams_edit_fetched_tray_type[16];
 
-/** 編集対象スロット（AMS View で Edit 押下時に設定）。ams_id=0..3, tray_id=1..4 */
+/** 編集対象スロット（AMS View で Edit 押下時に設定）。ams_id=0..3, tray_id=0..3=AMS / 254=External */
 extern int ams_edit_current_ams_id;
 extern int ams_edit_current_tray_id;
 
@@ -26,7 +28,7 @@ extern char ams_edit_current_tray_color[12];
 extern int ams_edit_current_brand_index;
 extern int ams_edit_current_type_index;
 
-void ams_edit_set_fetched_temps(const char *id, int min_val, int max_val, const char *filament_id);
+void ams_edit_set_fetched_temps(const char *id, int min_val, int max_val, const char *filament_id, const char *tray_type);
 void ams_edit_set_editing_slot(int ams_id, int tray_id);
 /** デバッグ: AMS Edit Save 時の温度ログ */
 void xtouch_debug_log_ams_save(const char *id_buf, const char *fetched_id, int id_match, int fetched_min, int fetched_max, int payload_min, int payload_max);

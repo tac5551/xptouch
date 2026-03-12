@@ -6,6 +6,8 @@
 #include "trays.h"
 #include "cloud.hpp"
 #include "ams_edit_temp.h"
+#include "filesystem.h"
+#include "paths.h"
 
 #define XTOUCH_DEVICE_CONTROL_MOVE_SPEED_XY 3000
 #define XTOUCH_DEVICE_CONTROL_MOVE_SPEED_Z 1500
@@ -429,30 +431,33 @@ static void xtouch_device_print_action_to_slot(int slot, const char *action)
     xtouch_mqtt_pushall_all_printers_for_screen_c();
 }
 
-void xtouch_device_onPauseSlotCommand(lv_msg_t *m)
+void xtouch_device_onPauseSlotCommand(void *s, lv_msg_t *m)
 {
+    (void)s;
     const void *p = m ? lv_msg_get_payload(m) : nullptr;
     if (!p)
         return;
-    int slot = (int)(intptr_t)p;
+    int slot = (int)(intptr_t)p - 1; /* UI は slot+1 を送る（0 を NULL で送れないため） */
     xtouch_device_print_action_to_slot(slot, "pause");
 }
 
-void xtouch_device_onStopSlotCommand(lv_msg_t *m)
+void xtouch_device_onStopSlotCommand(void *s, lv_msg_t *m)
 {
+    (void)s;
     const void *p = m ? lv_msg_get_payload(m) : nullptr;
     if (!p)
         return;
-    int slot = (int)(intptr_t)p;
+    int slot = (int)(intptr_t)p - 1;
     xtouch_device_print_action_to_slot(slot, "stop");
 }
 
-void xtouch_device_onResumeSlotCommand(lv_msg_t *m)
+void xtouch_device_onResumeSlotCommand(void *s, lv_msg_t *m)
 {
+    (void)s;
     const void *p = m ? lv_msg_get_payload(m) : nullptr;
     if (!p)
         return;
-    int slot = (int)(intptr_t)p;
+    int slot = (int)(intptr_t)p - 1;
     xtouch_device_print_action_to_slot(slot, "resume");
 }
 #endif
@@ -550,8 +555,7 @@ void xtouch_device_command_ams_load(void *s, lv_msg_t *m)
         return;
     }
 
-    uint16_t slot_id = tmp_slot_id + 1;
-    const char *tray_type = get_tray_type(tmp_ams_id, slot_id);
+    const char *tray_type = get_tray_type(tmp_ams_id, tmp_slot_id); /* 0-3=AMS */
     if (!tray_type || strcmp(tray_type, "null") == 0)
     {
         Serial.println(F("[AMS load] skip: tray_type null"));
@@ -602,16 +606,95 @@ void xtouch_device_command_ams_unload(void *s, lv_msg_t *m)
 
 static char s_ams_fetch_pending_id[16];
 
+/* 不正 JSON 検出時に UI へ送るメッセージ用バッファ（ダイアログ表示）。 */
+static char s_ams_json_error_buf[96];
+
+/* Extention が生成したローカル JSON (/xtouch/filament/json/<setting_id>.json) から温度範囲・filament_id・tray_type を読む。
+ * フォーマット: { "filament_id": "GFA00", "nozzle_min": 200, "nozzle_max": 260, "tray_type": "PLA Matte" }
+ * 成功時 true。min/max のどちらか一方だけでも >0 なら有効とみなす。不正な JSON の場合はダイアログ用メッセージを送って false。 */
+static bool xtouch_load_local_slicer_temps(const char *setting_id, int *out_min, int *out_max, char *out_filament_id, size_t out_filament_id_size, char *out_tray_type, size_t out_tray_type_size)
+{
+    if (!setting_id || !*setting_id || !out_min || !out_max)
+        return false;
+    char path[96];
+    snprintf(path, sizeof(path), "%s/%s.json", xtouch_paths_filament_json_dir, setting_id);
+
+    if (!SD.exists(path))
+    {
+        snprintf(s_ams_json_error_buf, sizeof(s_ams_json_error_buf), "No JSON file\n%s", path);
+        lv_msg_send(XTOUCH_AMS_EDIT_JSON_ERROR, s_ams_json_error_buf);
+        return false;
+    }
+    File configFile = SD.open(path);
+    if (!configFile || !configFile.available())
+    {
+        snprintf(s_ams_json_error_buf, sizeof(s_ams_json_error_buf), "No JSON file\n%s", path);
+        lv_msg_send(XTOUCH_AMS_EDIT_JSON_ERROR, s_ams_json_error_buf);
+        return false;
+    }
+    DynamicJsonDocument doc(320);
+    DeserializationError err = deserializeJson(doc, configFile);
+    configFile.close();
+    if (err)
+    {
+        snprintf(s_ams_json_error_buf, sizeof(s_ams_json_error_buf), "Invalid JSON\n%s", path);
+        lv_msg_send(XTOUCH_AMS_EDIT_JSON_ERROR, s_ams_json_error_buf);
+        return false;
+    }
+    if (!doc.containsKey("nozzle_min") && !doc.containsKey("nozzle_max"))
+        return false;
+
+    int min_val = doc["nozzle_min"] | 0;
+    int max_val = doc["nozzle_max"] | 0;
+    if (min_val <= 0 && max_val <= 0)
+        return false;
+
+    *out_min = min_val;
+    *out_max = max_val;
+    if (out_filament_id && out_filament_id_size > 0)
+    {
+        const char *fid = doc["filament_id"] | "";
+        if (fid && fid[0])
+        {
+            strncpy(out_filament_id, fid, out_filament_id_size - 1);
+            out_filament_id[out_filament_id_size - 1] = '\0';
+        }
+        else
+        {
+            out_filament_id[0] = '\0';
+        }
+    }
+    if (out_tray_type && out_tray_type_size > 0)
+    {
+        const char *tt = doc["tray_type"] | "";
+        if (tt && tt[0])
+        {
+            strncpy(out_tray_type, tt, out_tray_type_size - 1);
+            out_tray_type[out_tray_type_size - 1] = '\0';
+        }
+        else
+        {
+            out_tray_type[0] = '\0';
+        }
+    }
+    return true;
+}
+
 /** フィラメント選択時に UI から送られる。payload = (const char*) tray_info_idx。lv_timer で非同期に API 取得し ams_edit_* グローバルに保存。 */
 static void xtouch_ams_fetch_slicer_timer_cb(lv_timer_t *t)
 {
     int min_val = 0, max_val = 0;
     char filament_buf[16] = {0};
-    bool ok = (cloud.loggedIn && s_ams_fetch_pending_id[0] != '\0' && cloud.getSlicerSetting(s_ams_fetch_pending_id, &min_val, &max_val, filament_buf, sizeof(filament_buf)));
+    char tray_type_buf[16] = {0};
+    bool ok = false;
+
+    /* 2.8 / 5.0 とも Cloud API ではなく、Extention が生成したローカル JSON から温度・filament_id・tray_type を読む。 */
+    if (s_ams_fetch_pending_id[0] != '\0')
+        ok = xtouch_load_local_slicer_temps(s_ams_fetch_pending_id, &min_val, &max_val, filament_buf, sizeof(filament_buf), tray_type_buf, sizeof(tray_type_buf));
     if (ok)
-        ams_edit_set_fetched_temps(s_ams_fetch_pending_id, min_val, max_val, filament_buf[0] ? filament_buf : nullptr);
+        ams_edit_set_fetched_temps(s_ams_fetch_pending_id, min_val, max_val, filament_buf[0] ? filament_buf : nullptr, tray_type_buf[0] ? tray_type_buf : nullptr);
     else
-        ams_edit_set_fetched_temps(s_ams_fetch_pending_id, 0, 0, nullptr);
+        ams_edit_set_fetched_temps(s_ams_fetch_pending_id, 0, 0, nullptr, nullptr);
     lv_msg_send(XTOUCH_AMS_EDIT_FETCHED_TEMP, NULL);
     lv_timer_del(t);
 }
@@ -623,7 +706,8 @@ void xtouch_device_command_ams_fetch_slicer_temp(void *s, lv_msg_t *m)
     const char *id = (const char *)m->payload;
     strncpy(s_ams_fetch_pending_id, id, 15);
     s_ams_fetch_pending_id[15] = '\0';
-    lv_timer_create(xtouch_ams_fetch_slicer_timer_cb, 1, NULL);
+    /* ローカル JSON 読み込みのみなのでタイマーは短めで十分。 */
+    lv_timer_create(xtouch_ams_fetch_slicer_timer_cb, 50, NULL);
 }
 
 /** Save 時に UI から送られる ams_filament_setting。payload = (const XTOUCH_AMS_FILAMENT_SETTING_PAYLOAD*)。温度は UI がグローバル or SD で設定済み。
@@ -683,6 +767,9 @@ void xtouch_device_command_ams_filament_setting(void *s, lv_msg_t *m)
     String result3;
     serializeJson(json3, result3);
     xtouch_device_publish(result3);
+
+    /* 設定確定後に PushAll をリクエストして最新の AMS/トレイ状態を取得（Reset 時も通常設定時も同様） */
+    xtouch_device_pushall();
 }
 
 /** M620 R# で AMS をリフレッシュ（トレイ情報をプリンターから再取得）。payload = (void*)(uintptr_t)tray_index (0〜15) */
@@ -781,5 +868,10 @@ void xtouch_device_onPreHeatOffCommand(lv_msg_t *m)
 //     serializeJson(doc, result);
 //     xtouch_device_publish(result);
 // }
+
+#ifdef __XTOUCH_SCREEN_50__
+/** push_status 受信後など、task_id に応じて xtouch_thumbnail_slot_path[slot] を更新する。thumbnail.h で実装。 */
+void xtouch_thumbnail_update_path_for_slot(int slot);
+#endif
 
 #endif

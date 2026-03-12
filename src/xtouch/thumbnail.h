@@ -27,6 +27,21 @@ void xtouch_thumbnail_timer_stop(void);
 /** 次回タイマーから全スロットを取得して上書きするようスケジュール（画面表示時に呼ぶ）。 */
 void xtouch_thumbnail_schedule_fetch_all(void);
 
+/** task_id に応じて xtouch_thumbnail_slot_path[slot] を更新（push_status 受信後などに呼ぶ）。
+ *  ファイルが SD に存在する場合のみ path を設定。未 DL の場合は空にして open エラーを防ぐ。 */
+inline void xtouch_thumbnail_update_path_for_slot(int slot)
+{
+    char path[64];
+    getThumbPathForSlot(slot, path, sizeof(path));
+    if (slot >= 0 && slot < XTOUCH_THUMB_SLOT_MAX)
+    {
+        if (SD.exists(path))
+            snprintf(xtouch_thumbnail_slot_path[slot], XTOUCH_THUMB_PATH_LEN, "S:%s", path);
+        else
+            xtouch_thumbnail_slot_path[slot][0] = '\0';
+    }
+}
+
 /* 以下は C++ のみ（main.cpp が include する想定）。実装は static 変数・コールバックのあとで extern "C" 定義 */
 static lv_timer_t *s_thumb_timer = nullptr;
 static int s_thumb_next_slot = 0;
@@ -91,9 +106,21 @@ static void thumbnail_timer_cb(lv_timer_t *t)
 {
     (void)t;
     int idx = xTouchConfig.currentScreenIndex;
-    /* Home(0): 全スロットを順番にキャッシュ（Printers へ遷移時にすぐ表示できるよう） */
+    /* Home(0): 全スロットを順番にキャッシュ（Printers へ遷移時にすぐ表示できるよう）。
+     * 起動直後印刷中の場合、SCHEDULE_THUMB_FETCH で force_fetch_slot=0 が設定されるのでスロット0を優先取得。 */
     if (idx == 0)
     {
+        if (s_thumb_force_fetch_slot < XTOUCH_THUMB_SLOT_MAX)
+        {
+            int s = s_thumb_force_fetch_slot;
+            if (thumbnail_slot_has_url_or_task(s, cloud.loggedIn ? 1 : 0) && thumbnail_needs_download(s))
+            {
+                s_thumb_force_fetch_slot++;
+                lv_timer_t *once = lv_timer_create(thumbnail_do_slot_cb, XTOUCH_THUMB_FETCH_DELAY_MS, (void *)(intptr_t)s);
+                lv_timer_set_repeat_count(once, 1);
+                return;
+            }
+        }
         static uint32_t s_home_thumb_last = 0;
         uint32_t now = lv_tick_get();
         if (now - s_home_thumb_last >= 500u)
@@ -270,7 +297,9 @@ lv_img_dsc_t g_lgfx_thumb_dsc;
 /* Printers 画面用: スロット毎のバッファと descriptor。xtouch_thumbnail_slot_dsc は types.h で extern（C から参照）。 */
 static lv_color_t *g_lgfx_thumb_buf_slot[XTOUCH_THUMB_SLOT_MAX] = { nullptr };
 static lv_img_dsc_t g_lgfx_thumb_dsc_slot[XTOUCH_THUMB_SLOT_MAX];
-extern "C" void *xtouch_thumbnail_slot_dsc[XTOUCH_THUMB_SLOT_MAX] = { nullptr, nullptr, nullptr, nullptr, nullptr };
+extern "C" {
+void *xtouch_thumbnail_slot_dsc[XTOUCH_THUMB_SLOT_MAX] = { nullptr, nullptr, nullptr, nullptr, nullptr };
+}
 
 struct xtouch_pngle_ctx_t
 {

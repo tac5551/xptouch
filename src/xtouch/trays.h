@@ -6,6 +6,9 @@
 #define _TRAYS_INCLUDE_GUARD
 #endif
 
+/** 統一: tray_id 254=External, 0-3=AMS slot */
+#define TRAY_ID_EXTERNAL 254
+
 #ifdef __cplusplus
 extern "C"
 {

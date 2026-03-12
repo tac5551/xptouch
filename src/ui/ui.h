@@ -102,6 +102,7 @@ extern "C"
   lv_obj_t *ui_optional_chamberSensorSwitch;
   lv_obj_t *ui_optional_stackChanSwitch;
   lv_obj_t *ui_optional_preheatSwitch;
+  lv_obj_t *ui_optional_multiPrinterMonitorSwitch;
   lv_obj_t *ui_optional_Idle_ledSwitch;
 
   lv_obj_t *ui_characterScreen;
@@ -144,6 +145,10 @@ extern "C"
 #endif
 
   LV_FONT_DECLARE(ui_font_xlcdmin);
+#if defined(__XTOUCH_SCREEN_50__)
+  /* 5インチのみ: 日本語ファイル名用 Noto 28 */
+  LV_FONT_DECLARE(lv_font_notosans_28);
+#endif
 
   // 関数の宣言
   const lv_font_t *lv_font_small(void);

@@ -8,6 +8,7 @@
 int led_red = 0;
 int led_green = 0;
 int led_blue = 0;
+bool xtouch_led_initialized = false;
 
 #if defined(__XTOUCH_SCREEN_28__)
 #include "devices/2.8/screen.h"
@@ -18,6 +19,8 @@ int led_blue = 0;
 
 void xtouch_led_set(int red, int green, int blue)
 {
+    if (!xtouch_led_initialized)
+        return;
     // アクティブローのLEDのため、PWM値を反転（255-値）
     ledcWrite(0, 255 - red);   // 赤色LED（チャンネル0）
     ledcWrite(1, 255 - green); // 緑色LED（チャンネル1）
@@ -52,6 +55,7 @@ void xtouch_led_init(void)
     ledcAttachPin(led_green, 1);
     ledcAttachPin(led_blue, 2);
 
+    xtouch_led_initialized = true;
     xtouch_led_set(0, 0, 0); // オフ
 }
 #endif

@@ -7,7 +7,7 @@ void initialActions(lv_event_t *e) {}
 /* -----------Sidebar-------------- */
 void onSidebarHome(lv_event_t *e) { loadScreen(0); }
 #ifdef __XTOUCH_SCREEN_50__
-void onSidebarPrinters(lv_event_t *e) { if (!xTouchConfig.xTouchLanOnlyMode) loadScreen(6); }
+void onSidebarPrinters(lv_event_t *e) { if (!xTouchConfig.xTouchLanOnlyMode && xTouchConfig.xTouchMultiPrinterMonitorEnabled) loadScreen(6); }
 #endif
 void onSidebarTemp(lv_event_t *e) { loadScreen(1); }
 void onSidebarControl(lv_event_t *e) { loadScreen(2); }
@@ -136,12 +136,13 @@ static int _printers_slot = 0;
 
 static void onPrintersPauseConfirm(void)
 {
-    lv_msg_send(XTOUCH_COMMAND_PAUSE_SLOT, (void *)(intptr_t)_printers_slot);
+    /* payload に 0 を送ると NULL になり受信側で捨てられるため、slot+1 を送る */
+    lv_msg_send(XTOUCH_COMMAND_PAUSE_SLOT, (void *)(intptr_t)(_printers_slot + 1));
 }
 
 static void onPrintersStopConfirm(void)
 {
-    lv_msg_send(XTOUCH_COMMAND_STOP_SLOT, (void *)(intptr_t)_printers_slot);
+    lv_msg_send(XTOUCH_COMMAND_STOP_SLOT, (void *)(intptr_t)(_printers_slot + 1));
 }
 
 void onPrintersPause(lv_event_t *e)
@@ -156,7 +157,7 @@ void onPrintersPause(lv_event_t *e)
 
     if (status == XTOUCH_PRINT_STATUS_PAUSED)
     {
-        lv_msg_send(XTOUCH_COMMAND_RESUME_SLOT, (void *)(intptr_t)slot);
+        lv_msg_send(XTOUCH_COMMAND_RESUME_SLOT, (void *)(intptr_t)(slot + 1));
         return;
     }
     if (status == XTOUCH_PRINT_STATUS_RUNNING || status == XTOUCH_PRINT_STATUS_PREPARE)
@@ -241,6 +242,14 @@ void onOptionalPreheat(lv_event_t *e)
     xTouchConfig.xTouchPreheatEnabled = !xTouchConfig.xTouchPreheatEnabled;
     lv_msg_send(XTOUCH_SETTINGS_SAVE, NULL);
 }
+
+#ifdef __XTOUCH_SCREEN_50__
+void onOptionalMultiPrinterMonitor(lv_event_t *e)
+{
+    xTouchConfig.xTouchMultiPrinterMonitorEnabled = !xTouchConfig.xTouchMultiPrinterMonitorEnabled;
+    lv_msg_send(XTOUCH_SETTINGS_SAVE, NULL);
+}
+#endif
 
 void onOptionalIdleLED(lv_event_t *e)
 {

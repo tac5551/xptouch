@@ -221,50 +221,55 @@ void ui_event_comp_filamentComponent_onAmsUpdate(lv_event_t *e)
 
     struct XTOUCH_MESSAGE_DATA *message = (struct XTOUCH_MESSAGE_DATA *)m->payload;
 
-    uint8_t tmp_ams_id = user_data / 100;
-    uint8_t tmp_tray_id = user_data % 100;
-
-    // printf("onAmsUpdate %d %d %d\n", tmp_ams_id, tmp_tray_id, user_data);
+    uint8_t tmp_ams_id;
+    uint8_t tmp_tray_id;
+    if (user_data == TRAY_ID_EXTERNAL)
+    {
+        tmp_ams_id = 0;
+        tmp_tray_id = TRAY_ID_EXTERNAL;
+    }
+    else
+    {
+        tmp_ams_id = (uint8_t)(user_data / 100);
+        tmp_tray_id = (uint8_t)(user_data % 100);
+    }
 
     uint32_t tray_status = get_tray_status(tmp_ams_id, tmp_tray_id);
     uint16_t tray_id = ((tray_status >> 4) & 0x0F);
     uint16_t loaded = ((tray_status) & 0x01);
     char *tray_type = get_tray_type(tmp_ams_id, tmp_tray_id);
-    // lv_obj_t *unload = ui_comp_get_child(target, UI_COMP_FILAMENTCOMPONENT_FILAMENTSCREENFILAMENT_FILAMENTSCREENUNLOAD);
+    (void)message;
 
-    if (tmp_tray_id == tray_id)
+    int match = (tmp_tray_id == TRAY_ID_EXTERNAL) ? 1 : (tmp_tray_id == tray_id);
+    if (match)
     {
         lv_color_t color = lv_color_hex(tray_status >> 8);
         lv_color_t color_inv = lv_color_hex((0xFFFFFF - (tray_status >> 8)) & 0xFFFFFF);
 
-        char buffer[100];
-        memset(buffer, 0, 100);
-   
-        // tray_typeがnullポインタでなく、空文字列でもなく、文字列"null"でもない場合、その文字列を設定（優先）
-        if (tray_type[0] != '\0' && strcmp(tray_type, "null") != 0) {
+        if (tray_type && tray_type[0] != '\0' && strcmp(tray_type, "null") != 0)
             lv_label_set_text(target, tray_type);
-        } else {
+        else
             lv_label_set_text(target, "x");
-        }
-
-        // printf(" tray_now: %d, tray_tar: %d, slot: %d, color: %06llX \n", bambuStatus.m_tray_now, bambuStatus.m_tray_tar, tray_id, message->data >> 8);
 
         lv_obj_set_style_bg_color(target, color, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_text_color(target, color_inv, LV_PART_MAIN | LV_STATE_DEFAULT);
-
-        if (tray_id == 0)
-            tray_id = 254 + 1;
-
         lv_obj_set_style_border_color(target, color, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_border_width(target, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-        if (bambuStatus.m_tray_now + 1 == tray_id)
+        int is_current = (tmp_tray_id == TRAY_ID_EXTERNAL && bambuStatus.m_tray_now == TRAY_ID_EXTERNAL) ||
+                        (tmp_tray_id <= 3 && bambuStatus.m_tray_now >= 0 && bambuStatus.m_tray_now <= 15 &&
+                         (uint8_t)(bambuStatus.m_tray_now >> 2) == tmp_ams_id &&
+                         (uint8_t)(bambuStatus.m_tray_now & 3) == tmp_tray_id);
+        int is_prev = (tmp_tray_id <= 3 && bambuStatus.m_tray_pre >= 0 && bambuStatus.m_tray_pre <= 15 &&
+                       (uint8_t)(bambuStatus.m_tray_pre >> 2) == tmp_ams_id &&
+                       (uint8_t)(bambuStatus.m_tray_pre & 3) == tmp_tray_id && bambuStatus.m_tray_pre != bambuStatus.m_tray_tar);
+
+        if (is_current)
         {
-            // lv_label_set_text(target, "L");
             lv_obj_set_style_border_color(target, color_inv, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_border_width(target, AMS_BORDER, LV_PART_MAIN | LV_STATE_DEFAULT);
         }
-        else if (bambuStatus.m_tray_pre + 1 == tray_id && bambuStatus.m_tray_pre != bambuStatus.m_tray_tar)
+        else if (is_prev)
         {
             // lv_label_set_text(target, "U");
         }

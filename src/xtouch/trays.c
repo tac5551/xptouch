@@ -30,68 +30,107 @@ char tray_setting_id[max_ams][5][TRAY_SETTING_ID_LEN];
 // AMS:2 Tray:3  user_id = 203
 // AMS:2 Tray:4  user_id = 204
 
-// AMS:3 Tray:1  user_id = 301
-// AMS:3 Tray:2  user_id = 302
-// AMS:3 Tray:3  user_id = 303
-// AMS:3 Tray:4  user_id = 304
+// AMS:3 Tray:0~3  user_id = 300~303
+
+/** 統一: tray_id 254=External, 0-3=AMS slot。配列 [0]=254, [1]=slot0, [2]=slot1, [3]=slot2, [4]=slot3 */
+#define TRAY_ID_EXTERNAL 254
+static inline int tray_id_to_index(uint8_t tray_id)
+{
+    if (tray_id == TRAY_ID_EXTERNAL)
+        return 0;
+    if (tray_id <= 3)
+        return (int)tray_id + 1;
+    return -1;
+}
 
 char *get_tray_type(uint8_t ams_id, uint8_t tray_id)
 {
-    return tray_types[ams_id][tray_id + 1];
+    int i = tray_id_to_index(tray_id);
+    if (ams_id >= max_ams || i < 0)
+        return (char *)"";
+    return tray_types[ams_id][i];
 }
 
 void set_tray_type(uint8_t ams_id, uint8_t tray_id, char *tray_type)
 {
-    strcpy(tray_types[ams_id][tray_id + 1], tray_type);
+    int i = tray_id_to_index(tray_id);
+    if (ams_id >= max_ams || i < 0 || !tray_type)
+        return;
+    strncpy(tray_types[ams_id][i], tray_type, 15);
+    tray_types[ams_id][i][15] = '\0';
 }
 
 const char *get_tray_color(uint8_t ams_id, uint8_t tray_id)
 {
-    if (ams_id >= max_ams || tray_id > 3)
+    int i = tray_id_to_index(tray_id);
+    if (ams_id >= max_ams || i < 0)
         return "";
-    return tray_colors[ams_id][tray_id + 1];
+    return tray_colors[ams_id][i];
 }
 
 void set_tray_color(uint8_t ams_id, uint8_t tray_id, const char *color)
 {
-    if (ams_id >= max_ams || tray_id > 3 || !color)
+    int i = tray_id_to_index(tray_id);
+    if (ams_id >= max_ams || i < 0 || !color)
         return;
-    strncpy(tray_colors[ams_id][tray_id + 1], color, TRAY_COLOR_LEN - 1);
-    tray_colors[ams_id][tray_id + 1][TRAY_COLOR_LEN - 1] = '\0';
+    strncpy(tray_colors[ams_id][i], color, TRAY_COLOR_LEN - 1);
+    tray_colors[ams_id][i][TRAY_COLOR_LEN - 1] = '\0';
 }
 
 uint16_t get_tray_temp(uint8_t ams_id, uint8_t tray_id)
 {
-    return tray_temps[ams_id][tray_id + 1];
+    int i = tray_id_to_index(tray_id);
+    if (ams_id >= max_ams || i < 0)
+        return 0;
+    return tray_temps[ams_id][i];
 }
 void set_tray_temp(uint8_t ams_id, uint8_t tray_id, uint16_t tray_temp)
 {
-    tray_temps[ams_id][tray_id] = tray_temp;
+    int i = tray_id_to_index(tray_id);
+    if (ams_id >= max_ams || i < 0)
+        return;
+    tray_temps[ams_id][i] = tray_temp;
 }
 
 uint16_t get_tray_temp_min(uint8_t ams_id, uint8_t tray_id)
 {
-    return tray_temp_min[ams_id][tray_id + 1];
+    int i = tray_id_to_index(tray_id);
+    if (ams_id >= max_ams || i < 0)
+        return 0;
+    return tray_temp_min[ams_id][i];
 }
 uint16_t get_tray_temp_max(uint8_t ams_id, uint8_t tray_id)
 {
-    return tray_temp_max[ams_id][tray_id + 1];
+    int i = tray_id_to_index(tray_id);
+    if (ams_id >= max_ams || i < 0)
+        return 0;
+    return tray_temp_max[ams_id][i];
 }
 void set_tray_temp_min_max(uint8_t ams_id, uint8_t tray_id, uint16_t t_min, uint16_t t_max)
 {
-    tray_temp_min[ams_id][tray_id] = t_min;
-    tray_temp_max[ams_id][tray_id] = t_max;
+    int i = tray_id_to_index(tray_id);
+    if (ams_id >= max_ams || i < 0)
+        return;
+    tray_temp_min[ams_id][i] = t_min;
+    tray_temp_max[ams_id][i] = t_max;
 }
 
 uint64_t get_tray_status(uint8_t ams_id, uint8_t tray_id)
 {
-    return tray_status[ams_id][tray_id];
+    int i = tray_id_to_index(tray_id);
+    if (ams_id >= max_ams || i < 0)
+        return 0;
+    return tray_status[ams_id][i];
 }
 void set_tray_status(uint8_t ams_id, uint8_t tray_id, uint64_t tray_state)
 {
-    tray_status[ams_id][tray_id] = tray_state;
+    int i = tray_id_to_index(tray_id);
+    if (ams_id >= max_ams || i < 0)
+        return;
+    tray_status[ams_id][i] = tray_state;
 }
 
+/* setting_id: tray_id 0-3=AMS slot のみ（External は使わない） */
 const char *get_tray_setting_id(uint8_t ams_id, uint8_t tray_id)
 {
     if (ams_id >= max_ams || tray_id > 3)

@@ -82,6 +82,7 @@ void loadScreen(int screen)
             eventData.data = 0;
             eventData.data2 = 0;
             lv_msg_send(XTOUCH_PRINTERS_THUMB_TIMER_START, &eventData);
+            lv_msg_send(XTOUCH_PRINTERS_SCHEDULE_THUMB_FETCH, &eventData);
             /* cleanup は送らない（Printers 入室時のみ）。pushall でメインプリンタの image_url/task_id を取得 */
             extern void xtouch_mqtt_pushall_all_printers_for_screen_c(void);
             xtouch_mqtt_pushall_all_printers_for_screen_c();
@@ -171,8 +172,8 @@ void loadScreen(int screen)
 #ifdef __XTOUCH_SCREEN_50__
     case 6: sidebar_index = 1; break;
 #endif
-    case 1: case 2: case 3: case 11: sidebar_index = 1; break; /* Temp/Control/Nozzle/Util タブ */
-    case 7: case 10: case 12: case 13: case 14: sidebar_index = 2; break; /* AMS 系 */
+    case 1: case 2: case 3: case 10: case 11: case 12: sidebar_index = 1; break; /* Temp/Control/Nozzle/Util/NozzleSelect/Calibration */
+    case 7: case 13: case 14: sidebar_index = 2; break; /* AMS 系 */
     case 4: sidebar_index = 3; break; /* Settings */
     default: break;
     }
@@ -186,10 +187,22 @@ void loadScreen(int screen)
     }
 }
 
+#ifdef __XTOUCH_SCREEN_50__
+static void on_settings_save_sidebar(const void *payload, void *user_data)
+{
+    (void)payload;
+    (void)user_data;
+    ui_sidebarComponent_updatePrintersVisibility();
+}
+#endif
+
 void initTopLayer()
 {
     ui_confirmComponent = ui_confirmPanel_create(lv_layer_top());
     lv_obj_add_flag(ui_confirmComponent, LV_OBJ_FLAG_HIDDEN);
     ui_hmsComponent = ui_hmsPanel_create(lv_layer_top());
     lv_obj_add_flag(ui_hmsComponent, LV_OBJ_FLAG_HIDDEN);
+#ifdef __XTOUCH_SCREEN_50__
+    lv_msg_subscribe(XTOUCH_SETTINGS_SAVE, (lv_msg_subscribe_cb_t)on_settings_save_sidebar, NULL);
+#endif
 }

@@ -106,6 +106,14 @@ static void on_fetched_temp_msg(lv_event_t *e)
 {
     if (lv_event_get_code(e) != LV_EVENT_MSG_RECEIVED)
         return;
+    lv_msg_t *m = lv_event_get_msg(e);
+    if (m && lv_msg_get_id(m) == XTOUCH_AMS_EDIT_JSON_ERROR)
+    {
+        const void *p = lv_msg_get_payload(m);
+        if (p)
+            ui_confirmPanel_show((const char *)p, ui_confirmPanel_hide);
+        return;
+    }
     update_temp_display();
 }
 
@@ -154,13 +162,13 @@ static void on_reset_clicked(lv_event_t *e)
 {
     if (lv_event_get_code(e) != LV_EVENT_CLICKED)
         return;
-    /* tray_info_idx を空で登録してスロット情報をリセットする */
+    /* Bambu 側の挙動に合わせ、setting_id/tray_info_idx を ""、温度を 0 でリセットする */
     struct XTOUCH_AMS_FILAMENT_SETTING_PAYLOAD payload;
     payload.ams_id = ams_edit_current_ams_id;
     payload.tray_id = ams_edit_current_tray_id;
     payload.nozzle_temp_min = 0;
     payload.nozzle_temp_max = 0;
-    payload.tray_info_idx[0] = '\0';          /* tray_info_idx="" */
+    payload.tray_info_idx[0] = '\0';
     snprintf(payload.tray_color, sizeof(payload.tray_color), "00000000"); /* RRGGBBAA デフォルトは透明 */
     payload.tray_type[0] = '\0';              /* tray_type も空にする */
     lv_msg_send(XTOUCH_COMMAND_AMS_FILAMENT_SETTING, &payload);
@@ -211,7 +219,10 @@ static void on_save_clicked(lv_event_t *e)
     else
         snprintf(payload.filament_id, sizeof(payload.filament_id), "%s", payload.tray_info_idx);
     snprintf(payload.tray_color, sizeof(payload.tray_color), "%s", ams_edit_current_tray_color);
-    snprintf(payload.tray_type, sizeof(payload.tray_type), "%s", type_buf[0] ? type_buf : "PLA");
+    if (id_match && ams_edit_fetched_tray_type[0] != '\0')
+        snprintf(payload.tray_type, sizeof(payload.tray_type), "%s", ams_edit_fetched_tray_type);
+    else
+        snprintf(payload.tray_type, sizeof(payload.tray_type), "%s", type_buf[0] ? type_buf : "PLA");
     lv_msg_send(XTOUCH_COMMAND_AMS_FILAMENT_SETTING, &payload);
     if (s_ams_edit_sd_timer)
     {
@@ -438,6 +449,7 @@ lv_obj_t *ui_amsEditComponent_create(lv_obj_t *comp_parent)
     update_temp_display();
     lv_obj_add_event_cb(content, on_fetched_temp_msg, LV_EVENT_MSG_RECEIVED, NULL);
     lv_msg_subsribe_obj(XTOUCH_AMS_EDIT_FETCHED_TEMP, content, NULL);
+    lv_msg_subsribe_obj(XTOUCH_AMS_EDIT_JSON_ERROR, content, NULL);
 
     /* Footer: Back, Reset, Save */
     lv_obj_t *footer = lv_obj_create(cui_amsEditComponent);

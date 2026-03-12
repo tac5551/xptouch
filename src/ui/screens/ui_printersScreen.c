@@ -26,7 +26,7 @@ static const char *print_status_str(int s)
 
 #define PRINTERS_ROW_MAX 5
 
-/* 1行: row の子は [0]=左サムネイル, [1]=右カラム(name/progress/layer), [2]=ボタンエリア(pause/stop)。
+/* 1行: row の子は [0]=左サムネイル, [1]=右カラム(name/subtask/progress/layer), [2]=ボタンエリア(pause/stop)。
  * ボタンは印刷中(RUNNING/PAUSED/PREPARE)のみ表示、終了時は非表示（スペースは維持）。 */
 static void update_one_row(int slot, lv_obj_t *row)
 {
@@ -36,11 +36,12 @@ static void update_one_row(int slot, lv_obj_t *row)
     if (!leftBox || !rightCol || !btnArea)
         return;
     lv_obj_t *nameLabel = lv_obj_get_child(rightCol, 0);
-    lv_obj_t *progressBar = lv_obj_get_child(rightCol, 1);
-    lv_obj_t *layerLabel = lv_obj_get_child(rightCol, 2);
+    lv_obj_t *subtaskLabel = lv_obj_get_child(rightCol, 1);
+    lv_obj_t *progressBar = lv_obj_get_child(rightCol, 2);
+    lv_obj_t *layerLabel = lv_obj_get_child(rightCol, 3);
     lv_obj_t *pauseBtn = lv_obj_get_child(btnArea, 0);
     lv_obj_t *stopBtn = lv_obj_get_child(btnArea, 1);
-    if (!nameLabel || !progressBar || !layerLabel || !pauseBtn || !stopBtn)
+    if (!nameLabel || !subtaskLabel || !progressBar || !layerLabel || !pauseBtn || !stopBtn)
         return;
 
     const char *name = "-";
@@ -70,6 +71,34 @@ static void update_one_row(int slot, lv_obj_t *row)
     }
 
     lv_label_set_text(nameLabel, name);
+
+    /* プリンタ名の下に subtask_name（ファイル名）の先頭を表示 */
+    const char *subtask_src = "";
+    if (slot == 0)
+        subtask_src = bambuStatus.subtask_name[0] ? bambuStatus.subtask_name : "";
+    else if (slot - 1 < xtouch_other_printer_count && otherPrinters[slot - 1].valid)
+        subtask_src = otherPrinters[slot - 1].subtask_name[0] ? otherPrinters[slot - 1].subtask_name : "";
+    {
+        char subBuf[24];
+        int n = 0;
+        while (n < 20 && subtask_src[n] != '\0')
+        {
+            subBuf[n] = subtask_src[n];
+            n++;
+        }
+        subBuf[n] = '\0';
+        if (subtask_src[n] != '\0')
+        {
+            if (n > 3)
+                n = 17;
+            subBuf[n++] = '.';
+            subBuf[n++] = '.';
+            subBuf[n++] = '.';
+            subBuf[n] = '\0';
+        }
+        lv_label_set_text(subtaskLabel, subBuf);
+    }
+
     lv_slider_set_value(progressBar, percent, LV_ANIM_OFF);
 
     char layerBuf[96];
@@ -100,6 +129,11 @@ static void update_one_row(int slot, lv_obj_t *row)
     {
         lv_obj_clear_flag(pauseBtn, LV_OBJ_FLAG_HIDDEN);
         lv_obj_clear_flag(stopBtn, LV_OBJ_FLAG_HIDDEN);
+        /* 一時停止中は再開アイコン(z)、印刷中は一時停止アイコン(0)。Home と同様。 */
+        if (status == XTOUCH_PRINT_STATUS_PAUSED)
+            lv_label_set_text(pauseBtn, "z");
+        else
+            lv_label_set_text(pauseBtn, "0");
     }
     else
     {
@@ -143,13 +177,18 @@ void ui_printers_on_other_update(lv_msg_t *m, void *user_data)
         return;
 
     /* サムネイルDL完了通知（XTOUCH_ON_OTHER_PRINTER_UPDATE）のとき payload のスロットを即描画。
-     * 遅延しない: 送信側で DL→LGFX デコード済みなので、ここで即 set_src して次のスロット DL ブロック前に描画する。 */
+     * 遅延しない: 送信側で DL→LGFX デコード済みなので、ここで即 set_src して次のスロット DL ブロック前に描画する。
+     * payload: MQTT は &XTOUCH_MESSAGE_DATA (data = 行インデックス 0=メイン,1=他1台目…)、サムネは (void*)(slot+1)。 */
     if (m && lv_msg_get_id(m) == XTOUCH_ON_OTHER_PRINTER_UPDATE)
     {
         const void *p = lv_msg_get_payload(m);
         if (p)
         {
-            int slot = (int)(intptr_t)p - 1;  /* 送信側で +1 しているので戻す */
+            int slot;
+            if ((uintptr_t)p < 256)
+                slot = (int)(intptr_t)p - 1;  /* サムネ側: slot+1 で送っている */
+            else
+                slot = (int)((const struct XTOUCH_MESSAGE_DATA *)p)->data;  /* MQTT: data = 行インデックス */
             if (slot >= 0 && slot < PRINTERS_ROW_MAX)
                 thumb_refresh_slot(slot);
         }

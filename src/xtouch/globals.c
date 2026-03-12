@@ -28,7 +28,8 @@ void xtouch_globals_init()
 {
     controlMode.inc = 10;
 #ifdef __XTOUCH_SCREEN_50__
+    /* 起動時は pthumb_N.png を指さない。task_id ベースのパスは getThumbPathForSlot() で設定される */
     for (int i = 0; i < XTOUCH_THUMB_SLOT_MAX; i++)
-        snprintf(xtouch_thumbnail_slot_path[i], XTOUCH_THUMB_PATH_LEN, "S:/tmp/pthumb_%d.png", i);
+        xtouch_thumbnail_slot_path[i][0] = '\0';
 #endif
 } 

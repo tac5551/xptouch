@@ -51,7 +51,31 @@ lv_obj_t *ui_systemComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_pad_top(cui_unpairButton, 16, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_bottom(cui_unpairButton, 16, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_color(cui_unpairButton, lv_color_hex(0x000), LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_label_set_text_fmt(cui_unpairButton, LV_SYMBOL_SHUFFLE " Unlink [ %s ]", xTouchConfig.xTouchPrinterName);
+    if (xTouchConfig.xTouchLanOnlyMode)
+    {
+        /* LAN モード: プリンタ名のみ表示、Unlink 禁止（ボタン無効）、その下に接続先 IP を表示 */
+        lv_label_set_text_fmt(cui_unpairButton, "[ %s ]", xTouchConfig.xTouchPrinterName[0] ? xTouchConfig.xTouchPrinterName : xTouchConfig.xTouchSerialNumber);
+        lv_obj_clear_flag(cui_unpairButton, LV_OBJ_FLAG_CLICKABLE);
+        lv_obj_add_state(cui_unpairButton, LV_STATE_DISABLED);
+
+        lv_obj_t *cui_lanIpLabel = lv_label_create(cui_systemComponent);
+        lv_obj_set_width(cui_lanIpLabel, lv_pct(100));
+        lv_obj_set_height(cui_lanIpLabel, LV_SIZE_CONTENT);
+        lv_label_set_text_fmt(cui_lanIpLabel, LV_SYMBOL_WIFI " %s", xTouchConfig.xTouchHost[0] ? xTouchConfig.xTouchHost : "-");
+        lv_obj_set_style_text_font(cui_lanIpLabel, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_pad_left(cui_lanIpLabel, 16, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_pad_right(cui_lanIpLabel, 16, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_pad_top(cui_lanIpLabel, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_pad_bottom(cui_lanIpLabel, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_bg_color(cui_lanIpLabel, lv_color_hex(0x333333), LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_bg_opa(cui_lanIpLabel, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_radius(cui_lanIpLabel, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_text_color(cui_lanIpLabel, lv_color_hex(0xCCCCCC), LV_PART_MAIN | LV_STATE_DEFAULT);
+    }
+    else
+    {
+        lv_label_set_text_fmt(cui_unpairButton, LV_SYMBOL_SHUFFLE " Unlink [ %s ]", xTouchConfig.xTouchPrinterName);
+    }
 
     lv_obj_t *cui_deviceTitle = lv_label_create(cui_systemComponent);
     lv_obj_set_width(cui_deviceTitle, lv_pct(100));

@@ -35,6 +35,10 @@ enum SidebarComponent {
     void ui_event_comp_sidebarComponent_sidebarAmsViewButton(lv_event_t *e);
     void ui_event_comp_sidebarComponent_sidebarSettingsButton(lv_event_t *e);
     void ui_sidebarComponent_set_active(int index);
+#ifdef __XTOUCH_SCREEN_50__
+    /** 設定保存後などに、Printers ボタンの表示を xTouchConfig に合わせて更新する */
+    void ui_sidebarComponent_updatePrintersVisibility(void);
+#endif
 #ifdef __cplusplus
 } /*extern "C"*/
 #endif

@@ -4,8 +4,8 @@
 #define SLOT_COUNT 5
 #define AMS_BORDER 3
 
-/* コンボで選択中の行（0=EXT, 1=AMS1〜4）。リフレッシュでビットコールバックが走ってもこれを優先する */
-static uint8_t s_ams_view_selector = UI_AMS_SELECTOR_AMS1;
+/* コンボで選択中の行（0=EXT, 1=AMS1〜4）。初期はEXT（AMS未接続時もEXT表示にする） */
+static uint8_t s_ams_view_selector = UI_AMS_SELECTOR_EXT;
 /* 画面を開いたときの初期選択をまだ適用していないフラグ（コンポーネント作成時に false にリセット） */
 static bool s_ams_view_initialized = false;
 /* コンボの選択肢インデックス → 論理セレクタ(0=EXT,1=AMS1..4)。接続されているAMSだけ並べるため */
@@ -63,10 +63,10 @@ static void ui_event_comp_amsViewComponent_onAmsUpdateBySlotIndex(lv_event_t *e)
     {
         if (slot_index > 0)
             return;
-        /* Home画面と同様: EXTは ams_id=0, tray_id=0 (vt_tray) の色・タイプを表示 */
-        uint32_t ext_status = get_tray_status(0, 0);
+        /* 254=External: ams_id=0, tray_id=TRAY_ID_EXTERNAL */
+        uint32_t ext_status = get_tray_status(0, TRAY_ID_EXTERNAL);
         uint32_t color_code = (uint32_t)((ext_status >> 8) & 0xFFFFFF);
-        char *ext_tray_type = get_tray_type(0, 0);
+        char *ext_tray_type = get_tray_type(0, TRAY_ID_EXTERNAL);
         if (color_code != 0)
         {
             lv_color_t color = lv_color_hex(color_code);
@@ -95,7 +95,7 @@ static void ui_event_comp_amsViewComponent_onAmsUpdateBySlotIndex(lv_event_t *e)
     }
 
     uint8_t tmp_ams_id = s_ams_view_selector - 1;
-    uint8_t tmp_tray_id = slot_index + 1;
+    uint8_t tmp_tray_id = slot_index; /* 0-3=AMS */
 
     uint32_t tray_status = get_tray_status(tmp_ams_id, tmp_tray_id);
     uint16_t tray_id = (uint16_t)((tray_status >> 4) & 0x0F);
@@ -114,18 +114,15 @@ static void ui_event_comp_amsViewComponent_onAmsUpdateBySlotIndex(lv_event_t *e)
         else
             lv_label_set_text(target, "-");
 
-        if (tray_id == 0)
-            tray_id = 254 + 1;
-
         lv_obj_set_style_bg_color(target, color, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_text_color(target, color_inv, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_border_color(target, color, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_border_width(target, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-        /* 表示中のAMSのスロットのみハイライト。m_tray_now は 0-15 (ams*4+tray) なので、現在AMSかつスロット一致時のみボーダー表示 */
+        /* m_tray_now: 0-15=ams*4+tray(0-3), 254=External */
         if (bambuStatus.m_tray_now >= 0 && bambuStatus.m_tray_now <= 15 &&
             (uint8_t)(bambuStatus.m_tray_now >> 2) == tmp_ams_id &&
-            (uint8_t)(bambuStatus.m_tray_now & 3) == slot_index)
+            (uint8_t)(bambuStatus.m_tray_now & 3) == tmp_tray_id)
         {
             lv_obj_set_style_border_color(target, color_inv, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_border_width(target, AMS_BORDER, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -175,10 +172,10 @@ static void ui_amsViewComponent_onAmsLockSyncButtons(lv_event_t *e)
             if (s_ams_view_selector == UI_AMS_SELECTOR_EXT)
             {
                 is_ext_slot = (slot_index == 0) ? 1 : 0;
-                loaded = is_ext_slot ? (int)((get_tray_status(0, 0) & 0x01) != 0) : 0;
+                loaded = is_ext_slot ? (int)((get_tray_status(0, TRAY_ID_EXTERNAL) & 0x01) != 0) : 0;
             }
             else
-                loaded = (int)((get_tray_status((uint8_t)(s_ams_view_selector - 1), (uint8_t)(slot_index + 1)) & 0x01) != 0);
+                loaded = (int)((get_tray_status((uint8_t)(s_ams_view_selector - 1), (uint8_t)slot_index) & 0x01) != 0);
         }
         for (uint32_t j = 0; j < m; j++)
         {
@@ -208,7 +205,7 @@ static void onAmsSlotClickUnified(lv_event_t *e)
         return;
     uintptr_t ud = (uintptr_t)lv_event_get_user_data(e);
     uint8_t slot_index = (uint8_t)(ud & 3);
-    int slot_id = (s_ams_view_selector == UI_AMS_SELECTOR_EXT) ? 254 : ((int)(s_ams_view_selector - 1) * 100 + slot_index + 1);
+    int slot_id = (s_ams_view_selector == UI_AMS_SELECTOR_EXT) ? TRAY_ID_EXTERNAL : ((int)(s_ams_view_selector - 1) * 100 + slot_index);
     onAmsSlotLoad(e, slot_id);
 }
 
@@ -276,10 +273,11 @@ void ui_amsViewComponent_onAMSBitsSlotDummy(lv_event_t *e)
     if (ams_id == 3)
         check_bit = 0b00001000;
 
+    /* 接続時は表示、未接続時は非表示（onAMSBitsSlot と同じ論理） */
     if ((bambuStatus.ams_exist_bits & check_bit) == 0)
-        lv_obj_clear_flag(target, LV_OBJ_FLAG_HIDDEN);
-    else
         lv_obj_add_flag(target, LV_OBJ_FLAG_HIDDEN);
+    else
+        lv_obj_clear_flag(target, LV_OBJ_FLAG_HIDDEN);
 }
 
 void ui_event_comp_amsViewComponent_onAmsUpdate(lv_event_t *e)
@@ -301,32 +299,28 @@ void ui_event_comp_amsViewComponent_onAmsUpdate(lv_event_t *e)
 
     struct XTOUCH_MESSAGE_DATA *message = (struct XTOUCH_MESSAGE_DATA *)m->payload;
 
-    uint8_t tmp_ams_id = user_data / 100;
-    uint8_t tmp_tray_id = user_data % 100;
+    uint8_t tmp_ams_id;
+    uint8_t tmp_tray_id;
+    if (user_data == TRAY_ID_EXTERNAL)
+    {
+        tmp_ams_id = 0;
+        tmp_tray_id = TRAY_ID_EXTERNAL;
+    }
+    else
+    {
+        tmp_ams_id = (uint8_t)(user_data / 100);
+        tmp_tray_id = (uint8_t)(user_data % 100); /* 0-3 */
+    }
 
     uint32_t tray_status = get_tray_status(tmp_ams_id, tmp_tray_id);
     uint16_t tray_id = (uint16_t)((tray_status >> 4) & 0x0F);
     uint16_t loaded = (uint16_t)(tray_status & 0x01);
     char *tray_type = get_tray_type(tmp_ams_id, tmp_tray_id);
-    // printf("onAmsUpdate %d %d %d %d\n", tmp_ams_id, tmp_tray_id, tray_id, loaded);
+    (void)message;
 
-    // for (int i = 0; i < 4; i++)
-    // {
-    //     printf("--------------------------------\n");
-    //     for (int j = 0; j < 5; j++)
-    //     {
-    //         uint32_t tray_status = get_tray_status(i, j);
-    //         uint16_t tray_id = ((tray_status >> 4) & 0x0F);
-    //         uint16_t loaded = ((tray_status) & 0x01);
-
-    //         printf("tray dump %d %d %d %d %d %f\n", i, j, tray_id, loaded, bambuStatus.ams_humidity[i], bambuStatus.ams_temperature[i]);
-    //     }
-    // }
-    // printf("--------------------------------\n");
-
-    // lv_obj_t *unload = ui_comp_get_child(target, UI_COMP_amsViewComponent_FILAMENTSCREENFILAMENT_FILAMENTSCREENUNLOAD);
-
-    if (tmp_tray_id == tray_id)
+    /* External(254) は status の nibble に 15 を入れる想定。0-3=AMS は tmp_tray_id==tray_id で一致 */
+    int match = (tmp_tray_id == TRAY_ID_EXTERNAL) ? 1 : (tmp_tray_id == tray_id);
+    if (match)
     {
         lv_color_t color = lv_color_hex(tray_status >> 8);
         lv_color_t color_inv = lv_color_hex((0xFFFFFF - (tray_status >> 8)) & 0xFFFFFF);
@@ -338,20 +332,18 @@ void ui_event_comp_amsViewComponent_onAmsUpdate(lv_event_t *e)
         else
             lv_label_set_text(target, "-");
 
-        // printf(" tray_now: %d, tray_tar: %d, slot: %d, color: %06llX \n", bambuStatus.m_tray_now, bambuStatus.m_tray_tar, tray_id, message->data >> 8);
-
         lv_obj_set_style_bg_color(target, color, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_text_color(target, color_inv, LV_PART_MAIN | LV_STATE_DEFAULT);
-
-        if (tray_id == 0)
-            tray_id = 254 + 1;
-
         lv_obj_set_style_border_color(target, color, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_border_width(target, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-        if (bambuStatus.m_tray_now + 1 == tray_id)
+        /* m_tray_now: 254=External, 0-15=ams*4+tray(0-3) */
+        int is_current = (tmp_tray_id == TRAY_ID_EXTERNAL && bambuStatus.m_tray_now == TRAY_ID_EXTERNAL) ||
+                        (tmp_tray_id <= 3 && bambuStatus.m_tray_now >= 0 && bambuStatus.m_tray_now <= 15 &&
+                         (uint8_t)(bambuStatus.m_tray_now >> 2) == tmp_ams_id &&
+                         (uint8_t)(bambuStatus.m_tray_now & 3) == tmp_tray_id);
+        if (is_current)
         {
-            // lv_label_set_text(target, "L");
             lv_obj_set_style_border_color(target, color_inv, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_border_width(target, AMS_BORDER, LV_PART_MAIN | LV_STATE_DEFAULT);
         }
@@ -395,10 +387,10 @@ static void on_ams_btn_edit(lv_event_t *e)
         tray_id = slot_index;                  /* 0-3 */
     }
     ams_edit_set_editing_slot(ams_id, tray_id);
-    /* 現在設定済みの色をロード（MQTT は tray_idx+1 で保存。External は vt_tray で (0,0)。） */
+    /* 現在設定済みの色をロード。254=External, 0-3=AMS */
     if (ams_id == 255)
     {
-        const char *color = get_tray_color(0, 0);
+        const char *color = get_tray_color(0, TRAY_ID_EXTERNAL);
         if (color && color[0] != '\0')
             ams_edit_set_tray_color(color);
     }
@@ -767,13 +759,14 @@ lv_obj_t *ui_amsViewComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_pad_bottom(cui_amsSelectorRow, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     lv_obj_t *cui_amsSelectorDropDown = lv_dropdown_create(cui_amsSelectorRow);
-    lv_dropdown_set_options(cui_amsSelectorDropDown, "EXT\nAMS1\nAMS2\nAMS3\nAMS4");
+    /* 初期はEXTのみ。XTOUCH_ON_AMS_BITSで接続AMSがあれば「EXT+AMS1..」に更新しAMS1を選択 */
+    lv_dropdown_set_options(cui_amsSelectorDropDown, "EXT");
     lv_obj_set_width(cui_amsSelectorDropDown, lv_pct(40));
     lv_obj_set_height(cui_amsSelectorDropDown, lv_pct(90));
     lv_obj_set_style_bg_color(cui_amsSelectorDropDown, lv_color_hex(0x555555), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(cui_amsSelectorDropDown, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_font(cui_amsSelectorDropDown, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_dropdown_set_selected(cui_amsSelectorDropDown, UI_AMS_SELECTOR_AMS1);
+    lv_dropdown_set_selected(cui_amsSelectorDropDown, 0);
     lv_obj_add_event_cb(cui_amsSelectorDropDown, ui_amsViewComponent_on_selector_change, LV_EVENT_VALUE_CHANGED, NULL);
     lv_obj_set_style_text_font(lv_dropdown_get_list(cui_amsSelectorDropDown), lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(lv_dropdown_get_list(cui_amsSelectorDropDown), lv_color_hex(0x666666), LV_PART_MAIN | LV_STATE_DEFAULT);

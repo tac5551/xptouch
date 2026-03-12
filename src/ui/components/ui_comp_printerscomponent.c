@@ -84,16 +84,33 @@ lv_obj_t *ui_printersComponent_create(lv_obj_t *comp_parent)
         lv_obj_set_style_text_color(nameLabel, lv_color_hex(0xDDDDDD), LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_text_font(nameLabel, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
 
+        /* プリンタ名の下: ファイル名（subtask_name）の先頭 */
+        lv_obj_t *subtaskLabel = lv_label_create(rightCol);
+        lv_label_set_text(subtaskLabel, "");
+        lv_obj_set_style_text_color(subtaskLabel, lv_color_hex(0x999999), LV_PART_MAIN | LV_STATE_DEFAULT);
+        /* Small と同じサイズ: 2.8=14px, 5=28px */
+        lv_obj_set_style_text_font(subtaskLabel,
+#if defined(__XTOUCH_SCREEN_28__)
+            &lv_font_notosans_14,
+#else
+            &lv_font_notosans_28,
+#endif
+            LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_label_set_long_mode(subtaskLabel, LV_LABEL_LONG_CLIP);
+
         lv_obj_t *progressBar = lv_slider_create(rightCol);
         lv_slider_set_range(progressBar, 0, 100);
         lv_slider_set_value(progressBar, 0, LV_ANIM_OFF);
         lv_obj_set_width(progressBar, lv_pct(100));
         lv_obj_set_height(progressBar, 14);
         lv_obj_clear_flag(progressBar, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE);
-        lv_obj_set_style_bg_color(progressBar, lv_color_hex(0x444444), LV_PART_MAIN | LV_STATE_DEFAULT);
+        /* 未進捗部分（背景）を行 0x444444 より暗くしてゲージの輪郭が分かるようにする */
+        lv_obj_set_style_bg_color(progressBar, lv_color_hex(0x2a2a2a), LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_bg_opa(progressBar, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_radius(progressBar, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_bg_color(progressBar, lv_color_hex(0xFFFFFF), LV_PART_INDICATOR | LV_STATE_DEFAULT);
         lv_obj_set_style_bg_opa(progressBar, 255, LV_PART_INDICATOR | LV_STATE_DEFAULT);
+        lv_obj_set_style_radius(progressBar, 4, LV_PART_INDICATOR | LV_STATE_DEFAULT);
         lv_obj_set_style_bg_opa(progressBar, 0, LV_PART_KNOB | LV_STATE_DEFAULT);
 
         lv_obj_t *layerLabel = lv_label_create(rightCol);
@@ -103,24 +120,26 @@ lv_obj_t *ui_printersComponent_create(lv_obj_t *comp_parent)
         lv_obj_set_height(layerLabel, LV_SIZE_CONTENT);
         lv_label_set_long_mode(layerLabel, LV_LABEL_LONG_WRAP);
 
-        /* 右端: 一時停止・停止ボタン用エリア（スペース固定、印刷中のみボタン表示） */
+        /* 右端: 一時停止・停止ボタン用エリア（ボタン2つ＋間隔がきれいに収まる幅） */
         lv_obj_t *btnArea = lv_obj_create(row);
-        lv_obj_set_width(btnArea, 120);
+        lv_obj_set_width(btnArea, 130);
         lv_obj_set_height(btnArea, LV_SIZE_CONTENT);
         lv_obj_set_flex_flow(btnArea, LV_FLEX_FLOW_ROW);
         lv_obj_set_flex_align(btnArea, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
-        lv_obj_set_style_pad_column(btnArea, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_pad_column(btnArea, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_bg_opa(btnArea, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_border_width(btnArea, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_clear_flag(btnArea, LV_OBJ_FLAG_SCROLLABLE);
 
         lv_obj_t *pauseBtn = lv_label_create(btnArea);
-        lv_obj_set_width(pauseBtn, 56);
-        lv_obj_set_height(pauseBtn, 40);
+        lv_obj_set_width(pauseBtn, 60);
+        lv_obj_set_height(pauseBtn, 70);
         lv_label_set_text(pauseBtn, "0");
         lv_obj_add_flag(pauseBtn, LV_OBJ_FLAG_CLICKABLE);
         lv_obj_set_style_text_align(pauseBtn, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_text_font(pauseBtn, lv_icon_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_pad_top(pauseBtn, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_pad_bottom(pauseBtn, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_radius(pauseBtn, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_border_width(pauseBtn, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_border_color(pauseBtn, lv_color_hex(0x888888), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -130,12 +149,14 @@ lv_obj_t *ui_printersComponent_create(lv_obj_t *comp_parent)
         lv_obj_add_flag(pauseBtn, LV_OBJ_FLAG_HIDDEN);
 
         lv_obj_t *stopBtn = lv_label_create(btnArea);
-        lv_obj_set_width(stopBtn, 56);
-        lv_obj_set_height(stopBtn, 40);
+        lv_obj_set_width(stopBtn, 60);
+        lv_obj_set_height(stopBtn, 70);
         lv_label_set_text(stopBtn, "1");
         lv_obj_add_flag(stopBtn, LV_OBJ_FLAG_CLICKABLE);
         lv_obj_set_style_text_align(stopBtn, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_text_font(stopBtn, lv_icon_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_pad_top(stopBtn, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_pad_bottom(stopBtn, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_radius(stopBtn, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_border_width(stopBtn, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_border_color(stopBtn, lv_color_hex(0x888888), LV_PART_MAIN | LV_STATE_DEFAULT);

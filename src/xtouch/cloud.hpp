@@ -185,6 +185,8 @@ public:
     *out_max = 0;
     String host = _region == "China" ? "api.bambulab.cn" : "api.bambulab.com";
     String path = String("/v1/iot-service/api/slicer/setting/") + setting_id;
+Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
+  
     String url = String("https://") + host + path;
     WiFiClientSecure &c = sslClient();
     c.stop();
@@ -201,18 +203,19 @@ public:
     int code = http.GET();
     String response = (code == 200) ? http.getString() : "";
     http.end();
+  Serial.printf("[Cloud getSlicerSetting] http code=%d\n", code);
     if (response.length() == 0)
       return false;
     const char *raw = response.c_str();
     size_t raw_len = response.length();
-#ifdef XTOUCH_DEBUG
+// #ifdef XTOUCH_DEBUG
     Serial.printf("[Cloud getSlicerSetting] url=%s\n", url.c_str());
     Serial.printf("[Cloud getSlicerSetting] id=%s raw_len=%u\n", setting_id, (unsigned)raw_len);
     Serial.print("[Cloud getSlicerSetting] raw=");
     for (size_t i = 0; i < raw_len; i++)
       Serial.print(raw[i]);
     Serial.println();
-#endif
+// #endif
     if (response.length() == 0)
       return false;
     *out_min = cloud_parse_json_int_key(raw, raw_len, "nozzle_temperature_range_low");
@@ -387,16 +390,14 @@ public:
     serializeJsonPretty(printers, Serial);
     xtouch_filesystem_writeJson(SD, xtouch_paths_printers, printers);
 
-    // 除外後で選択可能なデバイスだけにする
-    DynamicJsonDocument filteredDoc(4096);
-    JsonArray filtered = filteredDoc.to<JsonArray>();
+    // 除外後件数を数える（filteredDoc を使わずメモリ節約）
+    size_t filteredCount = 0;
     for (JsonVariant v : devices)
     {
-      if (isExcludedProduct(v)) continue;
-      filtered.add(v);
+      if (!isExcludedProduct(v)) filteredCount++;
     }
 
-    if (filtered.size() == 0)
+    if (filteredCount == 0)
     {
       Serial.println("No devices found in Bambu Cloud (or all excluded)");
 
@@ -408,19 +409,31 @@ public:
       return;
     }
 
-    if (filtered.size() == 1)
+    // n 番目（0-based）の非除外デバイスを返す
+    auto getNthNonExcluded = [&devices, &isExcludedProduct](size_t n) -> JsonVariant {
+      size_t idx = 0;
+      for (JsonVariant v : devices)
+      {
+        if (isExcludedProduct(v)) continue;
+        if (idx == n) return v;
+        idx++;
+      }
+      return JsonVariant();
+    };
+
+    if (filteredCount == 1)
     {
-      // auto select the only device
-      setCurrentDevice(filtered[0]["dev_id"].as<String>());
-      setCurrentModel(filtered[0]["dev_model_name"].as<String>());
-      setPrinterName(filtered[0]["name"].as<String>());
+      JsonVariant single = getNthNonExcluded(0);
+      setCurrentDevice(single["dev_id"].as<String>());
+      setCurrentModel(single["dev_model_name"].as<String>());
+      setPrinterName(single["name"].as<String>());
 
       JsonObject currentPrinterSettings = loadPrinters()[xTouchConfig.xTouchSerialNumber]["settings"];
       xTouchConfig.xTouchChamberSensorEnabled = currentPrinterSettings.containsKey("chamberTemp") ? currentPrinterSettings["chamberTemp"].as<bool>() : false;
       xTouchConfig.xTouchAuxFanEnabled = currentPrinterSettings.containsKey("auxFan") ? currentPrinterSettings["auxFan"].as<bool>() : false;
       xTouchConfig.xTouchChamberFanEnabled = currentPrinterSettings.containsKey("chamberFan") ? currentPrinterSettings["chamberFan"].as<bool>() : false;
 
-      savePrinterPair(filtered[0]["dev_id"].as<String>(), filtered[0]["dev_model_name"].as<String>(), filtered[0]["name"].as<String>());
+      savePrinterPair(single["dev_id"].as<String>(), single["dev_model_name"].as<String>(), single["name"].as<String>());
 
       return;
     }
@@ -428,8 +441,9 @@ public:
     loadScreen(5);
 
     String output = "";
-    for (JsonVariant v : filtered)
+    for (JsonVariant v : devices)
     {
+      if (isExcludedProduct(v)) continue;
       Serial.println("\n===========================================");
       serializeJsonPretty(v, Serial);
       output = output + LV_SYMBOL_CHARGE + " " + v["dev_id"].as<String>() + " (" + v["name"].as<String>() + ")\n";
@@ -447,16 +461,17 @@ public:
         lv_task_handler();
       }
       uint16_t currentIndex = lv_roller_get_selected(ui_printerPairScreenRoller);
-      setCurrentDevice(filtered[currentIndex]["dev_id"].as<String>());
-      setCurrentModel(filtered[currentIndex]["dev_model_name"].as<String>());
-      setPrinterName(filtered[currentIndex]["name"].as<String>());
+      JsonVariant selected = getNthNonExcluded(currentIndex);
+      setCurrentDevice(selected["dev_id"].as<String>());
+      setCurrentModel(selected["dev_model_name"].as<String>());
+      setPrinterName(selected["name"].as<String>());
 
       JsonObject currentPrinterSettings = loadPrinters()[xTouchConfig.xTouchSerialNumber]["settings"];
       xTouchConfig.xTouchChamberSensorEnabled = currentPrinterSettings.containsKey("chamberTemp") ? currentPrinterSettings["chamberTemp"].as<bool>() : false;
       xTouchConfig.xTouchAuxFanEnabled = currentPrinterSettings.containsKey("auxFan") ? currentPrinterSettings["auxFan"].as<bool>() : false;
       xTouchConfig.xTouchChamberFanEnabled = currentPrinterSettings.containsKey("chamberFan") ? currentPrinterSettings["chamberFan"].as<bool>() : false;
 
-      savePrinterPair(filtered[currentIndex]["dev_id"].as<String>(), filtered[currentIndex]["dev_model_name"].as<String>(), filtered[currentIndex]["name"].as<String>());
+      savePrinterPair(selected["dev_id"].as<String>(), selected["dev_model_name"].as<String>(), selected["name"].as<String>());
     }
     delete deviceListDocument; // 使い終わったら必ず解放する
     deviceListDocument = nullptr;

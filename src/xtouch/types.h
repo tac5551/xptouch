@@ -158,7 +158,7 @@ extern "C"
     /** 1＝ブランドは固定（Bambu Lab, Generic の2つのみ。_brands.txt は読まない）。 */
     extern int xtouch_filament_use_fixed_brands;
 
-    /** パイプ形式テキスト用バッファ（SD /xtouch/nozzle/ から読み込み）。DRAM 節約のため 3064。 */
+    /** パイプ形式テキスト用バッファ（SD /xtouch/filament/ から読み込み）。DRAM 節約のため 3064。 */
 #define XTOUCH_FILAMENTS_PIPE_BUF_SIZE 1024
     extern char xTouchFilamentsPipeBuf[XTOUCH_FILAMENTS_PIPE_BUF_SIZE];
     extern unsigned int xTouchFilamentsPipeLen;
@@ -193,6 +193,8 @@ extern "C"
  
         bool xTouchStackChanEnabled;
         bool xTouchPreheatEnabled;
+        /** Multi Printer Monitor / Printers 画面を有効にする（デフォルト true）。5inch のみ。 */
+        bool xTouchMultiPrinterMonitorEnabled;
 
         int xTouchNeoPixelNumValue;
         int xTouchNeoPixelBlightnessValue;

@@ -22,6 +22,9 @@ String xtouch_mqtt_report_topic;
 #include "ams.h"
 #include "device.h"
 #include "trays.h"
+#ifdef __XTOUCH_SCREEN_50__
+#include "xtouch/thumbnail.h"
+#endif
 #define XTOUCH_MQTT_SERVER_TIMEOUT 20
 #define XTOUCH_MQTT_SERVER_PUSH_STATUS_TIMEOUT 1800
 #define XTOUCH_MQTT_SERVER_JSON_PARSE_SIZE 4192
@@ -218,7 +221,8 @@ void xtouch_mqtt_processPushStatusOther(int slot, JsonDocument &incomingJson)
         otherPrinters[slot].current_layer = print["layer_num"].as<int>();
     if (print.containsKey("total_layer_num"))
         otherPrinters[slot].total_layers = print["total_layer_num"].as<int>();
-    xtouch_mqtt_sendMsg(XTOUCH_ON_OTHER_PRINTER_UPDATE, (unsigned long long)slot);
+    /* 行インデックスで送る: 0=メイン, 1=他1台目, 2=他2台目。UI の row と一致させる */
+    xtouch_mqtt_sendMsg(XTOUCH_ON_OTHER_PRINTER_UPDATE, (unsigned long long)(slot + 1));
 }
 #endif
 
@@ -269,14 +273,6 @@ void xtouch_mqtt_processPushStatus(JsonDocument &incomingJson)
     if (incomingJson != NULL && incomingJson.containsKey("print"))
     {
 
-        // #pragma region printing
-        // image_url 未使用のためコメントアウト。復元時は下記ブロックの /* と */ を削除し、types.h の image_url 宣言も復元すること
-        /*
-        if (incomingJson["print"].containsKey("url"))
-        {
-            strcpy(bambuStatus.image_url, incomingJson["print"]["url"]);
-        }
-        */
         // #pragma region printing
         if (incomingJson["print"].containsKey("print_gcode_action"))
         {
@@ -471,6 +467,18 @@ void xtouch_mqtt_processPushStatus(JsonDocument &incomingJson)
                 bambuStatus.task_id[sizeof(bambuStatus.task_id) - 1] = '\0';
             }
         }
+#ifdef __XTOUCH_SCREEN_50__
+        /* サムネイル取得用。LAN モードでは cloud 未ログインのため task_id だけでは取得不可。url があれば使用。task_id/subtask_id 処理の後に実行。 */
+        if (incomingJson["print"].containsKey("url"))
+        {
+            const char *url = incomingJson["print"]["url"].as<const char *>();
+            if (url && url[0])
+            {
+                strncpy(bambuStatus.image_url, url, sizeof(bambuStatus.image_url) - 1);
+                bambuStatus.image_url[sizeof(bambuStatus.image_url) - 1] = '\0';
+            }
+        }
+#endif
         // #pragma region print_task
 
         // #pragma region status
@@ -773,9 +781,9 @@ void xtouch_mqtt_processPushStatus(JsonDocument &incomingJson)
                         }
                         if (!loaded)
                         {
-                            xtouch_mqtt_parse_tray(ams_idx, tray_idx + 1, color, 0);
-                            set_tray_type(ams_idx, tray_idx + 1, traytype);
-                            set_tray_color(ams_idx, tray_idx + 1, color);
+                            xtouch_mqtt_parse_tray(ams_idx, tray_idx, color, 0);
+                            set_tray_type(ams_idx, tray_idx, traytype);
+                            set_tray_color(ams_idx, tray_idx, color);
                             set_tray_setting_id(ams_idx, tray_idx, "");
                             continue;
                         }
@@ -784,9 +792,12 @@ void xtouch_mqtt_processPushStatus(JsonDocument &incomingJson)
                         if (trays[tray_idx].containsKey("tray_type"))
                             trays[tray_idx]["tray_type"].as<String>().toCharArray(traytype, 16);
                         color[6] = 0;
-                        xtouch_mqtt_parse_tray(ams_idx, tray_idx + 1, color, 1);
-                        set_tray_type(ams_idx, tray_idx + 1, traytype);
-                        set_tray_color(ams_idx, tray_idx + 1, color);
+                        xtouch_mqtt_parse_tray(ams_idx, tray_idx, color, 1);
+                        /* PushAll 等で type/color が含まれない payload のときは既存表示を維持（空で上書きしない） */
+                        if (traytype[0] != '\0')
+                            set_tray_type(ams_idx, tray_idx, traytype);
+                        if (color[0] != '\0')
+                            set_tray_color(ams_idx, tray_idx, color);
                         if (trays[tray_idx].containsKey("tray_info_idx"))
                         {
                             char sid[TRAY_SETTING_ID_LEN];
@@ -829,8 +840,8 @@ void xtouch_mqtt_processPushStatus(JsonDocument &incomingJson)
                         //     trays[tray_idx].containsKey("nozzle_temp_max") ? 1 : 0,
                         //     trays[tray_idx].containsKey("nozzle_temperature_range_low") ? 1 : 0,
                         //     trays[tray_idx].containsKey("nozzle_temperature_range_high") ? 1 : 0);
-                        set_tray_temp(ams_idx, tray_idx + 1, (nt_max + nt_min) / 2);
-                        set_tray_temp_min_max(ams_idx, tray_idx + 1, (uint16_t)nt_min, (uint16_t)nt_max);
+                        set_tray_temp(ams_idx, tray_idx, (nt_max + nt_min) / 2);
+                        set_tray_temp_min_max(ams_idx, tray_idx, (uint16_t)nt_min, (uint16_t)nt_max);
                     }
                 }
 
@@ -915,7 +926,7 @@ void xtouch_mqtt_processPushStatus(JsonDocument &incomingJson)
             // printf("AMS tray now  %d\n", bambuStatus.m_tray_now);
         }
 
-        // vt_tray
+        /* vt_tray: 254=External */
         if (incomingJson["print"].containsKey("vt_tray"))
         {
             bambuStatus.ams_support_virtual_tray = true;
@@ -926,9 +937,9 @@ void xtouch_mqtt_processPushStatus(JsonDocument &incomingJson)
             incomingJson["print"]["vt_tray"]["tray_color"].as<String>().toCharArray(color, 16);
             incomingJson["print"]["vt_tray"]["tray_type"].as<String>().toCharArray(traytype, 16);
             color[6] = 0;
-            xtouch_mqtt_parse_tray(0, (uint8_t)incomingJson["print"]["vt_tray"]["n"].as<int>(), color, 0);
-            set_tray_type(0, 0, traytype);
-            set_tray_color(0, 0, color);
+            xtouch_mqtt_parse_tray(0, TRAY_ID_EXTERNAL, color, 1);
+            set_tray_type(0, TRAY_ID_EXTERNAL, traytype);
+            set_tray_color(0, TRAY_ID_EXTERNAL, color);
         }
         else
         {
@@ -1027,6 +1038,10 @@ void xtouch_mqtt_parseMessage(char *topic, byte *payload, unsigned int length, b
             {
                 xtouch_mqtt_processPushStatus(incomingJson);
 #ifdef __XTOUCH_SCREEN_50__
+                xtouch_thumbnail_update_path_for_slot(0);
+                /* ホーム表示中に push_status で task_id 取得した場合、サムネイル取得をスケジュール（起動直後印刷中で未取得のとき） */
+                if (xTouchConfig.currentScreenIndex == 0 && bambuStatus.task_id[0] && strcmp(bambuStatus.task_id, "0") != 0)
+                    xtouch_thumbnail_schedule_fetch_all();
                 xtouch_mqtt_sendMsg(XTOUCH_ON_OTHER_PRINTER_UPDATE, 0);
 #endif
             }
@@ -1168,6 +1183,7 @@ static void xtouch_mqtt_connect(const char *username, const char *password, cons
         {
             ConsoleInfo.println(F("[xPTouch][MQTT] ---- CONNECTED ----"));
 
+            /* メイン機の report は常に購読（1台のみのときもこれで push_status を受信） */
             ESP_LOGI("mqtt", "subscribe self report topic: %s", xtouch_mqtt_report_topic.c_str());
             xtouch_pubSubClient.subscribe(xtouch_mqtt_report_topic.c_str());
 #ifdef __XTOUCH_SCREEN_50__

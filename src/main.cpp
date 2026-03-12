@@ -43,9 +43,9 @@
 #include "xtouch/filaments_rev.h"
 #include "ui/ui_events.h"
 
-#if defined(__XTOUCH_SCREEN_28__)
-#include "xtouch/m5Stack.h"
-#endif
+// #if defined(__XTOUCH_SCREEN_28__)
+// #include "xtouch/m5Stack.h"
+// #endif
 
 void xtouch_intro_show(void)
 {
@@ -56,8 +56,8 @@ void xtouch_intro_show(void)
 
 void setup()
 {
-
-#if XTOUCH_USE_SERIAL == true || XTOUCH_DEBUG_ERROR == true || XTOUCH_DEBUG_DEBUG == true || XTOUCH_DEBUG_INFO == true
+  Serial.begin(115200);
+#if defined(XTOUCH_DEBUG) || XTOUCH_USE_SERIAL == true || XTOUCH_DEBUG_ERROR == true || XTOUCH_DEBUG_DEBUG == true || XTOUCH_DEBUG_INFO == true
   Serial.begin(115200);
   ConsoleDebug.println("Serial started");
 #endif
@@ -173,9 +173,9 @@ void setup()
   xtouch_chamber_timer_init();
   xtouch_screen_startScreenTimer();
 
-#if defined(__XTOUCH_SCREEN_28__)
-  xtouch_m5stack_buttons_setup((int)tft.getBoard());
-#endif
+// #if defined(__XTOUCH_SCREEN_28__)
+//   xtouch_m5stack_buttons_setup((int)tft.getBoard());
+// #endif
 }
 
 #ifdef XTOUCH_DEBUG
@@ -199,9 +199,9 @@ void loop()
   // キャラクターアニメーション処理（millis()ベース、タイマー不要）
   xtouch_events_onCharacterAnimation();
 
-#if defined(__XTOUCH_SCREEN_28__)
-  xtouch_m5stack_buttons_loop();
-#endif
+// #if defined(__XTOUCH_SCREEN_28__)
+//   xtouch_m5stack_buttons_loop();
+// #endif
 
 #ifdef XTOUCH_DEBUG
   if (millis() - s_last_heap_log_ms >= HEAP_LOG_INTERVAL_MS)

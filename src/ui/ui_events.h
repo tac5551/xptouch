@@ -62,6 +62,9 @@ extern "C"
     void onOptionalChamberSensor(lv_event_t *e);
     void onOptionalStackChan(lv_event_t *e);
     void onOptionalPreheat(lv_event_t *e);
+#ifdef __XTOUCH_SCREEN_50__
+    void onOptionalMultiPrinterMonitor(lv_event_t *e);
+#endif
     void onOptionalIdleLED(lv_event_t *e);
 
     void onTouchStackChan(lv_event_t *e);

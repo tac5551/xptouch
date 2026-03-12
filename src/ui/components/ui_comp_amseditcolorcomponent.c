@@ -70,7 +70,7 @@ lv_obj_t *ui_amsEditColorComponent_create(lv_obj_t *comp_parent)
             int idx = row * 5 + col;
             lv_obj_t *chip = lv_obj_create(row_obj);
             lv_obj_set_size(chip, 36, 36);
-            lv_obj_set_style_radius(chip, 18, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_radius(chip, 4, LV_PART_MAIN | LV_STATE_DEFAULT); /* ■ Edit 画面同様 */
             lv_obj_set_style_bg_color(chip, lv_color_hex(s_palette_colors[idx] & 0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_bg_opa(chip, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_border_width(chip, 1, LV_PART_MAIN | LV_STATE_DEFAULT);

@@ -95,7 +95,7 @@ static inline void xtouch_filaments_ensure_brands_loaded_impl(void) {
 
     /* ノズルサイズは使わず1セット: filaments_brands.txt */
     char path[96];
-    snprintf(path, sizeof(path), "%s/filaments_brands.txt", xtouch_paths_nozzle_dir);
+    snprintf(path, sizeof(path), "%s/filaments_brands.txt", xtouch_paths_filament_dir);
     if (SD.exists(path) && xtouch_filaments_read_file_to_buf(path)) {
         const char *p = xTouchFilamentsPipeBuf;
         const char *end = p + xTouchFilamentsPipeLen;
@@ -142,7 +142,7 @@ static inline void xtouch_filaments_get_ith_brand_name_impl(int index, char *buf
     }
     if (!xtouch_filament_pipe_holds_brands) {
         char path[96];
-        snprintf(path, sizeof(path), "%s/filaments_brands.txt", xtouch_paths_nozzle_dir);
+        snprintf(path, sizeof(path), "%s/filaments_brands.txt", xtouch_paths_filament_dir);
         if (!xtouch_filaments_read_file_to_buf(path)) return;
         xtouch_filament_pipe_holds_brands = 1;
     }
@@ -181,7 +181,7 @@ static inline void xtouch_filaments_load_type_options_for_display_index_impl(int
     xtouch_filaments_sanitize_brand_for_filename(brand, fname, sizeof(fname));
     /* ノズルなし1セット: filaments_{Brand}.txt（1行＝filament_idごと先頭のsetting_id） */
     char path[96];
-    snprintf(path, sizeof(path), "%s/filaments_%s.txt", xtouch_paths_nozzle_dir, fname);
+    snprintf(path, sizeof(path), "%s/filaments_%s.txt", xtouch_paths_filament_dir, fname);
     xtouch_filament_pipe_holds_brands = 0;
     if (xtouch_filaments_read_file_to_buf(path))
         xtouch_filaments_parse_pipe_into_type_options();
@@ -218,7 +218,7 @@ static inline void xtouch_filaments_get_id_n_for_brand_type_index_impl(int brand
     char fname[20];
     xtouch_filaments_sanitize_brand_for_filename(brand, fname, sizeof(fname));
     char path[96];
-    snprintf(path, sizeof(path), "%s/filaments_%s.txt", xtouch_paths_nozzle_dir, fname);
+    snprintf(path, sizeof(path), "%s/filaments_%s.txt", xtouch_paths_filament_dir, fname);
     if (!xtouch_filaments_read_file_to_buf(path)) return;
     const char *p = xTouchFilamentsPipeBuf;
     const char *end = p + xTouchFilamentsPipeLen;

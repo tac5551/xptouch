@@ -54,6 +54,21 @@ void ui_event_comp_sidebarComponent_sidebarSettingsButton(lv_event_t *e)
     }
 }
 
+#ifdef __XTOUCH_SCREEN_50__
+void ui_sidebarComponent_updatePrintersVisibility(void)
+{
+    if (ui_sidebarComponent == NULL)
+        return;
+    lv_obj_t *btn = ui_comp_get_child(ui_sidebarComponent, UI_COMP_SIDEBARCOMPONENT_SIDEBARPRINTERSBUTTON);
+    if (btn == NULL)
+        return;
+    if (xTouchConfig.xTouchLanOnlyMode || !xTouchConfig.xTouchMultiPrinterMonitorEnabled)
+        lv_obj_add_flag(btn, LV_OBJ_FLAG_HIDDEN);
+    else
+        lv_obj_clear_flag(btn, LV_OBJ_FLAG_HIDDEN);
+}
+#endif
+
 void ui_sidebarComponent_set_active(int index)
 {
     lv_obj_t *target;
@@ -179,11 +194,11 @@ lv_obj_t *ui_sidebarComponent_create(lv_obj_t *comp_parent)
     cui_sidebarPrintersButtonIcon = lv_label_create(cui_sidebarPrintersButton);
     lv_obj_set_width(cui_sidebarPrintersButtonIcon, LV_SIZE_CONTENT);
     lv_obj_set_height(cui_sidebarPrintersButtonIcon, LV_SIZE_CONTENT);
-    lv_label_set_text(cui_sidebarPrintersButtonIcon, "e");
+    lv_label_set_text(cui_sidebarPrintersButtonIcon, "p");
     lv_obj_clear_flag(cui_sidebarPrintersButtonIcon, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN);
     lv_obj_set_scrollbar_mode(cui_sidebarPrintersButtonIcon, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_style_text_font(cui_sidebarPrintersButtonIcon, lv_icon_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
-    if (xTouchConfig.xTouchLanOnlyMode)
+    if (xTouchConfig.xTouchLanOnlyMode || !xTouchConfig.xTouchMultiPrinterMonitorEnabled)
         lv_obj_add_flag(cui_sidebarPrintersButton, LV_OBJ_FLAG_HIDDEN);
 #endif
 

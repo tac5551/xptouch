@@ -122,7 +122,8 @@ int downloadFileToSDCard(const char *url, const char *fileName, void (*onProgres
 #include "xtouch/cloud.hpp"
 #include <SD.h>
 
-/** スロットの task_id をファイル名に使う。無効なら pthumb_N.png。buf に /tmp/XXX.png を書き、xtouch_thumbnail_slot_path[slot] も S: 付きで更新。 */
+/** スロットの task_id をファイル名に使う。無効なら pthumb_N.png。buf に /tmp/XXX.png を書き込む。
+ *  xtouch_thumbnail_slot_path は設定しない（UI 用 path はファイル存在時のみ downloadThumbnailForSlot / xtouch_thumbnail_update_path_for_slot で設定）。 */
 inline void getThumbPathForSlot(int slot, char *buf, size_t len)
 {
     const char *tid = nullptr;
@@ -144,14 +145,10 @@ inline void getThumbPathForSlot(int slot, char *buf, size_t len)
         if (j > 0)
         {
             snprintf(buf, len, "/tmp/%.28s.png", safe);
-            if (slot >= 0 && slot < XTOUCH_THUMB_SLOT_MAX)
-                snprintf(xtouch_thumbnail_slot_path[slot], XTOUCH_THUMB_PATH_LEN, "S:%s", buf);
             return;
         }
     }
     snprintf(buf, len, "/tmp/pthumb_%d.png", slot);
-    if (slot >= 0 && slot < XTOUCH_THUMB_SLOT_MAX)
-        snprintf(xtouch_thumbnail_slot_path[slot], XTOUCH_THUMB_PATH_LEN, "S:%s", buf);
 }
 
 /** 指定スロット(0=メイン, 1..4=他機)のサムネイルを URL から取得し SD に保存。ファイル名は TaskID（既存なら DL しない）。
@@ -253,7 +250,12 @@ inline bool downloadThumbnailForSlot(int slot)
     char path[64];
     getThumbPathForSlot(slot, path, sizeof(path));
     if (SD.exists(path))
-        return true; /* 既に同じ TaskID のファイルがあれば DL しない */
+    {
+        /* 既に同じ TaskID のファイルがあれば DL しない。UI 用 path を設定 */
+        if (slot >= 0 && slot < XTOUCH_THUMB_SLOT_MAX)
+            snprintf(xtouch_thumbnail_slot_path[slot], XTOUCH_THUMB_PATH_LEN, "S:%s", path);
+        return true;
+    }
 #ifdef XTOUCH_DEBUG
     ConsoleDebug.print(F("[xPTouch][THUMB] slot="));
     ConsoleDebug.print(slot);
@@ -309,6 +311,9 @@ inline bool downloadThumbnailForSlot(int slot)
         }
         return false;
     }
+    /* 保存成功。UI 用 path を設定（存在しないファイルを LVGL に渡さない） */
+    if (slot >= 0 && slot < XTOUCH_THUMB_SLOT_MAX)
+        snprintf(xtouch_thumbnail_slot_path[slot], XTOUCH_THUMB_PATH_LEN, "S:%s", path);
     return true;
 }
 

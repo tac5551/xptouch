@@ -201,26 +201,23 @@ void onXTouchNeoPixelMessage(lv_event_t *e)
 
 void onXTouchAMSUpdate(lv_event_t *e)
 {
-
-
     lv_obj_t *target = lv_event_get_target(e);
     lv_msg_t *m = lv_event_get_msg(e);
     uint16_t user_data = (uint16_t)(uintptr_t)lv_event_get_user_data(e);
 
-    struct XTOUCH_MESSAGE_DATA *message = (struct XTOUCH_MESSAGE_DATA *)m->payload;
-
-    uint8_t tmp_ams_id = user_data / 100;
-    uint8_t tmp_tray_id = user_data % 100;
-
-    // printf("onXTouchAMSUpdate %d %d\n", tmp_ams_id, tmp_tray_id);
+    (void)m;
+    /* Home: slot 0=External(254), slot 1-4=AMS1 の tray 0-3。ams_id=0 固定 */
+    uint8_t tmp_ams_id = 0;
+    uint8_t tmp_tray_id = (user_data == 0) ? TRAY_ID_EXTERNAL : (uint8_t)(user_data - 1);
 
     uint64_t tray_status = get_tray_status(tmp_ams_id, tmp_tray_id);
-    uint16_t tray_id = ((tray_status >> 4) & 0x0F);
-    uint16_t loaded = ((tray_status) & 0x01);
+    uint16_t tray_id = (uint16_t)((tray_status >> 4) & 0x0F);
+    uint16_t loaded = (uint16_t)(tray_status & 0x01);
     char *tray_type = get_tray_type(tmp_ams_id, tmp_tray_id);
 
     lv_label_set_text(target, "");
-    if (user_data == tray_id)
+    int match = (tmp_tray_id == TRAY_ID_EXTERNAL) ? 1 : (tmp_tray_id == tray_id);
+    if (match)
     {
         uint32_t color_code = (uint32_t)((tray_status >> 8) & 0xFFFFFF);
         lv_color_t color = (color_code != 0) ? lv_color_hex(color_code) : lv_color_hex(0x444444);
@@ -228,13 +225,8 @@ void onXTouchAMSUpdate(lv_event_t *e)
 
         lv_obj_set_style_bg_color(target, color, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_text_color(target, color_inv, LV_PART_MAIN | LV_STATE_DEFAULT);
-
-        if (tray_id == 0)
-            tray_id = 254 + 1;
-
         lv_obj_set_style_border_color(target, color, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_border_width(target, AMS_BORDER, LV_PART_MAIN | LV_STATE_DEFAULT);
-        /* AMS View と共通: フィラメント無し→X、入ってるが未設定→-、設定済み→tray_type */
         if (!loaded)
             lv_label_set_text(target, "X");
         else if (tray_type && tray_type[0] != '\0' && strcmp(tray_type, "null") != 0)
@@ -242,13 +234,15 @@ void onXTouchAMSUpdate(lv_event_t *e)
         else
             lv_label_set_text(target, "-");
 
-        if (bambuStatus.m_tray_now + 1 == tray_id)
+        int is_current = (tmp_tray_id == TRAY_ID_EXTERNAL && bambuStatus.m_tray_now == TRAY_ID_EXTERNAL) ||
+                        (tmp_tray_id <= 3 && bambuStatus.m_tray_now >= 0 && bambuStatus.m_tray_now <= 15 &&
+                         (uint8_t)(bambuStatus.m_tray_now & 3) == tmp_tray_id);
+        if (is_current)
         {
             lv_obj_set_style_border_color(target, color_inv, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_border_width(target, AMS_BORDER, LV_PART_MAIN | LV_STATE_DEFAULT);
         }
     }
-    (void)message;
 }
 
 void onXTouchBedTemp(lv_event_t *e)
@@ -410,6 +404,34 @@ void onXTouchPrintStatus(lv_event_t *e)
     }
     }
     lv_slider_set_value(comp_homeComponent[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPLAYER_MAINSCREENPROGRESSBAR], bambuStatus.mc_print_percent, LV_ANIM_ON);
+
+#ifdef __XTOUCH_SCREEN_50__
+    {
+        lv_obj_t *subtaskLabel = comp_homeComponent[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPLAYER_MAINSCREENCONTROLLER_MAINSCREENSUBTASKLABEL];
+        if (subtaskLabel)
+        {
+            static char subtaskBuf[24];
+            const char *src = bambuStatus.subtask_name[0] ? bambuStatus.subtask_name : "";
+            int n = 0;
+            while (n < 20 && src[n] != '\0')
+            {
+                subtaskBuf[n] = src[n];
+                n++;
+            }
+            subtaskBuf[n] = '\0';
+            if (src[n] != '\0')
+            {
+                if (n > 3)
+                    n = 17;
+                subtaskBuf[n++] = '.';
+                subtaskBuf[n++] = '.';
+                subtaskBuf[n++] = '.';
+                subtaskBuf[n] = '\0';
+            }
+            lv_label_set_text(subtaskLabel, subtaskBuf);
+        }
+    }
+#endif
 
     char remainingTimeText[48];
     _ui_seconds_to_timeleft(bambuStatus.mc_left_time, remainingTimeText);
@@ -776,17 +798,31 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_text_opa(cui_mainScreenController, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     lv_obj_t *cui_mainScreenNozzleIcon;
-#ifdef __XTOUCH_SCREEN_50__
-    /* 5インチのみ: 左に 150x150 の枠を用意し、非同期でサムネ描画（Printers と同じ slot 配列） */
-    cui_mainScreenNozzleIcon = lv_img_create(cui_mainScreenController);
-    lv_obj_set_width(cui_mainScreenNozzleIcon, 150);
-    lv_obj_set_height(cui_mainScreenNozzleIcon, 150);
-    lv_img_set_size_mode(cui_mainScreenNozzleIcon, LV_IMG_SIZE_MODE_REAL);
-    lv_obj_set_style_bg_color(cui_mainScreenNozzleIcon, lv_color_hex(0x333333), LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_bg_opa(cui_mainScreenNozzleIcon, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_radius(cui_mainScreenNozzleIcon, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
-    ui_thumb_set_img_src_from_slot(cui_mainScreenNozzleIcon, 0);
+#if defined(__XTOUCH_SCREEN_50__)
+    /* 5インチ: 非LAN はサムネイル表示、LAN モードは 2.8 同様ラベルのみ */
+    if (!xTouchConfig.xTouchLanOnlyMode)
+    {
+        cui_mainScreenNozzleIcon = lv_img_create(cui_mainScreenController);
+        lv_obj_set_width(cui_mainScreenNozzleIcon, 150);
+        lv_obj_set_height(cui_mainScreenNozzleIcon, 150);
+        lv_img_set_size_mode(cui_mainScreenNozzleIcon, LV_IMG_SIZE_MODE_REAL);
+        lv_obj_set_style_bg_color(cui_mainScreenNozzleIcon, lv_color_hex(0x333333), LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_bg_opa(cui_mainScreenNozzleIcon, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_radius(cui_mainScreenNozzleIcon, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
+        ui_thumb_set_img_src_from_slot(cui_mainScreenNozzleIcon, 0);
+    }
+    else
+    {
+        cui_mainScreenNozzleIcon = lv_label_create(cui_mainScreenController);
+        lv_obj_set_width(cui_mainScreenNozzleIcon, LV_SIZE_CONTENT);
+        lv_obj_set_height(cui_mainScreenNozzleIcon, LV_SIZE_CONTENT);
+        lv_label_set_text(cui_mainScreenNozzleIcon, "p");
+        lv_obj_clear_flag(cui_mainScreenNozzleIcon, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN);
+        lv_obj_set_scrollbar_mode(cui_mainScreenNozzleIcon, LV_SCROLLBAR_MODE_OFF);
+        lv_obj_set_style_text_font(cui_mainScreenNozzleIcon, lv_icon_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
+    }
 #else
+    /* 2.8: サムネイル非表示 */
     cui_mainScreenNozzleIcon = lv_label_create(cui_mainScreenController);
     lv_obj_set_width(cui_mainScreenNozzleIcon, LV_SIZE_CONTENT);  /// 50
     lv_obj_set_height(cui_mainScreenNozzleIcon, LV_SIZE_CONTENT); /// 24
@@ -796,11 +832,40 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_text_font(cui_mainScreenNozzleIcon, lv_icon_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
 #endif
 
+#if defined(__XTOUCH_SCREEN_50__)
+    /* 5インチ: サムネ右のボタン（横並び）＋subtask ラベル。ラッパーは幅広め。 */
+    lv_obj_t *cui_mainScreenControllerRight = lv_obj_create(cui_mainScreenController);
+    lv_obj_set_width(cui_mainScreenControllerRight, 340);
+    lv_obj_set_height(cui_mainScreenControllerRight, LV_SIZE_CONTENT);
+    lv_obj_set_flex_flow(cui_mainScreenControllerRight, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_flex_align(cui_mainScreenControllerRight, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
+    lv_obj_clear_flag(cui_mainScreenControllerRight, LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN);
+    lv_obj_set_style_bg_opa(cui_mainScreenControllerRight, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(cui_mainScreenControllerRight, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_row(cui_mainScreenControllerRight, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_top(cui_mainScreenControllerRight, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_bottom(cui_mainScreenControllerRight, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    /* Pause と Stop を横並びにする行 */
+    lv_obj_t *cui_mainScreenControllerRightBtnRow = lv_obj_create(cui_mainScreenControllerRight);
+    lv_obj_set_width(cui_mainScreenControllerRightBtnRow, 340);
+    lv_obj_set_height(cui_mainScreenControllerRightBtnRow, LV_SIZE_CONTENT);
+    lv_obj_set_flex_flow(cui_mainScreenControllerRightBtnRow, LV_FLEX_FLOW_ROW);
+    lv_obj_set_flex_align(cui_mainScreenControllerRightBtnRow, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_clear_flag(cui_mainScreenControllerRightBtnRow, LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN);
+    lv_obj_set_style_bg_opa(cui_mainScreenControllerRightBtnRow, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(cui_mainScreenControllerRightBtnRow, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_column(cui_mainScreenControllerRightBtnRow, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+#endif
+
     lv_obj_t *cui_mainScreenPlayPauseButton;
+#if defined(__XTOUCH_SCREEN_50__)
+    cui_mainScreenPlayPauseButton = lv_label_create(cui_mainScreenControllerRightBtnRow);
+#else
     cui_mainScreenPlayPauseButton = lv_label_create(cui_mainScreenController);
+#endif
     lv_obj_set_height(cui_mainScreenPlayPauseButton, LV_SIZE_CONTENT); /// 48
 #ifdef __XTOUCH_SCREEN_50__
-    lv_obj_set_width(cui_mainScreenPlayPauseButton, 140);
+    lv_obj_set_width(cui_mainScreenPlayPauseButton, 120);
 #else
     lv_obj_set_flex_grow(cui_mainScreenPlayPauseButton, 1);
 #endif
@@ -825,10 +890,14 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_bg_opa(cui_mainScreenPlayPauseButton, 255, LV_PART_MAIN | LV_STATE_PRESSED);
 
     lv_obj_t *cui_mainScreenStopButton;
+#if defined(__XTOUCH_SCREEN_50__)
+    cui_mainScreenStopButton = lv_label_create(cui_mainScreenControllerRightBtnRow);
+#else
     cui_mainScreenStopButton = lv_label_create(cui_mainScreenController);
+#endif
     lv_obj_set_height(cui_mainScreenStopButton, LV_SIZE_CONTENT); /// 48
 #ifdef __XTOUCH_SCREEN_50__
-    lv_obj_set_width(cui_mainScreenStopButton, 140);
+    lv_obj_set_width(cui_mainScreenStopButton, 120);
 #else
     lv_obj_set_flex_grow(cui_mainScreenStopButton, 1);
 #endif
@@ -851,6 +920,25 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_pad_column(cui_mainScreenStopButton, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(cui_mainScreenStopButton, lv_color_hex(0xff682a), LV_PART_MAIN | LV_STATE_PRESSED);
     lv_obj_set_style_bg_opa(cui_mainScreenStopButton, 255, LV_PART_MAIN | LV_STATE_PRESSED);
+
+#if defined(__XTOUCH_SCREEN_50__)
+    /* ボタン下に subtask_name の先頭を表示（最大約20文字想定で省略） */
+    lv_obj_t *cui_mainScreenSubtaskLabel = lv_label_create(cui_mainScreenControllerRight);
+    lv_obj_set_width(cui_mainScreenSubtaskLabel, 340);
+    lv_obj_set_height(cui_mainScreenSubtaskLabel, LV_SIZE_CONTENT);
+    lv_obj_set_style_min_height(cui_mainScreenSubtaskLabel, 20, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_label_set_text(cui_mainScreenSubtaskLabel, " ");
+    /* Small と同じサイズ: 2.8=14px, 5=28px */
+    lv_obj_set_style_text_font(cui_mainScreenSubtaskLabel,
+#if defined(__XTOUCH_SCREEN_28__)
+        &lv_font_notosans_14,
+#else
+        &lv_font_notosans_28,
+#endif
+        LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_color(cui_mainScreenSubtaskLabel, lv_color_hex(0xaaaaaa), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_label_set_long_mode(cui_mainScreenSubtaskLabel, LV_LABEL_LONG_CLIP);
+#endif
 
     lv_obj_t *cui_mainScreenProgressBar;
     cui_mainScreenProgressBar = lv_slider_create(cui_mainScreenPlayer);
@@ -1365,12 +1453,20 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
     children[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPLAYER] = cui_mainScreenPlayer;
     children[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPLAYER_MAINSCREENCONTROLLER] = cui_mainScreenController;
     children[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPLAYER_MAINSCREENCONTROLLER_MAINSCREENNOZZLEICON] = cui_mainScreenNozzleIcon;
-#ifdef __XTOUCH_SCREEN_50__
-    lv_msg_subsribe_obj(XTOUCH_ON_OTHER_PRINTER_UPDATE, cui_mainScreenNozzleIcon, NULL);
-    lv_obj_add_event_cb(cui_mainScreenNozzleIcon, ui_event_home_thumb_update, LV_EVENT_MSG_RECEIVED, NULL);
+#if defined(__XTOUCH_SCREEN_50__)
+    if (!xTouchConfig.xTouchLanOnlyMode)
+    {
+        lv_msg_subsribe_obj(XTOUCH_ON_OTHER_PRINTER_UPDATE, cui_mainScreenNozzleIcon, NULL);
+        lv_obj_add_event_cb(cui_mainScreenNozzleIcon, ui_event_home_thumb_update, LV_EVENT_MSG_RECEIVED, NULL);
+    }
 #endif
     children[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPLAYER_MAINSCREENCONTROLLER_MAINSCREENPLAYPAUSEBUTTON] = cui_mainScreenPlayPauseButton;
     children[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPLAYER_MAINSCREENCONTROLLER_MAINSCREENSTOPBUTTON] = cui_mainScreenStopButton;
+#if defined(__XTOUCH_SCREEN_50__)
+    children[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPLAYER_MAINSCREENCONTROLLER_MAINSCREENSUBTASKLABEL] = cui_mainScreenSubtaskLabel;
+#else
+    children[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPLAYER_MAINSCREENCONTROLLER_MAINSCREENSUBTASKLABEL] = NULL;
+#endif
     children[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPLAYER_MAINSCREENPROGRESSBAR] = cui_mainScreenProgressBar;
     children[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPLAYER_MAINSCREENCONTROLLER1] = cui_mainScreenController1;
     children[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPLAYER_MAINSCREENCONTROLLER1_MAINSCREENTIMELEFTICON] = cui_mainScreenTimeLeftIcon;

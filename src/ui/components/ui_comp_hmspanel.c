@@ -209,6 +209,8 @@ lv_obj_t *ui_hmsPanel_create(lv_obj_t *comp_parent)
     lv_obj_set_flex_grow(cui_hmsPanelCaption, 1);
     lv_label_set_text(cui_hmsPanelCaption, "Are you sure?");
     lv_label_set_long_mode(cui_hmsPanelCaption, LV_LABEL_LONG_WRAP);
+    /* フォントを明示しないと LV_FONT_DEFAULT（14px）が使われてボタンより小さく見える。ボタンラベルと同じ lv_font_small に揃える。 */
+    lv_obj_set_style_text_font(cui_hmsPanelCaption, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_clear_flag(cui_hmsPanelCaption, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN); /// Flags
     lv_obj_set_scrollbar_mode(cui_hmsPanelCaption, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_style_pad_left(cui_hmsPanelCaption, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
