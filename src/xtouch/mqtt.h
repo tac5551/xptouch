@@ -1326,6 +1326,7 @@ static void xtouch_mqtt_subscribe_commands(void)
     lv_msg_subscribe(XTOUCH_COMMAND_AMS_CONTROL, (lv_msg_subscribe_cb_t)xtouch_device_command_ams_control, NULL);
     /* ローカル/クラウドどちらでも AMS ロード・アンロードは gcode_line で送るため常に購読 */
     lv_msg_subscribe(XTOUCH_COMMAND_AMS_LOAD_SLOT, (lv_msg_subscribe_cb_t)xtouch_device_command_ams_load, NULL);
+    lv_msg_subscribe(XTOUCH_COMMAND_GCODE_M620_R, (lv_msg_subscribe_cb_t)xtouch_device_command_m620_r, NULL);
     lv_msg_subscribe(XTOUCH_COMMAND_AMS_UNLOAD_SLOT, (lv_msg_subscribe_cb_t)xtouch_device_command_ams_unload, NULL);
     lv_msg_subscribe(XTOUCH_COMMAND_AMS_REFRESH, (lv_msg_subscribe_cb_t)xtouch_device_command_ams_refresh, NULL);
     lv_msg_subscribe(XTOUCH_COMMAND_AMS_FILAMENT_SETTING, (lv_msg_subscribe_cb_t)xtouch_device_command_ams_filament_setting, NULL);

@@ -197,7 +197,7 @@ extern "C"
         bool xTouchMultiPrinterMonitorEnabled;
 
         int xTouchNeoPixelNumValue;
-        int xTouchNeoPixelBlightnessValue;
+        int xTouchNeoPixelBrightnessValue;
         int xTouchNeoPixelPinValue;
 
         int xTouchAlarmTimeoutValue;

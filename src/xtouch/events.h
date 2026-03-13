@@ -85,12 +85,12 @@ void xtouch_events_onLEDOffTimerSet(lv_msg_t *m)
 
 
 
-void xtouch_events_onNeoPixelBlightnessSet(lv_msg_t *m)
+void xtouch_events_onNeoPixelBrightnessSet(lv_msg_t *m)
 {
-    int32_t value = lv_slider_get_value(ui_optionalNeoPixelBlightnessSlider);
+    int32_t value = lv_slider_get_value(ui_optionalNeoPixelBrightnessSlider);
     DynamicJsonDocument settings = xtouch_filesystem_readJson(SD, xtouch_paths_settings);
-    settings["neoPixelBlightness"] = value;
-    xTouchConfig.xTouchNeoPixelBlightnessValue = value;
+    settings["neoPixelBrightness"] = value;
+    xTouchConfig.xTouchNeoPixelBrightnessValue = value;
     xtouch_filesystem_writeJson(SD, xtouch_paths_settings, settings);
     xtouch_neo_pixel_set_brightness(value);
 }
@@ -184,14 +184,14 @@ void xtouch_setupGlobalEvents()
     lv_msg_subscribe(XTOUCH_SETTINGS_TFTOFF_SET, (lv_msg_subscribe_cb_t)xtouch_events_onTFTTimerSet, NULL);
     lv_msg_subscribe(XTOUCH_SETTINGS_LEDOFF_SET, (lv_msg_subscribe_cb_t)xtouch_events_onLEDOffTimerSet, NULL);
     // lv_msg_subscribe(XTOUCH_SETTINGS_NEOPIXEL_NUM_SET, (lv_msg_subscribe_cb_t)xtouch_events_onNeoPixelNumSet, NULL);
-    // lv_msg_subscribe(XTOUCH_SETTINGS_NEOPIXEL_SET, (lv_msg_subscribe_cb_t)xtouch_events_onNeoPixelBlightnessSet, NULL);
+    // lv_msg_subscribe(XTOUCH_SETTINGS_NEOPIXEL_SET, (lv_msg_subscribe_cb_t)xtouch_events_onNeoPixelBrightnessSet, NULL);
     lv_msg_subscribe(XTOUCH_SETTINGS_TFT_INVERT, (lv_msg_subscribe_cb_t)xtouch_events_onTFTInvert, NULL);
     lv_msg_subscribe(XTOUCH_SETTINGS_SAVE, (lv_msg_subscribe_cb_t)xtouch_events_onSettingsSave, NULL);
     // lv_msg_subscribe(XTOUCH_SETTINGS_CHAMBER_TEMP, (lv_msg_subscribe_cb_t)xtouch_events_onChamberTempSwitch, NULL);
     lv_msg_subscribe(XTOUCH_SETTINGS_TFT_FLIP, (lv_msg_subscribe_cb_t)xtouch_events_onTFTFlip, NULL);
 
     lv_msg_subscribe(XTOUCH_OPTIONAL_NEOPIXEL_NUM_SET, (lv_msg_subscribe_cb_t)xtouch_events_onNeoPixelNumSet, NULL);
-    lv_msg_subscribe(XTOUCH_OPTIONAL_NEOPIXEL_SET, (lv_msg_subscribe_cb_t)xtouch_events_onNeoPixelBlightnessSet, NULL);
+    lv_msg_subscribe(XTOUCH_OPTIONAL_NEOPIXEL_SET, (lv_msg_subscribe_cb_t)xtouch_events_onNeoPixelBrightnessSet, NULL);
     lv_msg_subscribe(XTOUCH_OPTIONAL_CHAMBER_TEMP, (lv_msg_subscribe_cb_t)xtouch_events_onChamberTempSwitch, NULL);
     lv_msg_subscribe(XTOUCH_OPTIONAL_ALARM_TIMEOUT_SET, (lv_msg_subscribe_cb_t)xtouch_events_onAlarmTimeoutSet, NULL);
     lv_msg_subscribe(XTOUCH_OPTIONAL_IDLE_LED_SET, (lv_msg_subscribe_cb_t)xtouch_events_onIdleLEDSwitch, NULL);

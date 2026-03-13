@@ -478,38 +478,55 @@ void xtouch_device_onNozzleDown(lv_msg_t *m)
 
 void xtouch_device_onLoadFilament(lv_msg_t *m)
 {
-    if (xtouch_can_load_filament())
-    {
-        xtouch_device_gcode_line("M620 S254\nM106 S255\nM104 S250\nM17 S\nM17 X0.5 Y0.5\nG91\nG1 Y-5 F1200\nG1 Z3\nG90\nG28 X\nM17 R\nG1 X70 F21000\nG1 Y245\nG1 Y265 F3000\nG4\nM106 S0\nM109 S250\nG1 X90\nG1 Y255\nG1 X120\nG1 X20 Y50 F21000\nG1 Y-3\nT254\nG1 X54\nG1 Y265\nG92 E0\nG1 E40 F180\nG4\nM104 S0\nG1 X70 F15000\nG1 X76\nG1 X65\nG1 X76\nG1 X65\nG1 X90 F3000\nG1 Y255\nG1 X100\nG1 Y265\nG1 X70 F10000\nG1 X100 F5000\nG1 X70 F10000\nG1 X100 F5000\nG1 X165 F12000\nG1 Y245\nG1 X70\nG1 Y265 F3000\nG91\nG1 Z-3 F1200\nG90\nM621 S254\n\n");
-    }
-    else
+    (void)m;
+    if (!xtouch_can_load_filament())
     {
         printf("can't load filament right now\n");
-        printf("bambuStatus.ams_status_main %d\n", bambuStatus.ams_status_main);
-        printf("bambuStatus.hw_switch_state %d\n", bambuStatus.hw_switch_state);
-        printf("bambuStatus.m_tray_now %d\n", bambuStatus.m_tray_now);
+        return;
     }
+    /* EXT(254) ロード: 設定済み温度を使用し MQTT ams_change_filament で送る */
+    uint16_t tar_temp = get_tray_temp(0, TRAY_ID_EXTERNAL);
+    const char *tray_type = get_tray_type(0, TRAY_ID_EXTERNAL);
+    if (tar_temp < 100 || !tray_type || !tray_type[0] || strcmp(tray_type, "null") == 0)
+    {
+        ui_confirmPanel_show(LV_SYMBOL_WARNING " Set filament type and temperature\nin AMS View / Edit first.", ui_confirmPanel_hide);
+        return;
+    }
+    DynamicJsonDocument json(256);
+    json["print"]["command"] = "ams_change_filament";
+    json["print"]["sequence_id"] = xtouch_device_next_sequence();
+    json["print"]["target"] = 254;
+    json["print"]["ams_id"] = 254;
+    json["print"]["slot_id"] = 0;
+    json["print"]["curr_temp"] = (int)bambuStatus.nozzle_temper;
+    json["print"]["tar_temp"] = (int)tar_temp;
+    String result;
+    serializeJson(json, result);
+    xtouch_device_publish(result);
 }
 
 void xtouch_device_onUnloadFilament(lv_msg_t *m)
 {
-    if (xtouch_bblp_is_x1Series() && !bambuStatus.ams_support_virtual_tray)
+    printf("xtouch_device_onUnloadFilament\n");
+    // if (xtouch_bblp_is_x1Series() && !bambuStatus.ams_support_virtual_tray)
+    // {
+    //     printf("xtouch_bblp_is_x1Series() && !bambuStatus.ams_support_virtual_tray\n");
+    //     DynamicJsonDocument json(256);
+    //     json["print"]["command"] = "gcode_file";
+    //     json["print"]["param"] = "/usr/etc/print/filament_unload.gcode";
+    //     json["print"]["sequence_id"] = xtouch_device_next_sequence();
+    //     String result;
+    //     serializeJson(json, result);
+    //     xtouch_device_publish(result);
+    // }
+    // else if (xtouch_bblp_is_p1Series() || (xtouch_bblp_is_x1Series() && bambuStatus.ams_support_virtual_tray))
+    // {
+    //     printf("xtouch_bblp_is_p1Series() || (xtouch_bblp_is_x1Series() && bambuStatus.ams_support_virtual_tray)\n");
+    //     xtouch_device_gcode_line("M620 S255\nM106 P1 S255\nM104 S250\nM17 S\nM17 X0.5 Y0.5\nG91\nG1 Y-5 F3000\nG1 Z3 F1200\nG90\nG28 X\nM17 R\nG1 X70 F21000\nG1 Y245\nG1 Y265 F3000\nG4\nM106 P1 S0\nM109 S250\nG1 X90 F3000\nG1 Y255 F4000\nG1 X100 F5000\nG1 X120 F21000\nG1 X20 Y50\nG1 Y-3\nT255\nG4\nM104 S0\nG1 X70 F3000\n\nG91\nG1 Z-3 F1200\nG90\nM621 S255\n\n");
+    // }
+    // else
     {
-
-        DynamicJsonDocument json(256);
-        json["print"]["command"] = "gcode_file";
-        json["print"]["param"] = "/usr/etc/print/filament_unload.gcode";
-        json["print"]["sequence_id"] = xtouch_device_next_sequence();
-        String result;
-        serializeJson(json, result);
-        xtouch_device_publish(result);
-    }
-    else if (xtouch_bblp_is_p1Series() || (xtouch_bblp_is_x1Series() && bambuStatus.ams_support_virtual_tray))
-    {
-        xtouch_device_gcode_line("M620 S255\nM106 P1 S255\nM104 S250\nM17 S\nM17 X0.5 Y0.5\nG91\nG1 Y-5 F3000\nG1 Z3 F1200\nG90\nG28 X\nM17 R\nG1 X70 F21000\nG1 Y245\nG1 Y265 F3000\nG4\nM106 P1 S0\nM109 S250\nG1 X90 F3000\nG1 Y255 F4000\nG1 X100 F5000\nG1 X120 F21000\nG1 X20 Y50\nG1 Y-3\nT255\nG4\nM104 S0\nG1 X70 F3000\n\nG91\nG1 Z-3 F1200\nG90\nM621 S255\n\n");
-    }
-    else
-    {
+        printf("xtouch_device_onUnloadFilament\n");
         DynamicJsonDocument json(256);
         json["print"]["command"] = "unload_filament";
         json["print"]["sequence_id"] = xtouch_device_next_sequence();
@@ -541,6 +558,7 @@ void xtouch_device_command_ams_control(void *s, lv_msg_t *m)
 
 void xtouch_device_command_ams_load(void *s, lv_msg_t *m)
 {
+    (void)s;
     const void *payload = m->payload;
     uint16_t slot = payload ? (uint16_t)(unsigned long)payload - 1 : 0;
     uint8_t tmp_ams_id = slot / 100;
@@ -555,36 +573,35 @@ void xtouch_device_command_ams_load(void *s, lv_msg_t *m)
         return;
     }
 
-    const char *tray_type = get_tray_type(tmp_ams_id, tmp_slot_id); /* 0-3=AMS */
-    if (!tray_type || strcmp(tray_type, "null") == 0)
+    const char *tray_type = get_tray_type(tmp_ams_id, tmp_slot_id);
+    if (!tray_type || !tray_type[0] || strcmp(tray_type, "null") == 0)
     {
-        Serial.println(F("[AMS load] skip: tray_type null"));
-        xtouch_device_pushall();
+        ui_confirmPanel_show(LV_SYMBOL_WARNING " Set filament type and temperature\nin AMS View / Edit first.", ui_confirmPanel_hide);
         return;
     }
 
-    Serial.println(F("[AMS load] sending unload+load gcode"));
+    /* スロット毎に設定した材質温度（ABS/PLA等）を使用。get_tray_temp は AMS Edit / MQTT で設定された値 */
+    uint16_t tar_temp = get_tray_temp(tmp_ams_id, tmp_slot_id);
+    if (tar_temp < 100)
+        tar_temp = 0;
+
     bambuStatus.ams_status_main = AMS_STATUS_MAIN_FILAMENT_CHANGE;
     struct XTOUCH_MESSAGE_DATA eventData;
     eventData.data = 0;
     lv_msg_send(XTOUCH_ON_AMS_SLOT_UPDATE, &eventData);
     lv_msg_send(XTOUCH_ON_AMS_STATE_UPDATE, &eventData);
 
-    /* フィラメントがロードされているときだけアンロードを実行。0-15=AMS, 254=手動ロード, 255=未ロード */
-    bool filament_loaded = (bambuStatus.m_tray_now >= 0 && bambuStatus.m_tray_now <= 15) || (bambuStatus.m_tray_now == 254);
-    if (filament_loaded)
-    {
-        xtouch_device_gcode_line(ams_unload_gcode);
-    }
-    /* トレイ材質温度。未取得(0)や異常に低い値のときは 0（ノズルOFF） */
-    uint16_t load_temp = get_tray_temp(tmp_ams_id, tmp_slot_id);
-    if (load_temp < 100)
-    {
-        load_temp = 0;
-    }
-    memset(ams_gcode_buffer, 0, 700);
-    sprintf(ams_gcode_buffer, ams_load_gcode, tray_index, tray_index, load_temp, tray_index);
-    xtouch_device_gcode_line(ams_gcode_buffer);
+    DynamicJsonDocument json(256);
+    json["print"]["command"] = "ams_change_filament";
+    json["print"]["sequence_id"] = xtouch_device_next_sequence();
+    json["print"]["ams_id"] = tmp_ams_id;
+    json["print"]["slot_id"] = tray_index;
+    json["print"]["curr_temp"] = (int)tar_temp; /* スロット設定温度（材質に応じた温度） */
+    json["print"]["tar_temp"] = (int)tar_temp;
+    json["print"]["target"] = tray_index;
+    String result;
+    serializeJson(json, result);
+    xtouch_device_publish(result);
 }
 
 void xtouch_device_command_ams_unload(void *s, lv_msg_t *m)
@@ -602,6 +619,18 @@ void xtouch_device_command_ams_unload(void *s, lv_msg_t *m)
     lv_msg_send(XTOUCH_ON_AMS_STATE_UPDATE, &eventData);
 
     xtouch_device_gcode_line(ams_unload_gcode);
+}
+
+/** payload = (void*)(uintptr_t)tray_index。AMS1=0-3, AMS2=4-7, AMS3=8-11, AMS4=12-15。EXT=254。M620 R<tray_index> を gcode_line で送る */
+void xtouch_device_command_m620_r(void *s, lv_msg_t *m)
+{
+    (void)s;
+    uint16_t tray_index = m->payload ? (uint16_t)(uintptr_t)m->payload : 0;
+    if (tray_index > 15 && tray_index != 254)
+        return;
+    char buf[32];
+    snprintf(buf, sizeof(buf), "M620 R%u \n", (unsigned)tray_index);
+    xtouch_device_gcode_line(String(buf));
 }
 
 static char s_ams_fetch_pending_id[16];

@@ -118,21 +118,21 @@ void ui_event_comp_settingsComponent_onLEDOFF(lv_event_t *e)
 //    }
 // }
 
-// void ui_event_comp_settingsComponent_onNeoPixelBlightness(lv_event_t *e)
+// void ui_event_comp_settingsComponent_onNeoPixelBrightness(lv_event_t *e)
 // {
 //     lv_event_code_t event_code = lv_event_get_code(e);
 //     if (event_code == LV_EVENT_VALUE_CHANGED)
 //     {
-//         uint32_t value = lv_slider_get_value(ui_settingsNeoPixelBlightnessSlider);
-//         lv_label_set_text_fmt(ui_settingsNeoPixelBlightnessValue, "%dm", value);
+//         uint32_t value = lv_slider_get_value(ui_settingsNeoPixelBrightnessSlider);
+//         lv_label_set_text_fmt(ui_settingsNeoPixelBrightnessValue, "%dm", value);
 //         if (value < XTOUCH_LIGHT_MIN_SLEEP_TIME)
 //         {
-//             printf("onNeoPixelBlightness OFFSIMBOLE");
-//             lv_label_set_text(ui_settingsNeoPixelBlightnessValue, LV_SYMBOL_POWER);
+//             printf("onNeoPixelBrightness OFFSIMBOLE");
+//             lv_label_set_text(ui_settingsNeoPixelBrightnessValue, LV_SYMBOL_POWER);
 //         }
 //         else
 //         {
-//             lv_label_set_text_fmt(ui_settingsNeoPixelBlightnessValue, "%d", value);
+//             lv_label_set_text_fmt(ui_settingsNeoPixelBrightnessValue, "%d", value);
 //         }
 //     }
 //     if (event_code == LV_EVENT_RELEASED)
@@ -727,7 +727,7 @@ lv_obj_t *ui_settingsComponent_create(lv_obj_t *comp_parent)
     lv_obj_add_event_cb(ui_settingsLEDOFFSlider, ui_event_comp_settingsComponent_onLEDOFF, LV_EVENT_ALL, NULL);
 
     //lv_obj_add_event_cb(ui_settingsNeoPixelNumSlider, ui_event_comp_settingsComponent_onNeoPixelNum, LV_EVENT_ALL, NULL);
-    //lv_obj_add_event_cb(ui_settingsNeoPixelBlightnessSlider, ui_event_comp_settingsComponent_onNeoPixelBlightness, LV_EVENT_ALL, NULL);
+    //lv_obj_add_event_cb(ui_settingsNeoPixelBrightnessSlider, ui_event_comp_settingsComponent_onNeoPixelBrightness, LV_EVENT_ALL, NULL);
 
 
     lv_obj_add_event_cb(ui_settingsBackLightPanelSlider, ui_event_comp_settingsComponent_onBackLight, LV_EVENT_ALL, NULL);

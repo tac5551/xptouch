@@ -80,8 +80,8 @@ extern "C"
   lv_obj_t *ui_settingsLEDOFFValue;
   // lv_obj_t *ui_settingsNeoPixelNumSlider;
   // lv_obj_t *ui_settingsNeoPixelNumValue;
-  // lv_obj_t *ui_settingsNeoPixelBlightnessSlider;
-  // lv_obj_t *ui_settingsNeoPixelBlightnessValue;
+  // lv_obj_t *ui_settingsNeoPixelBrightnessSlider;
+  // lv_obj_t *ui_settingsNeoPixelBrightnessValue;
   lv_obj_t *ui_settingsTFTInvertSwitch;
   lv_obj_t *ui_settingsWOPSwitch;
   lv_obj_t *ui_settingsWDPSWitch;
@@ -95,8 +95,8 @@ extern "C"
   lv_obj_t *ui_optionalComponent;
   lv_obj_t *ui_optionalNeoPixelNumSlider;
   lv_obj_t *ui_optionalNeoPixelNumValue;
-  lv_obj_t *ui_optionalNeoPixelBlightnessSlider;
-  lv_obj_t *ui_optionalNeoPixelBlightnessValue;
+  lv_obj_t *ui_optionalNeoPixelBrightnessSlider;
+  lv_obj_t *ui_optionalNeoPixelBrightnessValue;
   lv_obj_t *ui_optionalAlarmTimeoutSlider;
   lv_obj_t *ui_optionalAlarmTimeoutValue;
   lv_obj_t *ui_optional_chamberSensorSwitch;

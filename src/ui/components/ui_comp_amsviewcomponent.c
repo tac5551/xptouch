@@ -166,6 +166,7 @@ static void ui_amsViewComponent_onAmsLockSyncButtons(lv_event_t *e)
         /* i>=1 がスロット 0..3 の btn_row。フィラメント有無で EDIT/LOAD を表示/非表示。EDIT は Brand ファイルあり時のみ表示。EXT 時はフィラメント有無問わず表示 */
         int loaded = 0;
         int is_ext_slot = 0;
+        int tray_index = -1; /* この行の tray_index。LOAD が現在ロード中なら無効化する用 */
         if (i >= 1)
         {
             uint8_t slot_index = (uint8_t)(i - 1);
@@ -173,17 +174,23 @@ static void ui_amsViewComponent_onAmsLockSyncButtons(lv_event_t *e)
             {
                 is_ext_slot = (slot_index == 0) ? 1 : 0;
                 loaded = is_ext_slot ? (int)((get_tray_status(0, TRAY_ID_EXTERNAL) & 0x01) != 0) : 0;
+                if (is_ext_slot)
+                    tray_index = (int)TRAY_ID_EXTERNAL; /* 254 */
             }
             else
+            {
                 loaded = (int)((get_tray_status((uint8_t)(s_ams_view_selector - 1), (uint8_t)slot_index) & 0x01) != 0);
+                tray_index = (int)(s_ams_view_selector - 1) * 4 + (int)slot_index; /* 0-15 */
+            }
         }
+        int is_current_tray = (tray_index >= 0 && (uint16_t)tray_index == (uint16_t)bambuStatus.m_tray_now);
         for (uint32_t j = 0; j < m; j++)
         {
             lv_obj_t *btn = lv_obj_get_child(btn_row, j);
-            /* EDIT(j==0) は Brand ファイルあり時表示。LOAD(j==1) はフィラメントあり or EXT で表示 */
+            /* EDIT(j==0) は Brand ファイルあり時表示。LOAD(j==1) はフィラメントあり or EXT で表示。LOAD は m_tray_now 一致時は押せない */
             int show_edit = (i >= 1) && bambuStatus.has_public_filaments && (is_ext_slot || loaded);
             int show_load = (i >= 1) && (is_ext_slot || loaded);
-            int disabled = global_disabled || (i >= 1 && (j == 0 ? !show_edit : !show_load));
+            int disabled = global_disabled || (i >= 1 && (j == 0 ? !show_edit : !show_load)) || (j == 1 && is_current_tray);
             if (disabled)
                 lv_obj_add_state(btn, LV_STATE_DISABLED);
             else
@@ -198,14 +205,25 @@ static void ui_amsViewComponent_onAmsLockSyncButtons(lv_event_t *e)
     }
 }
 
-/* 1組のスロットクリック用: user_data=slot_index(0-3)、表示中選択子に応じてスロットIDを渡してLOAD */
-static void onAmsSlotClickUnified(lv_event_t *e)
+/* スロット■（色）クリック: M620 R<tray_index> を送る。AMS1=0-3, AMS2=4-7, AMS3=8-11, AMS4=12-15, EXT=254 */
+static void onAmsSlotColorClick(lv_event_t *e)
 {
     if (lv_event_get_code(e) != LV_EVENT_CLICKED)
         return;
     uintptr_t ud = (uintptr_t)lv_event_get_user_data(e);
     uint8_t slot_index = (uint8_t)(ud & 3);
-    int slot_id = (s_ams_view_selector == UI_AMS_SELECTOR_EXT) ? TRAY_ID_EXTERNAL : ((int)(s_ams_view_selector - 1) * 100 + slot_index);
+    uint16_t tray_index = (s_ams_view_selector == UI_AMS_SELECTOR_EXT) ? (uint16_t)TRAY_ID_EXTERNAL : (uint16_t)((s_ams_view_selector - 1) * 4 + slot_index);
+    lv_msg_send(XTOUCH_COMMAND_GCODE_M620_R, (void *)(uintptr_t)tray_index);
+}
+
+/* 2段目 LOAD ボタン用: user_data=slot_index(0-3)。device は payload-1 で 0-based にするので 1-based(1-4) で渡す */
+static void onAmsSlotClickUnified(lv_event_t *e)
+{
+    if (lv_event_get_code(e) != LV_EVENT_CLICKED)
+        return;
+    uintptr_t ud = (uintptr_t)lv_event_get_user_data(e);
+    uint8_t slot_index = (uint8_t)(ud & 3); /* 0-3 */
+    int slot_id = (s_ams_view_selector == UI_AMS_SELECTOR_EXT) ? TRAY_ID_EXTERNAL : ((int)(s_ams_view_selector - 1) * 100 + (slot_index + 1));
     onAmsSlotLoad(e, slot_id);
 }
 
@@ -1054,9 +1072,11 @@ lv_obj_t *ui_amsViewComponent_create(lv_obj_t *comp_parent)
     lv_obj_add_event_cb(cui_amsViewComponent, ui_amsViewComponent_onAMSBitsSyncDropdown, LV_EVENT_MSG_RECEIVED, NULL);
     lv_msg_subsribe_obj(XTOUCH_ON_AMS_BITS, cui_amsViewComponent, NULL);
 
-    lv_obj_add_event_cb(cui_AmsSlot1_2, onAmsSlotClickUnified, LV_EVENT_CLICKED, (void *)1);
-    lv_obj_add_event_cb(cui_AmsSlot1_3, onAmsSlotClickUnified, LV_EVENT_CLICKED, (void *)2);
-    lv_obj_add_event_cb(cui_AmsSlot1_4, onAmsSlotClickUnified, LV_EVENT_CLICKED, (void *)3);
+    /* スロット■クリック → M620 R<tray_index> (AMS1=0-3, AMS2=4-7, …) */
+    lv_obj_add_event_cb(cui_AmsSlot1_1, onAmsSlotColorClick, LV_EVENT_CLICKED, (void *)0);
+    lv_obj_add_event_cb(cui_AmsSlot1_2, onAmsSlotColorClick, LV_EVENT_CLICKED, (void *)1);
+    lv_obj_add_event_cb(cui_AmsSlot1_3, onAmsSlotColorClick, LV_EVENT_CLICKED, (void *)2);
+    lv_obj_add_event_cb(cui_AmsSlot1_4, onAmsSlotColorClick, LV_EVENT_CLICKED, (void *)3);
 
     // Humidity: 1組のラベルを選択子に応じて更新
     lv_obj_add_event_cb(cui_AmsHumid1, ui_event_comp_amsViewComponent_onAmsHumidityUnified, LV_EVENT_MSG_RECEIVED, NULL);

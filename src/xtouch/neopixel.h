@@ -55,8 +55,8 @@ int flowing_position = 0;    // 流れる光の位置
 int fade_counter = 0;        // フェードカウンター
 int fade_direction = 1;      // フェード方向（1: フェードイン, -1: フェードアウト）
 
-int blightness_max = 32;
-int blightness_min = 2;
+int brightness_max = 32;
+int brightness_min = 2;
 int flowing_speed = 8; // より滑らかな移動のため増加
 const int timer_tick = 5;
 
@@ -180,7 +180,7 @@ void xtouch_neo_pixel_reset_all()
 }
 void xtouch_neo_pixel_set_brightness(int brightness)
 {
-    blightness_max = brightness;
+    brightness_max = brightness;
 }
 
 void xtouch_neo_pixel_set_pettern(int pattern)
@@ -385,7 +385,7 @@ void xtouch_neo_pixel_control_timer_handler(lv_timer_t *timer)
     int fade_interval = 1000;
 
     // Setting の明るさが0の場合は無条件でOFF
-    if (xTouchConfig.xTouchNeoPixelBlightnessValue <= 5)
+    if (xTouchConfig.xTouchNeoPixelBrightnessValue <= 5)
     {
         xtouch_neo_pixel_off();
         // ステータス変更フラグをリセット
@@ -420,9 +420,9 @@ void xtouch_neo_pixel_control_timer_handler(lv_timer_t *timer)
             fade_progress = 255 - fade_progress; // フェードアウト
         }
 
-        // フェード計算（blightness_min から blightness_max の範囲）
-        brightness_range = blightness_max - blightness_min;
-        current_brightness = blightness_min + (fade_progress * brightness_range) / 255;
+        // フェード計算（brightness_min から brightness_max の範囲）
+        brightness_range = brightness_max - brightness_min;
+        current_brightness = brightness_min + (fade_progress * brightness_range) / 255;
 
         current_red = (led_color[0] * current_brightness) / 255;
         current_green = (led_color[1] * current_brightness) / 255;
@@ -446,9 +446,9 @@ void xtouch_neo_pixel_control_timer_handler(lv_timer_t *timer)
             fade_progress = 255 - fade_progress; // フェードアウト
         }
 
-        // フェード計算（blightness_min から blightness_max の範囲）
-        brightness_range = blightness_max - blightness_min;
-        current_brightness = blightness_min + (fade_progress * brightness_range) / 255;
+        // フェード計算（brightness_min から brightness_max の範囲）
+        brightness_range = brightness_max - brightness_min;
+        current_brightness = brightness_min + (fade_progress * brightness_range) / 255;
 
         current_red = (led_color[0] * current_brightness) / 255;
         current_green = (led_color[1] * current_brightness) / 255;
@@ -499,12 +499,12 @@ void xtouch_neo_pixel_control_timer_handler(lv_timer_t *timer)
                 brightness_factor = 0.1;
             }
 
-            // 明度を計算（blightness_minからblightness_maxの範囲）
-            int brightness = blightness_min + (int)((blightness_max - blightness_min) * brightness_factor);
-            if (brightness < blightness_min)
-                brightness = blightness_min;
-            if (brightness > blightness_max)
-                brightness = blightness_max;
+            // 明度を計算（brightness_minからbrightness_maxの範囲）
+            int brightness = brightness_min + (int)((brightness_max - brightness_min) * brightness_factor);
+            if (brightness < brightness_min)
+                brightness = brightness_min;
+            if (brightness > brightness_max)
+                brightness = brightness_max;
 
             int r = (current_red * brightness) / 255;
             int g = (current_green * brightness) / 255;
@@ -543,12 +543,12 @@ void xtouch_neo_pixel_control_timer_handler(lv_timer_t *timer)
         // 滑らかな位置計算
         smooth_position = (float)flowing_position / flowing_speed;
 
-        // 全LEDをblightness_minの明るさで点灯
+        // 全LEDをbrightness_minの明るさで点灯
         for (int i = 0; i < NeoPixelCount; i++)
         {
-            int r = (current_red * blightness_min) / 255;
-            int g = (current_green * blightness_min) / 255;
-            int b = (current_blue * blightness_min) / 255;
+            int r = (current_red * brightness_min) / 255;
+            int g = (current_green * brightness_min) / 255;
+            int b = (current_blue * brightness_min) / 255;
             strip.setPixelColor(i, strip.Color(r, g, b));
         }
 
@@ -580,12 +580,12 @@ void xtouch_neo_pixel_control_timer_handler(lv_timer_t *timer)
                 brightness_factor = 0.1;
             }
 
-            // 明度を計算（blightness_minからblightness_maxの範囲）
-            int brightness = blightness_min + (int)((blightness_max - blightness_min) * brightness_factor);
-            if (brightness < blightness_min)
-                brightness = blightness_min;
-            if (brightness > blightness_max)
-                brightness = blightness_max;
+            // 明度を計算（brightness_minからbrightness_maxの範囲）
+            int brightness = brightness_min + (int)((brightness_max - brightness_min) * brightness_factor);
+            if (brightness < brightness_min)
+                brightness = brightness_min;
+            if (brightness > brightness_max)
+                brightness = brightness_max;
 
             int r = (current_red * brightness) / 255;
             int g = (current_green * brightness) / 255;
@@ -619,12 +619,12 @@ void xtouch_neo_pixel_control_timer_handler(lv_timer_t *timer)
         // 滑らかな位置計算
         smooth_position = (float)flowing_position / flowing_speed;
 
-        // 全LEDをblightness_minの明るさで点灯
+        // 全LEDをbrightness_minの明るさで点灯
         for (int i = 0; i < NeoPixelCount; i++)
         {
-            int r = (current_red * blightness_min) / 255;
-            int g = (current_green * blightness_min) / 255;
-            int b = (current_blue * blightness_min) / 255;
+            int r = (current_red * brightness_min) / 255;
+            int g = (current_green * brightness_min) / 255;
+            int b = (current_blue * brightness_min) / 255;
             strip.setPixelColor(i, strip.Color(r, g, b));
         }
 
@@ -653,12 +653,12 @@ void xtouch_neo_pixel_control_timer_handler(lv_timer_t *timer)
                 brightness_factor = 0.1;
             }
 
-            // 明度を計算（blightness_minからblightness_maxの範囲）
-            int brightness = blightness_min + (int)((blightness_max - blightness_min) * brightness_factor);
-            if (brightness < blightness_min)
-                brightness = blightness_min;
-            if (brightness > blightness_max)
-                brightness = blightness_max;
+            // 明度を計算（brightness_minからbrightness_maxの範囲）
+            int brightness = brightness_min + (int)((brightness_max - brightness_min) * brightness_factor);
+            if (brightness < brightness_min)
+                brightness = brightness_min;
+            if (brightness > brightness_max)
+                brightness = brightness_max;
 
             int r = (current_red * brightness) / 255;
             int g = (current_green * brightness) / 255;
