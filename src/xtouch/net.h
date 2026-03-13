@@ -53,6 +53,14 @@ int downloadFileToSDCard(const char *url, const char *fileName, void (*onProgres
 
     if (httpCode == HTTP_CODE_OK)
     {
+        // SD カード未挿入時は書き込みを試みずに終了（Printers 画面アイドル時の書き込みエラー対策）
+        if (SD.cardType() == CARD_NONE)
+        {
+            ConsoleError.println(F("[xPTouch][THUMB] SD card not present; skip downloadFileToSDCard"));
+            http.end();
+            return 0;
+        }
+
         File file = SD.open(fileName, FILE_WRITE);
         if (file)
         {

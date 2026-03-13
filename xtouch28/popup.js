@@ -409,6 +409,18 @@ function sanitizeBrandForFilename(brand) {
 }
 
 async function downloadFilamentZip() {
+  // 入力チェック & jsonData 更新（provisioning ボタンと統合）
+  if (!validateForm()) {
+    return;
+  }
+  $id("provisionDevice").style.display = "block";
+  jsonData.ssid = $id("ssid").value.trim();
+  jsonData.pwd = $id("password").value.trim();
+  localStorage.setItem(
+    "jsonData",
+    JSON.stringify({ ...jsonData, ip: $id("ip").value.trim() })
+  );
+
   if (typeof JSZip === "undefined") {
     alert("JSZip を読み込めません。xtouch28 フォルダに jszip.min.js を置いてください。（https://unpkg.com/jszip@3.10.1/dist/jszip.min.js）");
     return;
@@ -456,6 +468,29 @@ async function downloadFilamentZip() {
         jsonFolder.file(sid + ".json", json);
       });
     }
+
+    // --- 追加: provisioning.json と /resource/* を ZIP に含める ---
+    // ルート直下に provisioning.json を配置
+    if (jsonData && typeof jsonData === "object") {
+      const provisioningJson = JSON.stringify(jsonData, null, 2);
+      zip.file("provisioning.json", provisioningJson);
+    }
+
+    // 拡張機能パッケージ内の resource フォルダからファイルを取り込み、ZIP の /resource/ に配置
+    const resourceFolder = zip.folder("resource");
+    const resourceFiles = ["logo.png"]; // xtouch28/resource 配下にあるファイル
+    for (const name of resourceFiles) {
+      try {
+        const url = chrome.runtime.getURL("resource/" + name);
+        const resp = await fetch(url);
+        if (resp.ok) {
+          const buf = await resp.arrayBuffer();
+          resourceFolder.file(name, buf);
+        }
+      } catch (e) {
+        console.warn("[xtouch28] failed to include resource:", name, e);
+      }
+    }
     const blob = await zip.generateAsync({ type: "blob" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
@@ -479,25 +514,6 @@ function toggleContainers(showMain) {
     $id("main-container").style.display = "none";
     $id("main-login-container").style.display = "block";
   }
-}
-
-// Function to handle downloading JSON data
-async function downloadJsonData() {
-  if (!validateForm()) {
-    return;
-  }
-
-  $id("provisionDevice").style.display = "block";
-
-  jsonData.ssid = $id("ssid").value.trim();
-  jsonData.pwd = $id("password").value.trim();
-
-  localStorage.setItem(
-    "jsonData",
-    JSON.stringify({ ...jsonData, ip: $id("ip").value.trim() })
-  );
-
-  downloadProvisioningJson();
 }
 
 async function provisionDevice() {
@@ -601,7 +617,6 @@ function main() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  $id("downloadJson").addEventListener("click", downloadJsonData);
   $id("downloadFilamentZip").addEventListener("click", downloadFilamentZip);
   $id("provisionDevice-button").addEventListener("click", provisionDevice);
 

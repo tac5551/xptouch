@@ -17,7 +17,8 @@
 /** DL 開始を遅らせる ms。この間は画面遷移など UI が応答する */
 #define XTOUCH_THUMB_FETCH_DELAY_MS 200
 
-static bool xtouch_load_thumb_slot_with_lgfx(int slot, int out_w, int out_h); /* 実装は LGFX ブロック内 */
+static bool xtouch_load_thumb_slot_with_lgfx(int slot, int out_w, int out_h);       /* 実装は LGFX ブロック内 */
+static bool xtouch_load_logo_for_slot_with_lgfx(int slot, int out_w, int out_h);    /* /resource/logo.png 用 */
 
 /** サムネイル用パスは types.h の xtouch_thumbnail_slot_path[] を UI が参照。本ヘッダではタイマー等のみ。 */
 /** サムネイル用タイマーを開始（Printers 画面用）。 */
@@ -76,14 +77,6 @@ static bool thumbnail_needs_download(int slot)
     char path[64];
     getThumbPathForSlot(slot, path, sizeof(path));
     bool exists = SD.exists(path);
-#ifdef XTOUCH_DEBUG
-    ConsoleDebug.print(F("[xPTouch][THUMB] needs? slot="));
-    ConsoleDebug.print(slot);
-    ConsoleDebug.print(F(" path="));
-    ConsoleDebug.print(path);
-    ConsoleDebug.print(F(" exists="));
-    ConsoleDebug.println(exists ? 1 : 0);
-#endif
     return !exists;
 }
 
@@ -105,11 +98,28 @@ static void thumbnail_do_slot_cb(lv_timer_t *t)
 static void thumbnail_timer_cb(lv_timer_t *t)
 {
     (void)t;
+    /* SD が無いときは、サムネイル（DL／ロゴ）処理を一切行わない。HTTP や SD エラーを防ぐため。 */
+    if (SD.cardType() == CARD_NONE)
+        return;
+
     int idx = xTouchConfig.currentScreenIndex;
     /* Home(0): 全スロットを順番にキャッシュ（Printers へ遷移時にすぐ表示できるよう）。
      * 起動直後印刷中の場合、SCHEDULE_THUMB_FETCH で force_fetch_slot=0 が設定されるのでスロット0を優先取得。 */
     if (idx == 0)
     {
+        /* サムネイルURLもTaskIDも無いスロットには、デフォルトロゴを一度だけロードしておく（Home画面Idle用）。 */
+        for (int s = 0; s < XTOUCH_THUMB_SLOT_MAX; s++)
+        {
+            if (!s_thumb_exists[s] && !thumbnail_slot_has_url_or_task(s, cloud.loggedIn ? 1 : 0))
+            {
+                ConsoleDebug.print(F("[xPTouch][THUMB] home logo slot="));
+                ConsoleDebug.println(s);
+                bool ok = xtouch_load_logo_for_slot_with_lgfx(s, XTOUCH_THUMB_LGFX_W, XTOUCH_THUMB_LGFX_H);
+                s_thumb_exists[s] = true; /* 成功/失敗にかかわらず一度だけ試す（SD 連続アクセス防止） */
+                if (ok)
+                    lv_msg_send(XTOUCH_ON_OTHER_PRINTER_UPDATE, (void *)(intptr_t)(s + 1));
+            }
+        }
         if (s_thumb_force_fetch_slot < XTOUCH_THUMB_SLOT_MAX)
         {
             int s = s_thumb_force_fetch_slot;
@@ -142,6 +152,20 @@ static void thumbnail_timer_cb(lv_timer_t *t)
     }
     if (idx != 6)
         return;
+
+    /* Printers画面でも、URL/TaskID が無いスロットにはデフォルトロゴを一度だけロードしておく。 */
+    for (int s = 0; s < XTOUCH_THUMB_SLOT_MAX; s++)
+    {
+        if (!s_thumb_exists[s] && !thumbnail_slot_has_url_or_task(s, cloud.loggedIn ? 1 : 0))
+        {
+            ConsoleDebug.print(F("[xPTouch][THUMB] printers logo slot="));
+            ConsoleDebug.println(s);
+            bool ok = xtouch_load_logo_for_slot_with_lgfx(s, XTOUCH_THUMB_LGFX_W, XTOUCH_THUMB_LGFX_H);
+            s_thumb_exists[s] = true; /* 成功/失敗にかかわらず一度だけ試す（SD 連続アクセス防止） */
+            if (ok)
+                lv_msg_send(XTOUCH_ON_OTHER_PRINTER_UPDATE, (void *)(intptr_t)(s + 1));
+        }
+    }
 
     if (s_thumb_force_fetch_slot < XTOUCH_THUMB_SLOT_MAX)
     {
@@ -515,6 +539,65 @@ static bool xtouch_load_thumb_slot_with_lgfx(int slot, int out_w, int out_h)
         xtouch_thumbnail_slot_dsc[slot] = nullptr;
         return false;
     }
+    xtouch_thumbnail_slot_dsc[slot] = (void *)&g_lgfx_thumb_dsc_slot[slot];
+    return true;
+}
+
+/** デフォルトロゴ (/resource/logo.png) を LGFX の PNG デコーダ経由で読み込み、指定スロット用バッファにコピー。 */
+static bool xtouch_load_logo_for_slot_with_lgfx(int slot, int out_w, int out_h)
+{
+    if (slot < 0 || slot >= XTOUCH_THUMB_SLOT_MAX || out_w <= 0 || out_h <= 0)
+        return false;
+    /* SD 未挿入時は何もしない（無限に open を繰り返さないようにする） */
+    if (SD.cardType() == CARD_NONE)
+        return false;
+
+    size_t px_count = (size_t)out_w * (size_t)out_h;
+    lv_color_t *buf = g_lgfx_thumb_buf_slot[slot];
+    if (!buf || g_lgfx_thumb_dsc_slot[slot].header.w != out_w || g_lgfx_thumb_dsc_slot[slot].header.h != out_h)
+    {
+        if (buf)
+            free(buf);
+        buf = (lv_color_t *)ps_malloc(sizeof(lv_color_t) * px_count);
+        if (!buf)
+        {
+            xtouch_thumbnail_slot_dsc[slot] = nullptr;
+            return false;
+        }
+        g_lgfx_thumb_buf_slot[slot] = buf;
+    }
+    memset(buf, 0, sizeof(lv_color_t) * px_count);
+
+    /* LGFX のスプライトに logo.png を描画し、そのバッファを LVGL バッファにコピーする */
+    extern LGFX tft;
+    LGFX_Sprite spr(&tft);
+    spr.setColorDepth(16); /* RGB565 */
+    if (!spr.createSprite(out_w, out_h))
+    {
+        xtouch_thumbnail_slot_dsc[slot] = nullptr;
+        return false;
+    }
+    spr.fillScreen(0x0000);
+    spr.drawPngFile(SD, "/resource/logo.png", 0, 0);
+
+    void *spr_buf = spr.getBuffer();
+    if (!spr_buf)
+    {
+        spr.deleteSprite();
+        xtouch_thumbnail_slot_dsc[slot] = nullptr;
+        return false;
+    }
+    /* LGFX スプライトのバッファは RGB565(uint16_t) 想定。lv_color_t とサイズを合わせてコピー。 */
+    memcpy(buf, spr_buf, sizeof(lv_color_t) * px_count);
+    spr.deleteSprite();
+
+    g_lgfx_thumb_dsc_slot[slot].header.always_zero = 0;
+    g_lgfx_thumb_dsc_slot[slot].header.w = (lv_coord_t)out_w;
+    g_lgfx_thumb_dsc_slot[slot].header.h = (lv_coord_t)out_h;
+    g_lgfx_thumb_dsc_slot[slot].header.cf = LV_IMG_CF_TRUE_COLOR;
+    g_lgfx_thumb_dsc_slot[slot].data = (const uint8_t *)buf;
+    g_lgfx_thumb_dsc_slot[slot].data_size = sizeof(lv_color_t) * px_count;
+
     xtouch_thumbnail_slot_dsc[slot] = (void *)&g_lgfx_thumb_dsc_slot[slot];
     return true;
 }

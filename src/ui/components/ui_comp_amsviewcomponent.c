@@ -205,14 +205,16 @@ static void ui_amsViewComponent_onAmsLockSyncButtons(lv_event_t *e)
     }
 }
 
-/* スロット■（色）クリック: M620 R<tray_index> を送る。AMS1=0-3, AMS2=4-7, AMS3=8-11, AMS4=12-15, EXT=254 */
+/* スロット■（色）クリック: M620 R<tray_index> を送る。AMS1=0-3, AMS2=4-7, AMS3=8-11, AMS4=12-15。EXTの時は処理しない */
 static void onAmsSlotColorClick(lv_event_t *e)
 {
     if (lv_event_get_code(e) != LV_EVENT_CLICKED)
         return;
+    if (s_ams_view_selector == UI_AMS_SELECTOR_EXT)
+        return;
     uintptr_t ud = (uintptr_t)lv_event_get_user_data(e);
     uint8_t slot_index = (uint8_t)(ud & 3);
-    uint16_t tray_index = (s_ams_view_selector == UI_AMS_SELECTOR_EXT) ? (uint16_t)TRAY_ID_EXTERNAL : (uint16_t)((s_ams_view_selector - 1) * 4 + slot_index);
+    uint16_t tray_index = (uint16_t)((s_ams_view_selector - 1) * 4 + slot_index);
     lv_msg_send(XTOUCH_COMMAND_GCODE_M620_R, (void *)(uintptr_t)tray_index);
 }
 

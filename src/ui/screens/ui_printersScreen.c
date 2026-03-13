@@ -100,11 +100,13 @@ static void update_one_row(int slot, lv_obj_t *row)
     }
 
     lv_slider_set_value(progressBar, percent, LV_ANIM_OFF);
-    /* Finished のときはゲージを非表示 */
-    if (status == XTOUCH_PRINT_STATUS_FINISHED)
-        lv_obj_add_flag(progressBar, LV_OBJ_FLAG_HIDDEN);
-    else
+    /* 印刷中(RUNNING/PAUSED/PREPARE)のみゲージ表示。それ以外(IDLE/FINISHED/FAILED 等)は非表示。 */
+    if (status == XTOUCH_PRINT_STATUS_RUNNING ||
+        status == XTOUCH_PRINT_STATUS_PAUSED ||
+        status == XTOUCH_PRINT_STATUS_PREPARE)
         lv_obj_clear_flag(progressBar, LV_OBJ_FLAG_HIDDEN);
+    else
+        lv_obj_add_flag(progressBar, LV_OBJ_FLAG_HIDDEN);
 
     char layerBuf[96];
     char timeBuf[48];

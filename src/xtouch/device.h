@@ -621,12 +621,12 @@ void xtouch_device_command_ams_unload(void *s, lv_msg_t *m)
     xtouch_device_gcode_line(ams_unload_gcode);
 }
 
-/** payload = (void*)(uintptr_t)tray_index。AMS1=0-3, AMS2=4-7, AMS3=8-11, AMS4=12-15。EXT=254。M620 R<tray_index> を gcode_line で送る */
+/** payload = (void*)(uintptr_t)tray_index。AMS1=0-3, AMS2=4-7, AMS3=8-11, AMS4=12-15。M620 R<tray_index> を gcode_line で送る（EXT時はUIから送らない） */
 void xtouch_device_command_m620_r(void *s, lv_msg_t *m)
 {
     (void)s;
     uint16_t tray_index = m->payload ? (uint16_t)(uintptr_t)m->payload : 0;
-    if (tray_index > 15 && tray_index != 254)
+    if (tray_index > 15)
         return;
     char buf[32];
     snprintf(buf, sizeof(buf), "M620 R%u \n", (unsigned)tray_index);
