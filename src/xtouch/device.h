@@ -487,11 +487,14 @@ void xtouch_device_onLoadFilament(lv_msg_t *m)
     /* EXT(254) ロード: 設定済み温度を使用し MQTT ams_change_filament で送る */
     uint16_t tar_temp = get_tray_temp(0, TRAY_ID_EXTERNAL);
     const char *tray_type = get_tray_type(0, TRAY_ID_EXTERNAL);
-    if (tar_temp < 100 || !tray_type || !tray_type[0] || strcmp(tray_type, "null") == 0)
-    {
-        ui_confirmPanel_show(LV_SYMBOL_WARNING " Set filament type and temperature\nin AMS View / Edit first.", ui_confirmPanel_hide);
-        return;
-    }
+// #ifdef XTOUCH_DEBUG
+//     printf("[EXT load] tray_type=%s tar_temp=%u\n", tray_type ? tray_type : "(null)", (unsigned)tar_temp);
+// #endif
+//     if (tar_temp < 100 || !tray_type || !tray_type[0] || strcmp(tray_type, "null") == 0)
+//     {
+//         ui_confirmPanel_show(LV_SYMBOL_WARNING " Set filament type and temperature\nin AMS View / Edit first.", ui_confirmPanel_hide);
+//         return;
+//     }
     DynamicJsonDocument json(256);
     json["print"]["command"] = "ams_change_filament";
     json["print"]["sequence_id"] = xtouch_device_next_sequence();
@@ -502,6 +505,13 @@ void xtouch_device_onLoadFilament(lv_msg_t *m)
     json["print"]["tar_temp"] = (int)tar_temp;
     String result;
     serializeJson(json, result);
+#ifdef XTOUCH_DEBUG
+    Serial.println(F("[EXT load] MQTT ams_change_filament request"));
+    ConsoleDebug.print(F("[xPTouch][MQTT] PUB EXT len="));
+    ConsoleDebug.print(result.length());
+    ConsoleDebug.print(F(" payload="));
+    ConsoleDebug.println(result);
+#endif
     xtouch_device_publish(result);
 }
 

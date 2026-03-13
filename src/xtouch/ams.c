@@ -70,10 +70,6 @@ bool xtouch_can_load_filament()
     if (!xtouch_has_ams())
         return true;
 
-    if (bambuStatus.ams_status_main == AMS_STATUS_MAIN_IDLE && bambuStatus.hw_switch_state == 1 && (bambuStatus.m_tray_now == 255 || bambuStatus.m_tray_now == 254))
-    {
-        return true;
-    }
     return result;
 }
 

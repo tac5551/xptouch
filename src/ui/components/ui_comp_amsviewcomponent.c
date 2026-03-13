@@ -225,8 +225,16 @@ static void onAmsSlotClickUnified(lv_event_t *e)
         return;
     uintptr_t ud = (uintptr_t)lv_event_get_user_data(e);
     uint8_t slot_index = (uint8_t)(ud & 3); /* 0-3 */
-    int slot_id = (s_ams_view_selector == UI_AMS_SELECTOR_EXT) ? TRAY_ID_EXTERNAL : ((int)(s_ams_view_selector - 1) * 100 + (slot_index + 1));
-    onAmsSlotLoad(e, slot_id);
+    if (s_ams_view_selector == UI_AMS_SELECTOR_EXT)
+    {
+        /* EXT のときは AMS スロットではなく外部フィラメントロードを実行 */
+        onFilamentLoad(e);
+    }
+    else
+    {
+        int slot_id = (int)(s_ams_view_selector - 1) * 100 + (slot_index + 1);
+        onAmsSlotLoad(e, slot_id);
+    }
 }
 
 void ui_amsViewComponent_onAMSBitsSlot(lv_event_t *e)
