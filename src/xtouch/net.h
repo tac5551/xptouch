@@ -17,13 +17,17 @@ void onWiFiEvent(arduino_event_id_t event, arduino_event_info_t info)
 #include <HTTPClient.h>
 #include <MD5Builder.h>
 #include "bbl-certs.h"
+#include "xtouch/paths.h"
 
 int downloadFileToSDCard(const char *url, const char *fileName, void (*onProgress)(int) = NULL, void (*onMD5Check)(int) = NULL, const char *otaMD5 = NULL)
 {
 
     WiFiClientSecure wifiClient;
-    /* サムネイルなど S3 向けは証明書を検証せずに取得する。それ以外は従来通り CA を使う。 */
-    if (fileName && strstr(fileName, "/tmp/") && strstr(fileName, ".png"))
+    /* サムネイルなど S3 向け、および OTA ホスト(xtouch_paths_firmware_ota_host)向けは証明書を検証せずに取得する。
+     * それ以外は従来通り CA を使う。 */
+    bool isThumbnail = (fileName && strstr(fileName, "/tmp/") && strstr(fileName, ".png"));
+    bool isOtaHost = (url && strstr(url, xtouch_paths_firmware_ota_host));
+    if (isThumbnail || isOtaHost)
     {
         wifiClient.setInsecure();
     }
@@ -31,8 +35,9 @@ int downloadFileToSDCard(const char *url, const char *fileName, void (*onProgres
     {
         wifiClient.setCACert(xperiments_in);
     }
-    // WiFiClientSecureのタイムアウトも延長
-    wifiClient.setTimeout(60000); // 60秒
+    // WiFiClientSecure のタイムアウトも延長（最大に近い 65 秒）
+    // setTimeout は uint16_t なので 65535ms が上限付近
+    wifiClient.setTimeout(65000); // 約 65 秒
 
     HTTPClient http;
 
@@ -42,8 +47,8 @@ int downloadFileToSDCard(const char *url, const char *fileName, void (*onProgres
     // Begin the HTTP request
     http.begin(wifiClient, forceHttpsUrl);
     
-    // タイムアウトを延長（デフォルト5秒 → 60秒）
-    http.setTimeout(60000); // 60秒
+    // タイムアウトを延長（デフォルト5秒 → 約65秒）
+    http.setTimeout(65000); // 約 65 秒（HTTPClient::setTimeout は uint16_t 指定）
 
     int httpCode = http.GET();
 
