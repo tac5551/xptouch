@@ -17,8 +17,8 @@
 /** DL 開始を遅らせる ms。この間は画面遷移など UI が応答する */
 #define XTOUCH_THUMB_FETCH_DELAY_MS 200
 
-static bool xtouch_load_thumb_slot_with_lgfx(int slot, int out_w, int out_h);       /* 実装は LGFX ブロック内 */
-static bool xtouch_load_logo_for_slot_with_lgfx(int slot, int out_w, int out_h);    /* /resource/logo.png 用 */
+static bool xtouch_load_thumb_slot_with_lgfx(int slot, int out_w, int out_h);       /* 実装は LGFX + pngle 内 */
+static bool xtouch_load_logo_for_slot_with_lgfx(int slot, int out_w, int out_h);    /* /resource/logo.png 用（同じく pngle 経路） */
 
 /** サムネイル用パスは types.h の xtouch_thumbnail_slot_path[] を UI が参照。本ヘッダではタイマー等のみ。 */
 /** サムネイル用タイマーを開始（Printers 画面用）。 */
@@ -543,15 +543,17 @@ static bool xtouch_load_thumb_slot_with_lgfx(int slot, int out_w, int out_h)
     return true;
 }
 
-/** デフォルトロゴ (/resource/logo.png) を LGFX の PNG デコーダ経由で読み込み、指定スロット用バッファにコピー。 */
+/** デフォルトロゴ (/resource/logo.png) を LGFX + pngle でデコードし、指定スロット用バッファに格納。 */
 static bool xtouch_load_logo_for_slot_with_lgfx(int slot, int out_w, int out_h)
 {
     if (slot < 0 || slot >= XTOUCH_THUMB_SLOT_MAX || out_w <= 0 || out_h <= 0)
         return false;
     /* SD 未挿入時は何もしない（無限に open を繰り返さないようにする） */
     if (SD.cardType() == CARD_NONE)
+    {
+        ConsoleDebug.println(F("[xPTouch][THUMB] logo: SD not present"));
         return false;
-
+    }
     size_t px_count = (size_t)out_w * (size_t)out_h;
     lv_color_t *buf = g_lgfx_thumb_buf_slot[slot];
     if (!buf || g_lgfx_thumb_dsc_slot[slot].header.w != out_w || g_lgfx_thumb_dsc_slot[slot].header.h != out_h)
@@ -567,30 +569,6 @@ static bool xtouch_load_logo_for_slot_with_lgfx(int slot, int out_w, int out_h)
         g_lgfx_thumb_buf_slot[slot] = buf;
     }
     memset(buf, 0, sizeof(lv_color_t) * px_count);
-
-    /* LGFX のスプライトに logo.png を描画し、そのバッファを LVGL バッファにコピーする */
-    extern LGFX tft;
-    LGFX_Sprite spr(&tft);
-    spr.setColorDepth(16); /* RGB565 */
-    if (!spr.createSprite(out_w, out_h))
-    {
-        xtouch_thumbnail_slot_dsc[slot] = nullptr;
-        return false;
-    }
-    spr.fillScreen(0x0000);
-    spr.drawPngFile(SD, "/resource/logo.png", 0, 0);
-
-    void *spr_buf = spr.getBuffer();
-    if (!spr_buf)
-    {
-        spr.deleteSprite();
-        xtouch_thumbnail_slot_dsc[slot] = nullptr;
-        return false;
-    }
-    /* LGFX スプライトのバッファは RGB565(uint16_t) 想定。lv_color_t とサイズを合わせてコピー。 */
-    memcpy(buf, spr_buf, sizeof(lv_color_t) * px_count);
-    spr.deleteSprite();
-
     g_lgfx_thumb_dsc_slot[slot].header.always_zero = 0;
     g_lgfx_thumb_dsc_slot[slot].header.w = (lv_coord_t)out_w;
     g_lgfx_thumb_dsc_slot[slot].header.h = (lv_coord_t)out_h;
@@ -598,6 +576,57 @@ static bool xtouch_load_logo_for_slot_with_lgfx(int slot, int out_w, int out_h)
     g_lgfx_thumb_dsc_slot[slot].data = (const uint8_t *)buf;
     g_lgfx_thumb_dsc_slot[slot].data_size = sizeof(lv_color_t) * px_count;
 
+    const char *path = "/resource/logo.png";
+    xtouch_pngle_ctx_t pngle_ctx;
+    File file = SD.open(path, "r");
+    if (!file)
+    {
+        ConsoleDebug.print(F("[xPTouch][THUMB] logo: SD.open failed path="));
+        ConsoleDebug.println(path);
+        xtouch_thumbnail_slot_dsc[slot] = nullptr;
+        return false;
+    }
+    pngle_t *pngle = lgfx_pngle_new();
+    if (!pngle)
+    {
+        file.close();
+        ConsoleDebug.println(F("[xPTouch][THUMB] logo: lgfx_pngle_new failed"));
+        xtouch_thumbnail_slot_dsc[slot] = nullptr;
+        return false;
+    }
+    pngle_ctx.file = &file;
+    pngle_ctx.buf = buf;
+    pngle_ctx.width = out_w;
+    pngle_ctx.height = out_h;
+    pngle_ctx.img_width = 0;
+    pngle_ctx.img_height = 0;
+    if (lgfx_pngle_prepare(pngle, xtouch_pngle_read_cb, &pngle_ctx) < 0)
+    {
+        lgfx_pngle_destroy(pngle);
+        file.close();
+        ConsoleDebug.println(F("[xPTouch][THUMB] logo: lgfx_pngle_prepare failed"));
+        xtouch_thumbnail_slot_dsc[slot] = nullptr;
+        return false;
+    }
+    pngle_ctx.img_width = lgfx_pngle_get_width(pngle);
+    pngle_ctx.img_height = lgfx_pngle_get_height(pngle);
+    if (pngle_ctx.img_width == 0 || pngle_ctx.img_height == 0)
+    {
+        lgfx_pngle_destroy(pngle);
+        file.close();
+        ConsoleDebug.println(F("[xPTouch][THUMB] logo: invalid size"));
+        xtouch_thumbnail_slot_dsc[slot] = nullptr;
+        return false;
+    }
+    int res = lgfx_pngle_decomp(pngle, xtouch_pngle_draw_cb);
+    file.close();
+    lgfx_pngle_destroy(pngle);
+    if (res < 0)
+    {
+        ConsoleDebug.println(F("[xPTouch][THUMB] logo: lgfx_pngle_decomp failed"));
+        xtouch_thumbnail_slot_dsc[slot] = nullptr;
+        return false;
+    }
     xtouch_thumbnail_slot_dsc[slot] = (void *)&g_lgfx_thumb_dsc_slot[slot];
     return true;
 }
