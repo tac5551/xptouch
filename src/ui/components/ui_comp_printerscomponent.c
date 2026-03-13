@@ -131,39 +131,45 @@ lv_obj_t *ui_printersComponent_create(lv_obj_t *comp_parent)
         lv_obj_set_style_border_width(btnArea, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_clear_flag(btnArea, LV_OBJ_FLAG_SCROLLABLE);
 
-        lv_obj_t *pauseBtn = lv_label_create(btnArea);
+        /* 一時停止ボタン: コンテナ＋ラベルでアイコンを上下中央に */
+        lv_obj_t *pauseBtn = lv_obj_create(btnArea);
         lv_obj_set_width(pauseBtn, 60);
         lv_obj_set_height(pauseBtn, 70);
-        lv_label_set_text(pauseBtn, "0");
+        lv_obj_set_flex_flow(pauseBtn, LV_FLEX_FLOW_COLUMN);
+        lv_obj_set_flex_align(pauseBtn, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
         lv_obj_add_flag(pauseBtn, LV_OBJ_FLAG_CLICKABLE);
-        lv_obj_set_style_text_align(pauseBtn, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
-        lv_obj_set_style_text_font(pauseBtn, lv_icon_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
-        lv_obj_set_style_pad_top(pauseBtn, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
-        lv_obj_set_style_pad_bottom(pauseBtn, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_radius(pauseBtn, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_border_width(pauseBtn, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_border_color(pauseBtn, lv_color_hex(0x888888), LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_bg_color(pauseBtn, lv_color_hex(0x888888), LV_PART_MAIN | LV_STATE_PRESSED);
         lv_obj_set_style_bg_opa(pauseBtn, 255, LV_PART_MAIN | LV_STATE_PRESSED);
+        lv_obj_set_style_pad_all(pauseBtn, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_user_data(pauseBtn, (void *)(intptr_t)i);
         lv_obj_add_flag(pauseBtn, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_t *pauseLbl = lv_label_create(pauseBtn);
+        lv_label_set_text(pauseLbl, "0");
+        lv_obj_set_style_text_align(pauseLbl, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_text_font(pauseLbl, lv_icon_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-        lv_obj_t *stopBtn = lv_label_create(btnArea);
+        /* 停止ボタン: コンテナ＋ラベルでアイコンを上下中央に */
+        lv_obj_t *stopBtn = lv_obj_create(btnArea);
         lv_obj_set_width(stopBtn, 60);
         lv_obj_set_height(stopBtn, 70);
-        lv_label_set_text(stopBtn, "1");
+        lv_obj_set_flex_flow(stopBtn, LV_FLEX_FLOW_COLUMN);
+        lv_obj_set_flex_align(stopBtn, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
         lv_obj_add_flag(stopBtn, LV_OBJ_FLAG_CLICKABLE);
-        lv_obj_set_style_text_align(stopBtn, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
-        lv_obj_set_style_text_font(stopBtn, lv_icon_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
-        lv_obj_set_style_pad_top(stopBtn, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
-        lv_obj_set_style_pad_bottom(stopBtn, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_radius(stopBtn, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_border_width(stopBtn, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_border_color(stopBtn, lv_color_hex(0x888888), LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_bg_color(stopBtn, lv_color_hex(0xff682a), LV_PART_MAIN | LV_STATE_PRESSED);
         lv_obj_set_style_bg_opa(stopBtn, 255, LV_PART_MAIN | LV_STATE_PRESSED);
+        lv_obj_set_style_pad_all(stopBtn, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_user_data(stopBtn, (void *)(intptr_t)i);
         lv_obj_add_flag(stopBtn, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_t *stopLbl = lv_label_create(stopBtn);
+        lv_label_set_text(stopLbl, "1");
+        lv_obj_set_style_text_align(stopLbl, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_text_font(stopLbl, lv_icon_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
 
         lv_obj_add_event_cb(pauseBtn, onPrintersPause, LV_EVENT_CLICKED, NULL);
         lv_obj_add_event_cb(stopBtn, onPrintersStop, LV_EVENT_CLICKED, NULL);

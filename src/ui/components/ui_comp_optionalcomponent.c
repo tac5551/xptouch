@@ -233,11 +233,6 @@ lv_obj_t *ui_optionalComponent_create(lv_obj_t *comp_parent)
     {
         lv_obj_add_state(ui_optional_preheatSwitch, LV_STATE_CHECKED);
     }
-    /* P1P のときは Option の Preheat を非表示 */
-    if (xtouch_bblp_is_p1p())
-    {
-        lv_obj_add_flag(cui_optional_preheat, LV_OBJ_FLAG_HIDDEN);
-    }
     //---Preheat End------------------------------
 
 #if defined(__XTOUCH_SCREEN_50__)

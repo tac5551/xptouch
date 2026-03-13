@@ -13,8 +13,8 @@ static const char *print_status_str(int s)
 {
     switch (s)
     {
-    /* この画面の初期表示では未接続に見えるよう、IDLE は Disconnected 表記にする */
-    case XTOUCH_PRINT_STATUS_IDLE: return "Disconnected";
+    /* 待機中（未接続スロットは行ごと非表示なのでここには来ない） */
+    case XTOUCH_PRINT_STATUS_IDLE: return "IDLE";
     case XTOUCH_PRINT_STATUS_RUNNING: return "Running";
     case XTOUCH_PRINT_STATUS_PAUSED: return "Paused";
     case XTOUCH_PRINT_STATUS_FINISHED: return "Finished";
@@ -100,6 +100,11 @@ static void update_one_row(int slot, lv_obj_t *row)
     }
 
     lv_slider_set_value(progressBar, percent, LV_ANIM_OFF);
+    /* Finished のときはゲージを非表示 */
+    if (status == XTOUCH_PRINT_STATUS_FINISHED)
+        lv_obj_add_flag(progressBar, LV_OBJ_FLAG_HIDDEN);
+    else
+        lv_obj_clear_flag(progressBar, LV_OBJ_FLAG_HIDDEN);
 
     char layerBuf[96];
     char timeBuf[48];
@@ -122,18 +127,21 @@ static void update_one_row(int slot, lv_obj_t *row)
     lv_label_set_text(layerLabel, layerBuf);
     lv_obj_clear_flag(layerLabel, LV_OBJ_FLAG_HIDDEN);
 
-    /* 印刷中のみボタン表示、終了時は非表示（スペースはそのまま） */
+    /* 印刷中のみボタン表示、終了時は非表示（スペースはそのまま）。ボタンはコンテナで子がラベル */
     if (status == XTOUCH_PRINT_STATUS_RUNNING ||
         status == XTOUCH_PRINT_STATUS_PAUSED ||
         status == XTOUCH_PRINT_STATUS_PREPARE)
     {
         lv_obj_clear_flag(pauseBtn, LV_OBJ_FLAG_HIDDEN);
         lv_obj_clear_flag(stopBtn, LV_OBJ_FLAG_HIDDEN);
-        /* 一時停止中は再開アイコン(z)、印刷中は一時停止アイコン(0)。Home と同様。 */
-        if (status == XTOUCH_PRINT_STATUS_PAUSED)
-            lv_label_set_text(pauseBtn, "z");
-        else
-            lv_label_set_text(pauseBtn, "0");
+        lv_obj_t *pauseLbl = lv_obj_get_child(pauseBtn, 0);
+        if (pauseLbl)
+        {
+            if (status == XTOUCH_PRINT_STATUS_PAUSED)
+                lv_label_set_text(pauseLbl, "z");
+            else
+                lv_label_set_text(pauseLbl, "0");
+        }
     }
     else
     {

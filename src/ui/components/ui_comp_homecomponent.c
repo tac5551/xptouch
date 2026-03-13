@@ -442,47 +442,170 @@ void onXTouchPrintStatus(lv_event_t *e)
     lv_label_set_text(target, percentAndRemaining);
 
     lv_obj_t *playPauseButton = comp_homeComponent[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPLAYER_MAINSCREENCONTROLLER_MAINSCREENPLAYPAUSEBUTTON];
+    lv_obj_t *stopButton = comp_homeComponent[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPLAYER_MAINSCREENCONTROLLER_MAINSCREENSTOPBUTTON];
+    lv_obj_t *nozzleIcon = comp_homeComponent[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPLAYER_MAINSCREENCONTROLLER_MAINSCREENNOZZLEICON];
+    lv_obj_t *preheatBox = comp_homeComponent[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPREHEATBOX];
     lv_obj_t *dropDown = comp_homeComponent[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENCENTRAL_MAINSCREENSPEEDDROPDOWN];
+    lv_obj_t *statusCaption = comp_homeComponent[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENSTATUS_MAINSCREENSTATUSCAPTION];
 
+    /* メイン左カラムのボックス構成（上から）:
+     * 1.AMS 2.Player 3.ロゴ+メッセージ 4.Preheat 5.進捗・レイヤー 6.速度
+     * 状態ごとに表示/非表示と flex_grow を切り替え */
     switch (bambuStatus.print_status)
     {
     case XTOUCH_PRINT_STATUS_PAUSED:
         lv_label_set_text(playPauseButton, "z");
+        if (playPauseButton)
+            lv_obj_clear_flag(playPauseButton, LV_OBJ_FLAG_HIDDEN);
+        if (stopButton)
+            lv_obj_clear_flag(stopButton, LV_OBJ_FLAG_HIDDEN);
+        if (statusCaption)
+        {
+            lv_label_set_text(statusCaption, LV_SYMBOL_PAUSE " Paused");
+            lv_obj_clear_flag(statusCaption, LV_OBJ_FLAG_HIDDEN);
+        }
+        /* 1.AMS 2.Player(サムネ高さを約2/3に) 3.ロゴ(非表示) 4.Preheat(非表示) 5.進捗/レイヤー 6.速度 比率 2:2:1 */
+        lv_obj_clear_flag(comp_homeComponent[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENSTATUSBAR], LV_OBJ_FLAG_HIDDEN);
+        lv_obj_set_style_flex_grow(comp_homeComponent[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPLAYER], 2, 0);
+        lv_obj_set_style_flex_grow(comp_homeComponent[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPROGRESSBOX], 2, 0);
+        lv_obj_set_style_flex_grow(comp_homeComponent[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENCENTRAL], 1, 0);
+        lv_obj_set_style_flex_grow(ui_mainStatusComponent, 0, 0);
+        if (preheatBox)
+        {
+            lv_obj_set_style_flex_grow(preheatBox, 0, 0);
+            lv_obj_add_flag(preheatBox, LV_OBJ_FLAG_HIDDEN);
+        }
         lv_obj_clear_flag(comp_homeComponent[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPLAYER], LV_OBJ_FLAG_HIDDEN);
+        lv_obj_clear_flag(comp_homeComponent[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPROGRESSBOX], LV_OBJ_FLAG_HIDDEN);
         lv_obj_clear_flag(comp_homeComponent[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENCENTRAL], LV_OBJ_FLAG_HIDDEN);
         lv_obj_add_flag(comp_homeComponent[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENIDLE], LV_OBJ_FLAG_HIDDEN);
+        if (nozzleIcon)
+            lv_obj_clear_flag(nozzleIcon, LV_OBJ_FLAG_HIDDEN);
+
+
         lv_obj_clear_state(dropDown, LV_STATE_DISABLED);
-        {
-            lv_obj_t *statusCaption = ui_comp_get_child(ui_mainStatusComponent, UI_COMP_MAINSCREENSTATUS_MAINSCREENSTATUSCAPTION);
-            if (statusCaption)
-                lv_label_set_text(statusCaption, LV_SYMBOL_PAUSE " Paused");
-        }
         break;
     case XTOUCH_PRINT_STATUS_RUNNING:
-
         lv_label_set_text(playPauseButton, "0");
+        if (playPauseButton)
+            lv_obj_clear_flag(playPauseButton, LV_OBJ_FLAG_HIDDEN);
+        if (stopButton)
+            lv_obj_clear_flag(stopButton, LV_OBJ_FLAG_HIDDEN);
+        if (statusCaption)
+            lv_obj_add_flag(statusCaption, LV_OBJ_FLAG_HIDDEN);
+        /* 1.AMS 2.Player(サムネ高さを約2/3に) 3.ロゴ(非表示) 4.Preheat(非表示) 5.進捗/レイヤー 6.速度 比率 2:2:1 */
+        lv_obj_clear_flag(comp_homeComponent[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENSTATUSBAR], LV_OBJ_FLAG_HIDDEN);
+        lv_obj_set_style_flex_grow(comp_homeComponent[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPLAYER], 2, 0);
+        lv_obj_set_style_flex_grow(comp_homeComponent[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPROGRESSBOX], 2, 0);
+        lv_obj_set_style_flex_grow(comp_homeComponent[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENCENTRAL], 1, 0);
+        lv_obj_set_style_flex_grow(ui_mainStatusComponent, 0, 0);
+        if (preheatBox)
+        {
+            lv_obj_set_style_flex_grow(preheatBox, 0, 0);
+            lv_obj_add_flag(preheatBox, LV_OBJ_FLAG_HIDDEN);
+        }
         lv_obj_clear_flag(comp_homeComponent[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPLAYER], LV_OBJ_FLAG_HIDDEN);
+        lv_obj_clear_flag(comp_homeComponent[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPROGRESSBOX], LV_OBJ_FLAG_HIDDEN);
         lv_obj_clear_flag(comp_homeComponent[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENCENTRAL], LV_OBJ_FLAG_HIDDEN);
         lv_obj_add_flag(comp_homeComponent[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENIDLE], LV_OBJ_FLAG_HIDDEN);
+        if (nozzleIcon)
+            lv_obj_clear_flag(nozzleIcon, LV_OBJ_FLAG_HIDDEN);
+
+
         lv_obj_clear_state(dropDown, LV_STATE_DISABLED);
         break;
     case XTOUCH_PRINT_STATUS_PREPARE:
+        if (playPauseButton)
+            lv_obj_clear_flag(playPauseButton, LV_OBJ_FLAG_HIDDEN);
+        if (stopButton)
+            lv_obj_clear_flag(stopButton, LV_OBJ_FLAG_HIDDEN);
+        if (statusCaption)
+            lv_obj_add_flag(statusCaption, LV_OBJ_FLAG_HIDDEN);
+        /* 1.AMS 2.Player(サムネ高さを約2/3に) 3.ロゴ(非表示) 4.Preheat(非表示) 5.進捗/レイヤー 6.速度 比率 2:2:1 */
+        lv_obj_clear_flag(comp_homeComponent[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENSTATUSBAR], LV_OBJ_FLAG_HIDDEN);
+        lv_obj_set_style_flex_grow(comp_homeComponent[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPLAYER], 2, 0);
+        lv_obj_set_style_flex_grow(comp_homeComponent[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPROGRESSBOX], 2, 0);
+        lv_obj_set_style_flex_grow(comp_homeComponent[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENCENTRAL], 1, 0);
+        lv_obj_set_style_flex_grow(ui_mainStatusComponent, 0, 0);
+        if (preheatBox)
+        {
+            lv_obj_set_style_flex_grow(preheatBox, 0, 0);
+            lv_obj_add_flag(preheatBox, LV_OBJ_FLAG_HIDDEN);
+        }
         lv_obj_clear_flag(comp_homeComponent[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPLAYER], LV_OBJ_FLAG_HIDDEN);
+        lv_obj_clear_flag(comp_homeComponent[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPROGRESSBOX], LV_OBJ_FLAG_HIDDEN);
         lv_obj_clear_flag(comp_homeComponent[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENCENTRAL], LV_OBJ_FLAG_HIDDEN);
         lv_obj_add_flag(comp_homeComponent[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENIDLE], LV_OBJ_FLAG_HIDDEN);
+        if (nozzleIcon)
+            lv_obj_clear_flag(nozzleIcon, LV_OBJ_FLAG_HIDDEN);
+
         lv_obj_add_state(dropDown, LV_STATE_DISABLED);
         break;
 
     case XTOUCH_PRINT_STATUS_IDLE:
     case XTOUCH_PRINT_STATUS_FINISHED:
     case XTOUCH_PRINT_STATUS_FAILED:
+        if (playPauseButton)
+            lv_obj_add_flag(playPauseButton, LV_OBJ_FLAG_HIDDEN);
+        if (stopButton)
+            lv_obj_add_flag(stopButton, LV_OBJ_FLAG_HIDDEN);
+        /* ロゴ下のスペースで Ready/Finished/Failed を 2.8・5インチ共通表示 */
+        if (statusCaption)
+        {
+            lv_label_set_text(statusCaption, xtouch_device_get_print_state());
+            lv_obj_clear_flag(statusCaption, LV_OBJ_FLAG_HIDDEN);
+        }
+        lv_obj_clear_flag(comp_homeComponent[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENSTATUSBAR], LV_OBJ_FLAG_HIDDEN);
+        /* 1.AMS 2.Player 3.ロゴ+メッセージ / 4.Preheat（設定で表示可否、機種ごとに比率変更） 5,6は基本非表示 */
+#ifdef __XTOUCH_SCREEN_50__
+        /* 5インチ: Player + ロゴを残し、Preheat ボタンはコンパクトに表示 */
+        lv_obj_set_style_flex_grow(comp_homeComponent[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPLAYER], 1, 0);
+        lv_obj_set_style_flex_grow(ui_mainStatusComponent, 1, 0);
+        if (preheatBox)
+        {
+            if (xTouchConfig.xTouchPreheatEnabled)
+            {
+                lv_obj_set_style_flex_grow(preheatBox, 1, 0);
+                lv_obj_clear_flag(preheatBox, LV_OBJ_FLAG_HIDDEN);
+            }
+            else
+            {
+                lv_obj_set_style_flex_grow(preheatBox, 0, 0);
+                lv_obj_add_flag(preheatBox, LV_OBJ_FLAG_HIDDEN);
+            }
+        }
+        lv_obj_clear_flag(comp_homeComponent[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPLAYER], LV_OBJ_FLAG_HIDDEN);
+#else
+        /* 2.8インチ: ロゴ+メッセージ と Preheat ボタンをメインに使う */
+        lv_obj_set_style_flex_grow(comp_homeComponent[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPLAYER], 1, 0);
+        lv_obj_set_style_flex_grow(ui_mainStatusComponent, 1, 0);
+        if (preheatBox)
+        {
+            if (xTouchConfig.xTouchPreheatEnabled)
+            {
+                lv_obj_set_style_flex_grow(preheatBox, 1, 0);
+                lv_obj_clear_flag(preheatBox, LV_OBJ_FLAG_HIDDEN);
+            }
+            else
+            {
+                lv_obj_set_style_flex_grow(preheatBox, 0, 0);
+                lv_obj_add_flag(preheatBox, LV_OBJ_FLAG_HIDDEN);
+            }
+        }
         lv_obj_add_flag(comp_homeComponent[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPLAYER], LV_OBJ_FLAG_HIDDEN);
+#endif
+        lv_obj_set_style_flex_grow(comp_homeComponent[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPROGRESSBOX], 0, 0);
+        lv_obj_set_style_flex_grow(comp_homeComponent[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENCENTRAL], 0, 0);
+
+        lv_obj_add_flag(comp_homeComponent[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPROGRESSBOX], LV_OBJ_FLAG_HIDDEN);
         lv_obj_add_flag(comp_homeComponent[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENCENTRAL], LV_OBJ_FLAG_HIDDEN);
         lv_obj_clear_flag(comp_homeComponent[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENIDLE], LV_OBJ_FLAG_HIDDEN);
-        lv_obj_t *statusCaption = ui_comp_get_child(ui_mainStatusComponent, UI_COMP_MAINSCREENSTATUS_MAINSCREENSTATUSCAPTION);
-        lv_label_set_text(statusCaption, xtouch_device_get_print_state());
+        if (nozzleIcon)
+            lv_obj_clear_flag(nozzleIcon, LV_OBJ_FLAG_HIDDEN);
+
         lv_obj_add_state(dropDown, LV_STATE_DISABLED);
         break;
+    
     }
 
     lv_obj_clear_state(playPauseButton, LV_STATE_DISABLED);
@@ -594,6 +717,7 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
 //     lv_obj_set_style_text_font(cui_mainScreenCameraIcon, &ui_font_xlcdmin, LV_PART_MAIN | LV_STATE_DEFAULT);
 // #endif
 
+    //1 AMSbox
     lv_obj_t *cui_mainScreenAMS;
     cui_mainScreenAMS = lv_obj_create(cui_mainScreenStatusBar);
     lv_obj_set_height(cui_mainScreenAMS, lv_pct(70));
@@ -752,8 +876,7 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_text_font(cui_mainScreenAMSColor4, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_label_set_text(cui_mainScreenAMSColor4, "x");
 
-    ui_mainStatusComponent = ui_mainScreenStatus_create(cui_mainScreenLeft);
-
+    /* 2番ボックス: サムネ/ボタンの Player */
     lv_obj_t *cui_mainScreenPlayer;
     cui_mainScreenPlayer = lv_obj_create(cui_mainScreenLeft);
     lv_obj_set_width(cui_mainScreenPlayer, lv_pct(100));
@@ -776,6 +899,223 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_text_color(cui_mainScreenPlayer, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(cui_mainScreenPlayer, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
+    /* 3番ボックス: ロゴ＋メッセージ（HOME専用の mainStatus ボックス） */
+    ui_mainStatusComponent = lv_obj_create(cui_mainScreenLeft);
+    lv_obj_set_width(ui_mainStatusComponent, lv_pct(100));
+    lv_obj_set_flex_grow(ui_mainStatusComponent, 1);
+    lv_obj_set_flex_flow(ui_mainStatusComponent, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_flex_align(ui_mainStatusComponent, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_clear_flag(ui_mainStatusComponent,
+                      LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE |
+                          LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE |
+                          LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN);
+    lv_obj_set_scrollbar_mode(ui_mainStatusComponent, LV_SCROLLBAR_MODE_OFF);
+    lv_obj_set_style_bg_color(ui_mainStatusComponent, lv_color_hex(0x555555), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(ui_mainStatusComponent, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(ui_mainStatusComponent, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_left(ui_mainStatusComponent, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(ui_mainStatusComponent, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_top(ui_mainStatusComponent, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_bottom(ui_mainStatusComponent, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_row(ui_mainStatusComponent, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_column(ui_mainStatusComponent, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_color(ui_mainStatusComponent, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_opa(ui_mainStatusComponent, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    /* ロゴ */
+    lv_obj_t *cui_mainScreenStatusLogo;
+    cui_mainScreenStatusLogo = lv_img_create(ui_mainStatusComponent);
+    lv_obj_set_width(cui_mainScreenStatusLogo, 150);
+    lv_obj_set_height(cui_mainScreenStatusLogo, LV_SIZE_CONTENT);
+    lv_obj_clear_flag(cui_mainScreenStatusLogo,
+                      LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE |
+                          LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC |
+                          LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN);
+    lv_obj_set_size(cui_mainScreenStatusLogo, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+    lv_obj_set_scrollbar_mode(cui_mainScreenStatusLogo, LV_SCROLLBAR_MODE_OFF);
+    lv_img_set_src(cui_mainScreenStatusLogo, &img_logo2);
+
+    /* ロゴ下メッセージ (HOME専用) */
+    lv_obj_t *cui_mainScreenStatusCaption;
+    cui_mainScreenStatusCaption = lv_label_create(ui_mainStatusComponent);
+    lv_obj_set_width(cui_mainScreenStatusCaption, LV_SIZE_CONTENT);
+    lv_obj_set_height(cui_mainScreenStatusCaption, LV_SIZE_CONTENT);
+    lv_label_set_text(cui_mainScreenStatusCaption, "N/A");
+    lv_obj_set_style_text_font(cui_mainScreenStatusCaption, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
+#ifdef __XTOUCH_SCREEN_50__
+    /* 5インチではロゴ下メッセージは使わないので非表示にする（HOMEも同様のポリシー） */
+    lv_obj_add_flag(cui_mainScreenStatusCaption, LV_OBJ_FLAG_HIDDEN);
+#endif
+
+    /* 4番ボックス: Preheat ボタン（HOME専用の Preheat ボックス） */
+    lv_obj_t *ui_mainPreheatBox;
+    ui_mainPreheatBox = lv_obj_create(cui_mainScreenLeft);
+    lv_obj_set_width(ui_mainPreheatBox, lv_pct(100));
+    lv_obj_set_flex_grow(ui_mainPreheatBox, 1);
+    lv_obj_set_flex_flow(ui_mainPreheatBox, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_flex_align(ui_mainPreheatBox, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
+    lv_obj_clear_flag(ui_mainPreheatBox, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE |
+                                         LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE |
+                                         LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN);
+    lv_obj_set_scrollbar_mode(ui_mainPreheatBox, LV_SCROLLBAR_MODE_OFF);
+    lv_obj_set_style_bg_color(ui_mainPreheatBox, lv_color_hex(0x555555), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(ui_mainPreheatBox, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(ui_mainPreheatBox, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_left(ui_mainPreheatBox, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(ui_mainPreheatBox, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_top(ui_mainPreheatBox, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_bottom(ui_mainPreheatBox, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_row(ui_mainPreheatBox, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_column(ui_mainPreheatBox, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    /* 4番ボックス内に Preheat ボタン行を素直に定義 */
+    lv_obj_t *preHeatBox1;
+    preHeatBox1 = lv_obj_create(ui_mainPreheatBox);
+    lv_obj_set_width(preHeatBox1, lv_pct(100));
+    lv_obj_set_height(preHeatBox1, lv_pct(50));
+    lv_obj_set_x(preHeatBox1, 386);
+    lv_obj_set_y(preHeatBox1, 178);
+    lv_obj_set_flex_flow(preHeatBox1, LV_FLEX_FLOW_ROW);
+    lv_obj_set_flex_align(preHeatBox1, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_clear_flag(preHeatBox1, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN);
+    lv_obj_set_scrollbar_mode(preHeatBox1, LV_SCROLLBAR_MODE_OFF);
+    lv_obj_set_style_bg_color(preHeatBox1, lv_color_hex(0x555555), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(preHeatBox1, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(preHeatBox1, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_left(preHeatBox1, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(preHeatBox1, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_top(preHeatBox1, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_bottom(preHeatBox1, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_row(preHeatBox1, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_column(preHeatBox1, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_color(preHeatBox1, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_opa(preHeatBox1, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    lv_obj_t *preHeatBox2;
+    preHeatBox2 = lv_obj_create(ui_mainPreheatBox);
+    lv_obj_set_width(preHeatBox2, lv_pct(100));
+    lv_obj_set_height(preHeatBox2, lv_pct(50));
+    lv_obj_set_x(preHeatBox2, 386);
+    lv_obj_set_y(preHeatBox2, 178);
+    lv_obj_set_flex_flow(preHeatBox2, LV_FLEX_FLOW_ROW);
+    lv_obj_set_flex_align(preHeatBox2, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_clear_flag(preHeatBox2, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN);
+    lv_obj_set_scrollbar_mode(preHeatBox2, LV_SCROLLBAR_MODE_OFF);
+    lv_obj_set_style_bg_color(preHeatBox2, lv_color_hex(0x550000), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(preHeatBox2, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(preHeatBox2, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_left(preHeatBox2, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(preHeatBox2, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_top(preHeatBox2, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_bottom(preHeatBox2, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_row(preHeatBox2, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_column(preHeatBox2, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_color(preHeatBox2, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_opa(preHeatBox2, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    /* Preheat ボタン（PLA / ABS / Off）: 5インチと同様に「コンテナ＋ラベル」の一まとまりで扱う */
+    lv_obj_t *homePreHeatBtn1Cont = lv_obj_create(preHeatBox1);
+    lv_obj_set_width(homePreHeatBtn1Cont, lv_pct(37));
+    lv_obj_set_height(homePreHeatBtn1Cont, lv_pct(100));
+    lv_obj_set_flex_grow(homePreHeatBtn1Cont, 2);
+    lv_obj_set_align(homePreHeatBtn1Cont, LV_ALIGN_CENTER);
+    lv_obj_set_flex_flow(homePreHeatBtn1Cont, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_flex_align(homePreHeatBtn1Cont, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_add_flag(homePreHeatBtn1Cont, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_clear_flag(homePreHeatBtn1Cont, LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN);
+    lv_obj_set_scrollbar_mode(homePreHeatBtn1Cont, LV_SCROLLBAR_MODE_OFF);
+    lv_obj_set_style_radius(homePreHeatBtn1Cont, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(homePreHeatBtn1Cont, lv_color_hex(0x007700), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(homePreHeatBtn1Cont, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DISABLED);
+    lv_obj_set_style_bg_opa(homePreHeatBtn1Cont, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(homePreHeatBtn1Cont, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_all(homePreHeatBtn1Cont, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(homePreHeatBtn1Cont, lv_color_hex(0x333333), LV_PART_MAIN | LV_STATE_PRESSED);
+    lv_obj_set_style_border_width(homePreHeatBtn1Cont, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_t *homePreHeatButton1 = lv_label_create(homePreHeatBtn1Cont);
+    lv_obj_set_width(homePreHeatButton1, LV_SIZE_CONTENT);
+    lv_obj_set_height(homePreHeatButton1, LV_SIZE_CONTENT);
+    lv_label_set_text(homePreHeatButton1, "PLA");
+    lv_obj_set_style_text_align(homePreHeatButton1, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(homePreHeatButton1, lv_font_middle, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_color(homePreHeatButton1, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DISABLED);
+
+    lv_obj_t *homePreHeatBtn2Cont = lv_obj_create(preHeatBox1);
+    lv_obj_set_width(homePreHeatBtn2Cont, lv_pct(37));
+    lv_obj_set_height(homePreHeatBtn2Cont, lv_pct(100));
+    lv_obj_set_flex_grow(homePreHeatBtn2Cont, 2);
+    lv_obj_set_align(homePreHeatBtn2Cont, LV_ALIGN_CENTER);
+    lv_obj_set_flex_flow(homePreHeatBtn2Cont, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_flex_align(homePreHeatBtn2Cont, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_add_flag(homePreHeatBtn2Cont, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_clear_flag(homePreHeatBtn2Cont, LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN);
+    lv_obj_set_scrollbar_mode(homePreHeatBtn2Cont, LV_SCROLLBAR_MODE_OFF);
+    lv_obj_set_style_radius(homePreHeatBtn2Cont, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(homePreHeatBtn2Cont, lv_color_hex(0x000077), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(homePreHeatBtn2Cont, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DISABLED);
+    lv_obj_set_style_bg_opa(homePreHeatBtn2Cont, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(homePreHeatBtn2Cont, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_all(homePreHeatBtn2Cont, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(homePreHeatBtn2Cont, lv_color_hex(0x333333), LV_PART_MAIN | LV_STATE_PRESSED);
+    lv_obj_set_style_border_width(homePreHeatBtn2Cont, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_t *homePreHeatButton2 = lv_label_create(homePreHeatBtn2Cont);
+    lv_obj_set_width(homePreHeatButton2, LV_SIZE_CONTENT);
+    lv_obj_set_height(homePreHeatButton2, LV_SIZE_CONTENT);
+    lv_label_set_text(homePreHeatButton2, "ABS");
+    lv_obj_set_style_text_align(homePreHeatButton2, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(homePreHeatButton2, lv_font_middle, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_color(homePreHeatButton2, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DISABLED);
+
+    lv_obj_t *homePreHeatBtn3Cont = lv_obj_create(preHeatBox2);
+    lv_obj_set_width(homePreHeatBtn3Cont, lv_pct(26));
+    lv_obj_set_height(homePreHeatBtn3Cont, lv_pct(100));
+    lv_obj_set_flex_grow(homePreHeatBtn3Cont, 2);
+    lv_obj_set_align(homePreHeatBtn3Cont, LV_ALIGN_CENTER);
+    lv_obj_set_flex_flow(homePreHeatBtn3Cont, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_flex_align(homePreHeatBtn3Cont, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_add_flag(homePreHeatBtn3Cont, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_clear_flag(homePreHeatBtn3Cont, LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN);
+    lv_obj_set_scrollbar_mode(homePreHeatBtn3Cont, LV_SCROLLBAR_MODE_OFF);
+    lv_obj_set_style_radius(homePreHeatBtn3Cont, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(homePreHeatBtn3Cont, lv_color_hex(0x777777), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(homePreHeatBtn3Cont, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DISABLED);
+    lv_obj_set_style_bg_opa(homePreHeatBtn3Cont, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(homePreHeatBtn3Cont, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_all(homePreHeatBtn3Cont, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(homePreHeatBtn3Cont, lv_color_hex(0x333333), LV_PART_MAIN | LV_STATE_PRESSED);
+    lv_obj_set_style_border_width(homePreHeatBtn3Cont, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_t *homePreHeatButton3 = lv_label_create(homePreHeatBtn3Cont);
+    lv_obj_set_width(homePreHeatButton3, LV_SIZE_CONTENT);
+    lv_obj_set_height(homePreHeatButton3, LV_SIZE_CONTENT);
+    lv_label_set_text(homePreHeatButton3, "Off");
+    lv_obj_set_style_text_align(homePreHeatButton3, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(homePreHeatButton3, lv_font_middle, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_color(homePreHeatButton3, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DISABLED);
+
+    /* HOME 側 Preheat ボタンは直接 onPreHeatXXX にバインドする */
+    lv_obj_add_event_cb(homePreHeatBtn1Cont, onPreHeatPLA, LV_EVENT_CLICKED, NULL);
+    lv_obj_add_event_cb(homePreHeatBtn2Cont, onPreHeatABS, LV_EVENT_CLICKED, NULL);
+    lv_obj_add_event_cb(homePreHeatBtn3Cont, onPreHeatOff, LV_EVENT_CLICKED, NULL);
+
+    /* 5番ボックス: レイヤー/進捗用の専用コンテナ */
+    lv_obj_t *cui_mainScreenProgressBox;
+    cui_mainScreenProgressBox = lv_obj_create(cui_mainScreenLeft);
+    lv_obj_set_width(cui_mainScreenProgressBox, lv_pct(100));
+    lv_obj_set_flex_grow(cui_mainScreenProgressBox, 1);
+    lv_obj_set_flex_flow(cui_mainScreenProgressBox, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_flex_align(cui_mainScreenProgressBox, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
+    lv_obj_clear_flag(cui_mainScreenProgressBox, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN); /// Flags
+    lv_obj_set_scrollbar_mode(cui_mainScreenProgressBox, LV_SCROLLBAR_MODE_OFF);
+    lv_obj_set_style_bg_color(cui_mainScreenProgressBox, lv_color_hex(0x555555), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(cui_mainScreenProgressBox, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(cui_mainScreenProgressBox, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_left(cui_mainScreenProgressBox, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(cui_mainScreenProgressBox, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_top(cui_mainScreenProgressBox, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_bottom(cui_mainScreenProgressBox, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_row(cui_mainScreenProgressBox, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_column(cui_mainScreenProgressBox, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+
     lv_obj_t *cui_mainScreenController;
     cui_mainScreenController = lv_obj_create(cui_mainScreenPlayer);
     lv_obj_set_width(cui_mainScreenController, lv_pct(100));
@@ -794,6 +1134,7 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_pad_right(cui_mainScreenController, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_top(cui_mainScreenController, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_bottom(cui_mainScreenController, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_column(cui_mainScreenController, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_color(cui_mainScreenController, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(cui_mainScreenController, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
@@ -842,7 +1183,7 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
     lv_obj_clear_flag(cui_mainScreenControllerRight, LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN);
     lv_obj_set_style_bg_opa(cui_mainScreenControllerRight, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_width(cui_mainScreenControllerRight, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_row(cui_mainScreenControllerRight, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_row(cui_mainScreenControllerRight, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_top(cui_mainScreenControllerRight, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_bottom(cui_mainScreenControllerRight, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     /* Pause と Stop を横並びにする行 */
@@ -854,7 +1195,9 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
     lv_obj_clear_flag(cui_mainScreenControllerRightBtnRow, LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN);
     lv_obj_set_style_bg_opa(cui_mainScreenControllerRightBtnRow, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_width(cui_mainScreenControllerRightBtnRow, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_column(cui_mainScreenControllerRightBtnRow, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_column(cui_mainScreenControllerRightBtnRow, 12, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_top(cui_mainScreenControllerRight, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_bottom(cui_mainScreenControllerRight, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
 #endif
 
     lv_obj_t *cui_mainScreenPlayPauseButton;
@@ -922,6 +1265,16 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_bg_opa(cui_mainScreenStopButton, 255, LV_PART_MAIN | LV_STATE_PRESSED);
 
 #if defined(__XTOUCH_SCREEN_50__)
+    /* Failed/Finished 時にボタン位置に表示するラベル */
+    lv_obj_t *cui_mainScreenFinishedFailedLabel = lv_label_create(cui_mainScreenControllerRightBtnRow);
+    lv_obj_set_width(cui_mainScreenFinishedFailedLabel, 248);
+    lv_obj_set_height(cui_mainScreenFinishedFailedLabel, LV_SIZE_CONTENT);
+    lv_label_set_text(cui_mainScreenFinishedFailedLabel, "Finished");
+    lv_obj_set_style_text_font(cui_mainScreenFinishedFailedLabel, lv_font_middle, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_color(cui_mainScreenFinishedFailedLabel, lv_color_hex(0xaaaaaa), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_align(cui_mainScreenFinishedFailedLabel, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_add_flag(cui_mainScreenFinishedFailedLabel, LV_OBJ_FLAG_HIDDEN);
+
     /* ボタン下に subtask_name の先頭を表示（最大約20文字想定で省略） */
     lv_obj_t *cui_mainScreenSubtaskLabel = lv_label_create(cui_mainScreenControllerRight);
     lv_obj_set_width(cui_mainScreenSubtaskLabel, 340);
@@ -941,7 +1294,7 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
 #endif
 
     lv_obj_t *cui_mainScreenProgressBar;
-    cui_mainScreenProgressBar = lv_slider_create(cui_mainScreenPlayer);
+    cui_mainScreenProgressBar = lv_slider_create(cui_mainScreenProgressBox);
     lv_slider_set_value(cui_mainScreenProgressBar, 60, LV_ANIM_OFF);
     if (lv_slider_get_mode(cui_mainScreenProgressBar) == LV_SLIDER_MODE_RANGE)
         lv_slider_set_left_value(cui_mainScreenProgressBar, 0, LV_ANIM_OFF);
@@ -965,7 +1318,7 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_pad_bottom(cui_mainScreenProgressBar, 0, LV_PART_KNOB | LV_STATE_DEFAULT);
 
     lv_obj_t *cui_mainScreenController1;
-    cui_mainScreenController1 = lv_obj_create(cui_mainScreenPlayer);
+    cui_mainScreenController1 = lv_obj_create(cui_mainScreenProgressBox);
     lv_obj_set_width(cui_mainScreenController1, lv_pct(100));
     lv_obj_set_flex_grow(cui_mainScreenController1, 1);
     lv_obj_set_x(cui_mainScreenController1, 364);
@@ -1011,7 +1364,7 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_text_font(cui_mainScreenTimeLeft, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     lv_obj_t *cui_mainScreenController2;
-    cui_mainScreenController2 = lv_obj_create(cui_mainScreenPlayer);
+    cui_mainScreenController2 = lv_obj_create(cui_mainScreenProgressBox);
     lv_obj_set_width(cui_mainScreenController2, lv_pct(100));
     lv_obj_set_flex_grow(cui_mainScreenController2, 1);
     lv_obj_set_x(cui_mainScreenController2, 364);
@@ -1464,9 +1817,12 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
     children[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPLAYER_MAINSCREENCONTROLLER_MAINSCREENSTOPBUTTON] = cui_mainScreenStopButton;
 #if defined(__XTOUCH_SCREEN_50__)
     children[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPLAYER_MAINSCREENCONTROLLER_MAINSCREENSUBTASKLABEL] = cui_mainScreenSubtaskLabel;
+    children[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPLAYER_MAINSCREENCONTROLLER_MAINSCREENFINISHEDFAILEDLABEL] = cui_mainScreenFinishedFailedLabel;
 #else
     children[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPLAYER_MAINSCREENCONTROLLER_MAINSCREENSUBTASKLABEL] = NULL;
+    children[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPLAYER_MAINSCREENCONTROLLER_MAINSCREENFINISHEDFAILEDLABEL] = NULL;
 #endif
+    children[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPROGRESSBOX] = cui_mainScreenProgressBox;
     children[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPLAYER_MAINSCREENPROGRESSBAR] = cui_mainScreenProgressBar;
     children[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPLAYER_MAINSCREENCONTROLLER1] = cui_mainScreenController1;
     children[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPLAYER_MAINSCREENCONTROLLER1_MAINSCREENTIMELEFTICON] = cui_mainScreenTimeLeftIcon;
@@ -1492,6 +1848,8 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
     children[UI_COMP_HOMECOMPONENT_MAINSCREENRIGHT_MAINSCREENTEMPS_MAINSCREENCHAMBERTEMP] = cui_mainScreenChamberTemp;
     children[UI_COMP_HOMECOMPONENT_MAINSCREENRIGHT_MAINSCREENTEMPS_MAINSCREENCHAMBERTEMP_MAINSCREENCHAMBERTEMPICON] = cui_mainScreenChamberTempIcon;
     children[UI_COMP_HOMECOMPONENT_MAINSCREENRIGHT_MAINSCREENTEMPS_MAINSCREENCHAMBERTEMP_MAINSCREENCHAMBERTEMPVALUE] = cui_mainScreenChamberTempValue;
+    children[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPREHEATBOX] = ui_mainPreheatBox;
+    children[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENSTATUS_MAINSCREENSTATUSCAPTION] = cui_mainScreenStatusCaption;
 
     lv_obj_add_event_cb(cui_homeComponent, get_component_child_event_cb, LV_EVENT_GET_COMP_CHILD, children);
     lv_obj_add_event_cb(cui_homeComponent, del_component_child_event_cb, LV_EVENT_DELETE, children);
@@ -1553,6 +1911,10 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
 
     lv_obj_add_event_cb(cui_mainScreenTimeLeft, onXTouchPrintStatus, LV_EVENT_MSG_RECEIVED, children);
     lv_msg_subsribe_obj(XTOUCH_ON_PRINT_STATUS, cui_mainScreenTimeLeft, NULL);
+
+    /* 設定で PreHeat ボタンの表示を切り替え（loadScreen で毎回 create するためここで十分） */
+    if (!xTouchConfig.xTouchPreheatEnabled)
+        lv_obj_add_flag(ui_mainPreheatBox, LV_OBJ_FLAG_HIDDEN);
 
     ui_comp_homeComponent_create_hook(cui_homeComponent);
 
