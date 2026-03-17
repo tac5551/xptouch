@@ -54,6 +54,7 @@ extern "C"
   void ui_amsEditColorScreen_screen_init(void);
 #ifdef __XTOUCH_SCREEN_50__
   void ui_printersScreen_screen_init(void);
+  void ui_historyScreen_screen_init(void);
 #endif
 
   lv_obj_t *introScreen;
@@ -103,6 +104,7 @@ extern "C"
   lv_obj_t *ui_optional_stackChanSwitch;
   lv_obj_t *ui_optional_preheatSwitch;
   lv_obj_t *ui_optional_multiPrinterMonitorSwitch;
+  lv_obj_t *ui_optional_historySwitch;
   lv_obj_t *ui_optional_Idle_ledSwitch;
 
   lv_obj_t *ui_characterScreen;
@@ -134,6 +136,12 @@ extern "C"
   lv_obj_t *ui_printersScreen;
   lv_obj_t *ui_printersContentPanel;
   extern lv_obj_t *ui_printersListContainer;
+  lv_obj_t *ui_historyScreen;
+  lv_obj_t *ui_historyContentPanel;
+  /* ui_historyListContainer は ui_comp_historycomponent.c で定義 */
+  extern lv_obj_t *ui_historyListContainer;
+  /** Home 画面のサムネイル img（slot 0）。グローバル購読で IMAGE 受信時に再描画するため。 */
+  extern lv_obj_t *ui_homeThumbImg;
 #endif
 
   void ui_event____initial_actions0(lv_event_t *e);

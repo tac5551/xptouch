@@ -1151,9 +1151,11 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
         lv_obj_set_style_bg_opa(cui_mainScreenNozzleIcon, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_radius(cui_mainScreenNozzleIcon, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
         ui_thumb_set_img_src_from_slot(cui_mainScreenNozzleIcon, 0);
+        ui_homeThumbImg = cui_mainScreenNozzleIcon;
     }
     else
     {
+        ui_homeThumbImg = NULL;
         cui_mainScreenNozzleIcon = lv_label_create(cui_mainScreenController);
         lv_obj_set_width(cui_mainScreenNozzleIcon, LV_SIZE_CONTENT);
         lv_obj_set_height(cui_mainScreenNozzleIcon, LV_SIZE_CONTENT);

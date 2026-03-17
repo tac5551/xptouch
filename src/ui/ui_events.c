@@ -8,6 +8,7 @@ void initialActions(lv_event_t *e) {}
 void onSidebarHome(lv_event_t *e) { loadScreen(0); }
 #ifdef __XTOUCH_SCREEN_50__
 void onSidebarPrinters(lv_event_t *e) { if (!xTouchConfig.xTouchLanOnlyMode && xTouchConfig.xTouchMultiPrinterMonitorEnabled) loadScreen(6); }
+void onSidebarHistory(lv_event_t *e) { (void)e; if (!xTouchConfig.xTouchLanOnlyMode && xTouchConfig.xTouchHistoryEnabled) loadScreen(15); }
 #endif
 void onSidebarTemp(lv_event_t *e) { loadScreen(1); }
 void onSidebarControl(lv_event_t *e) { loadScreen(2); }
@@ -173,6 +174,40 @@ void onPrintersStop(lv_event_t *e)
     _printers_slot = (int)(intptr_t)lv_obj_get_user_data(target);
     ui_confirmPanel_show(LV_SYMBOL_WARNING " Cancel Print?", onPrintersStopConfirm);
 }
+
+void onHistoryReprint(lv_event_t *e)
+{
+    printf("[HistoryReprint] clicked\n");
+    lv_obj_t *target = lv_event_get_target(e);
+    /* クリックがラベルに当たると target がボタンでなくなるため、リスト行（list の直下）まで遡ってインデックスを取得 */
+    lv_obj_t *row = target;
+    while (row && lv_obj_get_parent(row) != ui_historyListContainer)
+        row = lv_obj_get_parent(row);
+    if (!row || !ui_historyListContainer)
+    {
+        printf("[HistoryReprint] abort: row=%p list=%p\n", (void *)row, (void *)ui_historyListContainer);
+        return;
+    }
+    int idx = -1;
+    for (int i = 0; i < XTOUCH_HISTORY_TASKS_MAX; i++)
+    {
+        if (lv_obj_get_child(ui_historyListContainer, i) == row)
+        {
+            idx = i;
+            break;
+        }
+    }
+    if (idx < 0)
+    {
+        printf("[HistoryReprint] abort: row not found in list\n");
+        return;
+    }
+    printf("[HistoryReprint] send REPRINT idx=%d\n", idx);
+    struct XTOUCH_MESSAGE_DATA eventData;
+    eventData.data = (unsigned long long)idx;
+    eventData.data2 = 0;
+    lv_msg_send(XTOUCH_HISTORY_REPRINT, &eventData);
+}
 #endif
 
 void onMoveUtilNozzleChangeScreen(lv_event_t *e) { 
@@ -247,6 +282,14 @@ void onOptionalPreheat(lv_event_t *e)
 void onOptionalMultiPrinterMonitor(lv_event_t *e)
 {
     xTouchConfig.xTouchMultiPrinterMonitorEnabled = !xTouchConfig.xTouchMultiPrinterMonitorEnabled;
+    lv_msg_send(XTOUCH_SETTINGS_SAVE, NULL);
+}
+#endif
+
+#ifdef __XTOUCH_SCREEN_50__
+void onOptionalHistory(lv_event_t *e)
+{
+    xTouchConfig.xTouchHistoryEnabled = !xTouchConfig.xTouchHistoryEnabled;
     lv_msg_send(XTOUCH_SETTINGS_SAVE, NULL);
 }
 #endif

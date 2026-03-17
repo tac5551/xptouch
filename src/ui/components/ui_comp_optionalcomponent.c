@@ -98,6 +98,17 @@ void ui_event_comp_optionalComponent_onMultiPrinterMonitor(lv_event_t *e)
 }
 #endif
 
+#ifdef __XTOUCH_SCREEN_50__
+void ui_event_comp_optionalComponent_onHistory(lv_event_t *e)
+{
+    lv_event_code_t event_code = lv_event_get_code(e);
+    if (event_code == LV_EVENT_VALUE_CHANGED)
+    {
+        onOptionalHistory(e);
+    }
+}
+#endif
+
 void ui_event_comp_optionalComponent_onIdleLED(lv_event_t *e)
 {
     lv_event_code_t event_code = lv_event_get_code(e);
@@ -274,6 +285,45 @@ lv_obj_t *ui_optionalComponent_create(lv_obj_t *comp_parent)
         lv_obj_add_state(ui_optional_multiPrinterMonitorSwitch, LV_STATE_CHECKED);
     }
     //---Multi Printer Monitor End------------------------------
+
+    //---History Screen Start------------------------------
+    lv_obj_t *cui_optional_history;
+    cui_optional_history = lv_obj_create(cui_optionalComponent);
+    lv_obj_set_width(cui_optional_history, lv_pct(100));
+    lv_obj_set_height(cui_optional_history, LV_SIZE_CONTENT);
+    lv_obj_set_flex_flow(cui_optional_history, LV_FLEX_FLOW_ROW);
+    lv_obj_set_flex_align(cui_optional_history, LV_FLEX_ALIGN_SPACE_BETWEEN, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_set_scrollbar_mode(cui_optional_history, LV_SCROLLBAR_MODE_OFF);
+    lv_obj_set_style_bg_color(cui_optional_history, lv_color_hex(0x222222), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(cui_optional_history, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(cui_optional_history, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_left(cui_optional_history, 16, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(cui_optional_history, 16, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_top(cui_optional_history, 16, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_bottom(cui_optional_history, 16, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    lv_obj_t *cui_optional_historyLabel;
+    cui_optional_historyLabel = lv_label_create(cui_optional_history);
+    lv_obj_set_width(cui_optional_historyLabel, LV_SIZE_CONTENT);
+    lv_obj_set_height(cui_optional_historyLabel, LV_SIZE_CONTENT);
+    lv_obj_set_style_text_font(cui_optional_historyLabel, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_label_set_text(cui_optional_historyLabel, "History screen");
+    lv_obj_set_scrollbar_mode(cui_optional_historyLabel, LV_SCROLLBAR_MODE_OFF);
+
+    ui_optional_historySwitch = lv_switch_create(cui_optional_history);
+    lv_obj_set_width(ui_optional_historySwitch, 50);
+    lv_obj_set_height(ui_optional_historySwitch, 25);
+    lv_obj_set_style_bg_color(ui_optional_historySwitch, lv_color_hex(0x2AFF00), LV_PART_INDICATOR | LV_STATE_CHECKED);
+    lv_obj_set_style_bg_opa(ui_optional_historySwitch, 255, LV_PART_INDICATOR | LV_STATE_CHECKED);
+    lv_obj_set_style_bg_color(ui_optional_historySwitch, lv_color_hex(0x2AFF00), LV_PART_KNOB | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(ui_optional_historySwitch, 255, LV_PART_KNOB | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(ui_optional_historySwitch, lv_color_hex(0x000000), LV_PART_KNOB | LV_STATE_CHECKED);
+    lv_obj_set_style_bg_opa(ui_optional_historySwitch, 255, LV_PART_KNOB | LV_STATE_CHECKED);
+    if (xTouchConfig.xTouchHistoryEnabled)
+    {
+        lv_obj_add_state(ui_optional_historySwitch, LV_STATE_CHECKED);
+    }
+    //---History Screen End------------------------------
 #endif
 
     //---NEOPIXEL Num Start------------------------------
@@ -651,10 +701,16 @@ lv_obj_t *ui_optionalComponent_create(lv_obj_t *comp_parent)
     children[UI_COMP_OPTIONALCOMPONENT_MULTI_PRINTER_MONITOR] = cui_optional_multiPrinterMonitor;
     children[UI_COMP_OPTIONALCOMPONENT_MULTI_PRINTER_MONITOR_LABEL] = cui_optional_multiPrinterMonitorLabel;
     children[UI_COMP_OPTIONALCOMPONENT_MULTI_PRINTER_MONITOR_SWITCH] = ui_optional_multiPrinterMonitorSwitch;
+    children[UI_COMP_OPTIONALCOMPONENT_HISTORY] = cui_optional_history;
+    children[UI_COMP_OPTIONALCOMPONENT_HISTORY_LABEL] = cui_optional_historyLabel;
+    children[UI_COMP_OPTIONALCOMPONENT_HISTORY_SWITCH] = ui_optional_historySwitch;
 #else
     children[UI_COMP_OPTIONALCOMPONENT_MULTI_PRINTER_MONITOR] = NULL;
     children[UI_COMP_OPTIONALCOMPONENT_MULTI_PRINTER_MONITOR_LABEL] = NULL;
     children[UI_COMP_OPTIONALCOMPONENT_MULTI_PRINTER_MONITOR_SWITCH] = NULL;
+    children[UI_COMP_OPTIONALCOMPONENT_HISTORY] = NULL;
+    children[UI_COMP_OPTIONALCOMPONENT_HISTORY_LABEL] = NULL;
+    children[UI_COMP_OPTIONALCOMPONENT_HISTORY_SWITCH] = NULL;
 #endif
 
    lv_obj_add_event_cb(cui_optionalComponent, get_component_child_event_cb, LV_EVENT_GET_COMP_CHILD, children);
@@ -668,6 +724,7 @@ lv_obj_t *ui_optionalComponent_create(lv_obj_t *comp_parent)
     lv_obj_add_event_cb(ui_optional_preheatSwitch, ui_event_comp_optionalComponent_onPreheat, LV_EVENT_VALUE_CHANGED, NULL);
 #if defined(__XTOUCH_SCREEN_50__)
     lv_obj_add_event_cb(ui_optional_multiPrinterMonitorSwitch, ui_event_comp_optionalComponent_onMultiPrinterMonitor, LV_EVENT_VALUE_CHANGED, NULL);
+    lv_obj_add_event_cb(ui_optional_historySwitch, ui_event_comp_optionalComponent_onHistory, LV_EVENT_VALUE_CHANGED, NULL);
 #endif
     lv_obj_add_event_cb(ui_optional_Idle_ledSwitch, ui_event_comp_optionalComponent_onIdleLED, LV_EVENT_VALUE_CHANGED, NULL);
 

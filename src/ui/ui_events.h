@@ -64,6 +64,7 @@ extern "C"
     void onOptionalPreheat(lv_event_t *e);
 #ifdef __XTOUCH_SCREEN_50__
     void onOptionalMultiPrinterMonitor(lv_event_t *e);
+    void onOptionalHistory(lv_event_t *e);
 #endif
     void onOptionalIdleLED(lv_event_t *e);
 
@@ -77,6 +78,8 @@ extern "C"
 #ifdef __XTOUCH_SCREEN_50__
     void onPrintersPause(lv_event_t *e);
     void onPrintersStop(lv_event_t *e);
+    void onSidebarHistory(lv_event_t *e);
+    void onHistoryReprint(lv_event_t *e);
 #endif
 
     /* -----------Confirm-------------- */

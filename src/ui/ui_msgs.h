@@ -119,6 +119,14 @@ extern "C"
         XTOUCH_PRINTERS_THUMB_TIMER_STOP,
         /** Printers 一覧の表示を更新せよ（初期表示・再描画。購読は画面側） */
         XTOUCH_PRINTERS_LIST_REFRESH,
+        /** History 画面: Cloud から履歴取得を依頼（購読は xtouch） */
+        XTOUCH_HISTORY_FETCH,
+        /** History 一覧の表示を更新せよ（購読は画面側） */
+        XTOUCH_HISTORY_LIST_REFRESH,
+        /** History 再印刷: payload data = 履歴行インデックス（0-based） */
+        XTOUCH_HISTORY_REPRINT,
+        /** History 再印刷 API 成功後に送信。購読側で Home へ遷移する */
+        XTOUCH_HISTORY_REPRINT_DONE,
     };
 
     struct XTOUCH_MESSAGE_DATA

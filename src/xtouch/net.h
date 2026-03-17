@@ -135,58 +135,58 @@ int downloadFileToSDCard(const char *url, const char *fileName, void (*onProgres
 #include "xtouch/cloud.hpp"
 #include <SD.h>
 
-/** スロットの task_id をファイル名に使う。無効なら pthumb_N.png。buf に /tmp/XXX.png を書き込む。
- *  xtouch_thumbnail_slot_path は設定しない（UI 用 path はファイル存在時のみ downloadThumbnailForSlot / xtouch_thumbnail_update_path_for_slot で設定）。 */
+/** スロットの task_id をファイル名に使う。task_id が無効な場合は buf に空文字を書き込む（pthumb_N は廃止）。 */
 inline void getThumbPathForSlot(int slot, char *buf, size_t len)
 {
+    if (!buf || len == 0)
+        return;
+    buf[0] = '\0';
     const char *tid = nullptr;
     if (slot == 0)
         tid = (bambuStatus.task_id[0] && strcmp(bambuStatus.task_id, "0") != 0) ? bambuStatus.task_id : nullptr;
     else if (slot >= 1 && slot - 1 < xtouch_other_printer_count && otherPrinters[slot - 1].valid)
         tid = (otherPrinters[slot - 1].task_id[0] && strcmp(otherPrinters[slot - 1].task_id, "0") != 0) ? otherPrinters[slot - 1].task_id : nullptr;
-    if (tid && tid[0])
+    if (!tid || !tid[0])
+        return;
+    char safe[32];
+    size_t j = 0;
+    for (size_t i = 0; tid[i] != '\0' && j < sizeof(safe) - 1; i++)
     {
-        char safe[32];
-        size_t j = 0;
-        for (size_t i = 0; tid[i] != '\0' && j < sizeof(safe) - 1; i++)
-        {
-            char c = tid[i];
-            if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_')
-                safe[j++] = c;
-        }
-        safe[j] = '\0';
-        if (j > 0)
-        {
-            snprintf(buf, len, "/tmp/%.28s.png", safe);
-            return;
-        }
+        char c = tid[i];
+        if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_')
+            safe[j++] = c;
     }
-    snprintf(buf, len, "/tmp/pthumb_%d.png", slot);
+    safe[j] = '\0';
+    if (j > 0)
+        snprintf(buf, len, "/tmp/%.28s.png", safe);
 }
 
-/** 指定スロット(0=メイン, 1..4=他機)のサムネイルを URL から取得し SD に保存。ファイル名は TaskID（既存なら DL しない）。
- *  @return ファイルが既にある/保存できた場合 true、未DL・失敗時は false */
-inline bool downloadThumbnailForSlot(int slot)
+/** 指定スロットのサムネイル URL と保存 path を取得（メインスレッドで呼ぶ。Cloud 解決で bambuStatus/otherPrinters を更新する）。
+ *  @return URL が取得できた場合 true。ワーカーに渡す url_out/path_out を埋める。 */
+inline bool getThumbnailUrlAndPathForSlot(int slot, char *url_out, size_t url_size, char *path_out, size_t path_size)
 {
-    static const char *TAG = "thumbnail";
+    if (!url_out || url_size == 0 || !path_out || path_size == 0)
+        return false;
+    url_out[0] = path_out[0] = '\0';
 
     const char *url = nullptr;
 #if defined(__XTOUCH_SCREEN_50__) && defined(CONFIG_SPIRAM)
-    static EXT_RAM_ATTR char resolved_url[1024]; /* S3 署名付き URL 用。PSRAM に配置。 */
+    static EXT_RAM_ATTR char resolved_url[1024];
 #else
     static char resolved_url[1024];
 #endif
     if (slot == 0)
     {
         url = bambuStatus.image_url;
-        /* URL が MQTT から来ていない場合は Cloud task から取得を試みる */
         if ((!url || !url[0]) && cloud.loggedIn && bambuStatus.task_id[0] && strcmp(bambuStatus.task_id, "0") != 0)
         {
-#ifdef XTOUCH_DEBUG
-            ConsoleDebug.print(F("[xPTouch][THUMB] slot=0 resolve from task_id="));
-            ConsoleDebug.println(bambuStatus.task_id);
-#endif
-            if (cloud.getTaskThumbnailUrl(bambuStatus.task_id, resolved_url, sizeof(resolved_url)))
+            /* 起動直後などで task_id が古い場合は /my/tasks?limit=1 と突き合わせ、違っていれば諦めてロゴにフォールバックする。 */
+            if (!cloud.isCurrentTaskForDevice(bambuStatus.task_id))
+            {
+                bambuStatus.task_id[0] = '\0';
+                bambuStatus.image_url[0] = '\0';
+            }
+            else if (cloud.getTaskThumbnailUrl(bambuStatus.task_id, resolved_url, sizeof(resolved_url)))
             {
                 strncpy(bambuStatus.image_url, resolved_url, sizeof(bambuStatus.image_url) - 1);
                 bambuStatus.image_url[sizeof(bambuStatus.image_url) - 1] = '\0';
@@ -194,47 +194,27 @@ inline bool downloadThumbnailForSlot(int slot)
             }
             else
             {
-                /* 取得に失敗したらこのセッションでは再試行しない */
                 bambuStatus.task_id[0] = '\0';
                 bambuStatus.image_url[0] = '\0';
             }
         }
         if (!url || !url[0])
-        {
-#ifdef XTOUCH_DEBUG
-            ConsoleDebug.print(F("[xPTouch][THUMB] slot="));
-            ConsoleDebug.print(slot);
-            ConsoleDebug.println(F(" main: no image_url"));
-#endif
             return false;
-        }
     }
     else
     {
         int idx = slot - 1;
         if (idx < 0 || idx >= xtouch_other_printer_count || !otherPrinters[idx].valid)
-        {
-#ifdef XTOUCH_DEBUG
-            ConsoleDebug.print(F("[xPTouch][THUMB] slot="));
-            ConsoleDebug.print(slot);
-            ConsoleDebug.print(F(" other: invalid idx="));
-            ConsoleDebug.print(idx);
-            ConsoleDebug.print(F(" xtouch_other_printer_count="));
-            ConsoleDebug.println(xtouch_other_printer_count);
-#endif
             return false;
-        }
         url = otherPrinters[idx].image_url;
-        /* URL が MQTT から来ていない場合は Cloud task から取得を試みる */
         if ((!url || !url[0]) && cloud.loggedIn && otherPrinters[idx].task_id[0] && strcmp(otherPrinters[idx].task_id, "0") != 0)
         {
-#ifdef XTOUCH_DEBUG
-            ConsoleDebug.print(F("[xPTouch][THUMB] slot="));
-            ConsoleDebug.print(slot);
-            ConsoleDebug.print(F(" resolve from task_id="));
-            ConsoleDebug.println(otherPrinters[idx].task_id);
-#endif
-            if (cloud.getTaskThumbnailUrl(otherPrinters[idx].task_id, resolved_url, sizeof(resolved_url)))
+            if (!cloud.isCurrentTaskForDevice(otherPrinters[idx].task_id))
+            {
+                otherPrinters[idx].task_id[0] = '\0';
+                otherPrinters[idx].image_url[0] = '\0';
+            }
+            else if (cloud.getTaskThumbnailUrl(otherPrinters[idx].task_id, resolved_url, sizeof(resolved_url)))
             {
                 strncpy(otherPrinters[idx].image_url, resolved_url, sizeof(otherPrinters[idx].image_url) - 1);
                 otherPrinters[idx].image_url[sizeof(otherPrinters[idx].image_url) - 1] = '\0';
@@ -242,26 +222,30 @@ inline bool downloadThumbnailForSlot(int slot)
             }
             else
             {
-                /* 取得に失敗したらこのセッションでは再試行しない */
                 otherPrinters[idx].task_id[0] = '\0';
                 otherPrinters[idx].image_url[0] = '\0';
             }
         }
         if (!url || !url[0])
-        {
-#ifdef XTOUCH_DEBUG
-            ConsoleDebug.print(F("[xPTouch][THUMB] slot="));
-            ConsoleDebug.print(slot);
-            ConsoleDebug.print(F(" other idx="));
-            ConsoleDebug.print(idx);
-            ConsoleDebug.println(F(" no image_url"));
-#endif
             return false;
-        }
     }
+    getThumbPathForSlot(slot, path_out, path_size);
+    if (!path_out[0])
+        return false;
+    strncpy(url_out, url, url_size - 1);
+    url_out[url_size - 1] = '\0';
+    return true;
+}
 
+/** 指定スロット(0=メイン, 1..4=他機)のサムネイルを URL から取得し SD に保存。ファイル名は TaskID（既存なら DL しない）。
+ *  @return ファイルが既にある/保存できた場合 true、未DL・失敗時は false */
+inline bool downloadThumbnailForSlot(int slot)
+{
+    static const char *TAG = "thumbnail";
+    char url_buf[1024];
     char path[64];
-    getThumbPathForSlot(slot, path, sizeof(path));
+    if (!getThumbnailUrlAndPathForSlot(slot, url_buf, sizeof(url_buf), path, sizeof(path)))
+        return false;
     if (SD.exists(path))
     {
         /* 既に同じ TaskID のファイルがあれば DL しない。UI 用 path を設定 */
@@ -273,24 +257,20 @@ inline bool downloadThumbnailForSlot(int slot)
     ConsoleDebug.print(F("[xPTouch][THUMB] slot="));
     ConsoleDebug.print(slot);
     ConsoleDebug.print(F(" download start url="));
-    ConsoleDebug.print(url);
+    ConsoleDebug.print(url_buf);
     ConsoleDebug.print(F(" -> path="));
     ConsoleDebug.println(path);
-    /* URL が長くて一行ログが途中で切れる場合に備え、改行しながらフル URL も出力する */
     ConsoleDebug.println(F("[xPTouch][THUMB] url full:"));
-    if (url)
+    for (size_t i = 0; url_buf[i] != '\0'; ++i)
     {
-        for (size_t i = 0; url[i] != '\0'; ++i)
-        {
-            ConsoleDebug.print(url[i]);
-            if ((i + 1) % 80 == 0)
-                ConsoleDebug.println();
-        }
-        ConsoleDebug.println();
+        ConsoleDebug.print(url_buf[i]);
+        if ((i + 1) % 80 == 0)
+            ConsoleDebug.println();
     }
+    ConsoleDebug.println();
 #endif
 
-    int ok = downloadFileToSDCard(url, path);
+    int ok = downloadFileToSDCard(url_buf, path);
 #ifdef XTOUCH_DEBUG
     if (ok)
     {

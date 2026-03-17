@@ -64,6 +64,10 @@ lv_obj_t *ui_mainScreenChamberTempValue;
 lv_obj_t *ui_printersScreen;
 lv_obj_t *ui_printersContentPanel;
 lv_obj_t *ui_printersListContainer = NULL;
+lv_obj_t *ui_historyScreen;
+lv_obj_t *ui_historyContentPanel;
+lv_obj_t *ui_historyListContainer = NULL;
+lv_obj_t *ui_homeThumbImg = NULL;
 #endif
 void ui_event____initial_actions0(lv_event_t *e);
 lv_obj_t *ui____initial_actions0;

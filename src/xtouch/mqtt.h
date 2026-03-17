@@ -410,7 +410,21 @@ void xtouch_mqtt_processPushStatus(JsonDocument &incomingJson)
             const char *new_tid = new_tid_str.c_str();
 #ifdef __XTOUCH_SCREEN_50__
             if (new_tid[0] && strcmp(bambuStatus.task_id, new_tid) != 0)
+            {
+                /* TaskID が変わったら既存 URL を捨て、新しい Task のサムネ取得をキックする。 */
                 bambuStatus.image_url[0] = '\0';
+                if (cloud.loggedIn)
+                {
+                    char thumb_url[1024];
+                    if (cloud.getTaskThumbnailUrl(new_tid, thumb_url, sizeof(thumb_url)))
+                    {
+                        strncpy(bambuStatus.image_url, thumb_url, sizeof(bambuStatus.image_url) - 1);
+                        bambuStatus.image_url[sizeof(bambuStatus.image_url) - 1] = '\0';
+                        /* Home/Printers 両方のスロットを一度取り直すようスケジュール */
+                        xtouch_thumbnail_schedule_fetch_all();
+                    }
+                }
+            }
 #endif
             strncpy(bambuStatus.task_id, new_tid, sizeof(bambuStatus.task_id) - 1);
             bambuStatus.task_id[sizeof(bambuStatus.task_id) - 1] = '\0';
@@ -1312,7 +1326,7 @@ static void xtouch_mqtt_subscribe_commands(void)
     lv_msg_subscribe(XTOUCH_COMMAND_RIGHT, (lv_msg_subscribe_cb_t)xtouch_device_onRightCommand, NULL);
     lv_msg_subscribe(XTOUCH_COMMAND_UP, (lv_msg_subscribe_cb_t)xtouch_device_onUpCommand, NULL);
     lv_msg_subscribe(XTOUCH_COMMAND_DOWN, (lv_msg_subscribe_cb_t)xtouch_device_onDownCommand, NULL);
-    /* Z 軸の Bed Up/Down はローカル／クラウド共通で常に購読する */
+
     lv_msg_subscribe(XTOUCH_COMMAND_BED_UP, (lv_msg_subscribe_cb_t)xtouch_device_onBedUpCommand, NULL);
     lv_msg_subscribe(XTOUCH_COMMAND_BED_DOWN, (lv_msg_subscribe_cb_t)xtouch_device_onBedDownCommand, NULL);
     lv_msg_subscribe(XTOUCH_COMMAND_BED_TARGET_TEMP, (lv_msg_subscribe_cb_t)xtouch_device_onBedTargetTempCommand, NULL);

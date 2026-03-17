@@ -2,6 +2,22 @@
 #include "ui.h"
 #include "ui_msgs.h"
 
+#ifdef __XTOUCH_SCREEN_50__
+static bool s_home_thumb_global_subscribed = false;
+/** IMAGE 受信（サムネ DL 完了）時に Home 表示中なら slot 0 を必ず再描画する。オブジェクト購読が届かない場合の保険。 */
+static void on_home_thumb_global(lv_msg_t *m, void *user_data)
+{
+    (void)user_data;
+    if (!m || lv_msg_get_id(m) != XTOUCH_ON_OTHER_PRINTER_UPDATE)
+        return;
+    if ((intptr_t)lv_msg_get_payload(m) != 1)
+        return; /* slot 0 のみ */
+    if (xTouchConfig.currentScreenIndex != 0 || !ui_homeThumbImg)
+        return;
+    ui_thumb_set_img_src_from_slot(ui_homeThumbImg, 0);
+}
+#endif
+
 void sendMqttMsg(int message, uint32_t data)
 {
     struct XTOUCH_MESSAGE_DATA eventData;
@@ -52,6 +68,8 @@ void loadScreen(int screen)
 {
 #ifdef __XTOUCH_SCREEN_50__
     ui_printersListContainer = NULL;
+    if (screen != 15)
+        ui_historyListContainer = NULL;
     if (screen != 6 && screen != 0)
     {
         struct XTOUCH_MESSAGE_DATA eventData;
@@ -62,6 +80,10 @@ void loadScreen(int screen)
 #endif
     xTouchConfig.currentScreenIndex = screen;
     lv_obj_t *current = lv_scr_act();
+#ifdef __XTOUCH_SCREEN_50__
+    if (current == ui_homeScreen)
+        ui_homeThumbImg = NULL;
+#endif
     if (current != NULL)
     {
         lv_obj_clean(current);
@@ -77,6 +99,11 @@ void loadScreen(int screen)
         ui_homeScreen_screen_init();
         lv_disp_load_scr(ui_homeScreen);
 #ifdef __XTOUCH_SCREEN_50__
+        if (!s_home_thumb_global_subscribed)
+        {
+            lv_msg_subscribe(XTOUCH_ON_OTHER_PRINTER_UPDATE, (lv_msg_subscribe_cb_t)on_home_thumb_global, NULL);
+            s_home_thumb_global_subscribed = true;
+        }
         {
             struct XTOUCH_MESSAGE_DATA eventData;
             eventData.data = 0;
@@ -161,25 +188,64 @@ void loadScreen(int screen)
         ui_amsEditColorScreen_screen_init();
         lv_disp_load_scr(ui_amsEditColorScreen);
         break;
+#ifdef __XTOUCH_SCREEN_50__
+    case 15:
+        ui_historyScreen_screen_init();
+        lv_disp_load_scr(ui_historyScreen);
+        break;
+#endif
     }
     fillScreenData(screen);
 
-    // サイドバーのハイライト (5inch: 0=Home,1=Printers,2=Temp,3=AMS,4=Settings / 2.8: 0=Home,1=Temp,2=AMS,3=Settings)
+    // サイドバーのハイライト
+    // 5inch: 0=Home,1=Printers,2=Temp,3=AMS,4=Settings (History はオプション機能)
+    // 2.8inch: 0=Home,1=Temp,2=AMS,3=Settings
     int sidebar_index = -1;
+#ifdef __XTOUCH_SCREEN_50__
     switch (screen)
     {
-    case 0: sidebar_index = 0; break;
-#ifdef __XTOUCH_SCREEN_50__
-    case 6: sidebar_index = 1; break;
-#endif
-    case 1: case 2: case 3: case 10: case 11: case 12: sidebar_index = 1; break; /* Temp/Control/Nozzle/Util/NozzleSelect/Calibration */
-    case 7: case 13: case 14: sidebar_index = 2; break; /* AMS 系 */
-    case 4: sidebar_index = 3; break; /* Settings */
-    default: break;
+    case 0:
+        sidebar_index = 0; // Home
+        break;
+    case 6:
+        sidebar_index = 1; // Printers
+        break;
+    case 1: case 2: case 3: case 10: case 11: case 12:
+        sidebar_index = 2; // Temps / Control 系
+        break;
+    case 7: case 13: case 14:
+        sidebar_index = 3; // AMS 系
+        break;
+    case 4:
+        sidebar_index = 4; // Settings
+        break;
+    case 15:
+        // History は Printers/Temps の間に位置づける（アイコン自体の表示/非表示は別途制御）
+        sidebar_index = 2;
+        break;
+    default:
+        break;
     }
-#ifdef __XTOUCH_SCREEN_50__
-    if (sidebar_index >= 1 && screen != 6)
+    if (sidebar_index >= 1 && screen != 6 && screen != 15)
         sidebar_index++;
+#else
+    switch (screen)
+    {
+    case 0:
+        sidebar_index = 0; // Home
+        break;
+    case 1: case 2: case 3: case 10: case 11: case 12:
+        sidebar_index = 1; // Temps / Control 系
+        break;
+    case 7: case 13: case 14:
+        sidebar_index = 2; // AMS 系
+        break;
+    case 4:
+        sidebar_index = 3; // Settings
+        break;
+    default:
+        break;
+    }
 #endif
     if (sidebar_index >= 0)
     {
@@ -194,6 +260,13 @@ static void on_settings_save_sidebar(const void *payload, void *user_data)
     (void)user_data;
     ui_sidebarComponent_updatePrintersVisibility();
 }
+
+static void on_reprint_done_goto_home(lv_msg_t *m, void *user_data)
+{
+    (void)m;
+    (void)user_data;
+    loadScreen(0);
+}
 #endif
 
 void initTopLayer()
@@ -204,5 +277,6 @@ void initTopLayer()
     lv_obj_add_flag(ui_hmsComponent, LV_OBJ_FLAG_HIDDEN);
 #ifdef __XTOUCH_SCREEN_50__
     lv_msg_subscribe(XTOUCH_SETTINGS_SAVE, (lv_msg_subscribe_cb_t)on_settings_save_sidebar, NULL);
+    lv_msg_subscribe(XTOUCH_HISTORY_REPRINT_DONE, (lv_msg_subscribe_cb_t)on_reprint_done_goto_home, NULL);
 #endif
 }

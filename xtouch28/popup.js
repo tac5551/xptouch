@@ -157,8 +157,8 @@ async function fetchCookies() {
       } else {
         const authToken = filteredCookies[0].value;
         jsonData["cloud-authToken"] = authToken;
-        $id("downloadJson").style.display = "inline-block";
-        $id("downloadFilamentZip").style.display = "inline-block";
+        const zipBtn = $id("downloadFilamentZip");
+        if (zipBtn) zipBtn.style.display = "inline-block";
       }
     });
   }

@@ -195,6 +195,8 @@ extern "C"
         bool xTouchPreheatEnabled;
         /** Multi Printer Monitor / Printers 画面を有効にする（デフォルト true）。5inch のみ。 */
         bool xTouchMultiPrinterMonitorEnabled;
+        /** History 画面を有効にする（デフォルト false）。5inch のみ。 */
+        bool xTouchHistoryEnabled;
 
         int xTouchNeoPixelNumValue;
         int xTouchNeoPixelBrightnessValue;
@@ -285,12 +287,41 @@ extern "C"
     extern char xtouch_other_printer_dev_ids[XTOUCH_OTHER_PRINTERS_MAX][16];
     extern int xtouch_other_printer_count;
 
-    /** サムネイル表示用: スロット番号ごとの SD パス（"S:/tmp/pthumb_N.png"）。UI はこれを参照するだけ。xtouch が init で埋める。 */
+    /** サムネイル表示用: スロット番号ごとの SD パス（"S:/tmp/{task_id}.png"）。UI はこれを参照するだけ。xtouch が init で埋める。 */
 #define XTOUCH_THUMB_SLOT_MAX 5
 #define XTOUCH_THUMB_PATH_LEN 64
     extern char xtouch_thumbnail_slot_path[XTOUCH_THUMB_SLOT_MAX][XTOUCH_THUMB_PATH_LEN];
     /** LGFX デコード済みサムネイルの descriptor ポインタ（スロット毎）。UI は lv_img_set_src(img, (lv_img_dsc_t*)xtouch_thumbnail_slot_dsc[slot]) で表示。 */
     extern void *xtouch_thumbnail_slot_dsc[XTOUCH_THUMB_SLOT_MAX];
+
+    /** Cloud 印刷履歴（user-service/my/tasks）1件。UI は参照のみ。再印刷用に model_id/profile_id/plate_index を保持。 */
+#define XTOUCH_HISTORY_TASKS_MAX 20
+#define XTOUCH_HISTORY_TITLE_LEN 64
+#define XTOUCH_HISTORY_COVER_URL_LEN 1024
+#define XTOUCH_HISTORY_DEVICE_NAME_LEN 32
+#define XTOUCH_HISTORY_TASK_ID_LEN 24
+#define XTOUCH_HISTORY_MODEL_ID_LEN 32
+#define XTOUCH_HISTORY_TIME_LEN 32
+    typedef struct
+    {
+        char task_id[XTOUCH_HISTORY_TASK_ID_LEN];  /* API の id を文字列で */
+        char title[XTOUCH_HISTORY_TITLE_LEN];
+        char cover_url[XTOUCH_HISTORY_COVER_URL_LEN];
+        char device_name[XTOUCH_HISTORY_DEVICE_NAME_LEN];
+        char start_time[XTOUCH_HISTORY_TIME_LEN];
+        char end_time[XTOUCH_HISTORY_TIME_LEN];
+        char model_id[XTOUCH_HISTORY_MODEL_ID_LEN]; /* create_task 用 */
+        int profile_id;   /* create_task 用 (profileId) */
+        int plate_index;  /* create_task 用 (plateIndex) */
+        int status;      /* 2=失敗, 3=完了 等 */
+        int is_printable; /* 1=再印刷可 */
+        unsigned char valid;
+    } xtouch_history_task_t;
+    extern xtouch_history_task_t xtouch_history_tasks[XTOUCH_HISTORY_TASKS_MAX];
+    extern int xtouch_history_count;
+#define XTOUCH_HISTORY_COVER_SLOTS 10
+    /** History 画面 行別: LGFX デコード済み cover 画像の descriptor。UI は lv_img_set_src(img, (lv_img_dsc_t*)xtouch_history_cover_dsc[idx]) で表示。 */
+    extern void *xtouch_history_cover_dsc[XTOUCH_HISTORY_COVER_SLOTS];
 #endif
 
     /** フィラメント Brand/Type ドロップダウン用。都度 SD から組み立てたオプション文字列を返す。実装は filaments_options.c。 */

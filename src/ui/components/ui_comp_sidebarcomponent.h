@@ -16,6 +16,8 @@ enum SidebarComponent {
 #ifdef __XTOUCH_SCREEN_50__
     UI_COMP_SIDEBARCOMPONENT_SIDEBARPRINTERSBUTTON,
     UI_COMP_SIDEBARCOMPONENT_SIDEBARPRINTERSBUTTON_SIDEBARPRINTERSBUTTONICON,
+    UI_COMP_SIDEBARCOMPONENT_SIDEBARHISTORYBUTTON,
+    UI_COMP_SIDEBARCOMPONENT_SIDEBARHISTORYBUTTON_SIDEBARHISTORYBUTTONICON,
 #endif
     UI_COMP_SIDEBARCOMPONENT_SIDEBARTEMPBUTTON,
     UI_COMP_SIDEBARCOMPONENT_SIDEBARTEMPBUTTON_SIDEBARTEMPBUTTONICON,
@@ -30,6 +32,7 @@ enum SidebarComponent {
     void ui_event_comp_sidebarComponent_sidebarHomeButton(lv_event_t *e);
 #ifdef __XTOUCH_SCREEN_50__
     void ui_event_comp_sidebarComponent_sidebarPrintersButton(lv_event_t *e);
+    void ui_event_comp_sidebarComponent_sidebarHistoryButton(lv_event_t *e);
 #endif
     void ui_event_comp_sidebarComponent_sidebarTempButton(lv_event_t *e);
     void ui_event_comp_sidebarComponent_sidebarAmsViewButton(lv_event_t *e);
