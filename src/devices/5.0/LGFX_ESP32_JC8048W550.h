@@ -75,7 +75,6 @@ public:
       cfg.vsync_pulse_width = 4;
       cfg.vsync_back_porch  = 8;
       cfg.pclk_idle_high    = 1;
-      cfg.pclk_active_neg   = false;
       _bus_instance.config(cfg);
     }
     _panel_instance.setBus(&_bus_instance);
