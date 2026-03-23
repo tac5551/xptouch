@@ -193,6 +193,10 @@ void loadScreen(int screen)
         ui_historyScreen_screen_init();
         lv_disp_load_scr(ui_historyScreen);
         break;
+    case 16:
+        ui_historyReprintScreen_screen_init();
+        lv_disp_load_scr(ui_historyReprintScreen);
+        break;
 #endif
     }
     fillScreenData(screen);
@@ -221,6 +225,10 @@ void loadScreen(int screen)
         break;
     case 15:
         // History は Printers/Temps の間に位置づける（アイコン自体の表示/非表示は別途制御）
+        sidebar_index = 2;
+        break;
+    case 16:
+        // History リプリント設定画面も History と同じグループ扱い
         sidebar_index = 2;
         break;
     default:

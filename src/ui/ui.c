@@ -23,6 +23,8 @@ void ui_utilNozzleChangeScreen_screen_init(void);
 void ui_utilScreen_screen_init(void);
 #ifdef __XTOUCH_SCREEN_50__
 void ui_printersScreen_screen_init(void);
+void ui_historyScreen_screen_init(void);
+void ui_historyReprintScreen_screen_init(void);
 #endif
 
 lv_obj_t *introScreen;
@@ -67,6 +69,7 @@ lv_obj_t *ui_printersListContainer = NULL;
 lv_obj_t *ui_historyScreen;
 lv_obj_t *ui_historyContentPanel;
 lv_obj_t *ui_historyListContainer = NULL;
+lv_obj_t *ui_historyReprintScreen;
 lv_obj_t *ui_homeThumbImg = NULL;
 #endif
 void ui_event____initial_actions0(lv_event_t *e);

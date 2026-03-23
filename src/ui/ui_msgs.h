@@ -127,6 +127,14 @@ extern "C"
         XTOUCH_HISTORY_REPRINT,
         /** History 再印刷 API 成功後に送信。購読側で Home へ遷移する */
         XTOUCH_HISTORY_REPRINT_DONE,
+        /** History リプリント設定画面からの確定: data=履歴行インデックス, data2=プリンタスロット(0=自機,1以降other) */
+        XTOUCH_HISTORY_REPRINT_WITH_OPTIONS,
+        /** History リプリント設定画面: 選択タスクの amsDetailMapping 詳細取得を依頼（購読は xtouch） */
+        XTOUCH_HISTORY_REPRINT_DETAIL_FETCH,
+        /** History リプリント設定画面: amsDetailMapping 詳細取得完了（購読は画面側。再描画用） */
+        XTOUCH_HISTORY_REPRINT_DETAIL_READY,
+        /** History リプリント設定: mapping行に対する AMS スロット選択。data=map_index, data2=(ams_id&0xFF)|((tray_id&0xFF)<<8) */
+        XTOUCH_HISTORY_REPRINT_SLOT_PICKED,
     };
 
     struct XTOUCH_MESSAGE_DATA

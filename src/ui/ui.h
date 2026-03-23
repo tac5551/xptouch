@@ -55,6 +55,7 @@ extern "C"
 #ifdef __XTOUCH_SCREEN_50__
   void ui_printersScreen_screen_init(void);
   void ui_historyScreen_screen_init(void);
+  void ui_historyReprintScreen_screen_init(void);
 #endif
 
   lv_obj_t *introScreen;
@@ -140,6 +141,7 @@ extern "C"
   lv_obj_t *ui_historyContentPanel;
   /* ui_historyListContainer は ui_comp_historycomponent.c で定義 */
   extern lv_obj_t *ui_historyListContainer;
+  lv_obj_t *ui_historyReprintScreen;
   /** Home 画面のサムネイル img（slot 0）。グローバル購読で IMAGE 受信時に再描画するため。 */
   extern lv_obj_t *ui_homeThumbImg;
 #endif

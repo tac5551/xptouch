@@ -23,6 +23,12 @@ int xtouch_other_printer_count = 0;
 char xtouch_thumbnail_slot_path[XTOUCH_THUMB_SLOT_MAX][XTOUCH_THUMB_PATH_LEN];
 xtouch_history_task_t xtouch_history_tasks[XTOUCH_HISTORY_TASKS_MAX];
 int xtouch_history_count = 0;
+int xtouch_history_selected_index = -1;
+int xtouch_history_selected_detail_index = -1;
+int xtouch_history_selected_ams_map_count = -1;
+xtouch_history_ams_map_t xtouch_history_selected_ams_map[XTOUCH_HISTORY_AMS_MAP_MAX];
+uint8_t xtouch_history_reprint_pick_ams[XTOUCH_HISTORY_AMS_MAP_MAX];
+uint8_t xtouch_history_reprint_pick_tray[XTOUCH_HISTORY_AMS_MAP_MAX];
 #endif
 
 // グローバル関数の実際の定義

@@ -202,11 +202,9 @@ void onHistoryReprint(lv_event_t *e)
         printf("[HistoryReprint] abort: row not found in list\n");
         return;
     }
-    printf("[HistoryReprint] send REPRINT idx=%d\n", idx);
-    struct XTOUCH_MESSAGE_DATA eventData;
-    eventData.data = (unsigned long long)idx;
-    eventData.data2 = 0;
-    lv_msg_send(XTOUCH_HISTORY_REPRINT, &eventData);
+    printf("[HistoryReprint] goto HistoryReprintScreen idx=%d\n", idx);
+    xtouch_history_selected_index = idx;
+    loadScreen(16);
 }
 #endif
 

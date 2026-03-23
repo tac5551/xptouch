@@ -34,6 +34,7 @@ extern "C"
 #include "ui_comp_utilcalibrationcomponent.h"
 #include "ui_comp_printerscomponent.h"
 #include "ui_comp_historycomponent.h"
+#include "ui_comp_historyreprintcomponent.h"
 
 #ifdef __cplusplus
 } /*extern "C"*/
