@@ -16,12 +16,10 @@
 #define JC8048_BUS_DEFAULT_VSYNC_PULSE_WIDTH 4
 #define JC8048_BUS_DEFAULT_VSYNC_BACK_PORCH  8
 #define JC8048_BUS_DEFAULT_PCLK_ACTIVE_NEG   1
-#define JC8048_BUS_DEFAULT_DE_IDLE_HIGH      0
+#define JC8048_BUS_DEFAULT_DE_IDLE_HIGH      1
 #define JC8048_BUS_DEFAULT_PCLK_IDLE_HIGH    1
 
-// #define screenWidth 800
-// #define screenHeight 480
-int screenWidth = 800;
+int screenWidth  = 800;
 int screenHeight = 480;
 
 #endif
