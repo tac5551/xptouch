@@ -3,12 +3,15 @@
 
 #include "FS.h"
 #include "SD.h"
+#include <SPI.h>
 #include <ArduinoJson.h>
 #include <Arduino.h>
 
 bool xtouch_sdcard_setup(int8_t sd_cs_pin)
 {
-    bool ok = (sd_cs_pin < 0) ? SD.begin() : SD.begin(sd_cs_pin);
+    /* LCD設定はそのまま、SD(SPI)だけ低速化して安定性を優先 */
+    const uint32_t sd_freq_hz = 20000000; /* 20MHz */
+    bool ok = (sd_cs_pin < 0) ? SD.begin() : SD.begin(sd_cs_pin, SPI, sd_freq_hz);
     if (!ok)
     {
         lv_label_set_text(introScreenCaption, LV_SYMBOL_SD_CARD " INSERT SD CARD");
