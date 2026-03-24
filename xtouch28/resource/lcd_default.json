@@ -1,14 +1,14 @@
 {
   "freq_write": 14000000,
-  "hsync_polarity": 1,
+  "hsync_polarity": 0,
   "hsync_front_porch": 8,
   "hsync_pulse_width": 4,
   "hsync_back_porch": 8,
-  "vsync_polarity": 1,
+  "vsync_polarity": 0,
   "vsync_front_porch": 8,
   "vsync_pulse_width": 4,
   "vsync_back_porch": 8,
   "pclk_active_neg": 1,
-  "de_idle_high": 1,
+  "de_idle_high": 0,
   "pclk_idle_high": 1
 }
