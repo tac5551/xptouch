@@ -16,6 +16,15 @@ ZIP の中身（想定）
 - `/xtouch/filament/*`  
   - フィラメント一覧 (`filaments_brands.txt`, `filaments_*.txt`) と `json/*.json`。
 
+### 5インチ LCD 用サンプル（`resource/` 内）
+
+| ファイル | 用途 |
+|----------|------|
+| `lcd_default.json` | 工場に近い LCD 設定。SD **ルート**に **`lcd.json`** にリネームして配置（5インチのみ）。 |
+| `lcd_disable.json` | LCD の細かい調整だけリセット（画面の向きは維持）。同上 **`lcd.json`** にリネーム。 |
+
+本体は **5インチビルド**（JC8048W550）のみ処理。詳細はリポジトリの **`docs/lcd-settings-5inch.md`**。
+
 注意
 ----
 

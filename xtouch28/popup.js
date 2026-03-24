@@ -478,7 +478,8 @@ async function downloadFilamentZip() {
 
     // 拡張機能パッケージ内の resource フォルダからファイルを取り込み、ZIP の /resource/ に配置
     const resourceFolder = zip.folder("resource");
-    const resourceFiles = ["logo.png"]; // xtouch28/resource 配下にあるファイル
+    // xtouch28/resource 配下。5" 用: SD ルートに lcd.json として置くときはリネーム（詳細 docs/lcd-settings-5inch.md）
+    const resourceFiles = ["logo.png", "lcd_default.json", "lcd_disable.json"];
     for (const name of resourceFiles) {
       try {
         const url = chrome.runtime.getURL("resource/" + name);
