@@ -32,6 +32,7 @@
 #include "xtouch/thumbnail.h"
 #include "xtouch/history.h"
 #include "xtouch/lv_fs_arduino_sd.h"
+#include "xtouch/lcd_json.h"
 #endif
 #include "xtouch/sensors/chamber.h"
 #include "xtouch/events.h"
@@ -64,6 +65,9 @@ void setup()
 #endif
 
   xtouch_eeprom_setup();
+#if defined(__XTOUCH_SCREEN_50__)
+  xtouch_eeprom_rgb_pclk_heal_invalid_storage();
+#endif
   xtouch_globals_init();
   xtouch_screen_setup();
 
@@ -88,16 +92,19 @@ void setup()
   int8_t sd_cs_pin = -1;  
   // 2.8": M5Stack のみ 4、それ以外は -1(デフォルト)
 #if defined(__XTOUCH_SCREEN_50__)
-      sd_cs_pin = 10;
+  sd_cs_pin = 10;
 #elif defined(__XTOUCH_SCREEN_28__)
   if (tft.getBoard() == (lgfx::boards::board_t)2) {
       sd_cs_pin = 4;
+  }else{
+      sd_cs_pin = 5;
   }
 #endif
   while (!xtouch_sdcard_setup(sd_cs_pin))
     ;
 
 #if defined(__XTOUCH_SCREEN_50__)
+  xtouch_lcd_json_apply_from_sd_and_reboot();
   lv_fs_arduino_sd_init();  /* LVGL FS ドライバ: Arduino SD を 'S:' として登録 */
   xtouch_thumbnail_subscribe_events();
   xtouch_history_subscribe_events();

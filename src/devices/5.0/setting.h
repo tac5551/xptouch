@@ -1,6 +1,24 @@
 #ifndef _XLCD_SETTING
 #define _XLCD_SETTING
 
+/**
+ * JC8048W550 / Bus_RGB::config_t 初期値（EEPROM 未設定時・LGFX コンストラクタ・lcd.json キーと同名）
+ * xtouch/eeprom.h からは XTOUCH_SETTING_BODY_DISABLED を定義してから include し、
+ * 下の screenWidth 定義を引き込まないこと。
+ */
+#define JC8048_BUS_DEFAULT_FREQ_WRITE        14000000u
+#define JC8048_BUS_DEFAULT_HSYNC_POLARITY    0
+#define JC8048_BUS_DEFAULT_HSYNC_FRONT_PORCH 8
+#define JC8048_BUS_DEFAULT_HSYNC_PULSE_WIDTH 4
+#define JC8048_BUS_DEFAULT_HSYNC_BACK_PORCH  8
+#define JC8048_BUS_DEFAULT_VSYNC_POLARITY    0
+#define JC8048_BUS_DEFAULT_VSYNC_FRONT_PORCH 8
+#define JC8048_BUS_DEFAULT_VSYNC_PULSE_WIDTH 4
+#define JC8048_BUS_DEFAULT_VSYNC_BACK_PORCH  8
+#define JC8048_BUS_DEFAULT_PCLK_ACTIVE_NEG   1
+#define JC8048_BUS_DEFAULT_DE_IDLE_HIGH      0
+#define JC8048_BUS_DEFAULT_PCLK_IDLE_HIGH    1
+
 // #define screenWidth 800
 // #define screenHeight 480
 int screenWidth = 800;

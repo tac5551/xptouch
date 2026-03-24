@@ -21,10 +21,10 @@ public:
     {
       auto cfg = _panel_instance.config();
 
-      cfg.memory_width  = 800;
-      cfg.memory_height = 480;
-      cfg.panel_width  = 800;
-      cfg.panel_height = 480;
+      cfg.memory_width  = screenWidth;
+      cfg.memory_height = screenHeight;
+      cfg.panel_width  = screenWidth;
+      cfg.panel_height = screenHeight;
 
       cfg.offset_x = 0;
       cfg.offset_y = 0;
@@ -64,17 +64,20 @@ public:
       cfg.pin_vsync   = GPIO_NUM_41;
       cfg.pin_hsync   = GPIO_NUM_39;
       cfg.pin_pclk    = GPIO_NUM_42;
-      cfg.freq_write  = 14000000;
+      cfg.freq_write  = JC8048_BUS_DEFAULT_FREQ_WRITE;
 
-      cfg.hsync_polarity    = 0;
-      cfg.hsync_front_porch = 8;
-      cfg.hsync_pulse_width = 4;
-      cfg.hsync_back_porch  = 8;
-      cfg.vsync_polarity    = 0;
-      cfg.vsync_front_porch = 8;
-      cfg.vsync_pulse_width = 4;
-      cfg.vsync_back_porch  = 8;
-      cfg.pclk_idle_high    = 1;
+      cfg.hsync_polarity    = JC8048_BUS_DEFAULT_HSYNC_POLARITY;
+      cfg.hsync_front_porch = JC8048_BUS_DEFAULT_HSYNC_FRONT_PORCH;
+      cfg.hsync_pulse_width = JC8048_BUS_DEFAULT_HSYNC_PULSE_WIDTH;
+      cfg.hsync_back_porch  = JC8048_BUS_DEFAULT_HSYNC_BACK_PORCH;
+      cfg.vsync_polarity    = JC8048_BUS_DEFAULT_VSYNC_POLARITY;
+      cfg.vsync_front_porch = JC8048_BUS_DEFAULT_VSYNC_FRONT_PORCH;
+      cfg.vsync_pulse_width = JC8048_BUS_DEFAULT_VSYNC_PULSE_WIDTH;
+      cfg.vsync_back_porch  = JC8048_BUS_DEFAULT_VSYNC_BACK_PORCH;
+      cfg.pclk_active_neg   = JC8048_BUS_DEFAULT_PCLK_ACTIVE_NEG;
+      cfg.de_idle_high      = JC8048_BUS_DEFAULT_DE_IDLE_HIGH;
+      cfg.pclk_idle_high    = JC8048_BUS_DEFAULT_PCLK_IDLE_HIGH;
+
       _bus_instance.config(cfg);
     }
     _panel_instance.setBus(&_bus_instance);
@@ -89,9 +92,9 @@ public:
     {
       auto cfg = _touch_instance.config();
       cfg.x_min      = 0;
-      cfg.x_max      = 800;
+      cfg.x_max      = screenWidth;
       cfg.y_min      = 0;
-      cfg.y_max      = 480;
+      cfg.y_max      = screenHeight;
       cfg.pin_int    = GPIO_NUM_NC;
       cfg.bus_shared = false;
       cfg.offset_rotation = 0;

@@ -5,6 +5,7 @@
 #include <LovyanGFX.h>
 
 #include "setting.h"
+#include "xtouch/eeprom.h"
 
 static lv_disp_draw_buf_t draw_buf;
 static lv_color_t *disp_draw_buf1;
@@ -207,6 +208,47 @@ void xtouch_screen_setup()
 {
 
     ConsoleInfo.println("[xPTouch][SCREEN] Setup");
+
+    {
+        uint8_t buf[XTOUCH_EEPROM_SIZE];
+        xtouch_eeprom_read_all(buf);
+        uint32_t raw = xtouch_u32_from_le(buf + XTOUCH_EEPROM_POS_RGB_PCLK_HZ);
+        uint32_t pclk = xtouch_eeprom_rgb_pclk_hz_read();
+        auto bus_cfg = tft._bus_instance.config();
+        bus_cfg.freq_write = pclk;
+        if (xtouch_eeprom_lcd_ext_timing_valid(buf))
+        {
+            bus_cfg.hsync_polarity = buf[XTOUCH_EEPROM_POS_LCD_TIMING_BASE + 0] != 0;
+            bus_cfg.hsync_front_porch = (int8_t)buf[XTOUCH_EEPROM_POS_LCD_TIMING_BASE + 1];
+            bus_cfg.hsync_pulse_width = (int8_t)buf[XTOUCH_EEPROM_POS_LCD_TIMING_BASE + 2];
+            bus_cfg.hsync_back_porch = (int8_t)buf[XTOUCH_EEPROM_POS_LCD_TIMING_BASE + 3];
+            bus_cfg.vsync_polarity = buf[XTOUCH_EEPROM_POS_LCD_TIMING_BASE + 4] != 0;
+            bus_cfg.vsync_front_porch = (int8_t)buf[XTOUCH_EEPROM_POS_LCD_TIMING_BASE + 5];
+            bus_cfg.vsync_pulse_width = (int8_t)buf[XTOUCH_EEPROM_POS_LCD_TIMING_BASE + 6];
+            bus_cfg.vsync_back_porch = (int8_t)buf[XTOUCH_EEPROM_POS_LCD_TIMING_BASE + 7];
+            bus_cfg.pclk_active_neg = buf[XTOUCH_EEPROM_POS_LCD_TIMING_BASE + 8] != 0;
+            bus_cfg.de_idle_high = buf[XTOUCH_EEPROM_POS_LCD_TIMING_BASE + 9] != 0;
+            bus_cfg.pclk_idle_high = buf[XTOUCH_EEPROM_POS_LCD_TIMING_BASE + 10] != 0;
+        }
+        else
+        {
+            bus_cfg.hsync_polarity = JC8048_BUS_DEFAULT_HSYNC_POLARITY;
+            bus_cfg.hsync_front_porch = JC8048_BUS_DEFAULT_HSYNC_FRONT_PORCH;
+            bus_cfg.hsync_pulse_width = JC8048_BUS_DEFAULT_HSYNC_PULSE_WIDTH;
+            bus_cfg.hsync_back_porch = JC8048_BUS_DEFAULT_HSYNC_BACK_PORCH;
+            bus_cfg.vsync_polarity = JC8048_BUS_DEFAULT_VSYNC_POLARITY;
+            bus_cfg.vsync_front_porch = JC8048_BUS_DEFAULT_VSYNC_FRONT_PORCH;
+            bus_cfg.vsync_pulse_width = JC8048_BUS_DEFAULT_VSYNC_PULSE_WIDTH;
+            bus_cfg.vsync_back_porch = JC8048_BUS_DEFAULT_VSYNC_BACK_PORCH;
+            bus_cfg.pclk_active_neg = JC8048_BUS_DEFAULT_PCLK_ACTIVE_NEG;
+            bus_cfg.de_idle_high = JC8048_BUS_DEFAULT_DE_IDLE_HIGH;
+            bus_cfg.pclk_idle_high = JC8048_BUS_DEFAULT_PCLK_IDLE_HIGH;
+        }
+        //tft._bus_instance.config(bus_cfg);
+        ConsoleInfo.printf("[xPTouch][SCREEN] Bus EEPROM raw_pclk=0x%08lX eff_Hz=%lu timing_ext=%u\n",
+                           (unsigned long)raw, (unsigned long)pclk,
+                           (unsigned)xtouch_eeprom_lcd_ext_timing_valid(buf));
+    }
 
     tft.begin();
 
