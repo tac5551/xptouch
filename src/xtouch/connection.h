@@ -51,7 +51,8 @@ bool xtouch_wifi_setup()
     int timeout = wifiConfig.containsKey("timeout") ? wifiConfig["timeout"].as<int>() : 3000;
 
     WiFi.mode(WIFI_STA);
-    WiFi.begin(ssidB64String.c_str(), ssidPWDString.c_str());
+    WiFi.persistent(false);
+    WiFi.setAutoReconnect(false); /* 自動再接続が暴れるとログが洪水になるため、自前で制御する */
     ConsoleInfo.println(F("[xPTouch][CONNECTION] Connecting to WiFi .."));
     WiFi.onEvent(onWiFiEvent);
 
@@ -60,61 +61,43 @@ bool xtouch_wifi_setup()
     lv_timer_handler();
     lv_task_handler();
 
-    delay(timeout);
-    wl_status_t status = WiFi.status();
-    const char *statusText = "";
-    lv_color_t statusColor = lv_color_hex(0x555555);
-
-    bool reboot = false;
-    while (status != WL_CONNECTED)
+    const int attempts_per_round = 2; /* 要望: 2回で区切る */
+    int round = 0;
+    while (WiFi.status() != WL_CONNECTED)
     {
+        round++;
+        lv_label_set_text(introScreenCaption, LV_SYMBOL_WIFI " Connecting");
+        lv_obj_set_style_text_color(introScreenCaption, lv_color_hex(0x555555), LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_timer_handler();
+        lv_task_handler();
 
-        switch (status)
+        for (int attempt = 0; attempt < attempts_per_round; attempt++)
         {
-        case WL_IDLE_STATUS:
-            statusText = LV_SYMBOL_WIFI " Connecting";
-            statusColor = lv_color_hex(0x555555);
-            break;
+            WiFi.disconnect(true, true);
+            delay(200);
+            WiFi.begin(ssidB64String.c_str(), ssidPWDString.c_str());
 
-        case WL_NO_SSID_AVAIL:
-            statusText = LV_SYMBOL_WARNING " Bad SSID Check WiFi credentials";
-            statusColor = lv_color_hex(0xff0000);
-            reboot = true;
-            break;
-
-            // case WL_CONNECTION_LOST:
-            //     break;
-
-        case WL_CONNECT_FAILED:
-        case WL_DISCONNECTED:
-            statusText = LV_SYMBOL_WARNING " Check your WiFi credentials";
-            statusColor = lv_color_hex(0xff0000);
-            reboot = true;
-            break;
-
-        default:
-            break;
+            unsigned long start = millis();
+            while (millis() - start < (unsigned long)timeout)
+            {
+                wl_status_t st = WiFi.status();
+                if (st == WL_CONNECTED)
+                    break;
+                delay(50);
+            }
+            if (WiFi.status() == WL_CONNECTED)
+                break;
         }
 
-        if (statusText != "")
-        {
+        if (WiFi.status() == WL_CONNECTED)
+            break;
 
-            lv_label_set_text(introScreenCaption, statusText);
-            lv_obj_set_style_text_color(introScreenCaption, statusColor, LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_timer_handler();
-            lv_task_handler();
-            delay(32);
-        }
-
-        if (reboot)
-        {
-            delay(3000);
-            lv_label_set_text(introScreenCaption, LV_SYMBOL_REFRESH " REBOOTING");
-            lv_timer_handler();
-            lv_task_handler();
-            ESP.restart();
-        }
-        status = WiFi.status();
+        /* 2回失敗したら少し待って次ラウンド（ログ洪水/電波状況変化待ち） */
+        lv_label_set_text(introScreenCaption, LV_SYMBOL_WARNING " WiFi retry...");
+        lv_obj_set_style_text_color(introScreenCaption, lv_color_hex(0xffaa00), LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_timer_handler();
+        lv_task_handler();
+        delay(2000);
     }
 
     WiFi.setTxPower(WIFI_POWER_19_5dBm); // https://github.com/G6EJD/ESP32-8266-Adjust-WiFi-RF-Power-Output/blob/main/README.md

@@ -12,10 +12,14 @@
 // #include "date.h"
 #include "bbl-certs.h"
 #include "filesystem.h"
+#include "globals.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/semphr.h"
 
 bool xtouch_cloud_pair_loop_exit = false;
 #include <WiFiClientSecure.h>
 #include <cstring>
+#include <strings.h>
 
 /** JSON 文字列から key の直後の数値を1つ取り出す（"key":123 や "key":[230] に対応）。ヒープを使わない。 */
 static int cloud_parse_json_int_key(const char *json, size_t len, const char *key)
@@ -113,6 +117,584 @@ static bool cloud_parse_json_bool_key(const char *json, size_t len, const char *
   return p && (size_t)(p - json) < len;
 }
 
+#ifdef __XTOUCH_SCREEN_50__
+#include <cstdlib>
+#include <stdint.h>
+extern "C" const char *get_tray_color(uint8_t ams_id, uint8_t tray_id);
+extern "C" const char *get_tray_setting_id(uint8_t ams_id, uint8_t tray_id);
+
+static double cloud_parse_json_double_key(const char *json, size_t len, const char *key)
+{
+  char needle[80];
+  snprintf(needle, sizeof(needle), "\"%s\"", key);
+  const char *p = strstr(json, needle);
+  if (!p || (size_t)(p - json) >= len)
+    return 0.0;
+  p = (const char *)memchr(p, ':', len - (size_t)(p - json));
+  if (!p)
+    return 0.0;
+  p++;
+  while ((size_t)(p - json) < len && (*p == ' ' || *p == '\t'))
+    p++;
+  return strtod(p, nullptr);
+}
+
+static void cloud_format_rrggbbaa(const char *tray_c, const char *fallback, char *out, size_t out_sz)
+{
+  if (out_sz < 9 || !out)
+    return;
+  out[0] = '\0';
+  if (tray_c && tray_c[0])
+  {
+    size_t L = strlen(tray_c);
+    if (L >= 8)
+    {
+      memcpy(out, tray_c, 8);
+      out[8] = '\0';
+      return;
+    }
+    if (L >= 6)
+    {
+      memcpy(out, tray_c, 6);
+      memcpy(out + 6, "FF", 3);
+      return;
+    }
+  }
+  const char *fb = (fallback && fallback[0]) ? fallback : "000000FF";
+  strncpy(out, fb, out_sz - 1);
+  out[8] = '\0';
+}
+
+static int cloud_parse_ams_detail_mapping(const char *obj, size_t obj_len, xtouch_history_ams_map_t *maps, int max_maps)
+{
+  const char *end = obj + obj_len;
+  const char *k = strstr(obj, "\"amsDetailMapping\"");
+  if (!k || k >= end)
+    return 0;
+  const char *br = strchr(k, '[');
+  if (!br || br >= end)
+    return 0;
+  int cnt = 0;
+  const char *p = br + 1;
+  while (p < end && cnt < max_maps)
+  {
+    while (p < end && (*p == ' ' || *p == '\t' || *p == '\n' || *p == '\r' || *p == ','))
+      p++;
+    if (p >= end)
+      break;
+    if (*p == ']')
+      break;
+    if (*p != '{')
+    {
+      p++;
+      continue;
+    }
+    const char *os = p;
+    int depth = 0;
+    const char *oe = nullptr;
+    for (const char *q = p; q < end; q++)
+    {
+      if (*q == '{')
+        depth++;
+      else if (*q == '}')
+      {
+        depth--;
+        if (depth == 0)
+        {
+          oe = q;
+          break;
+        }
+      }
+    }
+    if (!oe)
+      break;
+    size_t ol = (size_t)(oe - os + 1);
+    xtouch_history_ams_map_t *m = &maps[cnt];
+    memset(m, 0, sizeof(*m));
+    m->ams = cloud_parse_json_int_key(os, ol, "ams");
+    m->amsId = cloud_parse_json_int_key(os, ol, "amsId");
+    m->slotId = cloud_parse_json_int_key(os, ol, "slotId");
+    m->nozzleId = cloud_parse_json_int_key(os, ol, "nozzleId");
+    m->weight = cloud_parse_json_double_key(os, ol, "weight");
+    cloud_parse_json_str_key(os, ol, "filamentId", m->filamentId, sizeof(m->filamentId));
+    cloud_parse_json_str_key(os, ol, "filamentType", m->filamentType, sizeof(m->filamentType));
+    cloud_parse_json_str_key(os, ol, "sourceColor", m->sourceColor, sizeof(m->sourceColor));
+    cloud_parse_json_str_key(os, ol, "targetColor", m->targetColor, sizeof(m->targetColor));
+    cloud_parse_json_str_key(os, ol, "targetFilamentType", m->targetFilamentType, sizeof(m->targetFilamentType));
+    cnt++;
+    p = oe + 1;
+  }
+  return cnt;
+}
+
+/** HTTP レスポンスストリームから amsDetailMapping の配列要素だけを抽出し、maps に詰める。
+ * 大きい JSON Document を確保せず、各 "{...}" を小バッファに切り出して既存の cloud_parse_json_* で読む。
+ * 本文読取はタイムアウトまで read を試す（connected に依存しない）。task 詳細の filaments は getString + バッファ側を参照。 */
+static int cloud_parse_ams_detail_mapping_from_stream(HTTPClient &http, Stream &s, unsigned long timeout_ms,
+                                                      xtouch_history_ams_map_t *maps, int max_maps)
+{
+
+#ifdef XTOUCH_DEBUG
+    ConsoleDebug.print(F("[xPTouch][CLOUD] cloud_parse_ams_detail_mapping_from_stream"));
+#endif
+  if (!maps || max_maps <= 0)
+    return -1;
+  static const char needle[] = "\"amsDetailMapping\"";
+  int needle_i = 0;
+  bool found = false;
+  unsigned long start_ms = millis();
+
+  while (millis() - start_ms < timeout_ms)
+  {
+    int ch = s.read();
+    if (ch < 0)
+    {
+      delay(1);
+      continue;
+    }
+    if (ch == (int)needle[needle_i])
+    {
+      needle_i++;
+      if (needle[needle_i] == '\0')
+      {
+        found = true;
+        break;
+      }
+    }
+    else
+    {
+      needle_i = (ch == (int)needle[0]) ? 1 : 0;
+    }
+  }
+  if (!found)
+    return 0;
+
+#ifdef XTOUCH_DEBUG
+    ConsoleDebug.print(F("[xPTouch][CLOUD] cloud_parse_ams_detail_mapping_from_stream found"));
+#endif
+
+  /* ':' まで進める */
+  while (millis() - start_ms < timeout_ms)
+  {
+    int ch = s.read();
+    if (ch < 0)
+    {
+      delay(1);
+      continue;
+    }
+    if (ch == ':')
+      break;
+  }
+  /* '[' まで進める */
+  while (millis() - start_ms < timeout_ms)
+  {
+    int ch = s.read();
+    if (ch < 0)
+    {
+      delay(1);
+      continue;
+    }
+    if (ch == '[')
+      break;
+  }
+
+  int cnt = 0;
+  for (;;)
+  {
+    if (cnt >= max_maps)
+      break;
+
+    int ch = -1;
+    while (millis() - start_ms < timeout_ms)
+    {
+      ch = s.read();
+      if (ch < 0)
+      {
+        delay(1);
+        continue;
+      }
+      if (ch == '{' || ch == ']')
+        break;
+    }
+    if (ch == ']')
+      break;
+    if (ch != '{')
+      break;
+
+    char obj[768];
+    size_t olen = 0;
+    obj[olen++] = '{';
+    int depth = 1;
+    while (millis() - start_ms < timeout_ms && depth > 0)
+    {
+      int c2 = s.read();
+      if (c2 < 0)
+      {
+        delay(1);
+        continue;
+      }
+      if (olen + 1 < sizeof(obj))
+        obj[olen++] = (char)c2;
+      if (c2 == '{')
+        depth++;
+      else if (c2 == '}')
+        depth--;
+    }
+    if (olen >= sizeof(obj))
+      olen = sizeof(obj) - 1;
+    obj[olen] = '\0';
+    if (depth != 0)
+      break;
+
+#ifdef XTOUCH_DEBUG
+    ConsoleDebug.print(F("[xPTouch][CLOUD] cloud_parse_ams_detail_mapping_from_stream obj="));
+    ConsoleDebug.println(obj);
+#endif
+
+    xtouch_history_ams_map_t *m = &maps[cnt];
+    memset(m, 0, sizeof(*m));
+    m->ams = cloud_parse_json_int_key(obj, olen, "ams");
+    m->amsId = cloud_parse_json_int_key(obj, olen, "amsId");
+    m->slotId = cloud_parse_json_int_key(obj, olen, "slotId");
+    m->nozzleId = cloud_parse_json_int_key(obj, olen, "nozzleId");
+    m->weight = cloud_parse_json_double_key(obj, olen, "weight");
+    cloud_parse_json_str_key(obj, olen, "filamentId", m->filamentId, sizeof(m->filamentId));
+    cloud_parse_json_str_key(obj, olen, "filamentType", m->filamentType, sizeof(m->filamentType));
+    cloud_parse_json_str_key(obj, olen, "sourceColor", m->sourceColor, sizeof(m->sourceColor));
+    cloud_parse_json_str_key(obj, olen, "targetColor", m->targetColor, sizeof(m->targetColor));
+    cloud_parse_json_str_key(obj, olen, "targetFilamentType", m->targetFilamentType, sizeof(m->targetFilamentType));
+    cnt++;
+  }
+  return cnt;
+}
+
+/** GET /my/task/&lt;id&gt; の JSON 本文から filaments[] だけ走査し Reprint 用 maps を生成する。
+ * ESP32 の HTTPClient::getStream() からの逐次 read は本文が届かず常に -1 になる環境があるため、
+ * 呼び出し側は http.getString() 等で本文を確保してから本関数に渡す。 */
+static int cloud_rb_next(const char *data, size_t len, size_t *idx)
+{
+  if (*idx >= len)
+    return -1;
+  return (unsigned char)data[(*idx)++];
+}
+
+static int cloud_parse_reprint_mapping_from_buffer(const char *data, size_t len, xtouch_history_ams_map_t *maps, int max_maps)
+{
+  if (!maps || max_maps <= 0 || !data || len == 0)
+    return -1;
+
+  size_t idx = 0;
+  static const char needle_fil[] = "\"filaments\"";
+
+  for (;;)
+  {
+    int fi = 0;
+    while (idx < len)
+    {
+      int ch = cloud_rb_next(data, len, &idx);
+      if (ch < 0)
+        break;
+      if (ch == (int)needle_fil[fi])
+      {
+        fi++;
+        if (needle_fil[fi] == '\0')
+          break;
+      }
+      else
+      {
+        fi = (ch == (int)needle_fil[0]) ? 1 : 0;
+      }
+    }
+    if (needle_fil[fi] != '\0')
+      return 0;
+
+    while (idx < len)
+    {
+      int ch = cloud_rb_next(data, len, &idx);
+      if (ch < 0)
+        return 0;
+      if (ch == ':')
+        break;
+    }
+
+    int ch_first = -1;
+    while (idx < len)
+    {
+      int ch = cloud_rb_next(data, len, &idx);
+      if (ch < 0)
+        return 0;
+      if (ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r')
+        continue;
+      ch_first = ch;
+      break;
+    }
+    if (ch_first == '[')
+      break;
+    if (ch_first == 'n')
+    {
+      const char rest[] = "ull";
+      bool ok = true;
+      for (size_t ri = 0; ri < sizeof(rest) - 1 && ok; ri++)
+      {
+        if (idx >= len)
+        {
+          ok = false;
+          break;
+        }
+        int c2 = cloud_rb_next(data, len, &idx);
+        if (c2 != (int)(unsigned char)rest[ri])
+          ok = false;
+      }
+      continue;
+    }
+  }
+
+  int cnt = 0;
+  for (;;)
+  {
+    if (cnt >= max_maps)
+      break;
+
+    int ch = -1;
+    while (idx < len)
+    {
+      ch = cloud_rb_next(data, len, &idx);
+      if (ch < 0)
+        break;
+      if (ch == '{' || ch == ']')
+        break;
+    }
+    if (ch == ']')
+      break;
+    if (ch != '{')
+      break;
+
+    char obj[768];
+    size_t olen = 0;
+    obj[olen++] = '{';
+    int depth = 1;
+    while (idx < len && depth > 0)
+    {
+      int c2 = cloud_rb_next(data, len, &idx);
+      if (c2 < 0)
+        break;
+      if (olen + 1 < sizeof(obj))
+        obj[olen++] = (char)c2;
+      if (c2 == '{')
+        depth++;
+      else if (c2 == '}')
+        depth--;
+    }
+    if (olen >= sizeof(obj))
+      olen = sizeof(obj) - 1;
+    obj[olen] = '\0';
+    if (depth != 0)
+      break;
+
+    xtouch_history_ams_map_t *m = &maps[cnt];
+    memset(m, 0, sizeof(*m));
+
+    char color_buf[16] = { 0 };
+    char type_buf[20] = { 0 };
+    char id_buf[16] = { 0 };
+    cloud_parse_json_str_key(obj, olen, "id", id_buf, sizeof(id_buf));
+    cloud_parse_json_str_key(obj, olen, "type", type_buf, sizeof(type_buf));
+    cloud_parse_json_str_key(obj, olen, "color", color_buf, sizeof(color_buf));
+    double used_g = cloud_parse_json_double_key(obj, olen, "used_g");
+
+    const char *c0 = color_buf;
+    if (c0 && c0[0] == '#')
+      c0++;
+    if (c0 && strlen(c0) >= 6)
+    {
+      snprintf(m->sourceColor, sizeof(m->sourceColor), "%.6sFF", c0);
+      strlcpy(m->targetColor, m->sourceColor, sizeof(m->targetColor));
+    }
+    else
+    {
+      strlcpy(m->sourceColor, "808080FF", sizeof(m->sourceColor));
+      strlcpy(m->targetColor, "808080FF", sizeof(m->targetColor));
+    }
+
+    strlcpy(m->filamentId, id_buf, sizeof(m->filamentId));
+    strlcpy(m->filamentType, type_buf, sizeof(m->filamentType));
+    m->weight = used_g;
+    m->ams = 0;
+    m->amsId = 0;
+    m->slotId = 0;
+    m->nozzleId = 1;
+    m->targetFilamentType[0] = '\0';
+
+    cnt++;
+  }
+
+  return cnt;
+}
+
+#ifdef __XTOUCH_SCREEN_50__
+/** Task 詳細の filaments[].id が "2" のような内部IDのとき、POST の filamentId（GFLxx 等）に寄せる */
+static bool cloud_filament_id_looks_like_bambu_code(const char *s)
+{
+  if (!s || !s[0])
+    return false;
+  return (s[0] == 'G' && s[1] == 'F' && strlen(s) >= 4);
+}
+
+static const char *cloud_default_filament_id_for_type(const char *ftype)
+{
+  if (!ftype || !ftype[0])
+    return "GFL03";
+  if (strcasecmp(ftype, "PLA") == 0)
+    return "GFL03";
+  if (strcasecmp(ftype, "PETG") == 0)
+    return "GFG99";
+  if (strcasecmp(ftype, "ABS") == 0)
+    return "GFB99";
+  if (strcasecmp(ftype, "TPU") == 0)
+    return "GFU99";
+  return "GFL03";
+}
+
+static void cloud_resolve_filament_id_for_reprint(const char *raw_id, const char *ftype, char *out, size_t out_sz)
+{
+  if (cloud_filament_id_looks_like_bambu_code(raw_id))
+  {
+    strlcpy(out, raw_id, out_sz);
+    return;
+  }
+  strlcpy(out, cloud_default_filament_id_for_type(ftype), out_sz);
+}
+#endif
+
+/* HTTPClient + getStream() が環境によって Panic することがあるため、
+ * WiFiClientSecure 等の Client から直接本文を走査できる版も用意する。 */
+template <typename ClientT>
+static int cloud_parse_ams_detail_mapping_from_client(ClientT &c, unsigned long timeout_ms,
+                                                      xtouch_history_ams_map_t *maps, int max_maps)
+{
+  if (!maps || max_maps <= 0)
+    return -1;
+  static const char needle[] = "\"amsDetailMapping\"";
+  int needle_i = 0;
+  bool found = false;
+  unsigned long start_ms = millis();
+
+  while (millis() - start_ms < timeout_ms && (c.connected() || c.available()))
+  {
+    int ch = c.read();
+    if (ch < 0)
+    {
+      delay(1);
+      continue;
+    }
+    if (ch == (int)needle[needle_i])
+    {
+      needle_i++;
+      if (needle[needle_i] == '\0')
+      {
+        found = true;
+        break;
+      }
+    }
+    else
+    {
+      needle_i = (ch == (int)needle[0]) ? 1 : 0;
+    }
+  }
+  if (!found)
+    return 0;
+
+  /* ':' まで進める */
+  while (millis() - start_ms < timeout_ms && (c.connected() || c.available()))
+  {
+    int ch = c.read();
+    if (ch < 0)
+    {
+      delay(1);
+      continue;
+    }
+    if (ch == ':')
+      break;
+  }
+  /* '[' まで進める */
+  while (millis() - start_ms < timeout_ms && (c.connected() || c.available()))
+  {
+    int ch = c.read();
+    if (ch < 0)
+    {
+      delay(1);
+      continue;
+    }
+    if (ch == '[')
+      break;
+  }
+
+  int cnt = 0;
+  for (;;)
+  {
+    if (cnt >= max_maps)
+      break;
+
+    int ch = -1;
+    while (millis() - start_ms < timeout_ms && (c.connected() || c.available()))
+    {
+      ch = c.read();
+      if (ch < 0)
+      {
+        delay(1);
+        continue;
+      }
+      if (ch == '{' || ch == ']')
+        break;
+    }
+    if (ch == ']')
+      break;
+    if (ch != '{')
+      break;
+
+    char obj[768];
+    size_t olen = 0;
+    obj[olen++] = '{';
+    int depth = 1;
+    while (millis() - start_ms < timeout_ms && depth > 0 && (c.connected() || c.available()))
+    {
+      int c2 = c.read();
+      if (c2 < 0)
+      {
+        delay(1);
+        continue;
+      }
+      if (olen + 1 < sizeof(obj))
+        obj[olen++] = (char)c2;
+      if (c2 == '{')
+        depth++;
+      else if (c2 == '}')
+        depth--;
+    }
+    if (olen >= sizeof(obj))
+      olen = sizeof(obj) - 1;
+    obj[olen] = '\0';
+    if (depth != 0)
+      break;
+
+    xtouch_history_ams_map_t *m = &maps[cnt];
+    memset(m, 0, sizeof(*m));
+    m->ams = cloud_parse_json_int_key(obj, olen, "ams");
+    m->amsId = cloud_parse_json_int_key(obj, olen, "amsId");
+    m->slotId = cloud_parse_json_int_key(obj, olen, "slotId");
+    m->nozzleId = cloud_parse_json_int_key(obj, olen, "nozzleId");
+    m->weight = cloud_parse_json_double_key(obj, olen, "weight");
+    cloud_parse_json_str_key(obj, olen, "filamentId", m->filamentId, sizeof(m->filamentId));
+    cloud_parse_json_str_key(obj, olen, "filamentType", m->filamentType, sizeof(m->filamentType));
+    cloud_parse_json_str_key(obj, olen, "sourceColor", m->sourceColor, sizeof(m->sourceColor));
+    cloud_parse_json_str_key(obj, olen, "targetColor", m->targetColor, sizeof(m->targetColor));
+    cloud_parse_json_str_key(obj, olen, "targetFilamentType", m->targetFilamentType, sizeof(m->targetFilamentType));
+    cnt++;
+  }
+  return cnt;
+}
+#endif
+
 class BambuCloud
 {
 
@@ -121,6 +703,36 @@ private:
   String _auth_token;
   /** getDeviceList / getSlicerSetting で共有。都度 new せずヒープを抑える。 */
   WiFiClientSecure *_ssl_client = nullptr;
+  SemaphoreHandle_t _http_mutex = nullptr;
+
+  void httpLock()
+  {
+    if (_http_mutex == nullptr)
+      _http_mutex = xSemaphoreCreateMutex();
+    if (_http_mutex)
+      xSemaphoreTake(_http_mutex, portMAX_DELAY);
+  }
+
+  void httpUnlock()
+  {
+    if (_http_mutex)
+      xSemaphoreGive(_http_mutex);
+  }
+
+  struct HttpLockGuard
+  {
+    BambuCloud *self;
+    explicit HttpLockGuard(BambuCloud *s) : self(s)
+    {
+      if (self)
+        self->httpLock();
+    }
+    ~HttpLockGuard()
+    {
+      if (self)
+        self->httpUnlock();
+    }
+  };
 
   WiFiClientSecure &sslClient()
   {
@@ -135,6 +747,7 @@ public:
 
   bool getDeviceList(DynamicJsonDocument *&doc)
   {
+    HttpLockGuard _g(this);
     Serial.println(_region);
     Serial.println("Getting device list from Bambu Cloud");
     String url = _region == "China" ? "https://api.bambulab.cn/v1/iot-service/api/user/bind" : "https://api.bambulab.com/v1/iot-service/api/user/bind";
@@ -214,6 +827,7 @@ public:
   /** GET /v1/iot-service/api/slicer/setting/{setting_id} で温度範囲を取得。共通 sslClient + HTTPClient。 */
   bool getSlicerSetting(const char *setting_id, int *out_min, int *out_max, char *out_filament_id = nullptr, size_t out_filament_id_size = 0)
   {
+    HttpLockGuard _g(this);
     if (!setting_id || !*setting_id || !out_min || !out_max)
       return false;
     *out_min = 0;
@@ -231,13 +845,17 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
     yield();
     HTTPClient http;
     http.begin(c, url);
+    http.setReuse(false);
+    http.useHTTP10(true);
     char auth_buf[320];
     snprintf(auth_buf, sizeof(auth_buf), "Bearer %s", _auth_token.c_str());
     http.addHeader("Authorization", auth_buf);
+    http.addHeader("Connection", "close");
     http.setTimeout(8000);
     int code = http.GET();
     String response = (code == 200) ? http.getString() : "";
     http.end();
+    c.stop();
   Serial.printf("[Cloud getSlicerSetting] http code=%d\n", code);
     if (response.length() == 0)
       return false;
@@ -287,6 +905,7 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
    *  xtouch_history_* などのグローバル状態は一切更新しない。 */
   bool isCurrentTaskForDevice(const char *task_id)
   {
+    HttpLockGuard _g(this);
     if (!loggedIn || !task_id || !*task_id)
       return false;
     if (!xTouchConfig.xTouchSerialNumber[0])
@@ -303,13 +922,17 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
     yield();
     HTTPClient http;
     http.begin(c, url);
+    http.setReuse(false);
+    http.useHTTP10(true);
     char auth_buf[320];
     snprintf(auth_buf, sizeof(auth_buf), "Bearer %s", _auth_token.c_str());
     http.addHeader("Authorization", auth_buf);
+    http.addHeader("Connection", "close");
     http.setTimeout(8000);
     int code = http.GET();
     String response = (code == 200) ? http.getString() : "";
     http.end();
+    c.stop();
     if (code != 200 || response.length() == 0)
       return false;
 
@@ -358,6 +981,9 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
   /** GET /v1/iot-service/api/user/task/{task_id} から plates[0].thumbnail.url を取得する。 */
   bool getTaskThumbnailUrl(const char *task_id, char *out_url, size_t out_size)
   {
+#ifdef __XTOUCH_SCREEN_50__
+    HttpLockGuard _g(this);
+#endif
     if (!task_id || !*task_id || !out_url || out_size == 0)
       return false;
     if (!loggedIn)
@@ -382,9 +1008,12 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
     yield();
     HTTPClient http;
     http.begin(c, url);
+    http.setReuse(false);
+    http.useHTTP10(true);
     char auth_buf[320];
     snprintf(auth_buf, sizeof(auth_buf), "Bearer %s", _auth_token.c_str());
     http.addHeader("Authorization", auth_buf);
+    http.addHeader("Connection", "close");
     http.setTimeout(8000);
     int code = http.GET();
 #ifdef XTOUCH_DEBUG
@@ -402,11 +1031,12 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
     }
 #endif
     http.end();
+    c.stop();
     if (response.length() == 0)
       return false;
 
-#ifdef XTOUCH_DEBUG
-    /* デバッグ用に task レスポンス全体を SD に保存 */
+#ifdef XTOUCH_CLOUD_DEBUG
+    /* Cloud個別デバッグ: task レスポンス全体を SD に保存 */
     char dump_path[64];
     snprintf(dump_path, sizeof(dump_path), "/tmp/task_%s.json", task_id);
     File dump = SD.open(dump_path, FILE_WRITE);
@@ -465,6 +1095,7 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
   /** GET /v1/user-service/my/tasks?limit=N&deviceId=xxx[&after=id] で印刷履歴を取得。after 省略時は先頭から、指定時は続きを xtouch_history_tasks に追加。自機のみ。 */
   bool getMyTasks(int limit, const char *after = nullptr)
   {
+    HttpLockGuard _g(this);
     if (!loggedIn)
       return false;
     if (limit <= 0 || limit > XTOUCH_HISTORY_TASKS_MAX)
@@ -485,13 +1116,17 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
     yield();
     HTTPClient http;
     http.begin(c, url);
+    http.setReuse(false);
+    http.useHTTP10(true);
     char auth_buf[320];
     snprintf(auth_buf, sizeof(auth_buf), "Bearer %s", _auth_token.c_str());
     http.addHeader("Authorization", auth_buf);
     http.setTimeout(12000);
+    http.addHeader("Connection", "close");
     int code = http.GET();
     String response = (code == 200) ? http.getString() : "";
     http.end();
+    c.stop();
     if (code != 200 || response.length() == 0)
     {
       if (!after)
@@ -565,6 +1200,9 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
       t->plate_index = cloud_parse_json_int_key(obj_start, obj_len, "plateIndex");
       t->status = cloud_parse_json_int_key(obj_start, obj_len, "status");
       t->is_printable = cloud_parse_json_bool_key(obj_start, obj_len, "isPrintable") ? 1 : 0;
+      /* 一覧 hits: amsDetailMapping または filaments のどちらかがあれば Reprint 用データがあり得る */
+      t->has_ams_mapping =
+          (strstr(obj_start, "\"amsDetailMapping\"") != nullptr || strstr(obj_start, "\"filaments\"") != nullptr) ? 1 : 0;
       t->valid = 1;
       n++;
 
@@ -572,6 +1210,82 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
     }
     xtouch_history_count = n;
     return true;
+  }
+
+  /** 履歴 task_id の詳細 GET /my/task/&lt;id&gt; から amsDetailMapping[] を読み、Reprint 用の行を maps に詰める（失敗時は -1）。 */
+  int getMyTaskAmsDetailMapping(const char *task_id, xtouch_history_ams_map_t *maps, int max_maps)
+  {
+    HttpLockGuard _g(this);
+    if (!loggedIn || !task_id || !task_id[0] || !maps || max_maps <= 0)
+      return -1;
+    String host = _region == "China" ? "api.bambulab.cn" : "api.bambulab.com";
+    String url = String("https://") + host + String("/v1/user-service/my/task/") + String(task_id);
+
+    /* 共有 sslClient() の再利用が不安定な環境があるため、このリクエストはローカル client で完結させる */
+    WiFiClientSecure c;
+    c.setTimeout(12000);
+    c.setInsecure();
+    yield();
+    HTTPClient http;
+    http.begin(c, url);
+    http.setReuse(false);
+    http.useHTTP10(true);
+    char auth_buf[320];
+    snprintf(auth_buf, sizeof(auth_buf), "Bearer %s", _auth_token.c_str());
+    http.addHeader("Authorization", auth_buf);
+    http.addHeader("Connection", "close");
+    http.setTimeout(12000);
+    int code = http.GET();
+    if (code != 200)
+    {
+      http.end();
+      c.stop();
+      return -1;
+    }
+
+#ifdef XTOUCH_DEBUG
+    ConsoleDebug.println(F("[xPTouch][CLOUD] GET /v1/user-service/my/task/ OK"));
+#endif
+
+    /* getStream()+read() が本文 0 バイト扱いになる ESP32 環境があるため、他 API と同様に本文をまとめて取得 */
+    String body = http.getString();
+#ifdef XTOUCH_DEBUG
+    ConsoleDebug.print(F("[xPTouch][CLOUD] task detail JSON len="));
+    ConsoleDebug.println((unsigned)body.length());
+#endif
+    int cnt = cloud_parse_ams_detail_mapping(body.c_str(), body.length(), maps, max_maps);
+
+#ifdef XTOUCH_DEBUG
+    ConsoleDebug.print(F("[xPTouch][CLOUD] cloud_parse_ams_detail_mapping (my/task) cnt="));
+    ConsoleDebug.println(cnt);
+    ConsoleDebug.print(F("[xPTouch][CLOUD] amsDetailMapping parse task_id="));
+    ConsoleDebug.println(task_id);
+    {
+      const int nprint = (cnt > 16) ? 16 : cnt;
+      for (int i = 0; i < nprint; i++)
+      {
+        const xtouch_history_ams_map_t *m = &maps[i];
+        ConsoleDebug.printf("[xPTouch][CLOUD] amsMap[%d] id=%s type=%s srcColor=%s tgtColor=%s tgtType=%s w=%.2f ams=%d amsId=%d slot=%d nozzle=%d\n", i,
+                            m->filamentId[0] ? m->filamentId : "(empty)", m->filamentType[0] ? m->filamentType : "?",
+                            m->sourceColor[0] ? m->sourceColor : "?", m->targetColor[0] ? m->targetColor : "?",
+                            m->targetFilamentType[0] ? m->targetFilamentType : "?", m->weight, m->ams, m->amsId, m->slotId, m->nozzleId);
+      }
+      if (cnt > 16)
+        ConsoleDebug.println(F("[xPTouch][CLOUD] amsMap ... (truncated to 16 lines)"));
+    }
+    ConsoleDebug.println(F("[xPTouch][CLOUD] step: before http.end()"));
+#endif
+    http.end();
+#ifdef XTOUCH_DEBUG
+    ConsoleDebug.println(F("[xPTouch][CLOUD] step: after http.end()"));
+    ConsoleDebug.println(F("[xPTouch][CLOUD] step: before c.stop()"));
+#endif
+    c.stop();
+#ifdef XTOUCH_DEBUG
+    ConsoleDebug.println(F("[xPTouch][CLOUD] step: after c.stop()"));
+    ConsoleDebug.println(F("[xPTouch][CLOUD] step: return from getMyTaskAmsDetailMapping"));
+#endif
+    return cnt;
   }
 
   /**
@@ -582,6 +1296,7 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
    */
   bool submitReprintTask(int history_index)
   {
+    HttpLockGuard _g(this);
     Serial.printf("[Cloud] submitReprintTask(%d) loggedIn=%d count=%d\n", history_index, (int)loggedIn, xtouch_history_count);
     if (!loggedIn || history_index < 0 || history_index >= xtouch_history_count)
     {
@@ -618,7 +1333,11 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
     c.setInsecure();
     yield();
 
-    StaticJsonDocument<1024> doc;
+    /* TLS(esp-sha) の内部ヒープ確保と競合しやすいので、JSON は必要最小限の容量に抑える */
+    /* Dynamic はヒープ断片化リスクがあるため使わない。
+     * ローカル(スタック)確保も避け、静的領域を再利用する。 */
+    static StaticJsonDocument<2560> doc;
+    doc.clear();
     doc["modelId"] = t->model_id;
     doc["title"] = t->title[0] ? t->title : "Reprint";
     if (t->cover_url[0])
@@ -628,35 +1347,101 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
     doc["deviceId"] = device_id;
 
     JsonArray mapping = doc.createNestedArray("amsDetailMapping");
-    JsonObject m = mapping.createNestedObject();
-    m["ams"] = 0;
-    m["sourceColor"] = "000000FF";
-    m["targetColor"] = "000000FF";
-    m["filamentId"] = "GFL03";
-    m["filamentType"] = "PLA";
-    m["targetFilamentType"] = "";
-    m["weight"] = 0.0;
-    m["nozzleId"] = 1;
-    m["amsId"] = 0;
-    m["slotId"] = 0;
+    if (xtouch_history_selected_ams_map_count > 0)
+    {
+      int cnt = xtouch_history_selected_ams_map_count;
+      if (cnt > XTOUCH_HISTORY_AMS_MAP_MAX)
+        cnt = XTOUCH_HISTORY_AMS_MAP_MAX;
+      for (int i = 0; i < cnt; i++)
+      {
+        const xtouch_history_ams_map_t *src = &xtouch_history_selected_ams_map[i];
+        uint8_t pick_ams = xtouch_history_reprint_pick_ams[i];
+        uint8_t pick_tray = xtouch_history_reprint_pick_tray[i];
+        JsonObject m = mapping.createNestedObject();
+        m["ams"] = src->ams;
+        m["nozzleId"] = src->nozzleId;
+        m["weight"] = src->weight;
+        uint8_t sid_ams = (pick_tray == 254) ? 0 : pick_ams;
+        uint8_t sid_tray = (pick_tray == 254) ? 254 : pick_tray;
+        const char *picked_setting_id = get_tray_setting_id(sid_ams, sid_tray);
+        if (!(picked_setting_id && picked_setting_id[0]))
+        {
+          Serial.printf("[Cloud] submitReprintTask abort: missing tray setting_id map[%d] ams=%u tray=%u\n", i, (unsigned)sid_ams, (unsigned)sid_tray);
+          return false;
+        }
+        if (!src->filamentType[0])
+        {
+          Serial.printf("[Cloud] submitReprintTask abort: missing filamentType map[%d]\n", i);
+          return false;
+        }
+        if (!(src->sourceColor[0] && strlen(src->sourceColor) >= 6))
+        {
+          Serial.printf("[Cloud] submitReprintTask abort: missing sourceColor map[%d]\n", i);
+          return false;
+        }
+        m["filamentId"] = picked_setting_id;
+        m["filamentType"] = src->filamentType;
+        m["targetFilamentType"] = src->targetFilamentType[0] ? src->targetFilamentType : "";
+        if (pick_tray == 254)
+        {
+          m["amsId"] = 255;
+          m["slotId"] = 0;
+        }
+        else
+        {
+          m["amsId"] = (int)pick_ams;
+          m["slotId"] = (int)pick_tray;
+        }
+        const char *tc = (pick_tray == 254) ? get_tray_color(0, 254) : get_tray_color(pick_ams, pick_tray);
+        if (!(tc && tc[0] && strlen(tc) >= 6))
+        {
+          Serial.printf("[Cloud] submitReprintTask abort: missing tray color map[%d] ams=%u tray=%u\n", i, (unsigned)pick_ams, (unsigned)pick_tray);
+          return false;
+        }
+        char srcbuf[16];
+        cloud_format_rrggbbaa(src->sourceColor, src->sourceColor, srcbuf, sizeof(srcbuf));
+        char cbuf[16];
+        cloud_format_rrggbbaa(tc, tc, cbuf, sizeof(cbuf));
+        m["sourceColor"] = srcbuf;
+        m["targetColor"] = cbuf;
+      }
+    }
+    else
+    {
+      /* amsDetailMapping が無い履歴は、ユーザーが明示的にマッピングできないためリプリント禁止 */
+      Serial.println("[Cloud] submitReprintTask abort: no filament mapping rows (open Reprint screen first)");
+      return false;
+    }
 
     doc["mode"] = "lan_file";
 
+    if (doc.overflowed())
+    {
+      Serial.println("[Cloud] submitReprintTask abort: json doc overflowed");
+      return false;
+    }
+
     String body;
+    size_t body_len = measureJson(doc);
+    body.reserve(body_len + 64);
     serializeJson(doc, body);
     Serial.println("[Cloud] submitReprintTask body:");
     Serial.println(body);
 
     HTTPClient http;
     http.begin(c, url);
+    http.setReuse(false);
+    http.useHTTP10(true);
     char auth_buf[320];
     snprintf(auth_buf, sizeof(auth_buf), "Bearer %s", _auth_token.c_str());
     http.addHeader("Authorization", auth_buf);
     http.addHeader("Content-Type", "application/json");
+    http.addHeader("Connection", "close");
     http.setTimeout(15000);
     int code = http.POST(body);
     String response = http.getString();
     http.end();
+    c.stop();
 
     if (code >= 200 && code < 300)
     {

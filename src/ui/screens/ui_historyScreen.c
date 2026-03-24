@@ -60,13 +60,18 @@ static void update_one_row(int idx, lv_obj_t *row)
         {
             if (xTouchConfig.xTouchHideAllThumbnails)
             {
-                if (xtouch_logo_placeholder_dsc != NULL)
-                    lv_img_set_src(coverImg, (const lv_img_dsc_t *)xtouch_logo_placeholder_dsc);
+                if (xtouch_thumbnail_slot_dsc[0] != NULL)
+                {
+                    lv_img_set_src(coverImg, (const lv_img_dsc_t *)xtouch_thumbnail_slot_dsc[0]);
+                    lv_obj_clear_flag(coverImg, LV_OBJ_FLAG_HIDDEN);
+                    lv_obj_add_flag(placeLabel, LV_OBJ_FLAG_HIDDEN);
+                    lv_obj_invalidate(coverImg);
+                }
                 else
-                    lv_img_set_src(coverImg, &img_logo);
-                lv_obj_clear_flag(coverImg, LV_OBJ_FLAG_HIDDEN);
-                lv_obj_add_flag(placeLabel, LV_OBJ_FLAG_HIDDEN);
-                lv_obj_invalidate(coverImg);
+                {
+                    lv_obj_add_flag(coverImg, LV_OBJ_FLAG_HIDDEN);
+                    lv_obj_clear_flag(placeLabel, LV_OBJ_FLAG_HIDDEN);
+                }
             }
             else if (idx < XTOUCH_HISTORY_COVER_SLOTS && xtouch_history_cover_dsc[idx] != NULL)
             {

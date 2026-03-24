@@ -15,6 +15,8 @@ const char *xtouch_paths_config = "/xtouch.json";
 //for global settings
 const char *xtouch_paths_settings = XTOUCH_PATH_ROOT "/settings.json";
 const char *xtouch_paths_touch    = XTOUCH_PATH_ROOT "/touch.json";
+/** 5インチ: SD ルートの lcd.json で RGB PCLK を EEPROM に書き換えて再起動（検出後に削除） */
+const char *xtouch_paths_lcd_json = "/lcd.json";
 
 //for cloud
 const char *xtouch_paths_provisioning = "/provisioning.json";

@@ -116,6 +116,8 @@ static void xtouch_history_cover_task(void *pv)
   {
     if (xQueueReceive(s_history_download_queue, &row, portMAX_DELAY) != pdTRUE)
       continue;
+    if (xTouchConfig.xTouchHideAllThumbnails)
+      continue;
     if (row < 0 || row >= XTOUCH_HISTORY_COVER_SLOTS)
       continue;
     if (row >= xtouch_history_count || !xtouch_history_tasks[row].cover_url[0])
@@ -286,6 +288,8 @@ static void xtouch_history_cover_done_timer_cb(lv_timer_t *t)
   int row;
   if (xQueueReceive(s_history_done_queue, &row, 0) != pdTRUE)
     return;
+  if (xTouchConfig.xTouchHideAllThumbnails)
+    return;
   if (row >= xtouch_history_count)
     return;
   char path[64];
@@ -321,12 +325,15 @@ static void xtouch_history_fetch_done_timer_cb(lv_timer_t *t)
 
   if (s_history_download_queue)
     xQueueReset(s_history_download_queue);
-  int n = (xtouch_history_count < XTOUCH_HISTORY_COVER_SLOTS) ? xtouch_history_count : XTOUCH_HISTORY_COVER_SLOTS;
-  for (int row = 0; row < n; row++)
+  if (!xTouchConfig.xTouchHideAllThumbnails)
   {
-    if (!xtouch_history_tasks[row].cover_url[0])
-      continue;
-    xQueueSend(s_history_download_queue, &row, 0);
+    int n = (xtouch_history_count < XTOUCH_HISTORY_COVER_SLOTS) ? xtouch_history_count : XTOUCH_HISTORY_COVER_SLOTS;
+    for (int row = 0; row < n; row++)
+    {
+      if (!xtouch_history_tasks[row].cover_url[0])
+        continue;
+      xQueueSend(s_history_download_queue, &row, 0);
+    }
   }
 }
 
@@ -433,6 +440,35 @@ static void xtouch_history_on_reprint_with_options(void *user_data, lv_msg_t *m)
   }
 }
 
+static void xtouch_history_on_thumbnails_hide_changed(lv_msg_t *m, void *user_data)
+{
+  (void)m;
+  (void)user_data;
+  if (xTouchConfig.xTouchHideAllThumbnails)
+  {
+    xtouch_history_cover_clear();
+    if (s_history_download_queue)
+      xQueueReset(s_history_download_queue);
+  }
+  else
+  {
+    int n = (xtouch_history_count < XTOUCH_HISTORY_COVER_SLOTS) ? xtouch_history_count : XTOUCH_HISTORY_COVER_SLOTS;
+    for (int row = 0; row < n; row++)
+    {
+      char path[64];
+      if (xtouch_history_cover_path_for_task_id(xtouch_history_tasks[row].task_id, path, sizeof(path)) != 0)
+        continue;
+      if (SD.exists(path))
+        (void)xtouch_history_cover_load_path(row, path);
+      else if (xtouch_history_tasks[row].cover_url[0] && s_history_download_queue)
+        xQueueSend(s_history_download_queue, &row, 0);
+    }
+  }
+  struct XTOUCH_MESSAGE_DATA eventData = { 0, 0 };
+  lv_msg_send(XTOUCH_HISTORY_LIST_REFRESH, &eventData);
+  lv_msg_send(XTOUCH_HISTORY_REPRINT_DETAIL_READY, &eventData);
+}
+
 static void xtouch_history_subscribe_events_impl(void)
 {
   if (s_history_download_queue == NULL)
@@ -462,6 +498,7 @@ static void xtouch_history_subscribe_events_impl(void)
   lv_msg_subscribe(XTOUCH_HISTORY_REPRINT_WITH_OPTIONS, (lv_msg_subscribe_cb_t)xtouch_history_on_reprint_with_options, NULL);
   lv_msg_subscribe(XTOUCH_HISTORY_REPRINT_DETAIL_FETCH, (lv_msg_subscribe_cb_t)xtouch_history_on_reprint_detail_fetch, NULL);
   lv_msg_subscribe(XTOUCH_HISTORY_REPRINT_SLOT_PICKED, (lv_msg_subscribe_cb_t)xtouch_history_on_reprint_slot_picked, NULL);
+  lv_msg_subscribe(XTOUCH_THUMBNAILS_HIDE_MODE_CHANGED, (lv_msg_subscribe_cb_t)xtouch_history_on_thumbnails_hide_changed, NULL);
 }
 
 void xtouch_history_subscribe_events(void)

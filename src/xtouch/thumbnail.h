@@ -59,6 +59,8 @@ static int s_thumb_force_fetch_slot = XTOUCH_THUMB_SLOT_MAX;
 static bool s_thumb_exists[XTOUCH_THUMB_SLOT_MAX];
 /** キャッシュから再描画を 1 回だけ行ったか（Home/Printers で SD に既にファイルがあるスロット用） */
 static bool s_thumb_cache_refresh_done[XTOUCH_THUMB_SLOT_MAX];
+/** 起動直後にロゴを先に全スロットへ投入したか */
+static bool s_thumb_boot_logo_seeded = false;
 
 #ifdef __XTOUCH_SCREEN_50__
 #define XTOUCH_THUMB_DL_QUEUE_LEN 5
@@ -119,7 +121,7 @@ static void thumb_dl_task(void *pv)
             continue;
         if (item.slot < 0 || item.slot >= XTOUCH_THUMB_SLOT_MAX)
             continue;
-        if (downloadFileToSDCard(item.url, item.path) != 0)
+        if (downloadFileToSDCard(item.url, item.path) == 0)
         {
             ConsoleDebug.print(F("[xPTouch][THUMB] dl_ng slot="));
             ConsoleDebug.println(item.slot);
@@ -169,6 +171,8 @@ static void thumb_dl_task(void *pv)
 static void thumbnail_do_slot_cb(lv_timer_t *t)
 {
     int s = (int)(intptr_t)t->user_data;
+    if (xTouchConfig.xTouchHideAllThumbnails)
+        return;
     int idx = xTouchConfig.currentScreenIndex;
     if (idx != 6 && idx != 0)
         return;
@@ -235,6 +239,8 @@ static void thumbnail_timer_cb(lv_timer_t *t)
         }
     }
 #endif
+    if (xTouchConfig.xTouchHideAllThumbnails)
+        return;
     /* SD が無いときは、サムネイル（DL／ロゴ）処理を一切行わない。HTTP や SD エラーを防ぐため。 */
     if (SD.cardType() == CARD_NONE)
         return;
@@ -450,6 +456,38 @@ static void xtouch_thumbnail_on_timer_stop(lv_msg_t *m, void *user_data)
     xtouch_thumbnail_timer_stop();
 }
 
+static void xtouch_thumbnail_on_hide_mode_changed(lv_msg_t *m, void *user_data)
+{
+    (void)m;
+    (void)user_data;
+    ConsoleDebug.print(F("[xPTouch][THUMB] hide_mode_changed hide="));
+    ConsoleDebug.println(xTouchConfig.xTouchHideAllThumbnails ? 1 : 0);
+    if (xTouchConfig.xTouchHideAllThumbnails)
+    {
+        xtouch_thumbnail_timer_stop();
+        for (int i = 0; i < XTOUCH_THUMB_SLOT_MAX; i++)
+        {
+            xtouch_thumbnail_slot_path[i][0] = '\0';
+            xtouch_thumbnail_slot_dsc[i] = nullptr;
+            bool ok = xtouch_load_logo_for_slot_with_lgfx(i, XTOUCH_THUMB_LGFX_W, XTOUCH_THUMB_LGFX_H);
+            ConsoleDebug.print(F("[xPTouch][THUMB] hide logo slot="));
+            ConsoleDebug.print(i);
+            ConsoleDebug.print(F(" ok="));
+            ConsoleDebug.println(ok ? 1 : 0);
+        }
+    }
+    else
+    {
+        if (xTouchConfig.currentScreenIndex == 0 || xTouchConfig.currentScreenIndex == 6)
+        {
+            xtouch_thumbnail_timer_start();
+            xtouch_thumbnail_schedule_fetch_all();
+        }
+    }
+    for (int s = 0; s < XTOUCH_THUMB_SLOT_MAX; s++)
+        lv_msg_send(XTOUCH_ON_OTHER_PRINTER_UPDATE, (void *)(intptr_t)(s + 1));
+}
+
 /** Printers 画面用イベント購読を登録。main の setup で一度呼ぶ */
 static void xtouch_thumbnail_subscribe_events(void)
 {
@@ -465,6 +503,21 @@ static void xtouch_thumbnail_subscribe_events(void)
     lv_msg_subscribe(XTOUCH_PRINTERS_SCHEDULE_THUMB_FETCH, (lv_msg_subscribe_cb_t)xtouch_thumbnail_on_schedule_fetch, NULL);
     lv_msg_subscribe(XTOUCH_PRINTERS_THUMB_TIMER_START, (lv_msg_subscribe_cb_t)xtouch_thumbnail_on_timer_start, NULL);
     lv_msg_subscribe(XTOUCH_PRINTERS_THUMB_TIMER_STOP, (lv_msg_subscribe_cb_t)xtouch_thumbnail_on_timer_stop, NULL);
+    lv_msg_subscribe(XTOUCH_THUMBNAILS_HIDE_MODE_CHANGED, (lv_msg_subscribe_cb_t)xtouch_thumbnail_on_hide_mode_changed, NULL);
+    if (!s_thumb_boot_logo_seeded && SD.cardType() != CARD_NONE)
+    {
+        for (int s = 0; s < XTOUCH_THUMB_SLOT_MAX; s++)
+        {
+            ConsoleDebug.print(F("[xPTouch][THUMB] boot logo slot="));
+            ConsoleDebug.println(s);
+            if (xtouch_load_logo_for_slot_with_lgfx(s, XTOUCH_THUMB_LGFX_W, XTOUCH_THUMB_LGFX_H))
+            {
+                s_thumb_exists[s] = true;
+                lv_msg_send(XTOUCH_ON_OTHER_PRINTER_UPDATE, (void *)(intptr_t)(s + 1));
+            }
+        }
+        s_thumb_boot_logo_seeded = true;
+    }
 }
 #endif
 

@@ -2,6 +2,7 @@
 #define _XLCD_TYPES
 
 #include <stddef.h>
+#include <stdint.h>
 
 #define XTOUCH_LCD_MIN_SLEEP_TIME 5
 #define XTOUCH_LIGHT_MIN_SLEEP_TIME 5
@@ -197,6 +198,8 @@ extern "C"
         bool xTouchMultiPrinterMonitorEnabled;
         /** History 画面を有効にする（デフォルト false）。5inch のみ。 */
         bool xTouchHistoryEnabled;
+        /** true のとき Home / Printers / History のサムネイルを表示しない（DL も行わない）。5inch のみ。 */
+        bool xTouchHideAllThumbnails;
 
         int xTouchNeoPixelNumValue;
         int xTouchNeoPixelBrightnessValue;
@@ -302,6 +305,24 @@ extern "C"
 #define XTOUCH_HISTORY_TASK_ID_LEN 24
 #define XTOUCH_HISTORY_MODEL_ID_LEN 32
 #define XTOUCH_HISTORY_TIME_LEN 32
+    /** Bambu 想定: AMS 最大 4 ユニット × 各 4 トレイ = 16 スロット。amsDetailMapping も最大 16 要素 */
+#define XTOUCH_BAMBU_AMS_UNITS 4
+#define XTOUCH_BAMBU_AMS_SLOTS_PER_UNIT 4
+#define XTOUCH_HISTORY_AMS_MAP_MAX ((XTOUCH_BAMBU_AMS_UNITS) * (XTOUCH_BAMBU_AMS_SLOTS_PER_UNIT))
+    /** Cloud my/tasks の amsDetailMapping 1要素（再印刷時に AMS スロットへ差し替え） */
+    typedef struct
+    {
+        int ams;
+        int amsId;
+        int slotId;
+        int nozzleId;
+        double weight;
+        char filamentId[16];
+        char filamentType[20];
+        char sourceColor[16];
+        char targetColor[16];
+        char targetFilamentType[20];
+    } xtouch_history_ams_map_t;
     typedef struct
     {
         char task_id[XTOUCH_HISTORY_TASK_ID_LEN];  /* API の id を文字列で */
@@ -315,6 +336,8 @@ extern "C"
         int plate_index;  /* create_task 用 (plateIndex) */
         int status;      /* 2=失敗, 3=完了 等 */
         int is_printable; /* 1=再印刷可 */
+        /** 履歴一覧取得時点で amsDetailMapping を含むか（詳細は Reprint 押下時に別取得して展開） */
+        unsigned char has_ams_mapping;
         unsigned char valid;
     } xtouch_history_task_t;
     extern xtouch_history_task_t xtouch_history_tasks[XTOUCH_HISTORY_TASKS_MAX];
@@ -322,6 +345,16 @@ extern "C"
 #define XTOUCH_HISTORY_COVER_SLOTS 10
     /** History 画面 行別: LGFX デコード済み cover 画像の descriptor。UI は lv_img_set_src(img, (lv_img_dsc_t*)xtouch_history_cover_dsc[idx]) で表示。 */
     extern void *xtouch_history_cover_dsc[XTOUCH_HISTORY_COVER_SLOTS];
+    /** History リプリント用に UI から選択された履歴行インデックスを一時保持する。-1 は未選択。 */
+    extern int xtouch_history_selected_index;
+    /** Reprint 対象として詳細(amsDetailMapping)を最後に取得した履歴行。-1 は未取得。 */
+    extern int xtouch_history_selected_detail_index;
+    /** Reprint 対象タスクの amsDetailMapping を展開した共有バッファ（必要時のみ取得）。count<0 は取得中、0 は無し */
+    extern int xtouch_history_selected_ams_map_count;
+    extern xtouch_history_ams_map_t xtouch_history_selected_ams_map[XTOUCH_HISTORY_AMS_MAP_MAX];
+    /** リプリント確定時: ams_map[i] に割り当てる AMS ユニット(0..XTOUCH_BAMBU_AMS_UNITS-1)とトレイ(0..3)。External は ams=0 tray=254。 */
+    extern uint8_t xtouch_history_reprint_pick_ams[XTOUCH_HISTORY_AMS_MAP_MAX];
+    extern uint8_t xtouch_history_reprint_pick_tray[XTOUCH_HISTORY_AMS_MAP_MAX];
 #endif
 
     /** フィラメント Brand/Type ドロップダウン用。都度 SD から組み立てたオプション文字列を返す。実装は filaments_options.c。 */
