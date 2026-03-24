@@ -1,7 +1,7 @@
 #include <pgmspace.h>
 
 // Non-optimized HMS errors (legacy format)
-int hms_error_length = 123;
+int hms_error_length = 124;
 
 const char *hms_error_keys[] PROGMEM = {
   "0C00040000010025",
@@ -17,6 +17,7 @@ const char *hms_error_keys[] PROGMEM = {
   "0300900000010007",
   "0700520000030001",
   "0300010000010005",
+  "0300400000020002",
   "030001000001000C",
   "050005000001000F",
   "0C0003000002000E",
@@ -143,6 +144,7 @@ const char *hms_error_values[] PROGMEM = {
   "High chamber temperature detected. If the hotend is overheating or emitting smoke, immediately power off the printer. Please refer to the Wiki for detailed troubleshooting instructions.",
   "Abnormal number or type of connected AMS units detected. Please refer to the Wiki for supported AMS combinations and adjust the current connection.",
   "A heatbed temperature control issue has been detected and the heating module may be damaged. Please power off the device immediately and follow the Wiki to replace the AC board.",
+  "G-code data error detected. The system has automatically reloaded the G-code and resumed printing.",
   "The heatbed has worked at full load for a long time. The temperature control system may be abnormal.",
   "The accessory firmware does not match the printer. Please upgrade it on the \"Firmware\" page.",
   "Your nozzle seems to be covered with jammed or clogged material.",
@@ -439,7 +441,7 @@ const char *device_error_values[] PROGMEM = {
   "Due to power limitations, only one AMS is allowed to use the device's power for drying.",
   "Detected that the extruder is not extruding normally. If the defects are acceptable, select \"Resume\" to resume the print job.",
   "Please observe the nozzle. If the filament has been extruded, select \"Done\"; if not, please push the filament forward slightly, and then select \"Retry\".",
-  "Nozzle temperature malfunction",
+  "Nozzle temperature malfunction. Check the Assistant page and resolve the issue before retrying heating.",
   "The time-lapse mode is set to Traditional in the slicing file. This may cause surface defects. Would you like to enable it?",
   "Build plate not detected. Please ensure there are no bulges or debris on the plate and that the nozzle is clean.",
   "The AMS firmware does not match the printer. Please upgrade it on the \"Firmware\" page.",

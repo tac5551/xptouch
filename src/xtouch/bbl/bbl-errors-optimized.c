@@ -244,6 +244,7 @@ const error_pattern_t hms_error_patterns[] PROGMEM = {
     {"1807700000020007", "AMS-HT filament ran out. Please put a new filament into the same slot in AMS and resume.", {}, 0},
     {"0300930000010004", "CHAMBER_TEMP_SENSOR_OPEN", {"COMMON_PHRASE_CHAMBER_TEMP_SENSOR_OPEN"}, 1},
     {"0300020000010003", "TEMP_SENSOR_OVER_TEMP", {"COMMON_PHRASE_TEMP_SENSOR_OVER_TEMP"}, 1},
+    {"0300920000010001", "The temperature of chamber HEATER_2 is abnormal. The heater may have a short circuit.", {"HEATER_2"}, 1},
     {"1800400000020004", "The filament buffer signal is abnormal; the spring may be stuck, or the filament may be tangled.", {}, 0},
     {"0C00020000020002", "LASER_LINE_TOO_WIDE", {"COMMON_PHRASE_LASER_LINE_TOO_WIDE"}, 1},
     {"03000A0000010004", "FORCE_SENSOR_EXTERNAL_DISTURBANCE", {"COMMON_PHRASE_FORCE_SENSOR_EXTERNAL_DISTURBANCE"}, 1},
@@ -269,7 +270,6 @@ const error_pattern_t hms_error_patterns[] PROGMEM = {
     {"0300020000010006", "TEMP_SENSOR_SHORT_CIRCUIT Please check whether the connector is properly plugged in.", {"COMMON_PHRASE_TEMP_SENSOR_SHORT_CIRCUIT"}, 1},
     {"1800400000020003", "The AMS_DEVICE_Aub communication is abnormal; the cable may be not well connected.", {"AMS_DEVICE_A"}, 1},
     {"18FF600000020001", "External spool may be tangled or jammed.", {}, 0},
-    {"0300920000010001", "The temperature of chamber HEATER_2 is abnormal. The heater may have a short circuit.", {"HEATER_2"}, 1},
     {"07FF200000020002", "External filament is missing; please load a new filament.", {}, 0},
     {"0300920000010006", "The temperature of chamber HEATER_2 is abnormal. The sensor may have a short circuit.", {"HEATER_2"}, 1},
     {"030091000001000C", "The chamber HEATER_1 has worked at full load for a long time. The temperature control system may be abnormal.", {"HEATER_1"}, 1},
@@ -336,13 +336,14 @@ const error_pattern_t device_error_patterns[] PROGMEM = {
 };
 
 // Retry and Done message arrays (for backward compatibility)
-int message_containing_retry_total = 399;
+int message_containing_retry_total = 401;
 
 const char *message_containing_retry[] PROGMEM = {
   "18FF700000020008",
   "07FF700000020008",
   "07FE700000020008",
   "18FE700000020008",
+  "0300400000020002",
   "1801210000010084",
   "0702210000010086",
   "1806200000010084",
@@ -448,6 +449,11 @@ const char *message_containing_retry[] PROGMEM = {
   "1805210000010084",
   "0705220000010086",
   "0707230000010084",
+  "0702230000010084",
+  "1801230000020016",
+  "1804960000010003",
+  "0702200000010086",
+  "1806210000010084",
   "0703700000020008",
   "1801700000020008",
   "1805960000010003",
@@ -538,11 +544,6 @@ const char *message_containing_retry[] PROGMEM = {
   "0706210000010086",
   "0705230000010084",
   "0702230000020016",
-  "0702230000010084",
-  "1801230000020016",
-  "1804960000010003",
-  "0702200000010086",
-  "1806210000010084",
   "1802700000020007",
   "1803220000020016",
   "0704230000020016",
@@ -638,6 +639,7 @@ const char *message_containing_retry[] PROGMEM = {
   "07FF8007",
   "07FF8012",
   "1806C06A",
+  "03008008",
   "0701C06B",
   "0700C06B",
   "0500402C",
