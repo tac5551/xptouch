@@ -198,8 +198,17 @@ static void populate_summary_panel(void)
 
     if (s_cover_img)
     {
-        if (xtouch_history_selected_index < XTOUCH_HISTORY_COVER_SLOTS &&
-            xtouch_history_cover_dsc[xtouch_history_selected_index] != NULL)
+        if (xTouchConfig.xTouchHideAllThumbnails)
+        {
+            if (xtouch_logo_placeholder_dsc != NULL)
+                lv_img_set_src(s_cover_img, (const lv_img_dsc_t *)xtouch_logo_placeholder_dsc);
+            else
+                lv_img_set_src(s_cover_img, &img_logo);
+            lv_obj_clear_flag(s_cover_img, LV_OBJ_FLAG_HIDDEN);
+            lv_obj_invalidate(s_cover_img);
+        }
+        else if (xtouch_history_selected_index < XTOUCH_HISTORY_COVER_SLOTS &&
+                 xtouch_history_cover_dsc[xtouch_history_selected_index] != NULL)
         {
             lv_img_set_src(s_cover_img, (const void *)xtouch_history_cover_dsc[xtouch_history_selected_index]);
             lv_obj_clear_flag(s_cover_img, LV_OBJ_FLAG_HIDDEN);

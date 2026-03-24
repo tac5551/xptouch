@@ -135,6 +135,8 @@ extern "C"
         XTOUCH_HISTORY_REPRINT_DETAIL_READY,
         /** History リプリント設定: mapping行に対する AMS スロット選択。data=map_index, data2=(ams_id&0xFF)|((tray_id&0xFF)<<8) */
         XTOUCH_HISTORY_REPRINT_SLOT_PICKED,
+        /** サムネイル全画面非表示オプション変更（settings 保存後に送る。xtouch が購読） */
+        XTOUCH_THUMBNAILS_HIDE_MODE_CHANGED,
     };
 
     struct XTOUCH_MESSAGE_DATA

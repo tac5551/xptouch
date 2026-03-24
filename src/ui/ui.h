@@ -106,6 +106,7 @@ extern "C"
   lv_obj_t *ui_optional_preheatSwitch;
   lv_obj_t *ui_optional_multiPrinterMonitorSwitch;
   lv_obj_t *ui_optional_historySwitch;
+  lv_obj_t *ui_optional_hideThumbnailsSwitch;
   lv_obj_t *ui_optional_Idle_ledSwitch;
 
   lv_obj_t *ui_characterScreen;

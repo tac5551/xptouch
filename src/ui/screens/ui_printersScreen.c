@@ -186,6 +186,9 @@ void ui_printers_on_other_update(lv_msg_t *m, void *user_data)
     if (ui_printersListContainer == NULL || xTouchConfig.currentScreenIndex != 6)
         return;
 
+    const bool refresh_all_thumb_slots =
+        (m == NULL || lv_msg_get_id(m) == XTOUCH_PRINTERS_LIST_REFRESH);
+
     /* サムネイルDL完了通知（XTOUCH_ON_OTHER_PRINTER_UPDATE）のとき payload のスロットを即描画。
      * 遅延しない: 送信側で DL→LGFX デコード済みなので、ここで即 set_src して次のスロット DL ブロック前に描画する。
      * payload: MQTT は &XTOUCH_MESSAGE_DATA (data = 行インデックス 0=メイン,1=他1台目…)、サムネは (void*)(slot+1)。 */
@@ -220,6 +223,12 @@ void ui_printers_on_other_update(lv_msg_t *m, void *user_data)
         }
         else
             lv_obj_add_flag(row, LV_OBJ_FLAG_HIDDEN);
+    }
+
+    if (refresh_all_thumb_slots)
+    {
+        for (int i = 0; i < show_count && i < PRINTERS_ROW_MAX; i++)
+            thumb_refresh_slot(i);
     }
 }
 

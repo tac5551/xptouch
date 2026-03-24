@@ -282,6 +282,17 @@ void ui_thumb_set_img_src_from_slot(lv_obj_t *img, int slot)
 {
    if (!img || slot < 0 || slot >= XTOUCH_THUMB_SLOT_MAX)
       return;
+   if (xTouchConfig.xTouchHideAllThumbnails)
+   {
+      lv_obj_clear_flag(img, LV_OBJ_FLAG_HIDDEN);
+      if (xtouch_logo_placeholder_dsc != NULL)
+         lv_img_set_src(img, (const lv_img_dsc_t *)xtouch_logo_placeholder_dsc);
+      else
+         lv_img_set_src(img, &img_logo);
+      lv_obj_invalidate(img);
+      return;
+   }
+   lv_obj_clear_flag(img, LV_OBJ_FLAG_HIDDEN);
    /* 同一 descriptor ポインタで中身だけ差し替えた場合、LVGL が変更を検知しないため
     * 一度 src をクリアしてから再設定し、必ず再描画させる。
     * pngle でデコード済みの dsc を優先する（History と同様。path だけだと LVGL が PNG を decode できず Nodata になる）。 */
