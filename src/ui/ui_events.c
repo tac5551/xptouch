@@ -1,6 +1,7 @@
 #include "ui.h"
 #include "../xtouch/types.h"
 #include "../xtouch/globals.h"
+#include "../xtouch/debug.h"
 
 void initialActions(lv_event_t *e) {}
 
@@ -366,7 +367,7 @@ int _slot = 255;
 void onAmsSlotLoadConfirm()
 {
 #ifdef XTOUCH_DEBUG
-    printf("[AMS load] YES tapped, sending _slot=%d\n", _slot);
+    ConsoleDebug_Printf("[xPTouch][D][AMS load] YES tapped, sending _slot=%d\n", _slot);
 #endif
     lv_msg_send(XTOUCH_COMMAND_AMS_LOAD_SLOT, (void *)(unsigned long)_slot);
     _slot = 255;

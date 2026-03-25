@@ -671,10 +671,8 @@ static void ui_amsViewComponent_on_selector_change(lv_event_t *e)
     lv_obj_t *comp = lv_obj_get_parent(lv_obj_get_parent(dropdown));
     apply_selector_visibility(comp, s_ams_view_selector);
     /* 1組のウィジェットの表示内容を再描画 */
-    struct XTOUCH_MESSAGE_DATA eventData;
-    eventData.data = 0;
-    lv_msg_send(XTOUCH_ON_AMS_SLOT_UPDATE, &eventData);
-    lv_msg_send(XTOUCH_ON_AMS_HUMIDITY_UPDATE, &eventData);
+    ui_msg_send(XTOUCH_ON_AMS_SLOT_UPDATE, 0, 0);
+    ui_msg_send(XTOUCH_ON_AMS_HUMIDITY_UPDATE, 0, 0);
 }
 
 /* AMS有無に応じてコンボの選択肢（接続されているAMSのみ）と初期選択を更新 */
@@ -1109,11 +1107,9 @@ lv_obj_t *ui_amsViewComponent_create(lv_obj_t *comp_parent)
 
     ui_comp_amsViewComponent_create_hook(cui_amsViewComponent);
 
-    struct XTOUCH_MESSAGE_DATA eventData;
-    eventData.data = 0;
-    lv_msg_send(XTOUCH_ON_AMS_BITS, &eventData);
-    lv_msg_send(XTOUCH_ON_AMS_SLOT_UPDATE, &eventData);
-    lv_msg_send(XTOUCH_ON_AMS_HUMIDITY_UPDATE, &eventData);
+    ui_msg_send(XTOUCH_ON_AMS_BITS, 0, 0);
+    ui_msg_send(XTOUCH_ON_AMS_SLOT_UPDATE, 0, 0);
+    ui_msg_send(XTOUCH_ON_AMS_HUMIDITY_UPDATE, 0, 0);
 
     return cui_amsViewComponent;
 }

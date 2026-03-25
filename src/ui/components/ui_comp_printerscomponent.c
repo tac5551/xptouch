@@ -177,10 +177,7 @@ lv_obj_t *ui_printersComponent_create(lv_obj_t *comp_parent)
 
     /* 購読・初期表示は画面側でイベント登録・送信。ここではサムネイル取得のみイベント送信 */
     {
-        struct XTOUCH_MESSAGE_DATA eventData;
-        eventData.data = 0;
-        eventData.data2 = 0;
-        lv_msg_send(XTOUCH_PRINTERS_SCHEDULE_THUMB_FETCH, &eventData);
+        ui_msg_send(XTOUCH_PRINTERS_SCHEDULE_THUMB_FETCH, 0, 0);
     }
     return cui_printersComponent;
 }

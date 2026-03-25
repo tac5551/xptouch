@@ -53,7 +53,7 @@ bool xtouch_wifi_setup()
     WiFi.mode(WIFI_STA);
     WiFi.persistent(false);
     WiFi.setAutoReconnect(false); /* 自動再接続が暴れるとログが洪水になるため、自前で制御する */
-    ConsoleInfo.println(F("[xPTouch][CONNECTION] Connecting to WiFi .."));
+    ConsoleInfo.println(F("[xPTouch][I][CONNECTION] Connecting to WiFi .."));
     WiFi.onEvent(onWiFiEvent);
 
     lv_label_set_text(introScreenCaption, LV_SYMBOL_WIFI " Connecting");
@@ -113,9 +113,9 @@ bool xtouch_wifi_setup()
     lv_timer_handler();
     lv_task_handler();
     delay(1000);
-    ConsoleInfo.print(F("[xPTouch][CONNECTION] Connected to the WiFi network with IP: "));
+    ConsoleInfo.print(F("[xPTouch][I][CONNECTION] Connected to the WiFi network with IP: "));
     ConsoleInfo.println(WiFi.localIP());
-    ConsoleInfo.print(F("[xPTouch][CONNECTION] DNS: "));
+    ConsoleInfo.print(F("[xPTouch][I][CONNECTION] DNS: "));
     ConsoleInfo.println(WiFi.dnsIP());
 
     return true;

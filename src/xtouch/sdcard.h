@@ -18,7 +18,7 @@ bool xtouch_sdcard_setup(int8_t sd_cs_pin)
         lv_obj_set_style_text_color(introScreenCaption, lv_color_hex(0xFF0000), LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_timer_handler();
 
-        ConsoleError.println("[xPTouch][SD] Card Mount Failed");
+        ConsoleError.println("[xPTouch][E][SD] Card Mount Failed");
         return false;
     }
 
@@ -28,11 +28,11 @@ bool xtouch_sdcard_setup(int8_t sd_cs_pin)
 
     if (cardType == CARD_NONE)
     {
-        ConsoleError.println("[xPTouch][SD] No SD card attached");
+        ConsoleError.println("[xPTouch][E][SD] No SD card attached");
         return false;
     }
 
-    ConsoleInfo.print("[xPTouch][SD] SD Card Type: ");
+    ConsoleInfo.printf("[xPTouch][I][SD] Card Type: %d\n", cardType);
 
     if (cardType == CARD_MMC)
     {
@@ -52,7 +52,7 @@ bool xtouch_sdcard_setup(int8_t sd_cs_pin)
     }
 
     uint64_t cardSize = SD.cardSize() / (1024 * 1024);
-    ConsoleInfo.printf("[xPTouch][SD] SD Card Size: %lluMB\n", cardSize);
+    ConsoleInfo.printf("[xPTouch][I][SD] Card Size: %lluMB\n", cardSize);
     xtouch_filesystem_mkdir(SD, xtouch_paths_root);
     xtouch_filesystem_mkdir(SD, "/tmp");
 

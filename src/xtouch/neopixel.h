@@ -210,7 +210,7 @@ void xtouch_neo_pixel_control_timer_handler(lv_timer_t *timer)
         status_timeout -= timer_tick * 10; // main delay 10ms
         if (status_timeout <= 0)
         {
-            ConsoleDebug.println("[xPTouch][LED] print_status : " + String(bambuStatus.print_status) + " , print_gcode_action : " + String(bambuStatus.print_gcode_action) + "percent : " + String(bambuStatus.mc_print_percent));
+            ConsoleDebug.println("[xPTouch][D][LED] print_status : " + String(bambuStatus.print_status) + " , print_gcode_action : " + String(bambuStatus.print_gcode_action) + "percent : " + String(bambuStatus.mc_print_percent));
             status_timeout = 0;
         }
     }
@@ -337,14 +337,14 @@ void xtouch_neo_pixel_control_timer_handler(lv_timer_t *timer)
             xtouch_neo_pixel_set_led_color(0, 0, 0);
             xtouch_neo_pixel_set_pettern(0);
         }
-        ConsoleDebug.println("[xPTouch][LED] print_status : " + String(bambuStatus.print_status) + " , print_gcode_action : " + String(bambuStatus.print_gcode_action) + " , percent : " + String(bambuStatus.mc_print_percent));
-        ConsoleDebug.println("[xPTouch][LED] pettern : " + String(pettern) + " , led_color : " + String(led_color[0]) + " , " + String(led_color[1]) + " , " + String(led_color[2]) + " status_timeout : " + String(status_timeout));
+        ConsoleDebug.println("[xPTouch][D][LED] print_status : " + String(bambuStatus.print_status) + " , print_gcode_action : " + String(bambuStatus.print_gcode_action) + " , percent : " + String(bambuStatus.mc_print_percent));
+        ConsoleDebug.println("[xPTouch][D][LED] pettern : " + String(pettern) + " , led_color : " + String(led_color[0]) + " , " + String(led_color[1]) + " , " + String(led_color[2]) + " status_timeout : " + String(status_timeout));
     }
 
     // タイムアウト時は無条件でIDLE状態に設定
     if (status_timeout == 0)
     {
-        ConsoleDebug.println("[xPTouch][LED] status_timeout : " + String(status_timeout));
+        ConsoleDebug.println("[xPTouch][D][LED] status_timeout : " + String(status_timeout));
         xtouch_neo_pixel_set_led_color(32, 0, 0);
         xtouch_neo_pixel_set_pettern(5);
         print_status_changed = true; // ステータス変更状態とする

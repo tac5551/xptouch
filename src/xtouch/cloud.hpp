@@ -234,9 +234,8 @@ static int cloud_parse_ams_detail_mapping_from_stream(HTTPClient &http, Stream &
                                                       xtouch_history_ams_map_t *maps, int max_maps)
 {
 
-#ifdef XTOUCH_DEBUG
-    ConsoleDebug.print(F("[xPTouch][CLOUD] cloud_parse_ams_detail_mapping_from_stream"));
-#endif
+  ConsoleVerbose.println("[xPTouch][V][CLOUD] cloud_parse_ams_detail_mapping_from_stream");
+
   if (!maps || max_maps <= 0)
     return -1;
   static const char needle[] = "\"amsDetailMapping\"";
@@ -269,9 +268,7 @@ static int cloud_parse_ams_detail_mapping_from_stream(HTTPClient &http, Stream &
   if (!found)
     return 0;
 
-#ifdef XTOUCH_DEBUG
-    ConsoleDebug.print(F("[xPTouch][CLOUD] cloud_parse_ams_detail_mapping_from_stream found"));
-#endif
+  ConsoleVerbose.println("[xPTouch][V][CLOUD] cloud_parse_ams_detail_mapping_from_stream found");
 
   /* ':' まで進める */
   while (millis() - start_ms < timeout_ms)
@@ -346,10 +343,7 @@ static int cloud_parse_ams_detail_mapping_from_stream(HTTPClient &http, Stream &
     if (depth != 0)
       break;
 
-#ifdef XTOUCH_DEBUG
-    ConsoleDebug.print(F("[xPTouch][CLOUD] cloud_parse_ams_detail_mapping_from_stream obj="));
-    ConsoleDebug.println(obj);
-#endif
+    ConsoleDebug.printf("[xPTouch][F][CLOUD] cloud_parse_ams_detail_mapping_from_stream obj=%s\n", obj);
 
     xtouch_history_ams_map_t *m = &maps[cnt];
     memset(m, 0, sizeof(*m));
@@ -993,12 +987,7 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
     String path = String("/v1/iot-service/api/user/task/") + task_id;
     String url = String("https://") + host + path;
 
-#ifdef XTOUCH_DEBUG
-    ConsoleDebug.print(F("[xPTouch][CLOUD] getTaskThumbnailUrl task_id="));
-    ConsoleDebug.print(task_id);
-    ConsoleDebug.print(F(" url="));
-    ConsoleDebug.println(url);
-#endif
+    ConsoleVerbose.printf("[xPTouch][V][CLOUD] getTaskThumbnailUrl task_id=%s url=%s\n", task_id, url.c_str());
 
     WiFiClientSecure &c = sslClient();
     c.stop();
@@ -1016,18 +1005,12 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
     http.addHeader("Connection", "close");
     http.setTimeout(8000);
     int code = http.GET();
-#ifdef XTOUCH_DEBUG
-    ConsoleDebug.print(F("[xPTouch][CLOUD] getTaskThumbnailUrl code="));
-    ConsoleDebug.println(code);
-#endif
     String response = http.getString();
-#ifdef XTOUCH_DEBUG
-    ConsoleDebug.print(F("[xPTouch][CLOUD] getTaskThumbnailUrl resp_len="));
-    ConsoleDebug.println(response.length());
+#ifdef XTOUCH_DEBUG_VERBOSE
+    ConsoleVerbose.printf("[xPTouch][V][CLOUD] getTaskThumbnailUrl code=%d resp_len=%d\n", code, response.length());
     if (code != 200)
     {
-      ConsoleDebug.print(F("[xPTouch][CLOUD] getTaskThumbnailUrl non-200 body="));
-      ConsoleDebug.println(response);
+      ConsoleVerbose.printf("[xPTouch][V][CLOUD] getTaskThumbnailUrl non-200 body=%s\n", response.c_str());
     }
 #endif
     http.end();
@@ -1035,7 +1018,7 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
     if (response.length() == 0)
       return false;
 
-#ifdef XTOUCH_CLOUD_DEBUG
+#ifdef XTOUCH_DEBUG_VERBOSE
     /* Cloud個別デバッグ: task レスポンス全体を SD に保存 */
     char dump_path[64];
     snprintf(dump_path, sizeof(dump_path), "/tmp/task_%s.json", task_id);
@@ -1044,8 +1027,7 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
     {
       dump.print(response);
       dump.close();
-      ConsoleDebug.print(F("[xPTouch][CLOUD] saved task JSON to "));
-      ConsoleDebug.println(dump_path);
+      ConsoleDebug.printf("[xPTouch][V][CLOUD] saved task JSON to %s\n", dump_path);
     }
 #endif
 
@@ -1075,16 +1057,11 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
     const char *url_c = url_buf;
     if (!url_c || !url_c[0])
     {
-#ifdef XTOUCH_DEBUG
-      ConsoleDebug.println(F("[xPTouch][CLOUD] getTaskThumbnailUrl thumbnail.url empty"));
-#endif
+      ConsoleVerbose.println("[xPTouch][V][CLOUD] getTaskThumbnailUrl thumbnail.url empty");
       return false;
     }
 
-#ifdef XTOUCH_DEBUG
-    ConsoleDebug.print(F("[xPTouch][CLOUD] getTaskThumbnailUrl extracted url="));
-    ConsoleDebug.println(url_c);
-#endif
+    ConsoleVerbose.printf("[xPTouch][V][CLOUD] getTaskThumbnailUrl extracted url=%s\n", url_c);
 
     strncpy(out_url, url_c, out_size - 1);
     out_url[out_size - 1] = '\0';
@@ -1243,48 +1220,30 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
       return -1;
     }
 
-#ifdef XTOUCH_DEBUG
-    ConsoleDebug.println(F("[xPTouch][CLOUD] GET /v1/user-service/my/task/ OK"));
-#endif
-
-    /* getStream()+read() が本文 0 バイト扱いになる ESP32 環境があるため、他 API と同様に本文をまとめて取得 */
+    ConsoleVerbose.println("[xPTouch][V][CLOUD] GET /v1/user-service/my/task/ OK");
     String body = http.getString();
-#ifdef XTOUCH_DEBUG
-    ConsoleDebug.print(F("[xPTouch][CLOUD] task detail JSON len="));
-    ConsoleDebug.println((unsigned)body.length());
-#endif
+    ConsoleVerbose.printf("[xPTouch][V][CLOUD] task detail JSON len=%d\n", (unsigned)body.length());
     int cnt = cloud_parse_ams_detail_mapping(body.c_str(), body.length(), maps, max_maps);
 
-#ifdef XTOUCH_DEBUG
-    ConsoleDebug.print(F("[xPTouch][CLOUD] cloud_parse_ams_detail_mapping (my/task) cnt="));
-    ConsoleDebug.println(cnt);
-    ConsoleDebug.print(F("[xPTouch][CLOUD] amsDetailMapping parse task_id="));
-    ConsoleDebug.println(task_id);
+#ifdef XTOUCH_DEBUG_VERBOSE
+    ConsoleVerbose.printf("[xPTouch][V][CLOUD] cloud_parse_ams_detail_mapping (my/task) cnt=%d\n", cnt);
+    ConsoleVerbose.printf("[xPTouch][V][CLOUD] amsDetailMapping parse task_id=%s\n", task_id);
     {
       const int nprint = (cnt > 16) ? 16 : cnt;
       for (int i = 0; i < nprint; i++)
       {
         const xtouch_history_ams_map_t *m = &maps[i];
-        ConsoleDebug.printf("[xPTouch][CLOUD] amsMap[%d] id=%s type=%s srcColor=%s tgtColor=%s tgtType=%s w=%.2f ams=%d amsId=%d slot=%d nozzle=%d\n", i,
+        ConsoleVerbose.printf("[xPTouch][V][CLOUD] amsMap[%d] id=%s type=%s srcColor=%s tgtColor=%s tgtType=%s w=%.2f ams=%d amsId=%d slot=%d nozzle=%d\n", i,
                             m->filamentId[0] ? m->filamentId : "(empty)", m->filamentType[0] ? m->filamentType : "?",
                             m->sourceColor[0] ? m->sourceColor : "?", m->targetColor[0] ? m->targetColor : "?",
                             m->targetFilamentType[0] ? m->targetFilamentType : "?", m->weight, m->ams, m->amsId, m->slotId, m->nozzleId);
       }
       if (cnt > 16)
-        ConsoleDebug.println(F("[xPTouch][CLOUD] amsMap ... (truncated to 16 lines)"));
+        ConsoleVerbose.printf("[xPTouch][V][CLOUD] amsMap ... (truncated to 16 lines)\n");
     }
-    ConsoleDebug.println(F("[xPTouch][CLOUD] step: before http.end()"));
 #endif
     http.end();
-#ifdef XTOUCH_DEBUG
-    ConsoleDebug.println(F("[xPTouch][CLOUD] step: after http.end()"));
-    ConsoleDebug.println(F("[xPTouch][CLOUD] step: before c.stop()"));
-#endif
     c.stop();
-#ifdef XTOUCH_DEBUG
-    ConsoleDebug.println(F("[xPTouch][CLOUD] step: after c.stop()"));
-    ConsoleDebug.println(F("[xPTouch][CLOUD] step: return from getMyTaskAmsDetailMapping"));
-#endif
     return cnt;
   }
 
@@ -1653,7 +1612,7 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
 
   void unpair()
   {
-    ConsoleInfo.println("[xPTouch][SSDP] Unpairing device");
+    ConsoleInfo.println("[xPTouch][I][SSDP] Unpairing device");
     DynamicJsonDocument pairFile = xtouch_filesystem_readJson(SD, xtouch_paths_pair, false);
     pairFile["paired"] = "";
     xtouch_filesystem_writeJson(SD, xtouch_paths_pair, pairFile);
@@ -1670,7 +1629,7 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
 
   void loadAuthTokens()
   {
-    ConsoleLog.println(ESP.getFreeHeap());
+    ConsoleVerbose.println(ESP.getFreeHeap());
     DynamicJsonDocument config = xtouch_filesystem_readJson(SD, xtouch_paths_provisioning, false, 2048);
     _auth_token = config["cloud-authToken"].as<String>();
     DynamicJsonDocument wifiConfig = xtouch_filesystem_readJson(SD, xtouch_paths_provisioning);

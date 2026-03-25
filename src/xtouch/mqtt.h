@@ -37,13 +37,6 @@ unsigned long long xtouch_mqtt_lastPushStatus = 0;
 
 XtouchAutoGrowBufferStream stream;
 
-void xtouch_mqtt_sendMsg(XTOUCH_MESSAGE message, unsigned long long data = 0)
-{
-    struct XTOUCH_MESSAGE_DATA eventData;
-    eventData.data = data;
-    lv_msg_send(message, &eventData);
-}
-
 void xtouch_mqtt_topic_setup()
 {
     String xtouch_device_topic = String("device/") + xTouchConfig.xTouchSerialNumber;
@@ -116,12 +109,12 @@ static void xtouch_mqtt_pushall_for_dev(const char *dev_id)
     String payload;
     serializeJson(json, payload);
     String topic = String("device/") + dev_id + "/request";
-    ConsoleDebug.print(F("[xPTouch][MQTT] PUSHALL dev_id="));
-    ConsoleDebug.print(dev_id);
-    ConsoleDebug.print(F(" topic="));
-    ConsoleDebug.print(topic);
-    ConsoleDebug.print(F(" payload="));
-    ConsoleDebug.println(payload);
+    ConsoleVerbose.print(F("[xPTouch][V][MQTT] PUSHALL dev_id="));
+    ConsoleVerbose.print(dev_id);
+    ConsoleVerbose.print(F(" topic="));
+    ConsoleVerbose.print(topic);
+    ConsoleVerbose.print(F(" payload="));
+    ConsoleVerbose.println(payload);
     xtouch_pubSubClient.publish(topic.c_str(), payload.c_str());
 }
 
@@ -199,7 +192,7 @@ void xtouch_mqtt_processPushStatusOther(int slot, JsonDocument &incomingJson)
         strncpy(otherPrinters[slot].task_id, tid, sizeof(otherPrinters[slot].task_id) - 1);
         otherPrinters[slot].task_id[sizeof(otherPrinters[slot].task_id) - 1] = '\0';
 #ifdef XTOUCH_DEBUG
-        ConsoleDebug.print(F("[xPTouch][MQTT] other slot="));
+        ConsoleDebug.print(F("[xPTouch][D][MQTT] other slot="));
         ConsoleDebug.print(slot);
         ConsoleDebug.print(F(" task_id="));
         ConsoleDebug.println(tid);
@@ -211,7 +204,7 @@ void xtouch_mqtt_processPushStatusOther(int slot, JsonDocument &incomingJson)
         strncpy(otherPrinters[slot].image_url, url_other, sizeof(otherPrinters[slot].image_url) - 1);
         otherPrinters[slot].image_url[sizeof(otherPrinters[slot].image_url) - 1] = '\0';
 #ifdef XTOUCH_DEBUG
-        ConsoleDebug.print(F("[xPTouch][MQTT] URL other slot="));
+        ConsoleDebug.print(F("[xPTouch][D][MQTT] URL other slot="));
         ConsoleDebug.print(slot);
         ConsoleDebug.print(F(" url="));
         ConsoleDebug.println(url_other);
@@ -222,7 +215,7 @@ void xtouch_mqtt_processPushStatusOther(int slot, JsonDocument &incomingJson)
     if (print.containsKey("total_layer_num"))
         otherPrinters[slot].total_layers = print["total_layer_num"].as<int>();
     /* 行インデックスで送る: 0=メイン, 1=他1台目, 2=他2台目。UI の row と一致させる */
-    xtouch_mqtt_sendMsg(XTOUCH_ON_OTHER_PRINTER_UPDATE, (unsigned long long)(slot + 1));
+    ui_msg_send(XTOUCH_ON_OTHER_PRINTER_UPDATE, (unsigned long long)(slot + 1), 0);
 }
 #endif
 
@@ -268,7 +261,7 @@ void xtouch_mqtt_update_slice_info(const char *project_id, const char *profile_i
 void xtouch_mqtt_processPushStatus(JsonDocument &incomingJson)
 {
     xtouch_mqtt_lastPushStatus = millis();
-    //ConsoleDebug.println(F("[xPTouch][MQTT] ProcessPushStatus"));
+    //ConsoleDebug.println(F("[xPTouch][D][MQTT] ProcessPushStatus"));
 
     if (incomingJson != NULL && incomingJson.containsKey("print"))
     {
@@ -362,7 +355,7 @@ void xtouch_mqtt_processPushStatus(JsonDocument &incomingJson)
                 if (xtouch_errors_isKeyPresent(prefix_str, device_error_keys, device_error_length))
                 {
                     hms_enqueue(incomingJson["print"]["print_error"].as<unsigned long long>());
-                    xtouch_mqtt_sendMsg(XTOUCH_ON_ERROR, 0);
+                    ui_msg_send(XTOUCH_ON_ERROR, 0, 0);
                 }
             }
         }
@@ -396,7 +389,7 @@ void xtouch_mqtt_processPushStatus(JsonDocument &incomingJson)
         if (incomingJson["print"].containsKey("gcode_state"))
         {
             xtouch_device_set_print_state(incomingJson["print"]["gcode_state"].as<String>());
-            xtouch_mqtt_sendMsg(XTOUCH_ON_PRINT_STATUS); /* ポーズ等の状態変更をすぐUIへ */
+            ui_msg_send(XTOUCH_ON_PRINT_STATUS, 0, 0); /* ポーズ等の状態変更をすぐUIへ */
         }
 
         if (incomingJson["print"].containsKey("queue_number"))
@@ -433,7 +426,7 @@ void xtouch_mqtt_processPushStatus(JsonDocument &incomingJson)
         if (incomingJson["print"].containsKey("gcode_file"))
         {
             strcpy(bambuStatus.gcode_file, incomingJson["print"]["gcode_file"]);
-            xtouch_mqtt_sendMsg(XTOUCH_ON_FILENAME_UPDATE, 0);
+            ui_msg_send(XTOUCH_ON_FILENAME_UPDATE, 0, 0);
         }
 
         if (incomingJson["print"].containsKey("gcode_file_prepare_percent"))
@@ -500,13 +493,13 @@ void xtouch_mqtt_processPushStatus(JsonDocument &incomingJson)
         if (incomingJson["print"].containsKey("bed_temper"))
         {
             bambuStatus.bed_temper = incomingJson["print"]["bed_temper"].as<double>();
-            xtouch_mqtt_sendMsg(XTOUCH_ON_BED_TEMP, bambuStatus.bed_temper);
+            ui_msg_send(XTOUCH_ON_BED_TEMP, bambuStatus.bed_temper, 0);
         }
 
         if (incomingJson["print"].containsKey("bed_target_temper"))
         {
             bambuStatus.bed_target_temper = incomingJson["print"]["bed_target_temper"].as<double>();
-            xtouch_mqtt_sendMsg(XTOUCH_ON_BED_TARGET_TEMP, bambuStatus.bed_target_temper);
+            ui_msg_send(XTOUCH_ON_BED_TARGET_TEMP, bambuStatus.bed_target_temper, 0);
         }
 
         if (incomingJson["print"].containsKey("frame_temper"))
@@ -517,19 +510,19 @@ void xtouch_mqtt_processPushStatus(JsonDocument &incomingJson)
         if (incomingJson["print"].containsKey("nozzle_temper"))
         {
             bambuStatus.nozzle_temper = incomingJson["print"]["nozzle_temper"].as<double>();
-            xtouch_mqtt_sendMsg(XTOUCH_ON_NOZZLE_TEMP, bambuStatus.nozzle_temper);
+            ui_msg_send(XTOUCH_ON_NOZZLE_TEMP, bambuStatus.nozzle_temper, 0);
         }
 
         if (incomingJson["print"].containsKey("nozzle_target_temper"))
         {
             bambuStatus.nozzle_target_temper = incomingJson["print"]["nozzle_target_temper"].as<double>();
-            xtouch_mqtt_sendMsg(XTOUCH_ON_NOZZLE_TARGET_TEMP, bambuStatus.nozzle_target_temper);
+            ui_msg_send(XTOUCH_ON_NOZZLE_TARGET_TEMP, bambuStatus.nozzle_target_temper, 0);
         }
 
         if (incomingJson["print"].containsKey("chamber_temper") && !xTouchConfig.xTouchChamberSensorEnabled)
         {
             bambuStatus.chamber_temper = incomingJson["print"]["chamber_temper"].as<double>();
-            xtouch_mqtt_sendMsg(XTOUCH_ON_CHAMBER_TEMP, bambuStatus.chamber_temper);
+            ui_msg_send(XTOUCH_ON_CHAMBER_TEMP, bambuStatus.chamber_temper, 0);
         }
 
         // link_th
@@ -539,7 +532,7 @@ void xtouch_mqtt_processPushStatus(JsonDocument &incomingJson)
             String wifi_signal = incomingJson["print"]["wifi_signal"].as<String>();
             wifi_signal.replace("dBm", "");
             bambuStatus.wifi_signal = abs(wifi_signal.toInt());
-            xtouch_mqtt_sendMsg(XTOUCH_ON_WIFI_SIGNAL, bambuStatus.wifi_signal);
+            ui_msg_send(XTOUCH_ON_WIFI_SIGNAL, bambuStatus.wifi_signal, 0);
         }
 
         if (incomingJson["print"].containsKey("fan_gear"))
@@ -548,9 +541,9 @@ void xtouch_mqtt_processPushStatus(JsonDocument &incomingJson)
             bambuStatus.cooling_fan_speed = (int)((fan_gear & 0x000000FF) >> 0);
             bambuStatus.big_fan1_speed = (int)((fan_gear & 0x0000FF00) >> 8);
             bambuStatus.big_fan2_speed = (int)((fan_gear & 0x00FF0000) >> 16);
-            xtouch_mqtt_sendMsg(XTOUCH_ON_PART_FAN_SPEED, bambuStatus.cooling_fan_speed);
-            xtouch_mqtt_sendMsg(XTOUCH_ON_PART_AUX_SPEED, bambuStatus.big_fan1_speed);
-            xtouch_mqtt_sendMsg(XTOUCH_ON_PART_CHAMBER_SPEED, bambuStatus.big_fan2_speed);
+            ui_msg_send(XTOUCH_ON_PART_FAN_SPEED, bambuStatus.cooling_fan_speed, 0);
+            ui_msg_send(XTOUCH_ON_PART_AUX_SPEED, bambuStatus.big_fan1_speed, 0);
+            ui_msg_send(XTOUCH_ON_PART_CHAMBER_SPEED, bambuStatus.big_fan2_speed, 0);
         }
         else
         {
@@ -558,21 +551,21 @@ void xtouch_mqtt_processPushStatus(JsonDocument &incomingJson)
             {
                 int speed = incomingJson["print"]["cooling_fan_speed"].as<int>();
                 bambuStatus.cooling_fan_speed = round(floor(speed / float(1.5)) * float(25.5));
-                xtouch_mqtt_sendMsg(XTOUCH_ON_PART_FAN_SPEED, bambuStatus.cooling_fan_speed);
+                ui_msg_send(XTOUCH_ON_PART_FAN_SPEED, bambuStatus.cooling_fan_speed, 0);
             }
 
             if (incomingJson["print"].containsKey("big_fan1_speed"))
             {
                 int speed = incomingJson["print"]["big_fan1_speed"].as<int>();
                 bambuStatus.big_fan1_speed = round(floor(speed / float(1.5)) * float(25.5));
-                xtouch_mqtt_sendMsg(XTOUCH_ON_PART_AUX_SPEED, bambuStatus.big_fan1_speed);
+                ui_msg_send(XTOUCH_ON_PART_AUX_SPEED, bambuStatus.big_fan1_speed, 0);
             }
 
             if (incomingJson["print"].containsKey("big_fan2_speed"))
             {
                 int speed = incomingJson["print"]["big_fan2_speed"].as<int>();
                 bambuStatus.big_fan2_speed = round(floor(speed / float(1.5)) * float(25.5));
-                xtouch_mqtt_sendMsg(XTOUCH_ON_PART_CHAMBER_SPEED, bambuStatus.big_fan2_speed);
+                ui_msg_send(XTOUCH_ON_PART_CHAMBER_SPEED, bambuStatus.big_fan2_speed, 0);
             }
         }
 
@@ -658,7 +651,7 @@ void xtouch_mqtt_processPushStatus(JsonDocument &incomingJson)
             {
                 bambuStatus.has_ipcam = incomingJson["print"]["ipcam"]["ipcam_dev"].as<String>() == "1";
             }
-            xtouch_mqtt_sendMsg(XTOUCH_ON_IPCAM);
+            ui_msg_send(XTOUCH_ON_IPCAM, 0, 0);
         }
 
         // xcam
@@ -712,7 +705,7 @@ void xtouch_mqtt_processPushStatus(JsonDocument &incomingJson)
                     if (xtouch_errors_isKeyPresent(buffer, hms_error_values, hms_error_length))
                     {
                         hms_enqueue(intValue);
-                        xtouch_mqtt_sendMsg(XTOUCH_ON_ERROR, 0);
+                        ui_msg_send(XTOUCH_ON_ERROR, 0, 0);
                     }
                 }
             }
@@ -758,7 +751,7 @@ void xtouch_mqtt_processPushStatus(JsonDocument &incomingJson)
 
                 JsonArray ams_list = incomingJson["print"]["ams"]["ams"].as<JsonArray>();
                 bambuStatus.ams = ams_list.size() > 0;
-                xtouch_mqtt_sendMsg(XTOUCH_ON_AMS, ams_list.size() > 0 ? 1 : 0);
+                ui_msg_send(XTOUCH_ON_AMS, ams_list.size() > 0 ? 1 : 0, 0);
 
                 char color[16];
                 char traytype[16];
@@ -770,14 +763,14 @@ void xtouch_mqtt_processPushStatus(JsonDocument &incomingJson)
                     {
                         bambuStatus.ams_humidity[ams_idx] = 6 - ams_list[ams_idx]["humidity"].as<int>();
                         // printf("AMS humidity: %d\n", bambuStatus.ams_humidity);
-                        xtouch_mqtt_sendMsg(XTOUCH_ON_AMS_HUMIDITY_UPDATE, 0);
+                        ui_msg_send(XTOUCH_ON_AMS_HUMIDITY_UPDATE, 0, 0);
                     }
 
                     if (ams_list[ams_idx].containsKey("temp"))
                     {
                         bambuStatus.ams_temperature[ams_idx] = ams_list[ams_idx]["temp"].as<float>();
                         // printf("AMS temp: %f\n", bambuStatus.ams_temperature);
-                        xtouch_mqtt_sendMsg(XTOUCH_ON_AMS_TEMPERATURE_UPDATE, 0);
+                        ui_msg_send(XTOUCH_ON_AMS_TEMPERATURE_UPDATE, 0, 0);
                     }
 
                     JsonArray trays = ams_list[ams_idx]["tray"].as<JsonArray>();
@@ -932,9 +925,9 @@ void xtouch_mqtt_processPushStatus(JsonDocument &incomingJson)
                 }
             }
 
-            xtouch_mqtt_sendMsg(XTOUCH_ON_AMS_BITS, 0);
-            xtouch_mqtt_sendMsg(XTOUCH_ON_AMS_STATE_UPDATE, 0);
-            xtouch_mqtt_sendMsg(XTOUCH_ON_AMS_SLOT_UPDATE, 0);
+            ui_msg_send(XTOUCH_ON_AMS_BITS, 0, 0);
+            ui_msg_send(XTOUCH_ON_AMS_STATE_UPDATE, 0, 0);
+            ui_msg_send(XTOUCH_ON_AMS_SLOT_UPDATE, 0, 0);
             // printf("AMS status main %d\n", bambuStatus.ams_status_main);
             // printf("AMS status sub  %d\n", bambuStatus.ams_status_sub);
             // printf("AMS tray now  %d\n", bambuStatus.m_tray_now);
@@ -970,7 +963,7 @@ void xtouch_mqtt_processPushStatus(JsonDocument &incomingJson)
             incomingJson["print"].containsKey("spd_mag"))
         {
 
-            xtouch_mqtt_sendMsg(XTOUCH_ON_PRINT_STATUS);
+            ui_msg_send(XTOUCH_ON_PRINT_STATUS, 0, 0);
         }
     }
 }
@@ -978,7 +971,7 @@ void xtouch_mqtt_processPushStatus(JsonDocument &incomingJson)
 void xtouch_mqtt_parseMessage(char *topic, byte *payload, unsigned int length, byte type = 0)
 {
 
-    // ConsoleDebug.println(F("[xPTouch][MQTT] ParseMessage"));
+    // ConsoleDebug.println(F("[xPTouch][D][MQTT] ParseMessage"));
     DynamicJsonDocument incomingJson(XTOUCH_MQTT_SERVER_JSON_PARSE_SIZE);
 
     DynamicJsonDocument amsFilter(128);
@@ -996,7 +989,7 @@ void xtouch_mqtt_parseMessage(char *topic, byte *payload, unsigned int length, b
 
         if ((millis() - xtouch_mqtt_lastPushStatus) > (XTOUCH_MQTT_SERVER_PUSH_STATUS_TIMEOUT * 1000))
         {
-            Serial.println("[xPTouch][MQTT] Force Reconnect after no Push Status for " + String(XTOUCH_MQTT_SERVER_PUSH_STATUS_TIMEOUT) + "s");
+            ConsoleInfo.println("[xPTouch][I][MQTT] Force Reconnect after no Push Status for " + String(XTOUCH_MQTT_SERVER_PUSH_STATUS_TIMEOUT) + "s");
             xtouch_pubSubClient.disconnect();
         }
 
@@ -1056,17 +1049,17 @@ void xtouch_mqtt_parseMessage(char *topic, byte *payload, unsigned int length, b
                 /* ホーム表示中に push_status で task_id 取得した場合、サムネイル取得をスケジュール（起動直後印刷中で未取得のとき） */
                 if (xTouchConfig.currentScreenIndex == 0 && bambuStatus.task_id[0] && strcmp(bambuStatus.task_id, "0") != 0)
                     xtouch_thumbnail_schedule_fetch_all();
-                xtouch_mqtt_sendMsg(XTOUCH_ON_OTHER_PRINTER_UPDATE, 0);
+                ui_msg_send(XTOUCH_ON_OTHER_PRINTER_UPDATE, 0, 0);
 #endif
             }
             if (command == "ams_change_filament")
             {
                 bambuStatus.m_tray_tar = incomingJson["target"].as<int>();
-                xtouch_mqtt_sendMsg(XTOUCH_ON_AMS_SLOT_UPDATE, 0);
+                ui_msg_send(XTOUCH_ON_AMS_SLOT_UPDATE, 0, 0);
             }
             else if (command == "gcode_line")
             {
-                ConsoleDebug.println(F("[xPTouch][MQTT] gcode_line ack"));
+                ConsoleDebug.println(F("[xPTouch][D][MQTT] gcode_line ack"));
                 ConsoleDebug.println(String((char *)payload));
             }
 
@@ -1096,7 +1089,7 @@ void xtouch_mqtt_parseMessage(char *topic, byte *payload, unsigned int length, b
                 {
                     bambuStatus.camera_recording_when_printing = incomingJson["camera"]["control"].as<String>() == "enable";
                 }
-                xtouch_mqtt_sendMsg(XTOUCH_ON_IPCAM);
+                    ui_msg_send(XTOUCH_ON_IPCAM, 0, 0);
             }
         }
 
@@ -1105,7 +1098,7 @@ void xtouch_mqtt_parseMessage(char *topic, byte *payload, unsigned int length, b
     }
     else
     {
-        ConsoleError.println(F("[xPTouch][MQTT] ParseMessage deserializeJson failed"));
+        ConsoleError.println(F("[xPTouch][E][MQTT] ParseMessage deserializeJson failed"));
     }
 
     // if (firstParseMessage)
@@ -1117,10 +1110,10 @@ void xtouch_mqtt_parseMessage(char *topic, byte *payload, unsigned int length, b
 
 void xtouch_pubSubClient_streamCallback(char *topic, byte *payload, unsigned int length)
 {
-    ConsoleDebug.print(F("[xPTouch][MQTT] RECV topic="));
-    ConsoleDebug.print(topic);
-    ConsoleDebug.print(F(" len="));
-    ConsoleDebug.println(length);
+    ConsoleVerbose.print(F("[xPTouch][V][MQTT] RECV topic="));
+    ConsoleVerbose.print(topic);
+    ConsoleVerbose.print(F(" len="));
+    ConsoleVerbose.println(length);
     // xtouch_mqtt_parseMessage(topic, (byte *)stream.get_buffer(), stream.current_length(), 0);
 
     // if (stream.includes("\"ams\""))
@@ -1150,7 +1143,7 @@ const char *xtouch_mqtt_generateRandomKey(int keyLength)
 /** SSL(-76)/LOST_IP 後は見かけ上IPがあるが到達不能になるため、WiFi.reconnect() してから再試行する */
 static void xtouch_mqtt_wifi_reconnect_and_wait(int timeout_ms)
 {
-    ConsoleInfo.println(F("[xPTouch][MQTT] WiFi reconnect before retry..."));
+    ConsoleInfo.println(F("[xPTouch][I][MQTT] WiFi reconnect before retry..."));
     WiFi.reconnect();
     for (int i = 0; i < (timeout_ms / 100); i++)
     {
@@ -1178,7 +1171,7 @@ void xtouch_mqtt_onMqttReady()
 
 static void xtouch_mqtt_connect(const char *username, const char *password, const char *introCaption, bool clear_cloud_on_unauthorized)
 {
-    ConsoleInfo.println(F("[xPTouch][MQTT] Connecting"));
+    ConsoleInfo.println(F("[xPTouch][I][MQTT] Connecting"));
 
     if (!xtouch_mqtt_firstConnectionDone)
     {
@@ -1195,7 +1188,7 @@ static void xtouch_mqtt_connect(const char *username, const char *password, cons
         String clientId = "XTouch-CLIENT-" + String(xtouch_mqtt_generateRandomKey(16));
         if (xtouch_pubSubClient.connect(clientId.c_str(), username, password))
         {
-            ConsoleInfo.println(F("[xPTouch][MQTT] ---- CONNECTED ----"));
+            ConsoleInfo.println(F("[xPTouch][I][MQTT] ---- CONNECTED ----"));
 
             /* メイン機の report は常に購読（1台のみのときもこれで push_status を受信） */
             ESP_LOGI("mqtt", "subscribe self report topic: %s", xtouch_mqtt_report_topic.c_str());
@@ -1216,7 +1209,7 @@ static void xtouch_mqtt_connect(const char *username, const char *password, cons
         }
         else
         {
-            ConsoleError.printf("[xPTouch][MQTT] ---- CONNECTION FAIL ----: %d\n", xtouch_pubSubClient.state());
+            ConsoleError.printf("[xPTouch][E][MQTT] ---- CONNECTION FAIL ----: %d\n", xtouch_pubSubClient.state());
 
             switch (xtouch_pubSubClient.state())
             {
@@ -1392,7 +1385,7 @@ void xtouch_cloud_mqtt_loop()
     xtouch_pubSubClient.loop();
     if (!xtouch_pubSubClient.connected())
     {
-        Serial.println("[xPTouch][MQTT] -----DISCONNECTED-----");
+        ConsoleVerbose.println("[xPTouch][V][MQTT] -----DISCONNECTED-----");
         xtouch_mqtt_wifi_reconnect_and_wait(5000);
         if(xTouchConfig.xTouchLanOnlyMode){
             xtouch_local_mqtt_connect();

@@ -402,10 +402,7 @@ lv_obj_t *ui_sidebarComponent_create(lv_obj_t *comp_parent)
     ui_comp_sidebarComponent_create_hook(cui_sidebarComponent);
 
     lv_msg_subsribe_obj(XTOUCH_ON_AMS_BITS, cui_sidebarAmsViewButton, NULL);
-
-    struct XTOUCH_MESSAGE_DATA eventData;
-    eventData.data = 0;
-    lv_msg_send(XTOUCH_ON_AMS_BITS, &eventData);
+    ui_msg_send(XTOUCH_ON_AMS_BITS, 0, 0);
 
     return cui_sidebarComponent;
 }

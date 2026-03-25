@@ -1,6 +1,5 @@
 
 #include "ui.h"
-#include "ui_msgs.h"
 
 #ifdef __XTOUCH_SCREEN_50__
 static bool s_home_thumb_global_subscribed = false;
@@ -18,48 +17,42 @@ static void on_home_thumb_global(lv_msg_t *m, void *user_data)
 }
 #endif
 
-void sendMqttMsg(int message, uint32_t data)
-{
-    struct XTOUCH_MESSAGE_DATA eventData;
-    eventData.data = data;
-    lv_msg_send(message, &eventData);
-}
 
 void fillScreenData(int screen)
 {
     switch (screen)
     {
     case 0:
-        sendMqttMsg(XTOUCH_ON_BED_TEMP, bambuStatus.bed_temper);
-        sendMqttMsg(XTOUCH_ON_BED_TARGET_TEMP, bambuStatus.bed_target_temper);
-        sendMqttMsg(XTOUCH_ON_NOZZLE_TEMP, bambuStatus.nozzle_temper);
-        sendMqttMsg(XTOUCH_ON_NOZZLE_TARGET_TEMP, bambuStatus.nozzle_target_temper);
-        sendMqttMsg(XTOUCH_ON_LIGHT_REPORT, bambuStatus.chamberLed);
-        sendMqttMsg(XTOUCH_ON_AMS, bambuStatus.ams);
-        sendMqttMsg(XTOUCH_ON_PRINT_STATUS, 0);
-        sendMqttMsg(XTOUCH_ON_CHAMBER_TEMP, bambuStatus.chamber_temper);
+        ui_msg_send(XTOUCH_ON_BED_TEMP, bambuStatus.bed_temper, 0);
+        ui_msg_send(XTOUCH_ON_BED_TARGET_TEMP, bambuStatus.bed_target_temper, 0);
+        ui_msg_send(XTOUCH_ON_NOZZLE_TEMP, bambuStatus.nozzle_temper, 0);
+        ui_msg_send(XTOUCH_ON_NOZZLE_TARGET_TEMP, bambuStatus.nozzle_target_temper, 0);
+        ui_msg_send(XTOUCH_ON_LIGHT_REPORT, bambuStatus.chamberLed, 0);
+        ui_msg_send(XTOUCH_ON_AMS, bambuStatus.ams, 0);
+        ui_msg_send(XTOUCH_ON_PRINT_STATUS, 0, 0);
+        ui_msg_send(XTOUCH_ON_CHAMBER_TEMP, bambuStatus.chamber_temper, 0);
         break;
     case 1:
-        sendMqttMsg(XTOUCH_ON_BED_TEMP, bambuStatus.bed_temper);
-        sendMqttMsg(XTOUCH_ON_BED_TARGET_TEMP, bambuStatus.bed_target_temper);
-        sendMqttMsg(XTOUCH_ON_NOZZLE_TEMP, bambuStatus.nozzle_temper);
-        sendMqttMsg(XTOUCH_ON_NOZZLE_TARGET_TEMP, bambuStatus.nozzle_target_temper);
-        sendMqttMsg(XTOUCH_ON_PART_FAN_SPEED, bambuStatus.cooling_fan_speed);
-        sendMqttMsg(XTOUCH_ON_PART_AUX_SPEED, bambuStatus.big_fan1_speed);
-        sendMqttMsg(XTOUCH_ON_PART_CHAMBER_SPEED, bambuStatus.big_fan2_speed);
+        ui_msg_send(XTOUCH_ON_BED_TEMP, bambuStatus.bed_temper, 0);
+        ui_msg_send(XTOUCH_ON_BED_TARGET_TEMP, bambuStatus.bed_target_temper, 0);
+        ui_msg_send(XTOUCH_ON_NOZZLE_TEMP, bambuStatus.nozzle_temper, 0);
+        ui_msg_send(XTOUCH_ON_NOZZLE_TARGET_TEMP, bambuStatus.nozzle_target_temper, 0);
+        ui_msg_send(XTOUCH_ON_PART_FAN_SPEED, bambuStatus.cooling_fan_speed, 0);
+        ui_msg_send(XTOUCH_ON_PART_AUX_SPEED, bambuStatus.big_fan1_speed, 0);
+        ui_msg_send(XTOUCH_ON_PART_CHAMBER_SPEED, bambuStatus.big_fan2_speed, 0);
         break;
     case 2:
-        sendMqttMsg(XTOUCH_CONTROL_INC_SWITCH, controlMode.inc);
+        ui_msg_send(XTOUCH_CONTROL_INC_SWITCH, controlMode.inc, 0);
         break;
     case 3:
-        sendMqttMsg(XTOUCH_ON_NOZZLE_TEMP, bambuStatus.nozzle_temper);
+        ui_msg_send(XTOUCH_ON_NOZZLE_TEMP, bambuStatus.nozzle_temper, 0);
                 break;
     case 7:
     case 13:
-        sendMqttMsg(XTOUCH_ON_AMS, bambuStatus.ams);
-        sendMqttMsg(XTOUCH_ON_AMS_BITS, 0);
-        sendMqttMsg(XTOUCH_ON_AMS_SLOT_UPDATE, 0);
-        sendMqttMsg(XTOUCH_ON_AMS_HUMIDITY_UPDATE, 0);
+        ui_msg_send(XTOUCH_ON_AMS, bambuStatus.ams, 0);
+        ui_msg_send(XTOUCH_ON_AMS_BITS, 0, 0);
+        ui_msg_send(XTOUCH_ON_AMS_SLOT_UPDATE, 0, 0);
+        ui_msg_send(XTOUCH_ON_AMS_HUMIDITY_UPDATE, 0, 0);
         break;
     }
 }
@@ -67,17 +60,20 @@ void fillScreenData(int screen)
 void loadScreen(int screen)
 {
 #ifdef __XTOUCH_SCREEN_50__
+    const int prev_screen = xTouchConfig.currentScreenIndex;
+
     ui_printersListContainer = NULL;
     if (screen != 15)
         ui_historyListContainer = NULL;
+
     if (screen != 6 && screen != 0)
-    {
-        struct XTOUCH_MESSAGE_DATA eventData;
-        eventData.data = 0;
-        eventData.data2 = 0;
-        lv_msg_send(XTOUCH_PRINTERS_THUMB_TIMER_STOP, &eventData);
-    }
+        ui_msg_send(XTOUCH_PRINTERS_THUMB_TIMER_STOP, 0, 0);
+
+    /* History カバー DL 待ちを捨てる。History 未使用時はキュー空で実質ノーオペ。遷移先が 15 のときは FETCH 後に再キューされる */
+    if (prev_screen != screen)
+        ui_msg_send(XTOUCH_HISTORY_COVER_DL_CANCEL, 0, 0);
 #endif
+
     xTouchConfig.currentScreenIndex = screen;
     lv_obj_t *current = lv_scr_act();
 #ifdef __XTOUCH_SCREEN_50__
@@ -104,16 +100,11 @@ void loadScreen(int screen)
             lv_msg_subscribe(XTOUCH_ON_OTHER_PRINTER_UPDATE, (lv_msg_subscribe_cb_t)on_home_thumb_global, NULL);
             s_home_thumb_global_subscribed = true;
         }
-        {
-            struct XTOUCH_MESSAGE_DATA eventData;
-            eventData.data = 0;
-            eventData.data2 = 0;
-            lv_msg_send(XTOUCH_PRINTERS_THUMB_TIMER_START, &eventData);
-            lv_msg_send(XTOUCH_PRINTERS_SCHEDULE_THUMB_FETCH, &eventData);
-            /* cleanup は送らない（Printers 入室時のみ）。pushall でメインプリンタの image_url/task_id を取得 */
-            extern void xtouch_mqtt_pushall_all_printers_for_screen_c(void);
-            xtouch_mqtt_pushall_all_printers_for_screen_c();
-        }
+        ui_msg_send(XTOUCH_PRINTERS_THUMB_TIMER_START, 0, 0);
+        ui_msg_send(XTOUCH_PRINTERS_SCHEDULE_THUMB_FETCH, 0, 0);
+        /* cleanup は送らない（Printers 入室時のみ）。pushall でメインプリンタの image_url/task_id を取得 */
+        extern void xtouch_mqtt_pushall_all_printers_for_screen_c(void);
+        xtouch_mqtt_pushall_all_printers_for_screen_c();
 #endif
         break;
     case 1:
@@ -146,12 +137,7 @@ void loadScreen(int screen)
         } else {
             ui_printersScreen_screen_init();
             lv_disp_load_scr(ui_printersScreen);
-            {
-                struct XTOUCH_MESSAGE_DATA eventData;
-                eventData.data = 0;
-                eventData.data2 = 0;
-                lv_msg_send(XTOUCH_PRINTERS_THUMB_TIMER_START, &eventData);
-            }
+            ui_msg_send(XTOUCH_PRINTERS_THUMB_TIMER_START, 0, 0);
             /* 全スロット取得スケジュールは Printers コンポーネント側でイベント送信 → xtouch が購読 */
             /* 画面遷移時に一度だけ全プリンタへ pushall を投げる（ループ側のポーリングはしない） */
             extern void xtouch_mqtt_pushall_all_printers_for_screen_c(void);

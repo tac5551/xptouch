@@ -147,7 +147,7 @@ void xtouch_device_publish(String request)
 {
 #ifdef XTOUCH_DEBUG
     Serial.println(F("[GCODE] MQTT publish request"));
-    ConsoleDebug.print(F("[xPTouch][MQTT] PUB topic="));
+    ConsoleDebug.print(F("[xPTouch][D][MQTT] PUB topic="));
     ConsoleDebug.print(xtouch_mqtt_request_topic);
     ConsoleDebug.print(F(" len="));
     ConsoleDebug.print(request.length());
@@ -507,7 +507,7 @@ void xtouch_device_onLoadFilament(lv_msg_t *m)
     serializeJson(json, result);
 #ifdef XTOUCH_DEBUG
     Serial.println(F("[EXT load] MQTT ams_change_filament request"));
-    ConsoleDebug.print(F("[xPTouch][MQTT] PUB EXT len="));
+    ConsoleDebug.print(F("[xPTouch][D][MQTT] PUB EXT len="));
     ConsoleDebug.print(result.length());
     ConsoleDebug.print(F(" payload="));
     ConsoleDebug.println(result);

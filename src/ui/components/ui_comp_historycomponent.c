@@ -117,10 +117,7 @@ lv_obj_t *ui_historyComponent_create(lv_obj_t *comp_parent)
     }
 
     {
-        struct XTOUCH_MESSAGE_DATA eventData;
-        eventData.data = 0;
-        eventData.data2 = 0;
-        lv_msg_send(XTOUCH_HISTORY_FETCH, &eventData);
+        ui_msg_send(XTOUCH_HISTORY_FETCH, 0, 0);
     }
     return cui_historyComponent;
 }

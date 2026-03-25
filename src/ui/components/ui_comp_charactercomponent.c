@@ -79,9 +79,6 @@ void xtouch_events_onCharacterAnimation()
     }
 
     unsigned long current_time = millis();
-    struct XTOUCH_MESSAGE_DATA eventData;
-    eventData.data = 0;
-    eventData.data2 = 0;
 
     // 瞬きの処理
     if (is_blinking)
@@ -89,9 +86,8 @@ void xtouch_events_onCharacterAnimation()
         // 100ms経過で目を開く
         if (current_time - blink_start_time >= 100)
         {
-            eventData.data = 8;
-            lv_msg_send(XTOUCH_ON_CHARACTER_LEFT_EYE_UPDATE, &eventData);
-            lv_msg_send(XTOUCH_ON_CHARACTER_RIGHT_EYE_UPDATE, &eventData);
+            ui_msg_send(XTOUCH_ON_CHARACTER_LEFT_EYE_UPDATE, 8, 0);
+            ui_msg_send(XTOUCH_ON_CHARACTER_RIGHT_EYE_UPDATE, 8, 0);
             is_blinking = false;
             last_blink_time = current_time;
         }
@@ -102,10 +98,8 @@ void xtouch_events_onCharacterAnimation()
         if (current_time - last_blink_time >= 3000 && rand() % 100 < 2)
         {
             // 目を細くする（瞬き開始）
-            eventData.data = 2;
-            eventData.data2 = 0;
-            lv_msg_send(XTOUCH_ON_CHARACTER_LEFT_EYE_UPDATE, &eventData);
-            lv_msg_send(XTOUCH_ON_CHARACTER_RIGHT_EYE_UPDATE, &eventData);
+            ui_msg_send(XTOUCH_ON_CHARACTER_LEFT_EYE_UPDATE, 2, 0);
+            ui_msg_send(XTOUCH_ON_CHARACTER_RIGHT_EYE_UPDATE, 2, 0);
 
             is_blinking = true;
             blink_start_time = current_time;
@@ -115,14 +109,10 @@ void xtouch_events_onCharacterAnimation()
             eye_position = (rand() % 17) - 8;  // -8から8の範囲
 
             // 左目のX位置を更新
-            eventData.data = eye_position_x + eye_position;
-            eventData.data2 = 0;
-            lv_msg_send(XTOUCH_ON_CHARACTER_LEFT_EYE_POSITION_X_UPDATE, &eventData);
+            ui_msg_send(XTOUCH_ON_CHARACTER_LEFT_EYE_POSITION_X_UPDATE,  eye_position_x + eye_position, 0);
             
             // 右目のX位置を更新
-            eventData.data = eye_position_x + eye_diff + eye_position;
-            eventData.data2 = 0;
-            lv_msg_send(XTOUCH_ON_CHARACTER_RIGHT_EYE_POSITION_X_UPDATE, &eventData);
+            ui_msg_send(XTOUCH_ON_CHARACTER_RIGHT_EYE_POSITION_X_UPDATE,  eye_position_x + eye_diff + eye_position, 0);
 
         }
     }
@@ -139,15 +129,13 @@ void xtouch_events_onCharacterAnimation()
             if (mouth_is_open)
             {
                 // 口を開く（4倍の高さに拡大）
-                eventData.data = mouth_height * 4;
-                lv_msg_send(XTOUCH_ON_CHARACTER_MOUTH_UPDATE, &eventData);
+                ui_msg_send(XTOUCH_ON_CHARACTER_MOUTH_UPDATE, mouth_height * 4, 0);
                 mouth_pakupaku_count++;
             }
             else
             {
                 // 口を閉じる（元のサイズ）
-                eventData.data = mouth_height;
-                lv_msg_send(XTOUCH_ON_CHARACTER_MOUTH_UPDATE, &eventData);
+                ui_msg_send(XTOUCH_ON_CHARACTER_MOUTH_UPDATE, mouth_height, 0);
             }
             
             // 3回パクパク（6回の状態変更）したら終了
@@ -157,8 +145,7 @@ void xtouch_events_onCharacterAnimation()
                 mouth_pakupaku_count = 0;
                 last_mouth_time = current_time;
                 // 口を閉じる（元のサイズ）
-                eventData.data = mouth_height;
-            lv_msg_send(XTOUCH_ON_CHARACTER_MOUTH_UPDATE, &eventData);
+                ui_msg_send(XTOUCH_ON_CHARACTER_MOUTH_UPDATE, mouth_height, 0);
                 mouth_is_open = false;
             }
         }
@@ -185,10 +172,7 @@ void xtouch_events_onCharacterAnimation()
         int random_y = (rand() % (screen_height-character_height));
         last_position_time = current_time;
         
-        // 1つのメッセージで data と data2 を同時に送信
-        eventData.data = random_x;   // data に X座標
-        eventData.data2 = random_y;  // data2 に Y座標
-        lv_msg_send(XTOUCH_ON_CHARACTER_FACEPOTITION_UPDATE, &eventData);
+        ui_msg_send(XTOUCH_ON_CHARACTER_FACEPOTITION_UPDATE, random_x, random_y);
     }
 }
 

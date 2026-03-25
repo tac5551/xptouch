@@ -59,7 +59,7 @@ void xtouch_intro_show(void)
 void setup()
 {
   Serial.begin(115200);
-#if defined(XTOUCH_DEBUG) || XTOUCH_USE_SERIAL == true || XTOUCH_DEBUG_ERROR == true || XTOUCH_DEBUG_DEBUG == true || XTOUCH_DEBUG_INFO == true
+#if defined(XTOUCH_DEBUG) || XTOUCH_USE_SERIAL == true || XTOUCH_DEBUG_ERROR == true || XTOUCH_DEBUG_DEBUG == true || XTOUCH_DEBUG_INFO == true|| XTOUCH_DEBUG_VERBOSE == true
   Serial.begin(115200);
   ConsoleDebug.println("Serial started");
 #endif
@@ -189,7 +189,7 @@ void setup()
 // #endif
 }
 
-#ifdef XTOUCH_DEBUG
+#ifdef XTOUCH_DEBUG_VERBOSE
 static uint32_t s_last_heap_log_ms = 0;
 #define HEAP_LOG_INTERVAL_MS 5000
 #endif
@@ -214,11 +214,11 @@ void loop()
 //   xtouch_m5stack_buttons_loop();
 // #endif
 
-#ifdef XTOUCH_DEBUG
+#ifdef XTOUCH_DEBUG_VERBOSE
   if (millis() - s_last_heap_log_ms >= HEAP_LOG_INTERVAL_MS)
   {
     s_last_heap_log_ms = millis();
-    Serial.printf("[Heap] free=%u max_alloc=%u\n", (unsigned)ESP.getFreeHeap(), (unsigned)ESP.getMaxAllocHeap());
+    ConsoleVerbose.printf("[xPTouch][V][Heap] free=%u max_alloc=%u\n", (unsigned)ESP.getFreeHeap(), (unsigned)ESP.getMaxAllocHeap());
   }
 #endif
 

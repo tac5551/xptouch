@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "ui_helpers.h"
 
+
 void _ui_bar_set_property(lv_obj_t *target, int id, int val)
 {
    if (id == _UI_BAR_PROPERTY_VALUE_WITH_ANIM)

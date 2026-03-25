@@ -169,15 +169,8 @@ static void xtouch_history_detail_task(void *pv)
     if (req.history_index >= 0 && req.history_index < xtouch_history_count && xtouch_history_tasks[req.history_index].valid)
     {
       const char *tid = xtouch_history_tasks[req.history_index].task_id;
-#ifdef XTOUCH_DEBUG
-      ConsoleDebug.print(F("[xPTouch][HISTORY] detail: before getMyTaskAmsDetailMapping tid="));
-      ConsoleDebug.println(tid ? tid : "(null)");
-#endif
       int cnt = cloud.getMyTaskAmsDetailMapping(tid, xtouch_history_selected_ams_map, XTOUCH_HISTORY_AMS_MAP_MAX);
-#ifdef XTOUCH_DEBUG
-      ConsoleDebug.print(F("[xPTouch][HISTORY] detail: after getMyTaskAmsDetailMapping cnt="));
-      ConsoleDebug.println(cnt);
-#endif
+
       if (cnt >= 0)
       {
         if (cnt > XTOUCH_HISTORY_AMS_MAP_MAX)
@@ -270,15 +263,20 @@ static void xtouch_history_detail_task(void *pv)
       res.ok = 0;
       res.map_count = 0;
     }
-#ifdef XTOUCH_DEBUG
-    ConsoleDebug.println(F("[xPTouch][HISTORY] detail: before xQueueSend(done)"));
-#endif
     if (s_history_detail_done_queue)
       xQueueSend(s_history_detail_done_queue, &res, 0);
-#ifdef XTOUCH_DEBUG
-    ConsoleDebug.println(F("[xPTouch][HISTORY] detail: after xQueueSend(done)"));
-#endif
   }
+}
+
+/* History 系画面外ではカバーを SD からデコードしない（遷移直後の done 残り・並行ヒープ消費を防ぐ） */
+static void xtouch_history_on_cover_dl_cancel(lv_msg_t *m, void *user_data)
+{
+  (void)m;
+  (void)user_data;
+  if (s_history_download_queue)
+    xQueueReset(s_history_download_queue);
+  if (s_history_done_queue)
+    xQueueReset(s_history_done_queue);
 }
 
 /* メインスレッドで呼ばれる: done キューに溜まった行を 1 件ずつロードして LIST_REFRESH（1 行ずつ描画） */
@@ -292,13 +290,19 @@ static void xtouch_history_cover_done_timer_cb(lv_timer_t *t)
     return;
   if (row >= xtouch_history_count)
     return;
+  {
+    const int scr = xTouchConfig.currentScreenIndex;
+    if (scr != 15 && scr != 16)
+      return;
+    if (scr == 16 && row != xtouch_history_selected_index)
+      return;
+  }
   char path[64];
   if (xtouch_history_cover_path_for_task_id(xtouch_history_tasks[row].task_id, path, sizeof(path)) != 0)
     return;
   if (xtouch_history_cover_load_path(row, path))
   {
-    struct XTOUCH_MESSAGE_DATA eventData = { 0, 0 };
-    lv_msg_send(XTOUCH_HISTORY_LIST_REFRESH, &eventData);
+    lv_msg_send(XTOUCH_HISTORY_LIST_REFRESH, NULL);
   }
 }
 
@@ -319,9 +323,8 @@ static void xtouch_history_fetch_done_timer_cb(lv_timer_t *t)
     }
     return;
   }
-  struct XTOUCH_MESSAGE_DATA eventData = { 0, 0 };
   xtouch_history_cover_clear();
-  lv_msg_send(XTOUCH_HISTORY_LIST_REFRESH, &eventData);
+  lv_msg_send(XTOUCH_HISTORY_LIST_REFRESH, NULL);
 
   if (s_history_download_queue)
     xQueueReset(s_history_download_queue);
@@ -344,8 +347,7 @@ static void xtouch_history_detail_done_timer_cb(lv_timer_t *t)
   xtouch_history_detail_res_t res;
   if (xQueueReceive(s_history_detail_done_queue, &res, 0) != pdTRUE)
     return;
-  struct XTOUCH_MESSAGE_DATA eventData = { 0, 0 };
-  lv_msg_send(XTOUCH_HISTORY_REPRINT_DETAIL_READY, &eventData);
+  lv_msg_send(XTOUCH_HISTORY_REPRINT_DETAIL_READY, NULL);
 }
 
 /* XTOUCH_HISTORY_FETCH 受信時は即 getMyTasks せず、遅延タイマーで非同期実行（Printers 直後の SSL メモリ競合を避ける）。user_data はリトライ回数（初回は 0）。 */
@@ -466,7 +468,7 @@ static void xtouch_history_on_thumbnails_hide_changed(lv_msg_t *m, void *user_da
   }
   struct XTOUCH_MESSAGE_DATA eventData = { 0, 0 };
   lv_msg_send(XTOUCH_HISTORY_LIST_REFRESH, &eventData);
-  lv_msg_send(XTOUCH_HISTORY_REPRINT_DETAIL_READY, &eventData);
+  lv_msg_send(XTOUCH_HISTORY_REPRINT_DETAIL_READY, NULL);
 }
 
 static void xtouch_history_subscribe_events_impl(void)
@@ -498,6 +500,7 @@ static void xtouch_history_subscribe_events_impl(void)
   lv_msg_subscribe(XTOUCH_HISTORY_REPRINT_WITH_OPTIONS, (lv_msg_subscribe_cb_t)xtouch_history_on_reprint_with_options, NULL);
   lv_msg_subscribe(XTOUCH_HISTORY_REPRINT_DETAIL_FETCH, (lv_msg_subscribe_cb_t)xtouch_history_on_reprint_detail_fetch, NULL);
   lv_msg_subscribe(XTOUCH_HISTORY_REPRINT_SLOT_PICKED, (lv_msg_subscribe_cb_t)xtouch_history_on_reprint_slot_picked, NULL);
+  lv_msg_subscribe(XTOUCH_HISTORY_COVER_DL_CANCEL, (lv_msg_subscribe_cb_t)xtouch_history_on_cover_dl_cancel, NULL);
   lv_msg_subscribe(XTOUCH_THUMBNAILS_HIDE_MODE_CHANGED, (lv_msg_subscribe_cb_t)xtouch_history_on_thumbnails_hide_changed, NULL);
 }
 

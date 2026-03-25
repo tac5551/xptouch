@@ -266,10 +266,7 @@ void ui_printersScreen_screen_init(void)
     lv_msg_subsribe_obj(XTOUCH_PRINTERS_LIST_REFRESH, ui_printersListContainer, NULL);
     lv_obj_add_event_cb(ui_printersListContainer, ui_event_printers_on_other_update, LV_EVENT_MSG_RECEIVED, NULL);
     {
-        struct XTOUCH_MESSAGE_DATA eventData;
-        eventData.data = 0;
-        eventData.data2 = 0;
-        lv_msg_send(XTOUCH_PRINTERS_LIST_REFRESH, &eventData);
+        ui_msg_send(XTOUCH_PRINTERS_LIST_REFRESH, 0, 0);
     }
 }
 

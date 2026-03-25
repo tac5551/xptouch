@@ -135,6 +135,8 @@ extern "C"
         XTOUCH_HISTORY_REPRINT_DETAIL_READY,
         /** History リプリント設定: mapping行に対する AMS スロット選択。data=map_index, data2=(ams_id&0xFF)|((tray_id&0xFF)<<8) */
         XTOUCH_HISTORY_REPRINT_SLOT_PICKED,
+        /** History カバー画像 DL 待ちキューを捨てる（画面遷移時。購読は xtouch。再入場は fetch 完了後に再キュー） */
+        XTOUCH_HISTORY_COVER_DL_CANCEL,
         /** サムネイル全画面非表示オプション変更（settings 保存後に送る。xtouch が購読） */
         XTOUCH_THUMBNAILS_HIDE_MODE_CHANGED,
     };
@@ -144,6 +146,8 @@ extern "C"
         unsigned long long data;
         unsigned long long data2;
     };
+
+    void ui_msg_send(enum XTOUCH_MESSAGE msg, unsigned long long data1, unsigned long long data2);
 
     /** Save 時に送る ams_filament_setting 用。tray_info_idx は setting_id（フル）。filament_id は Cloud の filament_id（例: GFB00）。 */
     struct XTOUCH_AMS_FILAMENT_SETTING_PAYLOAD

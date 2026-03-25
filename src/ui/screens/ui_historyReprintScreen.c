@@ -36,10 +36,8 @@ static void ui_history_reprint_detail_fetch_timer_cb(lv_timer_t *t)
     (void)t;
     s_reprint_detail_fetch_timer = NULL;
     /* 画面遷移直後のメモリ圧迫を避けるため少し遅延して取得開始 */
-    struct XTOUCH_MESSAGE_DATA eventData;
-    eventData.data = (unsigned long long)xtouch_history_selected_index;
-    eventData.data2 = 0;
-    lv_msg_send(XTOUCH_HISTORY_REPRINT_DETAIL_FETCH, &eventData);
+    ui_msg_send(XTOUCH_HISTORY_REPRINT_DETAIL_FETCH,
+                 (unsigned long long)xtouch_history_selected_index, 0);
     lv_timer_del(t);
 }
 

@@ -9,7 +9,7 @@ void onWiFiEvent(arduino_event_id_t event, arduino_event_info_t info)
 {
     if (event == ARDUINO_EVENT_WIFI_STA_LOST_IP)
     {
-        ConsoleInfo.println(F("[xPTouch][WiFi] STA LOST IP, reconnecting..."));
+        ConsoleInfo.println("[xPTouch][I][NET] STA LOST IP, reconnecting...");
         WiFi.reconnect();
     }
 }
@@ -61,7 +61,7 @@ int downloadFileToSDCard(const char *url, const char *fileName, void (*onProgres
         // SD カード未挿入時は書き込みを試みずに終了（Printers 画面アイドル時の書き込みエラー対策）
         if (SD.cardType() == CARD_NONE)
         {
-            ConsoleError.println(F("[xPTouch][THUMB] SD card not present; skip downloadFileToSDCard"));
+            ConsoleError.println("[xPTouch][E][NET] SD card not present, skip downloadFileToSDCard");
             http.end();
             return 0;
         }
@@ -253,36 +253,16 @@ inline bool downloadThumbnailForSlot(int slot)
             snprintf(xtouch_thumbnail_slot_path[slot], XTOUCH_THUMB_PATH_LEN, "S:%s", path);
         return true;
     }
-#ifdef XTOUCH_DEBUG
-    ConsoleDebug.print(F("[xPTouch][THUMB] slot="));
-    ConsoleDebug.print(slot);
-    ConsoleDebug.print(F(" download start url="));
-    ConsoleDebug.print(url_buf);
-    ConsoleDebug.print(F(" -> path="));
-    ConsoleDebug.println(path);
-    ConsoleDebug.println(F("[xPTouch][THUMB] url full:"));
-    for (size_t i = 0; url_buf[i] != '\0'; ++i)
-    {
-        ConsoleDebug.print(url_buf[i]);
-        if ((i + 1) % 80 == 0)
-            ConsoleDebug.println();
-    }
-    ConsoleDebug.println();
-#endif
 
     int ok = downloadFileToSDCard(url_buf, path);
-#ifdef XTOUCH_DEBUG
+#ifdef XTOUCH_DEBUG_VERBOSE
     if (ok)
     {
-        ConsoleDebug.print(F("[xPTouch][THUMB] slot="));
-        ConsoleDebug.print(slot);
-        ConsoleDebug.println(F(" download success"));
+        ConsoleDebug.printf("[xPTouch][V][NET] slot=%d download success\n", slot);
     }
     else
     {
-        ConsoleDebug.print(F("[xPTouch][THUMB] slot="));
-        ConsoleDebug.print(slot);
-        ConsoleDebug.println(F(" download FAILED"));
+        ConsoleError.printf("[xPTouch][E][NET] slot=%d download FAILED\n", slot);
     }
 #endif
     if (!ok)

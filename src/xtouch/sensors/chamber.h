@@ -3,6 +3,7 @@
 
 #include <OneWire.h>
 #include <DallasTemperature.h>
+#include "ui/ui_msgs.h"
 
 #if defined(__XTOUCH_SCREEN_50__)
 #define XTOUCH_CHAMBER_TEMP_PIN 18
@@ -30,7 +31,7 @@ void xtouch_chamber_requestTemperatures(lv_timer_t *timer)
 {
     int temperatureC = xtouch_chamber_sensors.getTempCByIndex(0) + xTouchConfig.xTouchChamberSensorReadingDiff;
     bambuStatus.chamber_temper = temperatureC;
-    xtouch_mqtt_sendMsg(XTOUCH_ON_CHAMBER_TEMP, temperatureC);
+    ui_msg_send(XTOUCH_ON_CHAMBER_TEMP, (unsigned long long)(int64_t)temperatureC, 0);
     xtouch_chamber_sensors.requestTemperatures();
     xtouch_chamber_timer_create();
 }

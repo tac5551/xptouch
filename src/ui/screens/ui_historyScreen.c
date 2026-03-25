@@ -158,10 +158,7 @@ void ui_historyScreen_screen_init(void)
     lv_msg_subsribe_obj(XTOUCH_HISTORY_LIST_REFRESH, ui_historyListContainer, NULL);
     lv_obj_add_event_cb(ui_historyListContainer, ui_event_history_on_list_refresh, LV_EVENT_MSG_RECEIVED, NULL);
     {
-        struct XTOUCH_MESSAGE_DATA eventData;
-        eventData.data = 0;
-        eventData.data2 = 0;
-        lv_msg_send(XTOUCH_HISTORY_LIST_REFRESH, &eventData);
+        ui_msg_send(XTOUCH_HISTORY_LIST_REFRESH, 0, 0);
     }
 }
 

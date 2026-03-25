@@ -40,7 +40,7 @@ void xtouch_screen_sleep()
 
 void xtouch_screen_wakeUp()
 {
-    ConsoleInfo.println("[xPTouch][SCREEN] Screen Reset");
+    ConsoleInfo.println("[xPTouch][I][SCREEN] Wake Up");
     if (xtouch_screen_onScreenOffTimer != NULL) { // NULLチェックを追加
         lv_timer_reset(xtouch_screen_onScreenOffTimer);
     }
@@ -61,7 +61,7 @@ void xtouch_screen_onScreenTimeout(lv_timer_t *timer)
         return;
     }
 
-    ConsoleInfo.println("[xPTouch][SCREEN] Screen Off");
+    ConsoleInfo.println("[xPTouch][I][SCREEN] Screen Off");
     xtouch_screen_sleep();
 
 }
@@ -82,7 +82,7 @@ void xtouch_screen_onLEDOff(lv_timer_t *timer)
     // if led On
     if (bambuStatus.chamberLed == true)
     {
-        ConsoleInfo.println("[xPTouch][LED] LED Off");
+        ConsoleInfo.println("[xPTouch][I][LED] LED Off");
         lv_msg_send(XTOUCH_COMMAND_LIGHT_TOGGLE, NULL);
     }
 }
@@ -95,14 +95,14 @@ void xtouch_screen_setupScreenTimer()
 
 void xtouch_screen_startScreenTimer()
 {
-    ConsoleInfo.println("[xPTouch][SCREEN] Screen Resume");
+    ConsoleInfo.println("[xPTouch][I][SCREEN] Screen Resume");
     lv_timer_resume(xtouch_screen_onScreenOffTimer);
     lv_timer_reset(xtouch_screen_onScreenOffTimer);
 }
 
 void xtouch_screen_setScreenTimer(uint32_t period)
 {
-    ConsoleInfo.println("[xPTouch][SCREEN] Screen SetPeriod");
+    ConsoleInfo.println("[xPTouch][I][SCREEN] Screen SetPeriod");
     lv_timer_set_period(xtouch_screen_onScreenOffTimer, period);
     lv_timer_reset(xtouch_screen_onScreenOffTimer);
 }
@@ -115,20 +115,20 @@ void xtouch_screen_setupLEDOffTimer()
 
 void xtouch_screen_startLEDOffTimer()
 {
-    ConsoleInfo.println("[xPTouch][SCREEN] LED off Resume");
+    ConsoleInfo.println("[xPTouch][I][SCREEN] LED off Resume");
     lv_timer_resume(xtouch_screen_onLEDOffTimer);
     lv_timer_reset(xtouch_screen_onLEDOffTimer);
 }
 
 void xtouch_screen_stopLEDOffTimer()
 {
-    ConsoleInfo.println("[xPTouch][SCREEN] LED off Stop");
+    ConsoleInfo.println("[xPTouch][I][SCREEN] LED off Stop");
     lv_timer_pause(xtouch_screen_onLEDOffTimer);
     lv_timer_reset(xtouch_screen_onLEDOffTimer);
 }
 void xtouch_screen_setLEDOffTimer(uint32_t period)
 {
-    ConsoleInfo.println("[xPTouch][LED] LED off SetPeriod");
+    ConsoleInfo.println("[xPTouch][I][LED] LED off SetPeriod");
     lv_timer_set_period(xtouch_screen_onLEDOffTimer, period);
     lv_timer_reset(xtouch_screen_onLEDOffTimer);
 }
@@ -141,7 +141,7 @@ void xtouch_screen_invertColors()
 byte xtouch_screen_getTFTFlip()
 {
     byte val = xtouch_eeprom_read(XTOUCH_EEPROM_POS_TFTFLIP);
-    ConsoleInfo.println("[xPTouch][SCREEN FLIP] " + String(val));
+    ConsoleInfo.println("[xPTouch][I][SCREEN FLIP] " + String(val));
     xTouchConfig.xTouchTFTFlip = val;
     return val;
 }
@@ -149,7 +149,7 @@ byte xtouch_screen_getTFTFlip()
 void xtouch_screen_setTFTFlip(byte mode)
 {
     xTouchConfig.xTouchTFTFlip = mode;
-    ConsoleInfo.println("[xPTouch][SCREEN FLIP] Set : " + String(mode));
+    ConsoleInfo.println("[xPTouch][I][SCREEN FLIP] Set : " + String(mode));
     xtouch_eeprom_write(XTOUCH_EEPROM_POS_TFTFLIP, mode);
 }
 
@@ -213,7 +213,7 @@ void xtouch_screen_touchRead(lv_indev_drv_t *indev_driver, lv_indev_data_t *data
 void xtouch_screen_setup()
 {
 
-    ConsoleInfo.println("[xPTouch][SCREEN] Setup");
+    ConsoleInfo.println("[xPTouch][I][SCREEN] Setup");
 
     tft.begin();
 
@@ -227,7 +227,7 @@ void xtouch_screen_setup()
     // 実際の物理画面の解像度を取得
     screenWidth = tft.height();
     screenHeight = tft.width();
-    ConsoleInfo.println("[xPTouch][SCREEN] Physical display size: " + String(screenWidth) + "x" + String(screenHeight));
+    ConsoleInfo.println("[xPTouch][I][SCREEN] Physical display size: " + String(screenWidth) + "x" + String(screenHeight));
 
     lv_init();
 
