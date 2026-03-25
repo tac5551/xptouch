@@ -287,7 +287,8 @@ void onOptionalMultiPrinterMonitor(lv_event_t *e)
 #ifdef __XTOUCH_SCREEN_50__
 void onOptionalHistory(lv_event_t *e)
 {
-    xTouchConfig.xTouchHistoryEnabled = !xTouchConfig.xTouchHistoryEnabled;
+    lv_obj_t *sw = lv_event_get_target(e);
+    xTouchConfig.xTouchHistoryEnabled = lv_obj_has_state(sw, LV_STATE_CHECKED);
     lv_msg_send(XTOUCH_SETTINGS_SAVE, NULL);
 }
 

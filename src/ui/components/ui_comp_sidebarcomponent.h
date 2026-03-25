@@ -41,6 +41,8 @@ enum SidebarComponent {
 #ifdef __XTOUCH_SCREEN_50__
     /** 設定保存後などに、Printers ボタンの表示を xTouchConfig に合わせて更新する */
     void ui_sidebarComponent_updatePrintersVisibility(void);
+    /** History 無効時はサイドバーから History を隠す（LAN-only 時も非表示） */
+    void ui_sidebarComponent_updateHistoryVisibility(void);
 #endif
 #ifdef __cplusplus
 } /*extern "C"*/

@@ -77,6 +77,19 @@ void ui_sidebarComponent_updatePrintersVisibility(void)
     else
         lv_obj_clear_flag(btn, LV_OBJ_FLAG_HIDDEN);
 }
+
+void ui_sidebarComponent_updateHistoryVisibility(void)
+{
+    if (ui_sidebarComponent == NULL)
+        return;
+    lv_obj_t *btn = ui_comp_get_child(ui_sidebarComponent, UI_COMP_SIDEBARCOMPONENT_SIDEBARHISTORYBUTTON);
+    if (btn == NULL)
+        return;
+    if (xTouchConfig.xTouchLanOnlyMode || !xTouchConfig.xTouchHistoryEnabled)
+        lv_obj_add_flag(btn, LV_OBJ_FLAG_HIDDEN);
+    else
+        lv_obj_clear_flag(btn, LV_OBJ_FLAG_HIDDEN);
+}
 #endif
 
 void ui_sidebarComponent_set_active(int index)
@@ -248,7 +261,7 @@ lv_obj_t *ui_sidebarComponent_create(lv_obj_t *comp_parent)
     lv_obj_clear_flag(cui_sidebarHistoryButtonIcon, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN);
     lv_obj_set_scrollbar_mode(cui_sidebarHistoryButtonIcon, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_style_text_font(cui_sidebarHistoryButtonIcon, lv_icon_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
-    if (xTouchConfig.xTouchLanOnlyMode)
+    if (xTouchConfig.xTouchLanOnlyMode || !xTouchConfig.xTouchHistoryEnabled)
         lv_obj_add_flag(cui_sidebarHistoryButton, LV_OBJ_FLAG_HIDDEN);
 #endif
 

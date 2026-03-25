@@ -267,6 +267,7 @@ static void on_settings_save_sidebar(const void *payload, void *user_data)
     (void)payload;
     (void)user_data;
     ui_sidebarComponent_updatePrintersVisibility();
+    ui_sidebarComponent_updateHistoryVisibility();
 }
 
 static void on_reprint_done_goto_home(lv_msg_t *m, void *user_data)
