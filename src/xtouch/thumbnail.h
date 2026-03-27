@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "ui/ui_msgs.h"
+#include "xtouch/types.h"
 #ifdef __XTOUCH_SCREEN_50__
 #include "xtouch/net.h"
 #include <SD.h>
@@ -61,6 +62,30 @@ static bool s_thumb_exists[XTOUCH_THUMB_SLOT_MAX];
 static bool s_thumb_cache_refresh_done[XTOUCH_THUMB_SLOT_MAX];
 /** 起動直後にロゴを先に全スロットへ投入したか */
 static bool s_thumb_boot_logo_seeded = false;
+
+/** task / メイン接続先の変化時: LGFX デコード済み dsc と path・取得フラグを捨てる（古い Home サムネが残るのを防ぐ） */
+inline void xtouch_thumbnail_invalidate_slot(int slot)
+{
+    if (slot < 0 || slot >= XTOUCH_THUMB_SLOT_MAX)
+        return;
+    s_thumb_exists[slot] = false;
+    s_thumb_cache_refresh_done[slot] = false;
+    xtouch_thumbnail_slot_dsc[slot] = nullptr;
+    xtouch_thumbnail_slot_path[slot][0] = '\0';
+}
+
+/** メイン付け替えで otherPrinters の行対応が変わるとき: slot0〜 をまとめて捨てる（Printers だけ並びが変わりサムネがズレるのを防ぐ） */
+inline void xtouch_thumbnail_invalidate_all_slots(void)
+{
+    for (int s = 0; s < XTOUCH_THUMB_SLOT_MAX; s++)
+        xtouch_thumbnail_invalidate_slot(s);
+}
+
+inline void xtouch_thumbnail_update_path_all_slots(void)
+{
+    for (int s = 0; s < XTOUCH_THUMB_SLOT_MAX; s++)
+        xtouch_thumbnail_update_path_for_slot(s);
+}
 
 #ifdef __XTOUCH_SCREEN_50__
 #define XTOUCH_THUMB_DL_QUEUE_LEN 5
@@ -422,6 +447,40 @@ static void xtouch_thumbnail_on_schedule_fetch(lv_msg_t *m, void *user_data)
     (void)user_data;
     xtouch_thumbnail_schedule_fetch_all();
 }
+
+/** Printers 入室時: 並び替え後も slot の LGFX が前世代のまま残るのを防ぐ */
+static void xtouch_thumbnail_on_printers_rebind(void *s, lv_msg_t *m)
+{
+    (void)s;
+    (void)m;
+    ConsoleVerbose.printf("[xPTouch][V][THUMB] printers_rebind\n");
+    xtouch_thumbnail_invalidate_all_slots();
+    xtouch_thumbnail_update_path_all_slots();
+    xtouch_thumbnail_schedule_fetch_all();
+#ifdef __XTOUCH_SCREEN_50__
+    if (SD.cardType() != CARD_NONE)
+    {
+        /* タイマー待ちなく SD にある現在 task の PNG を即デコード（cache_refresh_done 依存を回避） */
+        for (int slot = 0; slot < XTOUCH_THUMB_SLOT_MAX; slot++)
+        {
+            if (!thumbnail_slot_has_url_or_task(slot, cloud.loggedIn ? 1 : 0))
+                continue;
+            char path[64];
+            getThumbPathForSlot(slot, path, sizeof(path));
+            if (!path[0] || !SD.exists(path))
+                continue;
+            xtouch_thumbnail_update_path_for_slot(slot);
+            if (xtouch_load_thumb_slot_with_lgfx(slot, XTOUCH_THUMB_LGFX_W, XTOUCH_THUMB_LGFX_H))
+            {
+                s_thumb_cache_refresh_done[slot] = true;
+                s_thumb_exists[slot] = true;
+            }
+        }
+    }
+#endif
+    for (int slot = 0; slot < XTOUCH_THUMB_SLOT_MAX; slot++)
+        lv_msg_send(XTOUCH_ON_OTHER_PRINTER_UPDATE, (void *)(intptr_t)(slot + 1));
+}
 static void xtouch_thumbnail_on_timer_start(lv_msg_t *m, void *user_data)
 {
     (void)m;
@@ -476,6 +535,7 @@ static void xtouch_thumbnail_subscribe_events(void)
     }
 #endif
     lv_msg_subscribe(XTOUCH_PRINTERS_SCHEDULE_THUMB_FETCH, (lv_msg_subscribe_cb_t)xtouch_thumbnail_on_schedule_fetch, NULL);
+    lv_msg_subscribe(XTOUCH_PRINTERS_THUMB_REBIND, (lv_msg_subscribe_cb_t)xtouch_thumbnail_on_printers_rebind, NULL);
     lv_msg_subscribe(XTOUCH_PRINTERS_THUMB_TIMER_START, (lv_msg_subscribe_cb_t)xtouch_thumbnail_on_timer_start, NULL);
     lv_msg_subscribe(XTOUCH_PRINTERS_THUMB_TIMER_STOP, (lv_msg_subscribe_cb_t)xtouch_thumbnail_on_timer_stop, NULL);
     lv_msg_subscribe(XTOUCH_THUMBNAILS_HIDE_MODE_CHANGED, (lv_msg_subscribe_cb_t)xtouch_thumbnail_on_hide_mode_changed, NULL);

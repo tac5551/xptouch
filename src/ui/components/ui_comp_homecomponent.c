@@ -39,8 +39,8 @@ static void ui_event_home_thumb_update(lv_event_t *e)
     if (!m || lv_msg_get_id(m) != XTOUCH_ON_OTHER_PRINTER_UPDATE)
         return;
     const void *p = lv_msg_get_payload(m);
-    if ((intptr_t)p != 1)
-        return; /* スロット0 のみ (送信側は +1 で 1) */
+    if (!ui_msg_payload_is_main_thumb_refresh(p))
+        return;
     ui_thumb_set_img_src_from_slot(lv_event_get_target(e), 0);
 }
 #endif

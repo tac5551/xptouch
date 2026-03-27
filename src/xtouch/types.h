@@ -183,6 +183,8 @@ extern "C"
         char xTouchHost[16];
         char xTouchAccessCode[9];
         char xTouchSerialNumber[16];
+        /** pair.json の paired と一致。一時的な操作プリンタ切替えでは変えない（再起動で loadPair が xTouchSerialNumber を戻す）。 */
+        char xTouchPairedSerialNumber[16];
         char xTouchPrinterModel[32];
         char xTouchPrinterName[32];
         int xTouchBacklightLevel;

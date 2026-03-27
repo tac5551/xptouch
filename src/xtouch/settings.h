@@ -92,10 +92,18 @@ void xtouch_settings_loadSettings()
     if (cloud.isPaired())
     {
         cloud.loadPair();
-        JsonObject currentPrinterSettings = cloud.loadPrinters()[xTouchConfig.xTouchSerialNumber]["settings"];
-        xTouchConfig.xTouchChamberSensorEnabled = currentPrinterSettings.containsKey("chamberTemp") ? currentPrinterSettings["chamberTemp"].as<bool>() : false;
-        xTouchConfig.xTouchAuxFanEnabled = currentPrinterSettings.containsKey("auxFan") ? currentPrinterSettings["auxFan"].as<bool>() : false;
-        xTouchConfig.xTouchChamberFanEnabled = currentPrinterSettings.containsKey("chamberFan") ? currentPrinterSettings["chamberFan"].as<bool>() : false;
+        DynamicJsonDocument lp = cloud.loadPrinters();
+        JsonObject root = lp.as<JsonObject>();
+        JsonObject currentPrinterSettings;
+        if (root.containsKey(xTouchConfig.xTouchSerialNumber))
+        {
+            JsonObject dev = root[xTouchConfig.xTouchSerialNumber].as<JsonObject>();
+            if (!dev.isNull() && dev.containsKey("settings"))
+                currentPrinterSettings = dev["settings"].as<JsonObject>();
+        }
+        xTouchConfig.xTouchChamberSensorEnabled = (!currentPrinterSettings.isNull() && currentPrinterSettings.containsKey("chamberTemp")) ? currentPrinterSettings["chamberTemp"].as<bool>() : false;
+        xTouchConfig.xTouchAuxFanEnabled = (!currentPrinterSettings.isNull() && currentPrinterSettings.containsKey("auxFan")) ? currentPrinterSettings["auxFan"].as<bool>() : false;
+        xTouchConfig.xTouchChamberFanEnabled = (!currentPrinterSettings.isNull() && currentPrinterSettings.containsKey("chamberFan")) ? currentPrinterSettings["chamberFan"].as<bool>() : false;
     }
     else
     {

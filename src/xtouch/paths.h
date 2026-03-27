@@ -21,6 +21,8 @@ const char *xtouch_paths_lcd_json = "/lcd.json";
 //for cloud
 const char *xtouch_paths_provisioning = "/provisioning.json";
 const char *xtouch_paths_printers     = XTOUCH_PATH_ROOT "/printer.json";
+/** printer.json の DynamicJsonDocument 容量。デフォルト 1024 では複数台・長いフィールドでパース失敗する */
+#define XTOUCH_PRINTERS_JSON_DOC_CAP 12288
 const char *xtouch_paths_pair         = XTOUCH_PATH_ROOT "/printer-pair.json";
 
 //for OTA Update

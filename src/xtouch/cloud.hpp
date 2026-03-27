@@ -12,6 +12,7 @@
 // #include "date.h"
 #include "bbl-certs.h"
 #include "filesystem.h"
+#include "paths.h"
 #include "globals.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
@@ -1870,8 +1871,6 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
 
   void selectPrinter()
   {
-
-    DynamicJsonDocument printers = xtouch_filesystem_readJson(SD, xtouch_paths_printers, false);
     DynamicJsonDocument *deviceListDocument = nullptr;
     JsonArray devices;
     if (getDeviceList(deviceListDocument))
@@ -1890,16 +1889,15 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
       return;
     }
 
-    // H2C/H2D/H2S は一覧・printer.json に出さない
+    // H2C/H2D/H2S は Cloud 取得反映時・printer.json に保存しない（一覧・SD 上のデバイス一覧から除外）
     auto isExcludedProduct = [](JsonVariant v) -> bool {
       if (!v.containsKey("dev_product_name")) return false;
       const char *product = v["dev_product_name"].as<const char *>();
       return product && (strcmp(product, "H2C") == 0 || strcmp(product, "H2D") == 0 || strcmp(product, "H2S") == 0);
     };
 
-    /* printer.json は Cloud devices を正として再構築する（古い dev_id の残留を防ぐ）。
-     * ただし既存の per-device settings は、生存している dev_id についてのみ引き継ぐ。 */
-    DynamicJsonDocument printers_new(8192);
+    /* printer.json は SD 上の古い内容とマージしない。Cloud devices のみを正に書き込む（H2 系は上記で除外）。 */
+    DynamicJsonDocument printers_new(XTOUCH_PRINTERS_JSON_DOC_CAP);
     JsonObject root_new = printers_new.to<JsonObject>();
     for (JsonVariant v : devices)
     {
@@ -1915,13 +1913,6 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
       JsonObject dst = root_new.createNestedObject(dev_id);
       for (JsonPair kv : v.as<JsonObject>())
         dst[kv.key()] = kv.value();
-
-      if (printers.containsKey(dev_id))
-      {
-        JsonObject old_obj = printers[dev_id].as<JsonObject>();
-        if (!old_obj.isNull() && old_obj.containsKey("settings"))
-          dst["settings"] = old_obj["settings"];
-      }
     }
 
     serializeJsonPretty(printers_new, Serial);
@@ -1965,10 +1956,7 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
       setCurrentModel(single["dev_model_name"].as<String>());
       setPrinterName(single["name"].as<String>());
 
-      JsonObject currentPrinterSettings = loadPrinters()[xTouchConfig.xTouchSerialNumber]["settings"];
-      xTouchConfig.xTouchChamberSensorEnabled = currentPrinterSettings.containsKey("chamberTemp") ? currentPrinterSettings["chamberTemp"].as<bool>() : false;
-      xTouchConfig.xTouchAuxFanEnabled = currentPrinterSettings.containsKey("auxFan") ? currentPrinterSettings["auxFan"].as<bool>() : false;
-      xTouchConfig.xTouchChamberFanEnabled = currentPrinterSettings.containsKey("chamberFan") ? currentPrinterSettings["chamberFan"].as<bool>() : false;
+      applyStoredPrinterJsonSettingsToConfig();
 
       savePrinterPair(single["dev_id"].as<String>(), single["dev_model_name"].as<String>(), single["name"].as<String>());
 
@@ -2003,10 +1991,7 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
       setCurrentModel(selected["dev_model_name"].as<String>());
       setPrinterName(selected["name"].as<String>());
 
-      JsonObject currentPrinterSettings = loadPrinters()[xTouchConfig.xTouchSerialNumber]["settings"];
-      xTouchConfig.xTouchChamberSensorEnabled = currentPrinterSettings.containsKey("chamberTemp") ? currentPrinterSettings["chamberTemp"].as<bool>() : false;
-      xTouchConfig.xTouchAuxFanEnabled = currentPrinterSettings.containsKey("auxFan") ? currentPrinterSettings["auxFan"].as<bool>() : false;
-      xTouchConfig.xTouchChamberFanEnabled = currentPrinterSettings.containsKey("chamberFan") ? currentPrinterSettings["chamberFan"].as<bool>() : false;
+      applyStoredPrinterJsonSettingsToConfig();
 
       savePrinterPair(selected["dev_id"].as<String>(), selected["dev_model_name"].as<String>(), selected["name"].as<String>());
     }
@@ -2025,6 +2010,8 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
     doc["printerName"] = printerName.c_str();
 
     xtouch_filesystem_writeJson(SD, xtouch_paths_pair, doc);
+    strncpy(xTouchConfig.xTouchPairedSerialNumber, usn.c_str(), sizeof(xTouchConfig.xTouchPairedSerialNumber) - 1);
+    xTouchConfig.xTouchPairedSerialNumber[sizeof(xTouchConfig.xTouchPairedSerialNumber) - 1] = '\0';
   }
 
   bool isPaired()
@@ -2043,6 +2030,29 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
     setCurrentDevice(doc["paired"].as<String>());
     setCurrentModel(doc["model"].as<String>());
     setPrinterName(doc["printerName"].as<String>());
+    strncpy(xTouchConfig.xTouchPairedSerialNumber, xTouchConfig.xTouchSerialNumber,
+            sizeof(xTouchConfig.xTouchPairedSerialNumber) - 1);
+    xTouchConfig.xTouchPairedSerialNumber[sizeof(xTouchConfig.xTouchPairedSerialNumber) - 1] = '\0';
+  }
+
+  /** printer.json の現在シリアル直下の settings を xTouchConfig に反映（ペア確定・行切替え後など）。 */
+  void applyStoredPrinterJsonSettingsToConfig()
+  {
+    DynamicJsonDocument lp = loadPrinters();
+    JsonObject root = lp.as<JsonObject>();
+    JsonObject st;
+    if (root.containsKey(xTouchConfig.xTouchSerialNumber))
+    {
+      JsonObject dev = root[xTouchConfig.xTouchSerialNumber].as<JsonObject>();
+      if (!dev.isNull() && dev.containsKey("settings"))
+        st = dev["settings"].as<JsonObject>();
+    }
+    xTouchConfig.xTouchChamberSensorEnabled =
+        (!st.isNull() && st.containsKey("chamberTemp")) ? st["chamberTemp"].as<bool>() : false;
+    xTouchConfig.xTouchAuxFanEnabled =
+        (!st.isNull() && st.containsKey("auxFan")) ? st["auxFan"].as<bool>() : false;
+    xTouchConfig.xTouchChamberFanEnabled =
+        (!st.isNull() && st.containsKey("chamberFan")) ? st["chamberFan"].as<bool>() : false;
   }
 
   void setCurrentDevice(String deviceId)
@@ -2062,7 +2072,7 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
 
   DynamicJsonDocument loadPrinters()
   {
-    return xtouch_filesystem_readJson(SD, xtouch_paths_printers, false);
+    return xtouch_filesystem_readJson(SD, xtouch_paths_printers, false, XTOUCH_PRINTERS_JSON_DOC_CAP);
   }
 
   void clearDeviceList()

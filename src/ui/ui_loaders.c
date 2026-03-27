@@ -9,8 +9,8 @@ static void on_home_thumb_global(lv_msg_t *m, void *user_data)
     (void)user_data;
     if (!m || lv_msg_get_id(m) != XTOUCH_ON_OTHER_PRINTER_UPDATE)
         return;
-    if ((intptr_t)lv_msg_get_payload(m) != 1)
-        return; /* slot 0 のみ */
+    if (!ui_msg_payload_is_main_thumb_refresh(lv_msg_get_payload(m)))
+        return;
     if (xTouchConfig.currentScreenIndex != 0 || !ui_homeThumbImg)
         return;
     ui_thumb_set_img_src_from_slot(ui_homeThumbImg, 0);
@@ -135,6 +135,8 @@ void loadScreen(int screen)
             ui_homeScreen_screen_init();
             lv_disp_load_scr(ui_homeScreen);
         } else {
+            /* LIST_REFRESH より先に slot を現在の task_id に再バインド（cache_refresh_done で旧 dsc が残るのを防ぐ） */
+            ui_msg_send(XTOUCH_PRINTERS_THUMB_REBIND, 0, 0);
             ui_printersScreen_screen_init();
             lv_disp_load_scr(ui_printersScreen);
             ui_msg_send(XTOUCH_PRINTERS_THUMB_TIMER_START, 0, 0);

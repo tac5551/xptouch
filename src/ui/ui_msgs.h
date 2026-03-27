@@ -1,6 +1,8 @@
 #ifndef _XLCD_MESSAGING
 #define _XLCD_MESSAGING
 
+#include <stdint.h>
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -113,12 +115,16 @@ extern "C"
         XTOUCH_ON_OTHER_PRINTER_UPDATE,
         /** Printers 画面でサムネイル全スロット取得をスケジュールせよ（コンポーネント表示時。購読は xtouch） */
         XTOUCH_PRINTERS_SCHEDULE_THUMB_FETCH,
+        /** Printers 入室直前: 行と slot の対応を取り直す（dsc/cache フラグを捨て、現在の task_id で path・必要なら即デコード）。購読は xtouch */
+        XTOUCH_PRINTERS_THUMB_REBIND,
         /** サムネイルタイマー開始（Printers 画面表示時。購読は xtouch） */
         XTOUCH_PRINTERS_THUMB_TIMER_START,
         /** サムネイルタイマー停止（Printers 画面離脱時。購読は xtouch） */
         XTOUCH_PRINTERS_THUMB_TIMER_STOP,
         /** Printers 一覧の表示を更新せよ（初期表示・再描画。購読は画面側） */
         XTOUCH_PRINTERS_LIST_REFRESH,
+        /** Printers 画面: 行クリックでメイン操作先を一時切替え。data = 行 0..（1 以降＝他プリンタ）。購読は mqtt.h */
+        XTOUCH_PRINTERS_TEMP_FOCUS_ROW,
         /** History 画面: Cloud から履歴取得を依頼（購読は xtouch） */
         XTOUCH_HISTORY_FETCH,
         /** History 一覧の表示を更新せよ（購読は画面側） */
@@ -148,6 +154,18 @@ extern "C"
         unsigned long long data;
         unsigned long long data2;
     };
+
+    /** XTOUCH_ON_OTHER_PRINTER_UPDATE: Home のメイン(slot0)サムネ img を差し替えるべきペイロードか。
+     *  lv_msg_send の (slot+1) 直ポインタは 1 のみ。ui_msg_send では data==0（push_status 同期）または data==1（明示 slot0）。 */
+    static inline int ui_msg_payload_is_main_thumb_refresh(const void *payload)
+    {
+        if (!payload)
+            return 0;
+        if ((uintptr_t)payload < 256u)
+            return (intptr_t)payload == 1;
+        const struct XTOUCH_MESSAGE_DATA *d = (const struct XTOUCH_MESSAGE_DATA *)payload;
+        return (d->data == 0ull || d->data == 1ull);
+    }
 
     void ui_msg_send(enum XTOUCH_MESSAGE msg, unsigned long long data1, unsigned long long data2);
 

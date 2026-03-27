@@ -911,6 +911,10 @@ void xtouch_device_onPreHeatOffCommand(lv_msg_t *m)
 #ifdef __XTOUCH_SCREEN_50__
 /** push_status 受信後など、task_id に応じて xtouch_thumbnail_slot_path[slot] を更新する。thumbnail.h で実装。 */
 void xtouch_thumbnail_update_path_for_slot(int slot);
+/** task / 接続先変化時にサムネ LGFX キャッシュを捨てる。thumbnail.h で実装。 */
+void xtouch_thumbnail_invalidate_slot(int slot);
+void xtouch_thumbnail_invalidate_all_slots(void);
+void xtouch_thumbnail_update_path_all_slots(void);
 #endif
 
 #endif

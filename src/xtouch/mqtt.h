@@ -44,6 +44,10 @@ void xtouch_mqtt_topic_setup()
     xtouch_mqtt_report_topic = xtouch_device_topic + String("/report");
 }
 
+static void xtouch_mqtt_configure_client(const char *host);
+void xtouch_cloud_mqtt_connect(void);
+void xtouch_local_mqtt_connect(void);
+
 #ifdef __XTOUCH_SCREEN_50__
 /** printer.json から選択中以外の dev_id を最大 XTOUCH_OTHER_PRINTERS_MAX 件取得し、other_printer_* を埋める。クラウド MQTT セットアップ時のみ呼ぶ。 */
 void xtouch_mqtt_load_other_printers()
@@ -314,6 +318,212 @@ void xtouch_mqtt_processPushStatusOther(int slot, JsonDocument &incomingJson)
     if (xTouchConfig.currentScreenIndex == 16 && xtouch_history_reprint_printer_dd_slot == (slot + 1))
         ui_msg_send(XTOUCH_HISTORY_REPRINT_PRINTER_CHANGED, 0, 0);
 }
+
+/** Printers 一覧の行番号で MQTT メインを付け替え（pair.json は変更しない）。
+ *  slot 0 = ペア確定機（xTouchPairedSerialNumber）へ戻す。1… = 他機 otherPrinters[ slot-1 ]。 */
+static void xtouch_mqtt_apply_temp_main_from_row(int slot)
+{
+    if (slot < 0)
+    {
+        ConsoleVerbose.printf("[xPTouch][V][MQTT] TEMP_FOCUS ignore slot=%d (<0)\n", slot);
+        return;
+    }
+
+    const char *new_id = NULL;
+    const other_printer_status_t *preview_src = NULL;
+
+    if (slot == 0)
+    {
+        const char *paired = xTouchConfig.xTouchPairedSerialNumber;
+        if (!paired || !paired[0])
+        {
+            ConsoleVerbose.printf("[xPTouch][V][MQTT] TEMP_FOCUS slot0 ignore empty paired\n");
+            return;
+        }
+        if (strcmp(xTouchConfig.xTouchSerialNumber, paired) == 0)
+        {
+            ConsoleVerbose.printf("[xPTouch][V][MQTT] TEMP_FOCUS slot0 already on paired %s\n", paired);
+            return;
+        }
+        new_id = paired;
+        for (int i = 0; i < xtouch_other_printer_count; i++)
+        {
+            if (!otherPrinters[i].valid)
+                continue;
+            if (strcmp(otherPrinters[i].dev_id, paired) == 0)
+            {
+                preview_src = &otherPrinters[i];
+                break;
+            }
+        }
+    }
+    else
+    {
+        if (slot > xtouch_other_printer_count)
+        {
+            ConsoleVerbose.printf("[xPTouch][V][MQTT] TEMP_FOCUS ignore slot=%d other_count=%d\n", slot, xtouch_other_printer_count);
+            return;
+        }
+        if (!otherPrinters[slot - 1].valid)
+        {
+            ConsoleVerbose.printf("[xPTouch][V][MQTT] TEMP_FOCUS ignore slot=%d invalid\n", slot);
+            return;
+        }
+        new_id = otherPrinters[slot - 1].dev_id;
+        if (!new_id || !new_id[0])
+        {
+            ConsoleVerbose.printf("[xPTouch][V][MQTT] TEMP_FOCUS ignore slot=%d empty dev_id\n", slot);
+            return;
+        }
+        if (strcmp(new_id, xTouchConfig.xTouchSerialNumber) == 0)
+        {
+            ConsoleVerbose.printf("[xPTouch][V][MQTT] TEMP_FOCUS ignore slot=%d already current=%s\n", slot, xTouchConfig.xTouchSerialNumber);
+            return;
+        }
+        preview_src = &otherPrinters[slot - 1];
+    }
+
+    ConsoleVerbose.printf("[xPTouch][V][MQTT] TEMP_FOCUS start slot=%d from=%s to=%s\n",
+                          slot, xTouchConfig.xTouchSerialNumber, new_id);
+
+    strncpy(xTouchConfig.xTouchSerialNumber, new_id, sizeof(xTouchConfig.xTouchSerialNumber) - 1);
+    xTouchConfig.xTouchSerialNumber[sizeof(xTouchConfig.xTouchSerialNumber) - 1] = '\0';
+
+    if (preview_src)
+    {
+        const char *oname = preview_src->name;
+        if (oname && oname[0])
+        {
+            strncpy(xTouchConfig.xTouchPrinterName, oname, sizeof(xTouchConfig.xTouchPrinterName) - 1);
+            xTouchConfig.xTouchPrinterName[sizeof(xTouchConfig.xTouchPrinterName) - 1] = '\0';
+        }
+        else
+        {
+            strncpy(xTouchConfig.xTouchPrinterName, new_id, sizeof(xTouchConfig.xTouchPrinterName) - 1);
+            xTouchConfig.xTouchPrinterName[sizeof(xTouchConfig.xTouchPrinterName) - 1] = '\0';
+        }
+    }
+    else
+    {
+        strncpy(xTouchConfig.xTouchPrinterName, new_id, sizeof(xTouchConfig.xTouchPrinterName) - 1);
+        xTouchConfig.xTouchPrinterName[sizeof(xTouchConfig.xTouchPrinterName) - 1] = '\0';
+    }
+
+    /* Home の即時表示用。直後の push_status で正値に上書きされる想定。 */
+    if (preview_src)
+    {
+        bambuStatus.print_status = preview_src->print_status;
+        bambuStatus.mc_print_percent = preview_src->mc_print_percent;
+        bambuStatus.mc_left_time = preview_src->mc_left_time;
+        bambuStatus.current_layer = preview_src->current_layer;
+        bambuStatus.total_layers = preview_src->total_layers;
+        strncpy(bambuStatus.subtask_name, preview_src->subtask_name, sizeof(bambuStatus.subtask_name) - 1);
+        bambuStatus.subtask_name[sizeof(bambuStatus.subtask_name) - 1] = '\0';
+        strncpy(bambuStatus.task_id, preview_src->task_id, sizeof(bambuStatus.task_id) - 1);
+        bambuStatus.task_id[sizeof(bambuStatus.task_id) - 1] = '\0';
+        strncpy(bambuStatus.image_url, preview_src->image_url, sizeof(bambuStatus.image_url) - 1);
+        bambuStatus.image_url[sizeof(bambuStatus.image_url) - 1] = '\0';
+    }
+    /* preview_src が無いときは pushall まで現状のまま */
+
+    {
+        DynamicJsonDocument pj = cloud.loadPrinters();
+        JsonObject root = pj.as<JsonObject>();
+        if (root.containsKey(xTouchConfig.xTouchSerialNumber))
+        {
+            JsonObject dev = root[xTouchConfig.xTouchSerialNumber].as<JsonObject>();
+            if (!dev.isNull())
+            {
+                if (dev.containsKey("dev_model_name"))
+                {
+                    const char *md = dev["dev_model_name"].as<const char *>();
+                    if (md && md[0])
+                    {
+                        strncpy(xTouchConfig.xTouchPrinterModel, md, sizeof(xTouchConfig.xTouchPrinterModel) - 1);
+                        xTouchConfig.xTouchPrinterModel[sizeof(xTouchConfig.xTouchPrinterModel) - 1] = '\0';
+                    }
+                }
+                if (dev.containsKey("name"))
+                {
+                    const char *dn = dev["name"].as<const char *>();
+                    if (dn && dn[0])
+                    {
+                        strncpy(xTouchConfig.xTouchPrinterName, dn, sizeof(xTouchConfig.xTouchPrinterName) - 1);
+                        xTouchConfig.xTouchPrinterName[sizeof(xTouchConfig.xTouchPrinterName) - 1] = '\0';
+                    }
+                }
+            }
+        }
+    }
+
+    cloud.applyStoredPrinterJsonSettingsToConfig();
+
+    xtouch_mqtt_topic_setup();
+    xtouch_mqtt_load_other_printers();
+    xtouch_pubSubClient.disconnect();
+    delay(80);
+
+    if (xTouchConfig.xTouchLanOnlyMode)
+    {
+        ConsoleVerbose.printf("[xPTouch][V][MQTT] TEMP_FOCUS reconnect LAN host=%s\n", xTouchConfig.xTouchHost);
+        xtouch_mqtt_configure_client(xTouchConfig.xTouchHost);
+        xtouch_local_mqtt_connect();
+    }
+    else
+    {
+        ConsoleVerbose.printf("[xPTouch][V][MQTT] TEMP_FOCUS reconnect Cloud host=%s\n", cloud.getMqttCloudHost());
+        xtouch_mqtt_configure_client(cloud.getMqttCloudHost());
+        xtouch_cloud_mqtt_connect();
+    }
+
+    ConsoleVerbose.printf("[xPTouch][V][MQTT] TEMP_FOCUS done current=%s name=%s\n",
+                          xTouchConfig.xTouchSerialNumber, xTouchConfig.xTouchPrinterName);
+    /* 要望: 切替後は Home に戻る */
+    loadScreen(0);
+    /* Home を作り直した直後に、2段目のファイル名・進捗・サムネを即反映する。 */
+    ui_msg_send(XTOUCH_ON_PRINT_STATUS, 0, 0);
+    ui_msg_send(XTOUCH_ON_FILENAME_UPDATE, 0, 0);
+    /* 行0=新メイン、行1…=並び替え後の他機。slot1〜の dsc が前世代のデバイス向けのまま残るため全クリア */
+    xtouch_thumbnail_invalidate_all_slots();
+    xtouch_thumbnail_update_path_all_slots();
+    xtouch_thumbnail_schedule_fetch_all();
+    ui_msg_send(XTOUCH_ON_OTHER_PRINTER_UPDATE, 1, 0); /* Home は payload=1 で slot0 サムネ更新 */
+    ui_msg_send(XTOUCH_PRINTERS_LIST_REFRESH, 0, 0);
+    ui_msg_send(XTOUCH_ON_OTHER_PRINTER_UPDATE, 0, 0); /* Printers 側の行更新 */
+}
+
+static void xtouch_mqtt_on_printers_temp_focus(void *s, lv_msg_t *m)
+{
+    (void)s;
+    if (!m)
+    {
+        ConsoleVerbose.println("[xPTouch][V][MQTT] TEMP_FOCUS event m=null");
+        return;
+    }
+    const void *payload = lv_msg_get_payload(m);
+    if (!payload)
+    {
+        ConsoleVerbose.println("[xPTouch][V][MQTT] TEMP_FOCUS event payload=null");
+        return;
+    }
+    int slot = -1;
+    uintptr_t pv = (uintptr_t)payload;
+    if (pv > 0 && pv <= (uintptr_t)(XTOUCH_MULTI_PRINTER_MAX + 1))
+    {
+        /* 直接送信形式: payload = slot+1 */
+        slot = (int)pv - 1;
+        ConsoleVerbose.printf("[xPTouch][V][MQTT] TEMP_FOCUS event raw slot=%d\n", slot);
+    }
+    else
+    {
+        /* ui_msg_send 形式: payload = XTOUCH_MESSAGE_DATA* */
+        const struct XTOUCH_MESSAGE_DATA *p = (const struct XTOUCH_MESSAGE_DATA *)payload;
+        slot = (int)p->data;
+        ConsoleVerbose.printf("[xPTouch][V][MQTT] TEMP_FOCUS event data=%llu data2=%llu slot=%d\n",
+                              p->data, p->data2, slot);
+    }
+    xtouch_mqtt_apply_temp_main_from_row(slot);
+}
 #endif
 
 void xtouch_mqtt_parse_tray(uint8_t ams_idx, uint8_t tray_idx, char *color, int loaded)
@@ -501,8 +711,9 @@ void xtouch_mqtt_processPushStatus(JsonDocument &incomingJson)
 #ifdef __XTOUCH_SCREEN_50__
             if (new_tid[0] && strcmp(bambuStatus.task_id, new_tid) != 0)
             {
-                /* TaskID が変わったら既存 URL を捨て、新しい Task のサムネ取得をキックする。 */
+                /* TaskID が変わったら既存 URL・LGFX dsc を捨て、新タスクのサムネ取得をキック（LAN 非ログイン時も）。 */
                 bambuStatus.image_url[0] = '\0';
+                xtouch_thumbnail_invalidate_slot(0);
                 if (cloud.loggedIn)
                 {
                     char thumb_url[1024];
@@ -510,10 +721,9 @@ void xtouch_mqtt_processPushStatus(JsonDocument &incomingJson)
                     {
                         strncpy(bambuStatus.image_url, thumb_url, sizeof(bambuStatus.image_url) - 1);
                         bambuStatus.image_url[sizeof(bambuStatus.image_url) - 1] = '\0';
-                        /* Home/Printers 両方のスロットを一度取り直すようスケジュール */
-                        xtouch_thumbnail_schedule_fetch_all();
                     }
                 }
+                xtouch_thumbnail_schedule_fetch_all();
             }
 #endif
             strncpy(bambuStatus.task_id, new_tid, sizeof(bambuStatus.task_id) - 1);
@@ -565,7 +775,11 @@ void xtouch_mqtt_processPushStatus(JsonDocument &incomingJson)
                 const char *new_tid = new_tid_str.c_str();
 #ifdef __XTOUCH_SCREEN_50__
                 if (new_tid[0] && strcmp(bambuStatus.task_id, new_tid) != 0)
+                {
                     bambuStatus.image_url[0] = '\0';
+                    xtouch_thumbnail_invalidate_slot(0);
+                    xtouch_thumbnail_schedule_fetch_all();
+                }
 #endif
                 strncpy(bambuStatus.task_id, new_tid, sizeof(bambuStatus.task_id) - 1);
                 bambuStatus.task_id[sizeof(bambuStatus.task_id) - 1] = '\0';
@@ -578,6 +792,13 @@ void xtouch_mqtt_processPushStatus(JsonDocument &incomingJson)
             const char *url = incomingJson["print"]["url"].as<const char *>();
             if (url && url[0])
             {
+#ifdef __XTOUCH_SCREEN_50__
+                if (strncmp(bambuStatus.image_url, url, sizeof(bambuStatus.image_url)) != 0)
+                {
+                    xtouch_thumbnail_invalidate_slot(0);
+                    xtouch_thumbnail_schedule_fetch_all();
+                }
+#endif
                 strncpy(bambuStatus.image_url, url, sizeof(bambuStatus.image_url) - 1);
                 bambuStatus.image_url[sizeof(bambuStatus.image_url) - 1] = '\0';
             }
@@ -1272,7 +1493,8 @@ static void xtouch_mqtt_connect(const char *username, const char *password, cons
 {
     ConsoleInfo.println(F("[xPTouch][I][MQTT] Connecting"));
 
-    if (!xtouch_mqtt_firstConnectionDone)
+    /* 初回接続前のみロード画面に文言表示。一度でも接続成功後は一時的な付け替え等で全面を挟まない */
+    if (!xtouch_mqtt_has_ever_connected)
     {
         lv_label_set_text(introScreenCaption, introCaption);
         lv_timer_handler();
@@ -1411,6 +1633,7 @@ static void xtouch_mqtt_subscribe_commands(void)
     lv_msg_subscribe(XTOUCH_COMMAND_PAUSE_SLOT, (lv_msg_subscribe_cb_t)xtouch_device_onPauseSlotCommand, NULL);
     lv_msg_subscribe(XTOUCH_COMMAND_STOP_SLOT, (lv_msg_subscribe_cb_t)xtouch_device_onStopSlotCommand, NULL);
     lv_msg_subscribe(XTOUCH_COMMAND_RESUME_SLOT, (lv_msg_subscribe_cb_t)xtouch_device_onResumeSlotCommand, NULL);
+    lv_msg_subscribe(XTOUCH_PRINTERS_TEMP_FOCUS_ROW, (lv_msg_subscribe_cb_t)xtouch_mqtt_on_printers_temp_focus, NULL);
 #endif
 
     lv_msg_subscribe(XTOUCH_COMMAND_HOME, (lv_msg_subscribe_cb_t)xtouch_device_onHomeCommand, NULL);

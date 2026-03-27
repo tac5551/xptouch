@@ -41,7 +41,8 @@ static void update_one_row(int slot, lv_obj_t *row)
     lv_obj_t *layerLabel = lv_obj_get_child(rightCol, 3);
     lv_obj_t *pauseBtn = lv_obj_get_child(btnArea, 0);
     lv_obj_t *stopBtn = lv_obj_get_child(btnArea, 1);
-    if (!nameLabel || !subtaskLabel || !progressBar || !layerLabel || !pauseBtn || !stopBtn)
+    lv_obj_t *selectBtn = lv_obj_get_child(btnArea, 2);
+    if (!nameLabel || !subtaskLabel || !progressBar || !layerLabel || !pauseBtn || !stopBtn || !selectBtn)
         return;
 
     const char *name = "-";
@@ -150,6 +151,19 @@ static void update_one_row(int slot, lv_obj_t *row)
         lv_obj_add_flag(pauseBtn, LV_OBJ_FLAG_HIDDEN);
         lv_obj_add_flag(stopBtn, LV_OBJ_FLAG_HIDDEN);
     }
+
+    /* 一時切替中のみ先頭行に「SW」: ペア確定機へ戻す */
+    if (slot == 0)
+    {
+        bool show_back_sw = (xTouchConfig.xTouchPairedSerialNumber[0] != '\0' &&
+                             strcmp(xTouchConfig.xTouchSerialNumber, xTouchConfig.xTouchPairedSerialNumber) != 0);
+        if (show_back_sw)
+            lv_obj_clear_flag(selectBtn, LV_OBJ_FLAG_HIDDEN);
+        else
+            lv_obj_add_flag(selectBtn, LV_OBJ_FLAG_HIDDEN);
+    }
+    else
+        lv_obj_clear_flag(selectBtn, LV_OBJ_FLAG_HIDDEN);
 }
 
 /* 指定スロットのサムネイル img を slot_dsc または path で即時描画 */

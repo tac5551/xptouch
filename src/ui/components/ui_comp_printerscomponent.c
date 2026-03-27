@@ -9,6 +9,16 @@
 #define ROW_LEFT_THUMB_W 150
 #define ROW_LEFT_THUMB_H 150
 
+static void on_printer_select_temp_focus(lv_event_t *e)
+{
+    int slot = (int)(intptr_t)lv_event_get_user_data(e);
+    if (slot < 0)
+        return;
+    /* ui_msg_send のローカル構造体経由では payload が不定になるケースがあるため、
+     * ここは直接 slot+1 を送る（0 回避）。受信側で -1 して元の slot に戻す。 */
+    lv_msg_send(XTOUCH_PRINTERS_TEMP_FOCUS_ROW, (void *)(intptr_t)(slot + 1));
+}
+
 lv_obj_t *ui_printersComponent_create(lv_obj_t *comp_parent)
 {
     /* コンテンツ全体のパネル（従来の ui_printersContentPanel 相当） */
@@ -122,7 +132,7 @@ lv_obj_t *ui_printersComponent_create(lv_obj_t *comp_parent)
 
         /* 右端: 一時停止・停止ボタン用エリア（ボタン2つ＋間隔がきれいに収まる幅） */
         lv_obj_t *btnArea = lv_obj_create(row);
-        lv_obj_set_width(btnArea, 130);
+        lv_obj_set_width(btnArea, 190);
         lv_obj_set_height(btnArea, LV_SIZE_CONTENT);
         lv_obj_set_flex_flow(btnArea, LV_FLEX_FLOW_ROW);
         lv_obj_set_flex_align(btnArea, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
@@ -171,8 +181,29 @@ lv_obj_t *ui_printersComponent_create(lv_obj_t *comp_parent)
         lv_obj_set_style_text_align(stopLbl, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_text_font(stopLbl, lv_icon_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
 
+        /* 一時切替ボタン（他プリンタ行のみ有効） */
+        lv_obj_t *selectBtn = lv_obj_create(btnArea);
+        lv_obj_set_width(selectBtn, 50);
+        lv_obj_set_height(selectBtn, 70);
+        lv_obj_set_flex_flow(selectBtn, LV_FLEX_FLOW_COLUMN);
+        lv_obj_set_flex_align(selectBtn, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+        lv_obj_add_flag(selectBtn, LV_OBJ_FLAG_CLICKABLE);
+        lv_obj_set_style_radius(selectBtn, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_border_width(selectBtn, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_border_color(selectBtn, lv_color_hex(0x56a5ff), LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_bg_color(selectBtn, lv_color_hex(0x56a5ff), LV_PART_MAIN | LV_STATE_PRESSED);
+        lv_obj_set_style_bg_opa(selectBtn, 255, LV_PART_MAIN | LV_STATE_PRESSED);
+        lv_obj_set_style_pad_all(selectBtn, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_t *selectLbl = lv_label_create(selectBtn);
+        lv_label_set_text(selectLbl, "SW");
+        lv_obj_set_style_text_align(selectLbl, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_text_font(selectLbl, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
+        if (i == 0)
+            lv_obj_add_flag(selectBtn, LV_OBJ_FLAG_HIDDEN); /* update_one_row で一時切替時のみ表示 */
+
         lv_obj_add_event_cb(pauseBtn, onPrintersPause, LV_EVENT_CLICKED, NULL);
         lv_obj_add_event_cb(stopBtn, onPrintersStop, LV_EVENT_CLICKED, NULL);
+        lv_obj_add_event_cb(selectBtn, on_printer_select_temp_focus, LV_EVENT_CLICKED, (void *)(intptr_t)i);
     }
 
     /* 購読・初期表示は画面側でイベント登録・送信。ここではサムネイル取得のみイベント送信 */
