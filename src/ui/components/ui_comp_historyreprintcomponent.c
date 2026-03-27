@@ -873,6 +873,7 @@ lv_obj_t *ui_historyReprintComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_flex_align(form, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
     lv_obj_set_style_bg_opa(form, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_width(form, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_bottom(form, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_row(form, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_scrollbar_mode(form, LV_SCROLLBAR_MODE_AUTO);
     lv_obj_clear_flag(form, LV_OBJ_FLAG_SCROLLABLE);
@@ -1078,6 +1079,7 @@ lv_obj_t *ui_historyReprintComponent_create(lv_obj_t *comp_parent)
         lv_obj_set_style_bg_opa(row, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_border_width(row, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_pad_top(row, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_pad_bottom(row, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
 
         lv_obj_t *lbl = lv_label_create(row);
         lv_label_set_text(lbl, "Printer");

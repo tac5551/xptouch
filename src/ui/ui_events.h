@@ -79,6 +79,7 @@ extern "C"
 #ifdef __XTOUCH_SCREEN_50__
     void onPrintersPause(lv_event_t *e);
     void onPrintersStop(lv_event_t *e);
+    void onPrintersReprint(lv_event_t *e);
     void onSidebarHistory(lv_event_t *e);
     void onHistoryReprint(lv_event_t *e);
 #endif

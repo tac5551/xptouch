@@ -26,7 +26,7 @@ static const char *print_status_str(int s)
 
 #define PRINTERS_ROW_MAX 5
 
-/* 1行: row の子は [0]=左サムネイル, [1]=右カラム(name/subtask/progress/layer), [2]=ボタンエリア(pause/stop)。
+/* 1行: row の子は [0]=左サムネイル, [1]=右カラム(name/subtask/progress/layer), [2]=ボタンエリア(上段pause/stop/reprint, 下段select)。
  * ボタンは印刷中(RUNNING/PAUSED/PREPARE)のみ表示、終了時は非表示（スペースは維持）。 */
 static void update_one_row(int slot, lv_obj_t *row)
 {
@@ -39,10 +39,13 @@ static void update_one_row(int slot, lv_obj_t *row)
     lv_obj_t *subtaskLabel = lv_obj_get_child(rightCol, 1);
     lv_obj_t *progressBar = lv_obj_get_child(rightCol, 2);
     lv_obj_t *layerLabel = lv_obj_get_child(rightCol, 3);
-    lv_obj_t *pauseBtn = lv_obj_get_child(btnArea, 0);
-    lv_obj_t *stopBtn = lv_obj_get_child(btnArea, 1);
-    lv_obj_t *selectBtn = lv_obj_get_child(btnArea, 2);
-    if (!nameLabel || !subtaskLabel || !progressBar || !layerLabel || !pauseBtn || !stopBtn || !selectBtn)
+    lv_obj_t *topBtns = lv_obj_get_child(btnArea, 0);
+    lv_obj_t *bottomBtns = lv_obj_get_child(btnArea, 1);
+    lv_obj_t *pauseBtn = topBtns ? lv_obj_get_child(topBtns, 0) : NULL;
+    lv_obj_t *stopBtn = topBtns ? lv_obj_get_child(topBtns, 1) : NULL;
+    lv_obj_t *reprintBtn = topBtns ? lv_obj_get_child(topBtns, 2) : NULL;
+    lv_obj_t *selectBtn = bottomBtns ? lv_obj_get_child(bottomBtns, 0) : NULL;
+    if (!nameLabel || !subtaskLabel || !progressBar || !layerLabel || !topBtns || !bottomBtns || !pauseBtn || !stopBtn || !selectBtn || !reprintBtn)
         return;
 
     const char *name = "-";
@@ -137,6 +140,7 @@ static void update_one_row(int slot, lv_obj_t *row)
     {
         lv_obj_clear_flag(pauseBtn, LV_OBJ_FLAG_HIDDEN);
         lv_obj_clear_flag(stopBtn, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_add_flag(reprintBtn, LV_OBJ_FLAG_HIDDEN);
         lv_obj_t *pauseLbl = lv_obj_get_child(pauseBtn, 0);
         if (pauseLbl)
         {
@@ -150,6 +154,16 @@ static void update_one_row(int slot, lv_obj_t *row)
     {
         lv_obj_add_flag(pauseBtn, LV_OBJ_FLAG_HIDDEN);
         lv_obj_add_flag(stopBtn, LV_OBJ_FLAG_HIDDEN);
+        const char *tid = "";
+        if (slot == 0)
+            tid = bambuStatus.task_id;
+        else if (slot - 1 < xtouch_other_printer_count && otherPrinters[slot - 1].valid)
+            tid = otherPrinters[slot - 1].task_id;
+        if ((status == XTOUCH_PRINT_STATUS_FINISHED || status == XTOUCH_PRINT_STATUS_FAILED) &&
+            tid && tid[0] && strcmp(tid, "0") != 0)
+            lv_obj_clear_flag(reprintBtn, LV_OBJ_FLAG_HIDDEN);
+        else
+            lv_obj_add_flag(reprintBtn, LV_OBJ_FLAG_HIDDEN);
     }
 
     /* 一時切替中のみ先頭行に「SW」: ペア確定機へ戻す */

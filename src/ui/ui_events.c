@@ -177,6 +177,39 @@ void onPrintersStop(lv_event_t *e)
     ui_confirmPanel_show(LV_SYMBOL_WARNING " Cancel Print?", onPrintersStopConfirm);
 }
 
+void onPrintersReprint(lv_event_t *e)
+{
+    lv_obj_t *target = lv_event_get_target(e);
+    int slot = (int)(intptr_t)lv_obj_get_user_data(target);
+    const char *tid = NULL;
+    if (slot == 0)
+        tid = bambuStatus.task_id;
+    else if (slot - 1 < xtouch_other_printer_count && otherPrinters[slot - 1].valid)
+        tid = otherPrinters[slot - 1].task_id;
+
+    memset(xtouch_history_reprint_task_id, 0, XTOUCH_HISTORY_TASK_ID_LEN);
+    if (tid && tid[0] && strcmp(tid, "0") != 0)
+    {
+        strncpy(xtouch_history_reprint_task_id, tid, XTOUCH_HISTORY_TASK_ID_LEN - 1);
+        xtouch_history_reprint_task_id[XTOUCH_HISTORY_TASK_ID_LEN - 1] = '\0';
+        xtouch_history_reprint_task_id_valid = 1;
+    }
+    else
+    {
+        xtouch_history_reprint_task_id_valid = 0;
+        return;
+    }
+
+    xtouch_history_reprint_detail_fetch_inflight = 0;
+    xtouch_history_reprint_detail_fetch_done = 0;
+    xtouch_history_reprint_task_basic_valid = 0;
+    memset(&xtouch_history_reprint_task_basic, 0, sizeof(xtouch_history_reprint_task_basic));
+    xtouch_history_reprint_cover_dsc = NULL;
+    xtouch_history_selected_ams_map_count = -1;
+    xtouch_history_reprint_printer_dd_slot = slot;
+    loadScreen(16);
+}
+
 void onHistoryReprint(lv_event_t *e)
 {
     printf("[HistoryReprint] clicked\n");

@@ -1325,9 +1325,8 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_text_color(cui_mainScreenReprintButton, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_align(cui_mainScreenReprintButton, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_radius(cui_mainScreenReprintButton, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_border_color(cui_mainScreenReprintButton, lv_color_hex(0x888888), LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_border_opa(cui_mainScreenReprintButton, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_border_width(cui_mainScreenReprintButton, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(cui_mainScreenReprintButton, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(cui_mainScreenReprintButton, lv_color_hex(0x2a552a), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_left(cui_mainScreenReprintButton, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_right(cui_mainScreenReprintButton, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_top(cui_mainScreenReprintButton, 12, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1335,7 +1334,7 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_scrollbar_mode(cui_mainScreenReprintButton, LV_SCROLLBAR_MODE_OFF);
     lv_obj_add_flag(cui_mainScreenReprintButton, LV_OBJ_FLAG_CLICKABLE);
     lv_obj_clear_flag(cui_mainScreenReprintButton, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN);
-    lv_obj_set_style_bg_color(cui_mainScreenReprintButton, lv_color_hex(0xff682a), LV_PART_MAIN | LV_STATE_PRESSED);
+    lv_obj_set_style_bg_color(cui_mainScreenReprintButton, lv_color_hex(0x008800), LV_PART_MAIN | LV_STATE_PRESSED);
     lv_obj_set_style_bg_opa(cui_mainScreenReprintButton, 255, LV_PART_MAIN | LV_STATE_PRESSED);
     lv_obj_add_flag(cui_mainScreenReprintButton, LV_OBJ_FLAG_HIDDEN);
 
