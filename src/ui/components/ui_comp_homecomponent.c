@@ -70,6 +70,7 @@ void ui_event_comp_homeComponent_mainScreenReprintButton(lv_event_t *e)
     if (lv_event_get_code(e) != LV_EVENT_CLICKED)
         return;
 
+#ifdef __XTOUCH_SCREEN_50__
     if (!(bambuStatus.print_status == XTOUCH_PRINT_STATUS_FINISHED || bambuStatus.print_status == XTOUCH_PRINT_STATUS_FAILED))
         return;
 
@@ -92,6 +93,9 @@ void ui_event_comp_homeComponent_mainScreenReprintButton(lv_event_t *e)
     xtouch_history_reprint_cover_dsc = NULL;
     xtouch_history_selected_ams_map_count = -1;
     loadScreen(16);
+#else
+    (void)e;
+#endif
 }
 void ui_event_comp_homeComponent_mainScreenSpeedDropDown(lv_event_t *e)
 {
