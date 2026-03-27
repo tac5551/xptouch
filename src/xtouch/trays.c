@@ -1,4 +1,5 @@
 #include "trays.h"
+#include "types.h"
 #include <stdint.h>
 #include <string.h>
 #include <stdio.h>
@@ -145,3 +146,76 @@ void set_tray_setting_id(uint8_t ams_id, uint8_t tray_id, const char *setting_id
     strncpy(tray_setting_id[ams_id][tray_id + 1], setting_id, TRAY_SETTING_ID_LEN - 1);
     tray_setting_id[ams_id][tray_id + 1][TRAY_SETTING_ID_LEN - 1] = '\0';
 }
+
+#if defined(__XTOUCH_SCREEN_50__)
+
+static int xtouch_reprint_other_array_index(void)
+{
+    int dd = xtouch_history_reprint_printer_dd_slot;
+    if (dd <= 0)
+        return -1;
+    int o = dd - 1;
+    if (o < 0 || o >= xtouch_other_printer_count || o >= XTOUCH_OTHER_PRINTERS_MAX)
+        return -1;
+    return o;
+}
+
+long xtouch_reprint_ams_exist_bits(void)
+{
+    int o = xtouch_reprint_other_array_index();
+    if (o < 0)
+        return bambuStatus.ams_exist_bits;
+    return xtouch_other_printer_tray_ams_exist_bits[o];
+}
+
+uint64_t get_tray_status_reprint(uint8_t ams_id, uint8_t tray_id)
+{
+    int o = xtouch_reprint_other_array_index();
+    if (o < 0)
+        return get_tray_status(ams_id, tray_id);
+    if (tray_id == TRAY_ID_EXTERNAL)
+        return 0;
+    if (ams_id >= XTOUCH_BAMBU_AMS_UNITS || tray_id >= XTOUCH_BAMBU_AMS_SLOTS_PER_UNIT)
+        return 0;
+    return xtouch_other_printer_trays[o][ams_id][tray_id].tray_status;
+}
+
+char *get_tray_type_reprint(uint8_t ams_id, uint8_t tray_id)
+{
+    int o = xtouch_reprint_other_array_index();
+    if (o < 0)
+        return get_tray_type(ams_id, tray_id);
+    if (tray_id == TRAY_ID_EXTERNAL)
+        return (char *)"";
+    if (ams_id >= XTOUCH_BAMBU_AMS_UNITS || tray_id >= XTOUCH_BAMBU_AMS_SLOTS_PER_UNIT)
+        return (char *)"";
+    return (char *)xtouch_other_printer_trays[o][ams_id][tray_id].tray_type;
+}
+
+const char *get_tray_color_reprint(uint8_t ams_id, uint8_t tray_id)
+{
+    int o = xtouch_reprint_other_array_index();
+    if (o < 0)
+        return get_tray_color(ams_id, tray_id);
+    if (tray_id == TRAY_ID_EXTERNAL)
+        return "808080FF";
+    if (ams_id >= XTOUCH_BAMBU_AMS_UNITS || tray_id >= XTOUCH_BAMBU_AMS_SLOTS_PER_UNIT)
+        return "808080FF";
+    const char *c = xtouch_other_printer_trays[o][ams_id][tray_id].tray_color;
+    if (c && c[0] && strlen(c) >= 6)
+        return c;
+    return "808080FF";
+}
+
+const char *get_tray_setting_id_reprint(uint8_t ams_id, uint8_t tray_id)
+{
+    int o = xtouch_reprint_other_array_index();
+    if (o < 0)
+        return get_tray_setting_id(ams_id, tray_id);
+    if (tray_id == TRAY_ID_EXTERNAL)
+        return "";
+    if (ams_id >= XTOUCH_BAMBU_AMS_UNITS || tray_id > 3)
+        return "";
+    return xtouch_other_printer_trays[o][ams_id][tray_id].tray_setting_id;
+}
+#endif /* __XTOUCH_SCREEN_50__ */

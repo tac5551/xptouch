@@ -6,13 +6,23 @@
 
 static lv_timer_t *s_reprint_detail_fetch_timer = NULL;
 static lv_timer_t *s_reprint_detail_reload_timer = NULL;
+static lv_obj_t *s_historyReprintComponentRoot = NULL;
 
 static void ui_history_reprint_detail_reload_timer_cb(lv_timer_t *t)
 {
     (void)t;
     s_reprint_detail_reload_timer = NULL;
     if (xTouchConfig.currentScreenIndex == 16)
-        loadScreen(16);
+    {
+        /* 全画面 loadScreen しない。
+         * マッピング数が変わるため component だけ作り直す（screen_init が再実行されて再取得ループしない）。 */
+        if (s_historyReprintComponentRoot)
+        {
+            lv_obj_del(s_historyReprintComponentRoot);
+            s_historyReprintComponentRoot = NULL;
+        }
+        s_historyReprintComponentRoot = ui_historyReprintComponent_create(ui_historyReprintScreen);
+    }
     lv_timer_del(t);
 }
 
@@ -37,7 +47,7 @@ static void ui_history_reprint_detail_fetch_timer_cb(lv_timer_t *t)
     s_reprint_detail_fetch_timer = NULL;
     /* 画面遷移直後のメモリ圧迫を避けるため少し遅延して取得開始 */
     ui_msg_send(XTOUCH_HISTORY_REPRINT_DETAIL_FETCH,
-                 (unsigned long long)xtouch_history_selected_index, 0);
+                 0, 0);
     lv_timer_del(t);
 }
 
@@ -59,16 +69,23 @@ void ui_historyReprintScreen_screen_init(void)
     lv_obj_set_x(ui_sidebarComponent, 387);
     lv_obj_set_y(ui_sidebarComponent, 178);
 
-    ui_historyReprintComponent_create(ui_historyReprintScreen);
+    /* loadScreen() が前画面（この screen 自身も含む）を lv_obj_clean/lv_obj_del で破棄しているため、
+     * static で保持している s_historyReprintComponentRoot は dangling pointer になり得る。
+     * ここで lv_obj_del すると二重削除になって LVGL 側で panic するので、参照だけ NULL 化する。 */
+    s_historyReprintComponentRoot = NULL;
+    s_historyReprintComponentRoot = ui_historyReprintComponent_create(ui_historyReprintScreen);
 
     lv_msg_subsribe_obj(XTOUCH_HISTORY_REPRINT_DETAIL_READY, ui_historyReprintScreen, NULL);
     lv_obj_add_event_cb(ui_historyReprintScreen, ui_event_history_reprint_on_detail_ready, LV_EVENT_MSG_RECEIVED, NULL);
 
     /* 画面表示タイミングで即取得せず、描画を挟んでから詳細取得を開始する */
-    if (s_reprint_detail_fetch_timer)
-        lv_timer_del(s_reprint_detail_fetch_timer);
-    s_reprint_detail_fetch_timer = lv_timer_create(ui_history_reprint_detail_fetch_timer_cb, 350, NULL);
-    lv_timer_set_repeat_count(s_reprint_detail_fetch_timer, 1);
+    if (!xtouch_history_reprint_detail_fetch_done)
+    {
+        if (s_reprint_detail_fetch_timer)
+            lv_timer_del(s_reprint_detail_fetch_timer);
+        s_reprint_detail_fetch_timer = lv_timer_create(ui_history_reprint_detail_fetch_timer_cb, 350, NULL);
+        lv_timer_set_repeat_count(s_reprint_detail_fetch_timer, 1);
+    }
 }
 
 #else

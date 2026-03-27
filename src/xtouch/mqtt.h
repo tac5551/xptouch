@@ -49,6 +49,10 @@ void xtouch_mqtt_topic_setup()
 void xtouch_mqtt_load_other_printers()
 {
     xtouch_other_printer_count = 0;
+    xtouch_current_printer_dev_product_name[0] = '\0';
+    memset(xtouch_other_printer_trays, 0, sizeof(xtouch_other_printer_trays));
+    memset(xtouch_other_printer_tray_ams_exist_bits, 0, sizeof(xtouch_other_printer_tray_ams_exist_bits));
+    memset(xtouch_other_printer_dev_product_names, 0, sizeof(xtouch_other_printer_dev_product_names));
     for (int i = 0; i < XTOUCH_OTHER_PRINTERS_MAX; i++)
     {
         otherPrinters[i].valid = 0;
@@ -62,16 +66,27 @@ void xtouch_mqtt_load_other_printers()
         if (idx >= XTOUCH_OTHER_PRINTERS_MAX)
             break;
         const char *dev_id = p.key().c_str();
-        if (strcmp(dev_id, xTouchConfig.xTouchSerialNumber) == 0)
-            continue;
+        const char *product = NULL;
         if (p.value().containsKey("dev_product_name"))
+            product = p.value()["dev_product_name"].as<const char *>();
+        if (strcmp(dev_id, xTouchConfig.xTouchSerialNumber) == 0)
         {
-            const char *product = p.value()["dev_product_name"].as<const char *>();
-            if (product && (strcmp(product, "H2C") == 0 || strcmp(product, "H2D") == 0 || strcmp(product, "H2S") == 0))
-                continue;
+            if (product && product[0])
+            {
+                strncpy(xtouch_current_printer_dev_product_name, product, XTOUCH_DEV_PRODUCT_NAME_LEN - 1);
+                xtouch_current_printer_dev_product_name[XTOUCH_DEV_PRODUCT_NAME_LEN - 1] = '\0';
+            }
+            continue;
         }
+        if (product && (strcmp(product, "H2C") == 0 || strcmp(product, "H2D") == 0 || strcmp(product, "H2S") == 0))
+            continue;
         strncpy(xtouch_other_printer_dev_ids[idx], dev_id, 15);
         xtouch_other_printer_dev_ids[idx][15] = '\0';
+        if (product && product[0])
+        {
+            strncpy(xtouch_other_printer_dev_product_names[idx], product, XTOUCH_DEV_PRODUCT_NAME_LEN - 1);
+            xtouch_other_printer_dev_product_names[idx][XTOUCH_DEV_PRODUCT_NAME_LEN - 1] = '\0';
+        }
         otherPrinters[idx].valid = 1;
         strncpy(otherPrinters[idx].dev_id, dev_id, 15);
         otherPrinters[idx].dev_id[15] = '\0';
@@ -136,7 +151,84 @@ extern "C" void xtouch_mqtt_pushall_all_printers_for_screen_c(void)
 {
     xtouch_mqtt_pushall_all_printers_for_screen();
 }
+extern "C" void xtouch_mqtt_pushall_for_dev_c(const char *dev_id)
+{
+    xtouch_mqtt_pushall_for_dev(dev_id);
+}
 #endif
+
+/** 他プリンタ push_status の print.ams を xtouch_other_printer_trays[slot] にコピー */
+static void xtouch_mqtt_fill_other_printer_ams_from_print(int other_slot, JsonObject print)
+{
+    if (other_slot < 0 || other_slot >= XTOUCH_OTHER_PRINTERS_MAX)
+        return;
+    if (!print.containsKey("ams"))
+        return;
+    JsonObject amsroot = print["ams"].as<JsonObject>();
+    long parsed_ams_exist_bits = xtouch_other_printer_tray_ams_exist_bits[other_slot];
+    if (amsroot.containsKey("ams_exist_bits"))
+        parsed_ams_exist_bits = amsroot["ams_exist_bits"].as<String>().toInt();
+    if (!amsroot.containsKey("ams"))
+    {
+        xtouch_other_printer_tray_ams_exist_bits[other_slot] = parsed_ams_exist_bits;
+        return;
+    }
+    memset(xtouch_other_printer_trays[other_slot], 0, sizeof(xtouch_other_printer_trays[other_slot]));
+    xtouch_other_printer_tray_ams_exist_bits[other_slot] = parsed_ams_exist_bits;
+    JsonArray ams_list = amsroot["ams"].as<JsonArray>();
+    char color[16];
+    char traytype[24];
+    for (uint8_t ams_idx = 0; ams_idx < ams_list.size() && ams_idx < XTOUCH_BAMBU_AMS_UNITS; ams_idx++)
+    {
+        if (!ams_list[ams_idx].containsKey("tray"))
+            continue;
+        JsonArray trays = ams_list[ams_idx]["tray"].as<JsonArray>();
+        for (uint8_t tray_idx = 0; tray_idx < trays.size() && tray_idx < XTOUCH_BAMBU_AMS_SLOTS_PER_UNIT; tray_idx++)
+        {
+            memset(color, 0, sizeof(color));
+            memset(traytype, 0, sizeof(traytype));
+            int loaded = 0;
+            if (trays[tray_idx].containsKey("cols") && trays[tray_idx]["cols"].is<JsonArray>())
+            {
+                JsonArray cols = trays[tray_idx]["cols"].as<JsonArray>();
+                if (cols.size() > 0)
+                    loaded = 1;
+            }
+            xtouch_other_printer_tray_cell_t *cell = &xtouch_other_printer_trays[other_slot][ams_idx][tray_idx];
+            if (!loaded)
+            {
+                uint64_t number = strtoll(color, NULL, 16);
+                number <<= 8;
+                number |= (uint64_t)tray_idx << 4;
+                cell->tray_status = number;
+                cell->tray_setting_id[0] = '\0';
+                cell->tray_color[0] = '\0';
+                cell->tray_type[0] = '\0';
+                continue;
+            }
+            if (trays[tray_idx].containsKey("tray_color"))
+                trays[tray_idx]["tray_color"].as<String>().toCharArray(cell->tray_color, sizeof(cell->tray_color));
+            if (trays[tray_idx].containsKey("tray_type"))
+                trays[tray_idx]["tray_type"].as<String>().toCharArray(cell->tray_type, sizeof(cell->tray_type));
+            if (strlen(cell->tray_color) >= 6)
+                cell->tray_color[6] = '\0';
+            uint64_t number = strtoll(cell->tray_color, NULL, 16);
+            number <<= 8;
+            number |= (uint64_t)tray_idx << 4;
+            number |= 1;
+            cell->tray_status = number;
+            if (trays[tray_idx].containsKey("tray_info_idx"))
+            {
+                char sid[XTOUCH_OTHER_TRAY_SETTING_ID_LEN + 1];
+                memset(sid, 0, sizeof(sid));
+                trays[tray_idx]["tray_info_idx"].as<String>().toCharArray(sid, sizeof(sid));
+                strncpy(cell->tray_setting_id, sid, XTOUCH_OTHER_TRAY_SETTING_ID_LEN - 1);
+                cell->tray_setting_id[XTOUCH_OTHER_TRAY_SETTING_ID_LEN - 1] = '\0';
+            }
+        }
+    }
+    xtouch_other_printer_tray_ams_exist_bits[other_slot] = parsed_ams_exist_bits;
+}
 
 /** gcode_state 文字列を XTouchPrintStatus に変換（他プリンター用、device.h のマッピングと同一） */
 static int xtouch_mqtt_gcode_state_to_status(const String &state)
@@ -214,8 +306,13 @@ void xtouch_mqtt_processPushStatusOther(int slot, JsonDocument &incomingJson)
         otherPrinters[slot].current_layer = print["layer_num"].as<int>();
     if (print.containsKey("total_layer_num"))
         otherPrinters[slot].total_layers = print["total_layer_num"].as<int>();
+    xtouch_mqtt_fill_other_printer_ams_from_print(slot, print);
     /* 行インデックスで送る: 0=メイン, 1=他1台目, 2=他2台目。UI の row と一致させる */
     ui_msg_send(XTOUCH_ON_OTHER_PRINTER_UPDATE, (unsigned long long)(slot + 1), 0);
+    /* Reprint 表示中で、今選択中のプリンタの push_status が届いたら
+     * その時点の AMS キャッシュで再計算・再描画する。 */
+    if (xTouchConfig.currentScreenIndex == 16 && xtouch_history_reprint_printer_dd_slot == (slot + 1))
+        ui_msg_send(XTOUCH_HISTORY_REPRINT_PRINTER_CHANGED, 0, 0);
 }
 #endif
 
@@ -1050,6 +1147,8 @@ void xtouch_mqtt_parseMessage(char *topic, byte *payload, unsigned int length, b
                 if (xTouchConfig.currentScreenIndex == 0 && bambuStatus.task_id[0] && strcmp(bambuStatus.task_id, "0") != 0)
                     xtouch_thumbnail_schedule_fetch_all();
                 ui_msg_send(XTOUCH_ON_OTHER_PRINTER_UPDATE, 0, 0);
+                if (xTouchConfig.currentScreenIndex == 16 && xtouch_history_reprint_printer_dd_slot == 0)
+                    ui_msg_send(XTOUCH_HISTORY_REPRINT_PRINTER_CHANGED, 0, 0);
 #endif
             }
             if (command == "ams_change_filament")

@@ -24,6 +24,7 @@ extern int xtouch_filament_use_fixed_brands;
 extern other_printer_status_t otherPrinters[XTOUCH_OTHER_PRINTERS_MAX];
 extern char xtouch_other_printer_dev_ids[XTOUCH_OTHER_PRINTERS_MAX][16];
 extern int xtouch_other_printer_count;
+void xtouch_mqtt_pushall_for_dev_c(const char *dev_id);
 #endif
 #ifdef __cplusplus
 }

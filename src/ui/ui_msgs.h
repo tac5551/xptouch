@@ -133,6 +133,8 @@ extern "C"
         XTOUCH_HISTORY_REPRINT_DETAIL_FETCH,
         /** History リプリント設定画面: amsDetailMapping 詳細取得完了（購読は画面側。再描画用） */
         XTOUCH_HISTORY_REPRINT_DETAIL_READY,
+        /** Reprint 画面で印刷先プリンタが変わった（pushall 後に xtouch がデフォルトスロット再計算して DETAIL_READY） */
+        XTOUCH_HISTORY_REPRINT_PRINTER_CHANGED,
         /** History リプリント設定: mapping行に対する AMS スロット選択。data=map_index, data2=(ams_id&0xFF)|((tray_id&0xFF)<<8) */
         XTOUCH_HISTORY_REPRINT_SLOT_PICKED,
         /** History カバー画像 DL 待ちキューを捨てる（画面遷移時。購読は xtouch。再入場は fetch 完了後に再キュー） */

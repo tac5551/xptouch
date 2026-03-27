@@ -10,8 +10,8 @@ static const char *history_status_str(int s)
 {
     switch (s)
     {
-    case 2: return "Failed";
-    case 3: return "Finished";
+    case 2: return "Finished";
+    case 3: return "Failed";
     default: return "-";
     }
 }
@@ -46,9 +46,10 @@ static void update_one_row(int idx, lv_obj_t *row)
     if (!rightCol || !reprintBtn)
         return;
     lv_obj_t *titleLabel = lv_obj_get_child(rightCol, 0);
-    lv_obj_t *dateLabel = lv_obj_get_child(rightCol, 1);
-    lv_obj_t *statusLabel = lv_obj_get_child(rightCol, 2);
-    if (!titleLabel || !dateLabel || !statusLabel)
+    lv_obj_t *printerLabel = lv_obj_get_child(rightCol, 1);
+    lv_obj_t *dateLabel = lv_obj_get_child(rightCol, 2);
+    lv_obj_t *statusLabel = lv_obj_get_child(rightCol, 3);
+    if (!titleLabel || !printerLabel || !dateLabel || !statusLabel)
         return;
 
     /* 行別: cover サムネイルを表示（xtouch_history_cover_dsc[idx] が設定されていれば） */
@@ -90,6 +91,7 @@ static void update_one_row(int idx, lv_obj_t *row)
     if (idx >= xtouch_history_count || !xtouch_history_tasks[idx].valid)
     {
         lv_label_set_text(titleLabel, "-");
+        lv_label_set_text(printerLabel, "");
         lv_label_set_text(dateLabel, "");
         lv_label_set_text(statusLabel, "");
         lv_obj_add_state(reprintBtn, LV_STATE_DISABLED);
@@ -98,6 +100,18 @@ static void update_one_row(int idx, lv_obj_t *row)
 
     const xtouch_history_task_t *t = &xtouch_history_tasks[idx];
     lv_label_set_text(titleLabel, t->title[0] ? t->title : "-");
+    {
+        char pbuf[XTOUCH_HISTORY_DEVICE_NAME_LEN + XTOUCH_HISTORY_DEVICE_MODEL_LEN + 8];
+        if (t->device_name[0] && t->device_model[0] && strcmp(t->device_name, t->device_model) != 0)
+            snprintf(pbuf, sizeof(pbuf), "%s (%s)", t->device_name, t->device_model);
+        else if (t->device_name[0])
+            snprintf(pbuf, sizeof(pbuf), "%s", t->device_name);
+        else if (t->device_model[0])
+            snprintf(pbuf, sizeof(pbuf), "%s", t->device_model);
+        else
+            pbuf[0] = '\0';
+        lv_label_set_text(printerLabel, pbuf[0] ? pbuf : "-");
+    }
     char dateBuf[24];
     format_time_short(t->end_time[0] ? t->end_time : t->start_time, dateBuf, sizeof(dateBuf));
     lv_label_set_text(dateLabel, dateBuf);

@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <stdio.h>
+#include <string.h>
 #include "../ui.h"
 #include "../ui_msgs.h"
 #include "../../xtouch/trays.h"
@@ -63,6 +64,34 @@ void ui_event_comp_homeComponent_mainScreenStopButton(lv_event_t *e)
     {
         onHomeControllerStop(e);
     }
+}
+void ui_event_comp_homeComponent_mainScreenReprintButton(lv_event_t *e)
+{
+    if (lv_event_get_code(e) != LV_EVENT_CLICKED)
+        return;
+
+    if (!(bambuStatus.print_status == XTOUCH_PRINT_STATUS_FINISHED || bambuStatus.print_status == XTOUCH_PRINT_STATUS_FAILED))
+        return;
+
+    if (bambuStatus.task_id[0] && strcmp(bambuStatus.task_id, "0") != 0)
+    {
+        strncpy(xtouch_history_reprint_task_id, bambuStatus.task_id, XTOUCH_HISTORY_TASK_ID_LEN - 1);
+        xtouch_history_reprint_task_id[XTOUCH_HISTORY_TASK_ID_LEN - 1] = '\0';
+        xtouch_history_reprint_task_id_valid = 1;
+    }
+    else
+    {
+        memset(xtouch_history_reprint_task_id, 0, XTOUCH_HISTORY_TASK_ID_LEN);
+        xtouch_history_reprint_task_id_valid = 0;
+    }
+
+    xtouch_history_reprint_detail_fetch_inflight = 0;
+    xtouch_history_reprint_detail_fetch_done = 0;
+    xtouch_history_reprint_task_basic_valid = 0;
+    memset(&xtouch_history_reprint_task_basic, 0, sizeof(xtouch_history_reprint_task_basic));
+    xtouch_history_reprint_cover_dsc = NULL;
+    xtouch_history_selected_ams_map_count = -1;
+    loadScreen(16);
 }
 void ui_event_comp_homeComponent_mainScreenSpeedDropDown(lv_event_t *e)
 {
@@ -444,9 +473,13 @@ void onXTouchPrintStatus(lv_event_t *e)
     lv_obj_t *playPauseButton = comp_homeComponent[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPLAYER_MAINSCREENCONTROLLER_MAINSCREENPLAYPAUSEBUTTON];
     lv_obj_t *stopButton = comp_homeComponent[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPLAYER_MAINSCREENCONTROLLER_MAINSCREENSTOPBUTTON];
     lv_obj_t *nozzleIcon = comp_homeComponent[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPLAYER_MAINSCREENCONTROLLER_MAINSCREENNOZZLEICON];
+    lv_obj_t *reprintButton = comp_homeComponent[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPLAYER_MAINSCREENCONTROLLER_MAINSCREENREPRINTBUTTON];
     lv_obj_t *preheatBox = comp_homeComponent[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPREHEATBOX];
     lv_obj_t *dropDown = comp_homeComponent[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENCENTRAL_MAINSCREENSPEEDDROPDOWN];
     lv_obj_t *statusCaption = comp_homeComponent[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENSTATUS_MAINSCREENSTATUSCAPTION];
+
+    if (reprintButton)
+        lv_obj_add_flag(reprintButton, LV_OBJ_FLAG_HIDDEN);
 
     /* メイン左カラムのボックス構成（上から）:
      * 1.AMS 2.Player 3.ロゴ+メッセージ 4.Preheat 5.進捗・レイヤー 6.速度
@@ -549,6 +582,10 @@ void onXTouchPrintStatus(lv_event_t *e)
             lv_obj_add_flag(playPauseButton, LV_OBJ_FLAG_HIDDEN);
         if (stopButton)
             lv_obj_add_flag(stopButton, LV_OBJ_FLAG_HIDDEN);
+        if (reprintButton &&
+            (bambuStatus.print_status == XTOUCH_PRINT_STATUS_FINISHED ||
+             bambuStatus.print_status == XTOUCH_PRINT_STATUS_FAILED))
+            lv_obj_clear_flag(reprintButton, LV_OBJ_FLAG_HIDDEN);
         /* ロゴ下のスペースで Ready/Finished/Failed を 2.8・5インチ共通表示 */
         if (statusCaption)
         {
@@ -1266,6 +1303,8 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_bg_color(cui_mainScreenStopButton, lv_color_hex(0xff682a), LV_PART_MAIN | LV_STATE_PRESSED);
     lv_obj_set_style_bg_opa(cui_mainScreenStopButton, 255, LV_PART_MAIN | LV_STATE_PRESSED);
 
+    lv_obj_t *cui_mainScreenReprintButton = NULL;
+
 #if defined(__XTOUCH_SCREEN_50__)
     /* Failed/Finished 時にボタン位置に表示するラベル */
     lv_obj_t *cui_mainScreenFinishedFailedLabel = lv_label_create(cui_mainScreenControllerRightBtnRow);
@@ -1276,6 +1315,29 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_text_color(cui_mainScreenFinishedFailedLabel, lv_color_hex(0xaaaaaa), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_align(cui_mainScreenFinishedFailedLabel, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_add_flag(cui_mainScreenFinishedFailedLabel, LV_OBJ_FLAG_HIDDEN);
+
+    cui_mainScreenReprintButton = lv_label_create(cui_mainScreenControllerRightBtnRow);
+    lv_obj_set_width(cui_mainScreenReprintButton, 248);
+    lv_obj_set_height(cui_mainScreenReprintButton, LV_SIZE_CONTENT);
+    lv_obj_set_align(cui_mainScreenReprintButton, LV_ALIGN_CENTER);
+    lv_label_set_text(cui_mainScreenReprintButton, "Reprint");
+    lv_obj_set_style_text_font(cui_mainScreenReprintButton, lv_font_middle, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_color(cui_mainScreenReprintButton, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_align(cui_mainScreenReprintButton, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_radius(cui_mainScreenReprintButton, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_color(cui_mainScreenReprintButton, lv_color_hex(0x888888), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_opa(cui_mainScreenReprintButton, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(cui_mainScreenReprintButton, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_left(cui_mainScreenReprintButton, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(cui_mainScreenReprintButton, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_top(cui_mainScreenReprintButton, 12, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_bottom(cui_mainScreenReprintButton, 12, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_scrollbar_mode(cui_mainScreenReprintButton, LV_SCROLLBAR_MODE_OFF);
+    lv_obj_add_flag(cui_mainScreenReprintButton, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_clear_flag(cui_mainScreenReprintButton, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN);
+    lv_obj_set_style_bg_color(cui_mainScreenReprintButton, lv_color_hex(0xff682a), LV_PART_MAIN | LV_STATE_PRESSED);
+    lv_obj_set_style_bg_opa(cui_mainScreenReprintButton, 255, LV_PART_MAIN | LV_STATE_PRESSED);
+    lv_obj_add_flag(cui_mainScreenReprintButton, LV_OBJ_FLAG_HIDDEN);
 
     /* ボタン下に subtask_name の先頭を表示（最大約20文字想定で省略） */
     lv_obj_t *cui_mainScreenSubtaskLabel = lv_label_create(cui_mainScreenControllerRight);
@@ -1820,9 +1882,11 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
 #if defined(__XTOUCH_SCREEN_50__)
     children[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPLAYER_MAINSCREENCONTROLLER_MAINSCREENSUBTASKLABEL] = cui_mainScreenSubtaskLabel;
     children[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPLAYER_MAINSCREENCONTROLLER_MAINSCREENFINISHEDFAILEDLABEL] = cui_mainScreenFinishedFailedLabel;
+    children[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPLAYER_MAINSCREENCONTROLLER_MAINSCREENREPRINTBUTTON] = cui_mainScreenReprintButton;
 #else
     children[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPLAYER_MAINSCREENCONTROLLER_MAINSCREENSUBTASKLABEL] = NULL;
     children[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPLAYER_MAINSCREENCONTROLLER_MAINSCREENFINISHEDFAILEDLABEL] = NULL;
+    children[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPLAYER_MAINSCREENCONTROLLER_MAINSCREENREPRINTBUTTON] = NULL;
 #endif
     children[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPROGRESSBOX] = cui_mainScreenProgressBox;
     children[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPLAYER_MAINSCREENPROGRESSBAR] = cui_mainScreenProgressBar;
@@ -1857,6 +1921,10 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
     lv_obj_add_event_cb(cui_homeComponent, del_component_child_event_cb, LV_EVENT_DELETE, children);
     lv_obj_add_event_cb(cui_mainScreenPlayPauseButton, ui_event_comp_homeComponent_mainScreenPlayPauseButton, LV_EVENT_ALL, children);
     lv_obj_add_event_cb(cui_mainScreenStopButton, ui_event_comp_homeComponent_mainScreenStopButton, LV_EVENT_ALL, children);
+#if defined(__XTOUCH_SCREEN_50__)
+    if (cui_mainScreenReprintButton)
+        lv_obj_add_event_cb(cui_mainScreenReprintButton, ui_event_comp_homeComponent_mainScreenReprintButton, LV_EVENT_ALL, children);
+#endif
     lv_obj_add_event_cb(cui_mainScreenSpeedDropDown, ui_event_comp_homeComponent_mainScreenSpeedDropDown, LV_EVENT_ALL, children);
     lv_obj_add_event_cb(cui_mainScreenLightButton, ui_event_comp_homeComponent_mainScreenLightButton, LV_EVENT_ALL, children);
     lv_obj_add_event_cb(cui_mainScreenLCDButton, ui_event_comp_homeComponent_mainScreenLCDButton, LV_EVENT_ALL, children);

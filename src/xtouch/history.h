@@ -1,6 +1,6 @@
 /**
  * History 画面用: Cloud 履歴取得・再印刷のイベント購読。
- * UI は XTOUCH_HISTORY_FETCH / XTOUCH_HISTORY_REPRINT を送信し、
+ * UI は XTOUCH_HISTORY_FETCH / XTOUCH_HISTORY_REPRINT_WITH_OPTIONS を送信し、
  * ここで購読して cloud.getMyTasks / cloud.submitReprintTask を呼ぶ。
  * サムネイル DL は別タスクで 1 枚ずつ行い、完了するたびにメインでロードして UI を更新する（ブロックしない）。
  */
@@ -15,6 +15,7 @@
 #include <SD.h>
 #include <cstdio>
 #include <cstring>
+#include <strings.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
 #include "freertos/task.h"
@@ -73,6 +74,90 @@ static unsigned xtouch_color_dist_sq_rrggbbaa(const char *a, const char *b)
   int dg = (int)ag - (int)bg;
   int db = (int)ab - (int)bb;
   return (unsigned)(dr * dr + dg * dg + db * db);
+}
+
+/** amsDetailMapping と現在の xtouch_history_reprint_printer_dd_slot に合わせてデフォルトの AMS 候補を埋める */
+static void xtouch_history_reprint_recompute_default_picks(void)
+{
+  int cnt = xtouch_history_selected_ams_map_count;
+  if (cnt <= 0)
+    return;
+  if (cnt > XTOUCH_HISTORY_AMS_MAP_MAX)
+    cnt = XTOUCH_HISTORY_AMS_MAP_MAX;
+
+  for (int i = 0; i < cnt; i++)
+  {
+    const xtouch_history_ams_map_t *m = &xtouch_history_selected_ams_map[i];
+    const char *want_type = (m->filamentType[0] && strcmp(m->filamentType, "null") != 0) ? m->filamentType : NULL;
+    unsigned best_d = 0xFFFFFFFFu;
+    int best_ams = -1;
+    int best_tray = -1;
+    int first_loaded_ams = -1;
+    int first_loaded_tray = -1;
+    int first_type_loaded_ams = -1;
+    int first_type_loaded_tray = -1;
+    long ams_bits = xtouch_reprint_ams_exist_bits();
+    for (int ams_id = 0; ams_id < XTOUCH_BAMBU_AMS_UNITS; ams_id++)
+    {
+      if (((ams_bits >> ams_id) & 1) == 0)
+        continue;
+      for (int tray_id = 0; tray_id < XTOUCH_BAMBU_AMS_SLOTS_PER_UNIT; tray_id++)
+      {
+        uint32_t st = (uint32_t)get_tray_status_reprint((uint8_t)ams_id, (uint8_t)tray_id);
+        if ((st & 1) == 0)
+          continue;
+        if (first_loaded_ams < 0)
+        {
+          first_loaded_ams = ams_id;
+          first_loaded_tray = tray_id;
+        }
+        char *tt = get_tray_type_reprint((uint8_t)ams_id, (uint8_t)tray_id);
+        int type_ok = 1;
+        if (want_type && (!tt || !tt[0] || strcmp(tt, "null") == 0 || strcasecmp(tt, want_type) != 0))
+          type_ok = 0;
+        if (type_ok && first_type_loaded_ams < 0)
+        {
+          first_type_loaded_ams = ams_id;
+          first_type_loaded_tray = tray_id;
+        }
+        if (!type_ok)
+          continue;
+        const char *tc = get_tray_color_reprint((uint8_t)ams_id, (uint8_t)tray_id);
+        unsigned d = xtouch_color_dist_sq_rrggbbaa(m->sourceColor, tc);
+        if (best_ams < 0 || d < best_d)
+        {
+          best_d = d;
+          best_ams = ams_id;
+          best_tray = tray_id;
+        }
+      }
+    }
+    if (best_ams >= 0)
+    {
+      xtouch_history_reprint_pick_ams[i] = (uint8_t)best_ams;
+      xtouch_history_reprint_pick_tray[i] = (uint8_t)best_tray;
+    }
+    else if (first_type_loaded_ams >= 0)
+    {
+      xtouch_history_reprint_pick_ams[i] = (uint8_t)first_type_loaded_ams;
+      xtouch_history_reprint_pick_tray[i] = (uint8_t)first_type_loaded_tray;
+    }
+    else if (first_loaded_ams >= 0)
+    {
+      xtouch_history_reprint_pick_ams[i] = (uint8_t)first_loaded_ams;
+      xtouch_history_reprint_pick_tray[i] = (uint8_t)first_loaded_tray;
+    }
+    else if (m->amsId >= 0 && m->amsId < XTOUCH_BAMBU_AMS_UNITS)
+    {
+      xtouch_history_reprint_pick_ams[i] = (uint8_t)m->amsId;
+      xtouch_history_reprint_pick_tray[i] = (uint8_t)(m->slotId & 0xFF);
+    }
+    else
+    {
+      xtouch_history_reprint_pick_ams[i] = 0;
+      xtouch_history_reprint_pick_tray[i] = 0;
+    }
+  }
 }
 
 /* メインスレッド: 遅延後に fetch リクエストをキューへ投入 */
@@ -166,9 +251,28 @@ static void xtouch_history_detail_task(void *pv)
     res.history_index = req.history_index;
     res.ok = 0;
     res.map_count = 0;
-    if (req.history_index >= 0 && req.history_index < xtouch_history_count && xtouch_history_tasks[req.history_index].valid)
+    const char *tid = NULL;
+    if (xtouch_history_reprint_task_id_valid)
+      tid = xtouch_history_reprint_task_id;
+
+    if (tid)
     {
-      const char *tid = xtouch_history_tasks[req.history_index].task_id;
+      bool basic_ok = cloud.getMyTaskBasicForReprint(tid, &xtouch_history_reprint_task_basic);
+      xtouch_history_reprint_task_basic_valid = basic_ok ? 1 : 0;
+
+      /* サムネイルは Reprint 専用 descriptor にデコードするため、
+       * まず SD 上に PNG を用意して、デコードはメインスレッド側で行う。 */
+      if (!xTouchConfig.xTouchHideAllThumbnails &&
+          xtouch_history_reprint_task_basic.cover_url[0])
+      {
+        char path[64];
+        if (xtouch_history_cover_path_for_task_id(tid, path, sizeof(path)) == 0)
+        {
+          if (!SD.exists(path))
+            (void)downloadFileToSDCard(xtouch_history_reprint_task_basic.cover_url, path);
+        }
+      }
+
       int cnt = cloud.getMyTaskAmsDetailMapping(tid, xtouch_history_selected_ams_map, XTOUCH_HISTORY_AMS_MAP_MAX);
 
       if (cnt >= 0)
@@ -178,78 +282,7 @@ static void xtouch_history_detail_task(void *pv)
         xtouch_history_selected_ams_map_count = cnt;
         res.ok = 1;
         res.map_count = cnt;
-        for (int i = 0; i < cnt && i < XTOUCH_HISTORY_AMS_MAP_MAX; i++)
-        {
-          const xtouch_history_ams_map_t *m = &xtouch_history_selected_ams_map[i];
-          const char *want_type = (m->filamentType[0] && strcmp(m->filamentType, "null") != 0) ? m->filamentType : NULL;
-          unsigned best_d = 0xFFFFFFFFu;
-          int best_ams = -1;
-          int best_tray = -1;
-          int first_loaded_ams = -1;
-          int first_loaded_tray = -1;
-          int first_type_loaded_ams = -1;
-          int first_type_loaded_tray = -1;
-          for (int ams_id = 0; ams_id < XTOUCH_BAMBU_AMS_UNITS; ams_id++)
-          {
-            if (((bambuStatus.ams_exist_bits >> ams_id) & 1) == 0)
-              continue;
-            for (int tray_id = 0; tray_id < XTOUCH_BAMBU_AMS_SLOTS_PER_UNIT; tray_id++)
-            {
-              uint32_t st = get_tray_status((uint8_t)ams_id, (uint8_t)tray_id);
-              if ((st & 1) == 0)
-                continue; /* 未装填はデフォルト選択に使わない */
-              if (first_loaded_ams < 0)
-              {
-                first_loaded_ams = ams_id;
-                first_loaded_tray = tray_id;
-              }
-              const char *tt = get_tray_type((uint8_t)ams_id, (uint8_t)tray_id);
-              int type_ok = 1;
-              if (want_type && (!tt || !tt[0] || strcmp(tt, "null") == 0 || strcasecmp(tt, want_type) != 0))
-                type_ok = 0;
-              if (type_ok && first_type_loaded_ams < 0)
-              {
-                first_type_loaded_ams = ams_id;
-                first_type_loaded_tray = tray_id;
-              }
-              if (!type_ok)
-                continue;
-              const char *tc = get_tray_color((uint8_t)ams_id, (uint8_t)tray_id);
-              unsigned d = xtouch_color_dist_sq_rrggbbaa(m->sourceColor, tc);
-              if (best_ams < 0 || d < best_d)
-              {
-                best_d = d;
-                best_ams = ams_id;
-                best_tray = tray_id;
-              }
-            }
-          }
-          if (best_ams >= 0)
-          {
-            xtouch_history_reprint_pick_ams[i] = (uint8_t)best_ams;
-            xtouch_history_reprint_pick_tray[i] = (uint8_t)best_tray;
-          }
-          else if (first_type_loaded_ams >= 0)
-          {
-            xtouch_history_reprint_pick_ams[i] = (uint8_t)first_type_loaded_ams;
-            xtouch_history_reprint_pick_tray[i] = (uint8_t)first_type_loaded_tray;
-          }
-          else if (first_loaded_ams >= 0)
-          {
-            xtouch_history_reprint_pick_ams[i] = (uint8_t)first_loaded_ams;
-            xtouch_history_reprint_pick_tray[i] = (uint8_t)first_loaded_tray;
-          }
-          else if (m->amsId >= 0 && m->amsId < XTOUCH_BAMBU_AMS_UNITS)
-          {
-            xtouch_history_reprint_pick_ams[i] = (uint8_t)m->amsId;
-            xtouch_history_reprint_pick_tray[i] = (uint8_t)(m->slotId & 0xFF);
-          }
-          else
-          {
-            xtouch_history_reprint_pick_ams[i] = 0;
-            xtouch_history_reprint_pick_tray[i] = 0;
-          }
-        }
+        xtouch_history_reprint_recompute_default_picks();
       }
       else
       {
@@ -258,11 +291,11 @@ static void xtouch_history_detail_task(void *pv)
     }
     else
     {
-      /* インデックス不正でも「取得完了」扱いにして UI が Loading のまま固まらないようにする */
       xtouch_history_selected_ams_map_count = 0;
       res.ok = 0;
       res.map_count = 0;
     }
+    
     if (s_history_detail_done_queue)
       xQueueSend(s_history_detail_done_queue, &res, 0);
   }
@@ -290,13 +323,12 @@ static void xtouch_history_cover_done_timer_cb(lv_timer_t *t)
     return;
   if (row >= xtouch_history_count)
     return;
-  {
-    const int scr = xTouchConfig.currentScreenIndex;
-    if (scr != 15 && scr != 16)
-      return;
-    if (scr == 16 && row != xtouch_history_selected_index)
-      return;
-  }
+  /* Reprint(16) へ遷移後は History 一覧オブジェクトが破棄済み。
+   * ここで LIST_REFRESH を送ると、削除済み ui_historyListContainer へ通知が飛び LVGL が panic する。
+   * 先頭行(row=0)のカバー完了が最も早く届くため「idx=0 だけ落ちる」に見えやすい。
+   * Reprint 上半分のサムネは detail_done で xtouch_history_reprint_cover_dsc に載せる。 */
+  if (xTouchConfig.currentScreenIndex != 15)
+    return;
   char path[64];
   if (xtouch_history_cover_path_for_task_id(xtouch_history_tasks[row].task_id, path, sizeof(path)) != 0)
     return;
@@ -347,6 +379,28 @@ static void xtouch_history_detail_done_timer_cb(lv_timer_t *t)
   xtouch_history_detail_res_t res;
   if (xQueueReceive(s_history_detail_done_queue, &res, 0) != pdTRUE)
     return;
+  /* Reprint 上半分: 基本情報とサムネイルをここでデコードしてから画面側へ通知 */
+  if (xTouchConfig.xTouchHideAllThumbnails ||
+      !xtouch_history_reprint_task_basic_valid ||
+      !xtouch_history_reprint_task_basic.cover_url[0])
+  {
+    xtouch_history_reprint_cover_clear();
+  }
+  else
+  {
+    char path[64];
+    if (xtouch_history_cover_path_for_task_id(xtouch_history_reprint_task_id, path, sizeof(path)) == 0 &&
+        SD.exists(path))
+    {
+      (void)xtouch_history_reprint_cover_load_path(path);
+    }
+    else
+    {
+      xtouch_history_reprint_cover_clear();
+    }
+  }
+  xtouch_history_reprint_detail_fetch_inflight = 0;
+  xtouch_history_reprint_detail_fetch_done = 1;
   lv_msg_send(XTOUCH_HISTORY_REPRINT_DETAIL_READY, NULL);
 }
 
@@ -385,46 +439,42 @@ static void xtouch_history_on_reprint_detail_fetch(void *user_data, lv_msg_t *m)
       m ? (const struct XTOUCH_MESSAGE_DATA *)lv_msg_get_payload(m) : NULL;
   if (!payload)
     return;
-  int idx = (int)payload->data;
-  /* 同じ idx の詳細が取得済みなら再取得しない（Reprint 画面の再描画で無限ループするのを防ぐ） */
-  if (idx == xtouch_history_selected_detail_index && xtouch_history_selected_ams_map_count >= 0)
+
+  (void)payload; /* history_index ではなく task_id だけで detail を取得する */
+  if (!xtouch_history_reprint_task_id_valid)
     return;
-  /* 取得中(loading)が同じ idx なら enqueue しない */
-  if (idx == xtouch_history_selected_detail_index && xtouch_history_selected_ams_map_count < 0)
+  if (xtouch_history_reprint_detail_fetch_inflight)
     return;
 
-  xtouch_history_selected_detail_index = idx;
+  xtouch_history_reprint_detail_fetch_inflight = 1;
+  xtouch_history_reprint_task_basic_valid = 0;
+  memset(&xtouch_history_reprint_task_basic, 0, sizeof(xtouch_history_reprint_task_basic));
+  xtouch_history_reprint_cover_clear();
+  memset(xtouch_history_reprint_pick_ams, 0, sizeof(xtouch_history_reprint_pick_ams));
+  memset(xtouch_history_reprint_pick_tray, 0, sizeof(xtouch_history_reprint_pick_tray));
   xtouch_history_selected_ams_map_count = -1; /* loading */
   if (s_history_detail_queue)
   {
     xQueueReset(s_history_detail_queue);
-    xtouch_history_detail_req_t req = { idx };
+    xtouch_history_detail_req_t req = { 0 };
     xQueueSend(s_history_detail_queue, &req, 0);
-  }
-}
-
-/* LVGL の lv_msg 購読コールバック: (void *user_data, lv_msg_t *m)。
- * payload は常に lv_msg_get_payload(m) から取得する（Printers 画面と同じパターン）。 */
-static void xtouch_history_on_reprint(void *user_data, lv_msg_t *m)
-{
-  (void)user_data;
-  const struct XTOUCH_MESSAGE_DATA *payload =
-      m ? (const struct XTOUCH_MESSAGE_DATA *)lv_msg_get_payload(m) : NULL;
-  if (!payload)
-    return;
-  int idx = (int)payload->data;
-  if (idx < 0 || idx >= xtouch_history_count || !xtouch_history_tasks[idx].valid)
-    return;
-  if (cloud.submitReprintTask(idx))
-  {
-    struct XTOUCH_MESSAGE_DATA done = { 0, 0 };
-    lv_msg_send(XTOUCH_HISTORY_REPRINT_DONE, &done);
   }
 }
 
 /* 新しい History リプリント設定画面からの確定用。
  * ひとまず printer_slot / filament は Cloud 側の submitReprintTask に反映せず、
  * 既存の submitReprintTask と同じ挙動で再印刷だけ行う。 */
+static void xtouch_history_on_reprint_printer_changed(void *user_data, lv_msg_t *m)
+{
+  (void)user_data;
+  (void)m;
+  if (xtouch_history_selected_ams_map_count <= 0)
+    return;
+  xtouch_history_reprint_recompute_default_picks();
+  /* プリンタ変更時は選択先 AMS を画面へ反映する */
+  lv_msg_send(XTOUCH_HISTORY_REPRINT_DETAIL_READY, NULL);
+}
+
 static void xtouch_history_on_reprint_with_options(void *user_data, lv_msg_t *m)
 {
   (void)user_data;
@@ -432,10 +482,12 @@ static void xtouch_history_on_reprint_with_options(void *user_data, lv_msg_t *m)
       m ? (const struct XTOUCH_MESSAGE_DATA *)lv_msg_get_payload(m) : NULL;
   if (!payload)
     return;
-  int idx = (int)payload->data;
-  if (idx < 0 || idx >= xtouch_history_count || !xtouch_history_tasks[idx].valid)
-    return;
-  if (cloud.submitReprintTask(idx))
+  xtouch_history_reprint_printer_dd_slot = (int)payload->data2;
+  bool ok = false;
+  if (xtouch_history_reprint_task_id_valid)
+    ok = cloud.submitReprintTaskByTaskId(xtouch_history_reprint_task_id);
+
+  if (ok)
   {
     struct XTOUCH_MESSAGE_DATA done = { 0, 0 };
     lv_msg_send(XTOUCH_HISTORY_REPRINT_DONE, &done);
@@ -496,10 +548,10 @@ static void xtouch_history_subscribe_events_impl(void)
     }
   }
   lv_msg_subscribe(XTOUCH_HISTORY_FETCH, (lv_msg_subscribe_cb_t)xtouch_history_on_fetch, NULL);
-  lv_msg_subscribe(XTOUCH_HISTORY_REPRINT, (lv_msg_subscribe_cb_t)xtouch_history_on_reprint, NULL);
   lv_msg_subscribe(XTOUCH_HISTORY_REPRINT_WITH_OPTIONS, (lv_msg_subscribe_cb_t)xtouch_history_on_reprint_with_options, NULL);
   lv_msg_subscribe(XTOUCH_HISTORY_REPRINT_DETAIL_FETCH, (lv_msg_subscribe_cb_t)xtouch_history_on_reprint_detail_fetch, NULL);
   lv_msg_subscribe(XTOUCH_HISTORY_REPRINT_SLOT_PICKED, (lv_msg_subscribe_cb_t)xtouch_history_on_reprint_slot_picked, NULL);
+  lv_msg_subscribe(XTOUCH_HISTORY_REPRINT_PRINTER_CHANGED, (lv_msg_subscribe_cb_t)xtouch_history_on_reprint_printer_changed, NULL);
   lv_msg_subscribe(XTOUCH_HISTORY_COVER_DL_CANCEL, (lv_msg_subscribe_cb_t)xtouch_history_on_cover_dl_cancel, NULL);
   lv_msg_subscribe(XTOUCH_THUMBNAILS_HIDE_MODE_CHANGED, (lv_msg_subscribe_cb_t)xtouch_history_on_thumbnails_hide_changed, NULL);
 }

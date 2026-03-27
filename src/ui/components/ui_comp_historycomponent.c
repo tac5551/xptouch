@@ -85,6 +85,12 @@ lv_obj_t *ui_historyComponent_create(lv_obj_t *comp_parent)
         lv_obj_set_style_text_font(titleLabel, &lv_font_notosans_28, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_label_set_long_mode(titleLabel, LV_LABEL_LONG_CLIP);
 
+        lv_obj_t *printerLabel = lv_label_create(rightCol);
+        lv_label_set_text(printerLabel, "");
+        lv_obj_set_style_text_color(printerLabel, lv_color_hex(0xAAAAAA), LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_text_font(printerLabel, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_label_set_long_mode(printerLabel, LV_LABEL_LONG_CLIP);
+
         lv_obj_t *dateLabel = lv_label_create(rightCol);
         lv_label_set_text(dateLabel, "");
         lv_obj_set_style_text_color(dateLabel, lv_color_hex(0x999999), LV_PART_MAIN | LV_STATE_DEFAULT);

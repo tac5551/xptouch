@@ -2,6 +2,7 @@
 #include "../xtouch/types.h"
 #include "../xtouch/globals.h"
 #include "../xtouch/debug.h"
+#include <string.h>
 
 void initialActions(lv_event_t *e) {}
 
@@ -203,8 +204,29 @@ void onHistoryReprint(lv_event_t *e)
         printf("[HistoryReprint] abort: row not found in list\n");
         return;
     }
-    printf("[HistoryReprint] goto HistoryReprintScreen idx=%d\n", idx);
-    xtouch_history_selected_index = idx;
+    printf("[HistoryReprint] goto HistoryReprintScreen idx=%d task_id='%s' valid=%d\n",
+           idx,
+           (xtouch_history_tasks[idx].task_id[0] ? xtouch_history_tasks[idx].task_id : ""),
+           (int)xtouch_history_tasks[idx].valid);
+    /* History一覧からも task_id 指定で再印刷する */
+    memset(xtouch_history_reprint_task_id, 0, XTOUCH_HISTORY_TASK_ID_LEN);
+    if (xtouch_history_tasks[idx].task_id[0] && strcmp(xtouch_history_tasks[idx].task_id, "0") != 0)
+    {
+        strncpy(xtouch_history_reprint_task_id, xtouch_history_tasks[idx].task_id, XTOUCH_HISTORY_TASK_ID_LEN - 1);
+        xtouch_history_reprint_task_id[XTOUCH_HISTORY_TASK_ID_LEN - 1] = '\0';
+        xtouch_history_reprint_task_id_valid = 1;
+    }
+    else
+    {
+        xtouch_history_reprint_task_id_valid = 0;
+    }
+    xtouch_history_reprint_detail_fetch_inflight = 0;
+    xtouch_history_reprint_detail_fetch_done = 0;
+    xtouch_history_reprint_task_basic_valid = 0;
+    memset(&xtouch_history_reprint_task_basic, 0, sizeof(xtouch_history_reprint_task_basic));
+    xtouch_history_reprint_cover_dsc = NULL;
+    xtouch_history_selected_ams_map_count = -1;
+    xtouch_history_reprint_printer_dd_slot = 0;
     loadScreen(16);
 }
 #endif

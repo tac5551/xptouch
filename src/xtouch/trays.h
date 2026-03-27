@@ -39,6 +39,15 @@ extern "C"
     const char *get_tray_setting_id(uint8_t ams_id, uint8_t tray_id);
     void set_tray_setting_id(uint8_t ams_id, uint8_t tray_id, const char *setting_id);
 
+#if defined(__XTOUCH_SCREEN_50__)
+    /** Reprint: xtouch_history_reprint_printer_dd_slot（0=自機）に応じ bambuStatus または xtouch_other_printer_trays を参照 */
+    long xtouch_reprint_ams_exist_bits(void);
+    uint64_t get_tray_status_reprint(uint8_t ams_id, uint8_t tray_id);
+    char *get_tray_type_reprint(uint8_t ams_id, uint8_t tray_id);
+    const char *get_tray_color_reprint(uint8_t ams_id, uint8_t tray_id);
+    const char *get_tray_setting_id_reprint(uint8_t ams_id, uint8_t tray_id);
+#endif
+
 #ifdef __cplusplus
 } /*extern "C"*/
 #endif

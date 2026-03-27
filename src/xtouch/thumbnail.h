@@ -121,7 +121,26 @@ static void thumb_dl_task(void *pv)
             continue;
         if (item.slot < 0 || item.slot >= XTOUCH_THUMB_SLOT_MAX)
             continue;
-        if (downloadFileToSDCard(item.url, item.path) == 0)
+        if (downloadFileToSDCard(item.url, item.path) != 0)
+        {
+            ConsoleVerbose.printf("[xPTouch][V][THUMB] dl_ok slot=%d path=%s\n", item.slot, item.path);
+            /* 成功時も UI 更新のため done キューに流す。
+             * さらに、成功後は image_url を消しておき、今後このスロットでは SD 上の PNG のみを使うようにする。 */
+            if (item.slot == 0)
+            {
+                bambuStatus.image_url[0] = '\0';
+            }
+            else
+            {
+                int idx = item.slot - 1;
+                if (idx >= 0 && idx < xtouch_other_printer_count)
+                {
+                    otherPrinters[idx].image_url[0] = '\0';
+                }
+            }
+            xQueueSend(s_thumb_done_queue, &item.slot, 0);
+        }
+        else
         {
             ConsoleVerbose.printf("[xPTouch][V][THUMB] dl_ng slot=%d\n", item.slot);
             /* ダウンロード失敗時はこのスロットの URL / task_id をクリアし、以後はロゴにフォールバックさせる（リトライしない）。 */
@@ -137,25 +156,6 @@ static void thumb_dl_task(void *pv)
                 {
                     otherPrinters[idx].image_url[0] = '\0';
                     otherPrinters[idx].task_id[0] = '\0';
-                }
-            }
-            xQueueSend(s_thumb_done_queue, &item.slot, 0);
-        }
-        else
-        {
-            ConsoleVerbose.printf("[xPTouch][V][THUMB] dl_ok slot=%d path=%s\n", item.slot, item.path);
-            /* 成功時も UI 更新のため done キューに流す。
-             * さらに、成功後は image_url を消しておき、今後このスロットでは SD 上の PNG のみを使うようにする。 */
-            if (item.slot == 0)
-            {
-                bambuStatus.image_url[0] = '\0';
-            }
-            else
-            {
-                int idx = item.slot - 1;
-                if (idx >= 0 && idx < xtouch_other_printer_count)
-                {
-                    otherPrinters[idx].image_url[0] = '\0';
                 }
             }
             xQueueSend(s_thumb_done_queue, &item.slot, 0);
@@ -359,10 +359,9 @@ static void thumbnail_timer_cb(lv_timer_t *t)
 
     if (s_thumb_force_fetch_slot < XTOUCH_THUMB_SLOT_MAX)
     {
-        int s = s_thumb_force_fetch_slot;
+        int s = s_thumb_force_fetch_slot++;
         if (!thumbnail_slot_has_url_or_task(s, cloud.loggedIn ? 1 : 0))
             return;
-        s_thumb_force_fetch_slot++;
 
         ConsoleVerbose.printf("[xPTouch][V][THUMB] force fetch slot=%d\n", s);
 
@@ -520,7 +519,24 @@ static lv_img_dsc_t g_history_cover_dsc[XTOUCH_HISTORY_COVER_SLOTS];
 extern "C" {
 void *xtouch_thumbnail_slot_dsc[XTOUCH_THUMB_SLOT_MAX] = { nullptr, nullptr, nullptr, nullptr, nullptr };
 void *xtouch_history_cover_dsc[XTOUCH_HISTORY_COVER_SLOTS] = {};
+void *xtouch_history_reprint_cover_dsc = nullptr;
 }
+
+/* Reprint 画面上半分用: 1枚だけデコードして表示する */
+static lv_color_t *g_history_reprint_cover_buf = nullptr;
+static lv_img_dsc_t g_history_reprint_cover_dsc;
+
+/* 下で定義される pngle callback の前方宣言（Reprint decode のため） */
+struct xtouch_pngle_ctx_t;
+static uint32_t xtouch_pngle_read_cb(void *user_data, uint8_t *buf, uint32_t len);
+static void xtouch_pngle_draw_cb(void *user_data, uint32_t x, uint32_t y, uint_fast8_t div_x, size_t len, const uint8_t *argb);
+
+void xtouch_history_reprint_cover_clear(void)
+{
+    xtouch_history_reprint_cover_dsc = nullptr;
+}
+
+bool xtouch_history_reprint_cover_load_path(const char *path);
 
 struct xtouch_pngle_ctx_t
 {
@@ -575,6 +591,90 @@ static void xtouch_pngle_draw_cb(void *user_data, uint32_t x, uint32_t y, uint_f
                 row[dx].full = rgb565;
         }
     }
+}
+
+bool xtouch_history_reprint_cover_load_path(const char *path)
+{
+    if (!path || !path[0] || SD.cardType() == CARD_NONE)
+    {
+        xtouch_history_reprint_cover_clear();
+        return false;
+    }
+
+    const int out_w = XTOUCH_HISTORY_COVER_W;
+    const int out_h = XTOUCH_HISTORY_COVER_H;
+    const size_t px_count = (size_t)out_w * (size_t)out_h;
+
+    if (!g_history_reprint_cover_buf)
+    {
+        g_history_reprint_cover_buf = (lv_color_t *)ps_malloc(sizeof(lv_color_t) * px_count);
+        if (!g_history_reprint_cover_buf)
+        {
+            xtouch_history_reprint_cover_clear();
+            return false;
+        }
+    }
+
+    memset(g_history_reprint_cover_buf, 0, sizeof(lv_color_t) * px_count);
+    g_history_reprint_cover_dsc.header.always_zero = 0;
+    g_history_reprint_cover_dsc.header.w = (lv_coord_t)out_w;
+    g_history_reprint_cover_dsc.header.h = (lv_coord_t)out_h;
+    g_history_reprint_cover_dsc.header.cf = LV_IMG_CF_TRUE_COLOR;
+    g_history_reprint_cover_dsc.data = (const uint8_t *)g_history_reprint_cover_buf;
+    g_history_reprint_cover_dsc.data_size = sizeof(lv_color_t) * px_count;
+
+    File file = SD.open(path, "r");
+    if (!file)
+    {
+        xtouch_history_reprint_cover_clear();
+        return false;
+    }
+
+    pngle_t *pngle = lgfx_pngle_new();
+    if (!pngle)
+    {
+        file.close();
+        xtouch_history_reprint_cover_clear();
+        return false;
+    }
+
+    xtouch_pngle_ctx_t pngle_ctx;
+    pngle_ctx.file = &file;
+    pngle_ctx.buf = g_history_reprint_cover_buf;
+    pngle_ctx.width = out_w;
+    pngle_ctx.height = out_h;
+    pngle_ctx.img_width = 0;
+    pngle_ctx.img_height = 0;
+
+    if (lgfx_pngle_prepare(pngle, xtouch_pngle_read_cb, &pngle_ctx) < 0)
+    {
+        lgfx_pngle_destroy(pngle);
+        file.close();
+        xtouch_history_reprint_cover_clear();
+        return false;
+    }
+
+    pngle_ctx.img_width = lgfx_pngle_get_width(pngle);
+    pngle_ctx.img_height = lgfx_pngle_get_height(pngle);
+    if (pngle_ctx.img_width == 0 || pngle_ctx.img_height == 0)
+    {
+        lgfx_pngle_destroy(pngle);
+        file.close();
+        xtouch_history_reprint_cover_clear();
+        return false;
+    }
+
+    int res = lgfx_pngle_decomp(pngle, xtouch_pngle_draw_cb);
+    file.close();
+    lgfx_pngle_destroy(pngle);
+    if (res < 0)
+    {
+        xtouch_history_reprint_cover_clear();
+        return false;
+    }
+
+    xtouch_history_reprint_cover_dsc = (void *)&g_history_reprint_cover_dsc;
+    return true;
 }
 
 bool xtouch_load_thumb_with_lgfx(const char *path, int out_w, int out_h)

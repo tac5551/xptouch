@@ -270,6 +270,7 @@ extern "C"
 #ifdef __XTOUCH_SCREEN_50__
 #define XTOUCH_MULTI_PRINTER_MAX 5
 #define XTOUCH_OTHER_PRINTERS_MAX (XTOUCH_MULTI_PRINTER_MAX - 1)
+#define XTOUCH_DEV_PRODUCT_NAME_LEN 24
 
     typedef struct
     {
@@ -288,6 +289,8 @@ extern "C"
 
     extern other_printer_status_t otherPrinters[XTOUCH_OTHER_PRINTERS_MAX];
     extern char xtouch_other_printer_dev_ids[XTOUCH_OTHER_PRINTERS_MAX][16];
+    extern char xtouch_current_printer_dev_product_name[XTOUCH_DEV_PRODUCT_NAME_LEN];
+    extern char xtouch_other_printer_dev_product_names[XTOUCH_OTHER_PRINTERS_MAX][XTOUCH_DEV_PRODUCT_NAME_LEN];
     extern int xtouch_other_printer_count;
 
     /** サムネイル表示用: スロット番号ごとの SD パス（"S:/tmp/{task_id}.png"）。UI はこれを参照するだけ。xtouch が init で埋める。 */
@@ -302,6 +305,7 @@ extern "C"
 #define XTOUCH_HISTORY_TITLE_LEN 64
 #define XTOUCH_HISTORY_COVER_URL_LEN 1024
 #define XTOUCH_HISTORY_DEVICE_NAME_LEN 32
+#define XTOUCH_HISTORY_DEVICE_MODEL_LEN 24
 #define XTOUCH_HISTORY_TASK_ID_LEN 24
 #define XTOUCH_HISTORY_MODEL_ID_LEN 32
 #define XTOUCH_HISTORY_TIME_LEN 32
@@ -309,7 +313,18 @@ extern "C"
 #define XTOUCH_BAMBU_AMS_UNITS 4
 #define XTOUCH_BAMBU_AMS_SLOTS_PER_UNIT 4
 #define XTOUCH_HISTORY_AMS_MAP_MAX ((XTOUCH_BAMBU_AMS_UNITS) * (XTOUCH_BAMBU_AMS_SLOTS_PER_UNIT))
-    /** Cloud my/tasks の amsDetailMapping 1要素（再印刷時に AMS スロットへ差し替え） */
+#define XTOUCH_OTHER_TRAY_SETTING_ID_LEN 16
+    /** 他プリンタ用: push_status の AMS を自機の trays[] とは別に保持（Reprint のスロット表示・API 用） */
+    typedef struct
+    {
+        uint64_t tray_status;
+        char tray_color[16];
+        char tray_type[24];
+        char tray_setting_id[XTOUCH_OTHER_TRAY_SETTING_ID_LEN];
+    } xtouch_other_printer_tray_cell_t;
+    extern xtouch_other_printer_tray_cell_t xtouch_other_printer_trays[XTOUCH_OTHER_PRINTERS_MAX][XTOUCH_BAMBU_AMS_UNITS][XTOUCH_BAMBU_AMS_SLOTS_PER_UNIT];
+    extern long xtouch_other_printer_tray_ams_exist_bits[XTOUCH_OTHER_PRINTERS_MAX];
+    extern int xtouch_history_reprint_printer_dd_slot;
     typedef struct
     {
         int ams;
@@ -329,6 +344,7 @@ extern "C"
         char title[XTOUCH_HISTORY_TITLE_LEN];
         char cover_url[XTOUCH_HISTORY_COVER_URL_LEN];
         char device_name[XTOUCH_HISTORY_DEVICE_NAME_LEN];
+        char device_model[XTOUCH_HISTORY_DEVICE_MODEL_LEN]; /* API deviceModel（deviceName 空時の表示用） */
         char start_time[XTOUCH_HISTORY_TIME_LEN];
         char end_time[XTOUCH_HISTORY_TIME_LEN];
         char model_id[XTOUCH_HISTORY_MODEL_ID_LEN]; /* create_task 用 */
@@ -345,12 +361,21 @@ extern "C"
 #define XTOUCH_HISTORY_COVER_SLOTS 10
     /** History 画面 行別: LGFX デコード済み cover 画像の descriptor。UI は lv_img_set_src(img, (lv_img_dsc_t*)xtouch_history_cover_dsc[idx]) で表示。 */
     extern void *xtouch_history_cover_dsc[XTOUCH_HISTORY_COVER_SLOTS];
-    /** History リプリント用に UI から選択された履歴行インデックスを一時保持する。-1 は未選択。 */
-    extern int xtouch_history_selected_index;
-    /** Reprint 対象として詳細(amsDetailMapping)を最後に取得した履歴行。-1 は未取得。 */
-    extern int xtouch_history_selected_detail_index;
+    /** History リプリント対象の task_id を保持する（tasks 一覧が空でも再印刷可能にする）。空なら無効。 */
+    extern char xtouch_history_reprint_task_id[XTOUCH_HISTORY_TASK_ID_LEN];
+    /** xtouch_history_reprint_task_id が有効か（空文字列判定の代わり）。 */
+    extern int xtouch_history_reprint_task_id_valid;
+    /** Reprint 上半分（タイトル/デバイス/Plate/サムネ）表示用の task 基本情報 */
+    extern xtouch_history_task_t xtouch_history_reprint_task_basic;
+    extern int xtouch_history_reprint_task_basic_valid;
+    /** Reprint 用カバー画像デコード済み descriptor（History一覧の行とは独立） */
+    extern void *xtouch_history_reprint_cover_dsc;
     /** Reprint 対象タスクの amsDetailMapping を展開した共有バッファ（必要時のみ取得）。count<0 は取得中、0 は無し */
     extern int xtouch_history_selected_ams_map_count;
+    /** HistoryReprint の task_id detail fetch を多重実行しないためのフラグ */
+    extern int xtouch_history_reprint_detail_fetch_inflight;
+    /** HistoryReprint セッションの task_id detail fetch 完了フラグ（再初期化でも再取得しない） */
+    extern int xtouch_history_reprint_detail_fetch_done;
     extern xtouch_history_ams_map_t xtouch_history_selected_ams_map[XTOUCH_HISTORY_AMS_MAP_MAX];
     /** リプリント確定時: ams_map[i] に割り当てる AMS ユニット(0..XTOUCH_BAMBU_AMS_UNITS-1)とトレイ(0..3)。External は ams=0 tray=254。 */
     extern uint8_t xtouch_history_reprint_pick_ams[XTOUCH_HISTORY_AMS_MAP_MAX];

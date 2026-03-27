@@ -52,6 +52,78 @@ static int cloud_parse_json_int_key(const char *json, size_t len, const char *ke
   return val;
 }
 
+/** オブジェクト直下(depth=1)の "key":<int> を取得（ネスト配下の同名キー誤検出を避ける）。 */
+static int cloud_parse_json_int_key_top_level(const char *json, size_t len, const char *key)
+{
+  if (!json || !key || !key[0] || len == 0)
+    return 0;
+  char needle[80];
+  snprintf(needle, sizeof(needle), "\"%s\"", key);
+  const size_t needle_len = strlen(needle);
+  int obj_depth = 0;
+  bool in_string = false;
+  bool esc = false;
+  for (size_t i = 0; i < len; i++)
+  {
+    char c = json[i];
+    if (in_string)
+    {
+      if (esc)
+      {
+        esc = false;
+        continue;
+      }
+      if (c == '\\')
+      {
+        esc = true;
+        continue;
+      }
+      if (c == '"')
+        in_string = false;
+      continue;
+    }
+    if (obj_depth == 1 && c == '"')
+    {
+      if (i + needle_len <= len && memcmp(json + i, needle, needle_len) == 0)
+      {
+        size_t p = i + needle_len;
+        while (p < len && (json[p] == ' ' || json[p] == '\t' || json[p] == '\n' || json[p] == '\r'))
+          p++;
+        if (p < len && json[p] == ':')
+        {
+          p++;
+          while (p < len && (json[p] == ' ' || json[p] == '\t' || json[p] == '\n' || json[p] == '\r'))
+            p++;
+          int val = 0;
+          while (p < len && json[p] >= '0' && json[p] <= '9')
+          {
+            val = val * 10 + (json[p] - '0');
+            p++;
+          }
+          return val;
+        }
+      }
+    }
+    if (c == '"')
+    {
+      in_string = true;
+      continue;
+    }
+    if (c == '{')
+    {
+      obj_depth++;
+      continue;
+    }
+    if (c == '}')
+    {
+      if (obj_depth > 0)
+        obj_depth--;
+      continue;
+    }
+  }
+  return 0;
+}
+
 /** JSON 文字列から key の直後の文字列値 "key":"value" を out にコピー。ヒープを使わない。 */
 static void cloud_parse_json_str_key(const char *json, size_t len, const char *key, char *out, size_t out_size)
 {
@@ -122,6 +194,8 @@ static bool cloud_parse_json_bool_key(const char *json, size_t len, const char *
 #include <stdint.h>
 extern "C" const char *get_tray_color(uint8_t ams_id, uint8_t tray_id);
 extern "C" const char *get_tray_setting_id(uint8_t ams_id, uint8_t tray_id);
+extern "C" const char *get_tray_color_reprint(uint8_t ams_id, uint8_t tray_id);
+extern "C" const char *get_tray_setting_id_reprint(uint8_t ams_id, uint8_t tray_id);
 
 static double cloud_parse_json_double_key(const char *json, size_t len, const char *key)
 {
@@ -687,6 +761,40 @@ static int cloud_parse_ams_detail_mapping_from_client(ClientT &c, unsigned long 
   }
   return cnt;
 }
+
+/** クラウドの dev_product_name / deviceModel が A1 Mini 系か（表記ゆれ対応）。 */
+static bool cloud_history_name_is_a1_mini(const char *s)
+{
+  if (!s || !s[0])
+    return false;
+  if (strcasecmp(s, "A1 Mini") == 0)
+    return true;
+  if (strcasecmp(s, "A1Mini") == 0)
+    return true;
+  return false;
+}
+
+/** bind の dev_product_name と tasks の deviceModel を並べ、同一 History グループなら true。
+ * 固定グループ: X1 Carbon / P1S / P1P / P2S / A1。A1 Mini は共有グループに含めず、他機種との履歴共有もしない。 */
+static bool cloud_history_device_models_compatible(const char *local_product, const char *task_device_model)
+{
+  if (!local_product || !task_device_model || !local_product[0] || !task_device_model[0])
+    return false;
+  if (strcmp(local_product, task_device_model) == 0)
+    return true;
+  if (cloud_history_name_is_a1_mini(local_product) || cloud_history_name_is_a1_mini(task_device_model))
+    return false;
+  static const char *const k_x1_p1_full_plate[] = {"X1 Carbon", "P1S", "P1P", "P2S", "A1", nullptr};
+  bool loc = false, task = false;
+  for (int i = 0; k_x1_p1_full_plate[i]; i++)
+  {
+    if (strcmp(local_product, k_x1_p1_full_plate[i]) == 0)
+      loc = true;
+    if (strcmp(task_device_model, k_x1_p1_full_plate[i]) == 0)
+      task = true;
+  }
+  return loc && task;
+}
 #endif
 
 class BambuCloud
@@ -1069,123 +1177,234 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
   }
 
 #ifdef __XTOUCH_SCREEN_50__
-  /** GET /v1/user-service/my/tasks?limit=N&deviceId=xxx[&after=id] で印刷履歴を取得。after 省略時は先頭から、指定時は続きを xtouch_history_tasks に追加。自機のみ。 */
+  /** GET /v1/user-service/my/tasks（deviceId なし）。フィルタ後 want 件に達するまで after で追取得。生 hits は累計 50 件までで打ち切り（after 引数ありは 1 回のみ・上限なし）。 */
   bool getMyTasks(int limit, const char *after = nullptr)
   {
     HttpLockGuard _g(this);
     if (!loggedIn)
       return false;
-    if (limit <= 0 || limit > XTOUCH_HISTORY_TASKS_MAX)
-      limit = XTOUCH_HISTORY_TASKS_MAX;
 
-    String host = _region == "China" ? "api.bambulab.cn" : "api.bambulab.com";
-    String path = String("/v1/user-service/my/tasks?limit=") + String(limit);
-    if (xTouchConfig.xTouchSerialNumber[0] != '\0')
-      path += String("&deviceId=") + String(xTouchConfig.xTouchSerialNumber);
-    if (after && after[0] != '\0')
-      path += String("&after=") + String(after);
-    String url = String("https://") + host + path;
-
-    WiFiClientSecure &c = sslClient();
-    c.stop();
-    c.setTimeout(12000);
-    c.setInsecure();
-    yield();
-    HTTPClient http;
-    http.begin(c, url);
-    http.setReuse(false);
-    http.useHTTP10(true);
-    char auth_buf[320];
-    snprintf(auth_buf, sizeof(auth_buf), "Bearer %s", _auth_token.c_str());
-    http.addHeader("Authorization", auth_buf);
-    http.setTimeout(12000);
-    http.addHeader("Connection", "close");
-    int code = http.GET();
-    String response = (code == 200) ? http.getString() : "";
-    http.end();
-    c.stop();
-    if (code != 200 || response.length() == 0)
+    char dev_product_filter[64];
+    dev_product_filter[0] = '\0';
     {
-      if (!after)
-        xtouch_history_count = 0;
-      return false;
-    }
-
-    const char *raw = response.c_str();
-    const size_t raw_len = response.length();
-    const char *hits_key = "\"hits\"";
-    const char *p = strstr(raw, hits_key);
-    if (!p || (size_t)(p - raw) >= raw_len)
-    {
-      if (!after)
-        xtouch_history_count = 0;
-      return false;
-    }
-    p = (const char *)memchr(p, '[', raw_len - (size_t)(p - raw));
-    if (!p)
-      p = raw + raw_len;
-    else
-      p++;
-
-    int start = after ? xtouch_history_count : 0;
-    if (start >= XTOUCH_HISTORY_TASKS_MAX)
-      return true;
-    int n = start;
-    while (n < XTOUCH_HISTORY_TASKS_MAX && (size_t)(p - raw) < raw_len)
-    {
-      while ((size_t)(p - raw) < raw_len && (*p == ' ' || *p == '\t' || *p == '\n' || *p == '\r' || *p == ','))
-        p++;
-      if ((size_t)(p - raw) >= raw_len || *p == ']')
-        break;
-      if (*p != '{')
+      DynamicJsonDocument printers = loadPrinters();
+      JsonObject root = printers.as<JsonObject>();
+      if (root.containsKey(xTouchConfig.xTouchSerialNumber))
       {
-        p++;
-        continue;
-      }
-      const char *obj_start = p;
-      int depth = 0;
-      const char *obj_end = nullptr;
-      for (const char *q = p; (size_t)(q - raw) < raw_len; q++)
-      {
-        if (*q == '{')
-          depth++;
-        else if (*q == '}')
+        JsonObject dev = root[xTouchConfig.xTouchSerialNumber].as<JsonObject>();
+        if (!dev.isNull() && dev.containsKey("dev_product_name"))
         {
-          depth--;
-          if (depth == 0)
+          const char *pn = dev["dev_product_name"].as<const char *>();
+          if (pn && pn[0])
           {
-            obj_end = q;
-            break;
+            strncpy(dev_product_filter, pn, sizeof(dev_product_filter) - 1);
+            dev_product_filter[sizeof(dev_product_filter) - 1] = '\0';
           }
         }
       }
-      if (!obj_end)
-        break;
-      size_t obj_len = (size_t)(obj_end - obj_start + 1);
-
-      xtouch_history_task_t *t = &xtouch_history_tasks[n];
-      memset(t, 0, sizeof(*t));
-      long id_val = cloud_parse_json_long_key(obj_start, obj_len, "id");
-      snprintf(t->task_id, sizeof(t->task_id), "%ld", id_val);
-      cloud_parse_json_str_key(obj_start, obj_len, "modelId", t->model_id, sizeof(t->model_id));
-      cloud_parse_json_str_key(obj_start, obj_len, "title", t->title, sizeof(t->title));
-      cloud_parse_json_str_key(obj_start, obj_len, "cover", t->cover_url, sizeof(t->cover_url));
-      cloud_parse_json_str_key(obj_start, obj_len, "deviceName", t->device_name, sizeof(t->device_name));
-      cloud_parse_json_str_key(obj_start, obj_len, "startTime", t->start_time, sizeof(t->start_time));
-      cloud_parse_json_str_key(obj_start, obj_len, "endTime", t->end_time, sizeof(t->end_time));
-      t->profile_id = cloud_parse_json_int_key(obj_start, obj_len, "profileId");
-      t->plate_index = cloud_parse_json_int_key(obj_start, obj_len, "plateIndex");
-      t->status = cloud_parse_json_int_key(obj_start, obj_len, "status");
-      t->is_printable = cloud_parse_json_bool_key(obj_start, obj_len, "isPrintable") ? 1 : 0;
-      /* 一覧 hits: amsDetailMapping または filaments のどちらかがあれば Reprint 用データがあり得る */
-      t->has_ams_mapping =
-          (strstr(obj_start, "\"amsDetailMapping\"") != nullptr || strstr(obj_start, "\"filaments\"") != nullptr) ? 1 : 0;
-      t->valid = 1;
-      n++;
-
-      p = obj_end + 1;
     }
-    xtouch_history_count = n;
+
+    String host = _region == "China" ? "api.bambulab.cn" : "api.bambulab.com";
+    const bool append_one_shot = (after && after[0] != '\0');
+    int req_limit;
+    int want_visible;
+    if (append_one_shot)
+    {
+      req_limit = (limit <= 0 || limit > XTOUCH_HISTORY_TASKS_MAX) ? XTOUCH_HISTORY_TASKS_MAX : limit;
+      want_visible = XTOUCH_HISTORY_TASKS_MAX;
+    }
+    else
+    {
+      want_visible = (limit <= 0 || limit > XTOUCH_HISTORY_TASKS_MAX) ? XTOUCH_HISTORY_TASKS_MAX : limit;
+      req_limit = 10;
+    }
+
+    char cursor_after[XTOUCH_HISTORY_TASK_ID_LEN];
+    cursor_after[0] = '\0';
+    if (append_one_shot)
+    {
+      strncpy(cursor_after, after, sizeof(cursor_after) - 1);
+      cursor_after[sizeof(cursor_after) - 1] = '\0';
+    }
+
+    int n = append_one_shot ? xtouch_history_count : 0;
+    if (append_one_shot && n >= XTOUCH_HISTORY_TASKS_MAX)
+      return true;
+
+    const int k_history_raw_total_max = 50;
+    int raw_total = 0;
+    const int max_pages = 10;
+    for (int page_ix = 0; page_ix < max_pages; page_ix++)
+    {
+      if (!append_one_shot && raw_total >= k_history_raw_total_max)
+        break;
+      if (!append_one_shot && n >= want_visible)
+        break;
+      if (append_one_shot && n >= XTOUCH_HISTORY_TASKS_MAX)
+        break;
+
+      String path = String("/v1/user-service/my/tasks?limit=") + String(req_limit);
+      if (cursor_after[0] != '\0')
+        path += String("&after=") + String(cursor_after);
+      String url = String("https://") + host + path;
+
+      WiFiClientSecure &c = sslClient();
+      c.stop();
+      c.setTimeout(12000);
+      c.setInsecure();
+      yield();
+      HTTPClient http;
+      http.begin(c, url);
+      http.setReuse(false);
+      http.useHTTP10(true);
+      char auth_buf[320];
+      snprintf(auth_buf, sizeof(auth_buf), "Bearer %s", _auth_token.c_str());
+      http.addHeader("Authorization", auth_buf);
+      http.setTimeout(12000);
+      http.addHeader("Connection", "close");
+      int code = http.GET();
+      String response = (code == 200) ? http.getString() : "";
+      http.end();
+      c.stop();
+      if (code != 200 || response.length() == 0)
+      {
+        if (!append_one_shot && page_ix == 0)
+        {
+          xtouch_history_count = 0;
+          return false;
+        }
+        break;
+      }
+
+      const char *raw = response.c_str();
+      const size_t raw_len = response.length();
+      const char *hits_key = "\"hits\"";
+      const char *p = strstr(raw, hits_key);
+      if (!p || (size_t)(p - raw) >= raw_len)
+      {
+        if (!append_one_shot && page_ix == 0)
+        {
+          xtouch_history_count = 0;
+          return false;
+        }
+        break;
+      }
+      p = (const char *)memchr(p, '[', raw_len - (size_t)(p - raw));
+      if (!p)
+        p = raw + raw_len;
+      else
+        p++;
+
+      int raw_hits = 0;
+      char last_raw_id[XTOUCH_HISTORY_TASK_ID_LEN];
+      last_raw_id[0] = '\0';
+
+      /* hits 配列は末尾まで走査し、最終要素 id を after 用に残す（フィルタで先に want 件満たしても同ページ内の残りを読む） */
+      while ((size_t)(p - raw) < raw_len)
+      {
+        while ((size_t)(p - raw) < raw_len && (*p == ' ' || *p == '\t' || *p == '\n' || *p == '\r' || *p == ','))
+          p++;
+        if ((size_t)(p - raw) >= raw_len || *p == ']')
+          break;
+        if (*p != '{')
+        {
+          p++;
+          continue;
+        }
+        const char *obj_start = p;
+        int depth = 0;
+        const char *obj_end = nullptr;
+        for (const char *q = p; (size_t)(q - raw) < raw_len; q++)
+        {
+          if (*q == '{')
+            depth++;
+          else if (*q == '}')
+          {
+            depth--;
+            if (depth == 0)
+            {
+              obj_end = q;
+              break;
+            }
+          }
+        }
+        if (!obj_end)
+          break;
+        size_t obj_len = (size_t)(obj_end - obj_start + 1);
+
+        raw_hits++;
+        long id_val = cloud_parse_json_long_key(obj_start, obj_len, "id");
+        snprintf(last_raw_id, sizeof(last_raw_id), "%ld", id_val);
+
+        const bool want_copy =
+            append_one_shot ? (n < XTOUCH_HISTORY_TASKS_MAX) : (n < want_visible && n < XTOUCH_HISTORY_TASKS_MAX);
+
+        char device_model[64];
+        device_model[0] = '\0';
+        cloud_parse_json_str_key(obj_start, obj_len, "deviceModel", device_model, sizeof(device_model));
+
+        bool filtered_ok;
+        if (dev_product_filter[0] != '\0')
+          filtered_ok = cloud_history_device_models_compatible(dev_product_filter, device_model);
+        else
+        {
+          /* printer.json に dev_product_name が無い場合、全件表示すると他機種履歴が混ざるため hits の deviceId で自機のみに限定 */
+          char task_dev_id[32];
+          task_dev_id[0] = '\0';
+          cloud_parse_json_str_key(obj_start, obj_len, "deviceId", task_dev_id, sizeof(task_dev_id));
+          filtered_ok = (task_dev_id[0] && xTouchConfig.xTouchSerialNumber[0] &&
+                         strcmp(task_dev_id, xTouchConfig.xTouchSerialNumber) == 0);
+        }
+
+        if (filtered_ok && want_copy)
+        {
+          xtouch_history_task_t *t = &xtouch_history_tasks[n];
+          memset(t, 0, sizeof(*t));
+          snprintf(t->task_id, sizeof(t->task_id), "%ld", id_val);
+          cloud_parse_json_str_key(obj_start, obj_len, "modelId", t->model_id, sizeof(t->model_id));
+          cloud_parse_json_str_key(obj_start, obj_len, "title", t->title, sizeof(t->title));
+          cloud_parse_json_str_key(obj_start, obj_len, "cover", t->cover_url, sizeof(t->cover_url));
+          cloud_parse_json_str_key(obj_start, obj_len, "deviceName", t->device_name, sizeof(t->device_name));
+          cloud_parse_json_str_key(obj_start, obj_len, "deviceModel", t->device_model, sizeof(t->device_model));
+          cloud_parse_json_str_key(obj_start, obj_len, "startTime", t->start_time, sizeof(t->start_time));
+          cloud_parse_json_str_key(obj_start, obj_len, "endTime", t->end_time, sizeof(t->end_time));
+          t->profile_id = cloud_parse_json_int_key(obj_start, obj_len, "profileId");
+          t->plate_index = cloud_parse_json_int_key(obj_start, obj_len, "plateIndex");
+          int parsed_status = cloud_parse_json_int_key_top_level(obj_start, obj_len, "status");
+          if (parsed_status == 0)
+            parsed_status = cloud_parse_json_int_key(obj_start, obj_len, "status");
+          t->status = parsed_status;
+          t->is_printable = cloud_parse_json_bool_key(obj_start, obj_len, "isPrintable") ? 1 : 0;
+          t->has_ams_mapping =
+              (strstr(obj_start, "\"amsDetailMapping\"") != nullptr || strstr(obj_start, "\"filaments\"") != nullptr) ? 1 : 0;
+          t->valid = 1;
+          n++;
+        }
+
+        p = obj_end + 1;
+
+        if (append_one_shot && n >= XTOUCH_HISTORY_TASKS_MAX)
+          break;
+      }
+
+      xtouch_history_count = n;
+
+      if (append_one_shot)
+        return true;
+
+      raw_total += raw_hits;
+      if (raw_hits < req_limit)
+        break;
+      if (n >= want_visible)
+        break;
+      if (!last_raw_id[0])
+        break;
+      if (raw_total >= k_history_raw_total_max)
+        break;
+      strncpy(cursor_after, last_raw_id, sizeof(cursor_after) - 1);
+      cursor_after[sizeof(cursor_after) - 1] = '\0';
+    }
+
     return true;
   }
 
@@ -1248,10 +1467,78 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
   }
 
   /**
-   * 履歴タスクを再印刷する。
-   * GET /v1/user-service/my/tasks で取得した 1 件分 JSON（id 付き）を xtouch_history_tasks[].raw_json に保持しておき、
-   * ここでは id を削除し、deviceId を現在ペア中のデバイスに上書きして POST /v1/user-service/my/task に投げる。
-   * つまり「/my/tasks の 1 行（id だけ消したもの）をそのまま送り返す」イメージ。
+   * /v1/user-service/my/task/<id> から再印刷に必要な基本情報だけ抜き出す。
+   * submitReprintTaskByTaskId 内で HttpLockGuard を保持している前提。
+   */
+  bool getMyTaskBasicForReprint_no_lock(const char *task_id, xtouch_history_task_t *out)
+  {
+    if (!task_id || !task_id[0] || !out)
+      return false;
+    memset(out, 0, sizeof(*out));
+
+    String host = _region == "China" ? "api.bambulab.cn" : "api.bambulab.com";
+    String url = String("https://") + host + String("/v1/user-service/my/task/") + String(task_id);
+
+    WiFiClientSecure c;
+    c.setTimeout(12000);
+    c.setInsecure();
+    yield();
+    HTTPClient http;
+    http.begin(c, url);
+    http.setReuse(false);
+    http.useHTTP10(true);
+    char auth_buf[320];
+    snprintf(auth_buf, sizeof(auth_buf), "Bearer %s", _auth_token.c_str());
+    http.addHeader("Authorization", auth_buf);
+    http.addHeader("Connection", "close");
+    http.setTimeout(12000);
+    int code = http.GET();
+    if (code != 200)
+    {
+      http.end();
+      c.stop();
+      return false;
+    }
+
+    ConsoleVerbose.printf("[xPTouch][V][CLOUD] GET /v1/user-service/my/task/ basic OK task_id=%s\n", task_id);
+    String body = http.getString();
+    const char *raw = body.c_str();
+    const size_t raw_len = body.length();
+
+    cloud_parse_json_str_key(raw, raw_len, "modelId", out->model_id, sizeof(out->model_id));
+    cloud_parse_json_str_key(raw, raw_len, "title", out->title, sizeof(out->title));
+    cloud_parse_json_str_key(raw, raw_len, "cover", out->cover_url, sizeof(out->cover_url));
+    cloud_parse_json_str_key(raw, raw_len, "deviceName", out->device_name, sizeof(out->device_name));
+    cloud_parse_json_str_key(raw, raw_len, "deviceModel", out->device_model, sizeof(out->device_model));
+    cloud_parse_json_str_key(raw, raw_len, "startTime", out->start_time, sizeof(out->start_time));
+    cloud_parse_json_str_key(raw, raw_len, "endTime", out->end_time, sizeof(out->end_time));
+    out->profile_id = cloud_parse_json_int_key(raw, raw_len, "profileId");
+    out->plate_index = cloud_parse_json_int_key(raw, raw_len, "plateIndex");
+    out->status = cloud_parse_json_int_key(raw, raw_len, "status");
+    out->is_printable = cloud_parse_json_bool_key(raw, raw_len, "isPrintable") ? 1 : 0;
+
+    out->has_ams_mapping =
+        (strstr(raw, "\"amsDetailMapping\"") != nullptr || strstr(raw, "\"filaments\"") != nullptr) ? 1 : 0;
+    out->valid = 1;
+
+    http.end();
+    c.stop();
+    return out->valid && out->model_id[0] != '\0';
+  }
+
+  /**
+   * /v1/user-service/my/task/<id> から再印刷に必要な基本情報を取得（内部で HttpLockGuard 保護）。
+   * getMyTaskBasicForReprint_no_lock の安全版。
+   */
+  bool getMyTaskBasicForReprint(const char *task_id, xtouch_history_task_t *out)
+  {
+    HttpLockGuard _g(this);
+    return getMyTaskBasicForReprint_no_lock(task_id, out);
+  }
+
+  #if 0
+  /**
+   * History 一覧の history_index ベース reprint（task_id 経路へ統一したため廃止）
    */
   bool submitReprintTask(int history_index)
   {
@@ -1410,6 +1697,175 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
     Serial.printf("[Cloud] submitReprintTask failed code=%d %s\n", code, response.c_str());
     return false;
   }
+  #endif
+
+  /**
+   * task_id だけから再印刷する（History の tasks 一覧が空でも動かす）。
+   * amsDetailMapping は xtouch_history_selected_ams_map_* に依存。
+   */
+  bool submitReprintTaskByTaskId(const char *task_id)
+  {
+    HttpLockGuard _g(this);
+    Serial.printf("[Cloud] submitReprintTaskByTaskId(%s) loggedIn=%d count=%d\n", task_id ? task_id : "(null)", (int)loggedIn, xtouch_history_count);
+    if (!loggedIn || !task_id || !task_id[0])
+    {
+      Serial.println("[Cloud] submitReprintTaskByTaskId abort: !loggedIn or empty task_id");
+      return false;
+    }
+
+    xtouch_history_task_t t;
+    if (!getMyTaskBasicForReprint_no_lock(task_id, &t))
+    {
+      Serial.println("[Cloud] submitReprintTaskByTaskId abort: get basic failed");
+      return false;
+    }
+
+    Serial.printf("[Cloud] submitReprintTaskByTaskId valid=%d is_printable=%d model_id[0]=%d\n", (int)t.valid, (int)t.is_printable, (int)t.model_id[0]);
+    if (!t.valid || !t.is_printable || !t.model_id[0])
+    {
+      Serial.println("[Cloud] submitReprintTaskByTaskId abort: !valid or !is_printable or no model_id");
+      return false;
+    }
+
+    const char *device_id = xTouchConfig.xTouchSerialNumber;
+    int dd_slot = xtouch_history_reprint_printer_dd_slot;
+    if (dd_slot > 0)
+    {
+      int oi = dd_slot - 1;
+      if (oi >= 0 && oi < xtouch_other_printer_count && xtouch_other_printer_dev_ids[oi][0])
+        device_id = xtouch_other_printer_dev_ids[oi];
+    }
+    Serial.printf("[Cloud] submitReprintTaskByTaskId device_id=%s dd_slot=%d\n", device_id ? device_id : "(null)", dd_slot);
+    if (!device_id || !device_id[0])
+    {
+      Serial.println("[Cloud] submitReprintTaskByTaskId abort: no device_id (pair first)");
+      return false;
+    }
+
+    String host = _region == "China" ? "api.bambulab.cn" : "api.bambulab.com";
+    String path = "/v1/user-service/my/task";
+    String url = String("https://") + host + path;
+
+    WiFiClientSecure &c = sslClient();
+    c.stop();
+    c.setTimeout(15000);
+    c.setInsecure();
+    yield();
+
+    static StaticJsonDocument<2560> doc;
+    doc.clear();
+    doc["modelId"] = t.model_id;
+    doc["title"] = t.title[0] ? t.title : "Reprint";
+    if (t.cover_url[0])
+      doc["cover"] = t.cover_url;
+    doc["profileId"] = t.profile_id;
+    doc["plateIndex"] = t.plate_index;
+    doc["deviceId"] = device_id;
+
+    JsonArray mapping = doc.createNestedArray("amsDetailMapping");
+    if (xtouch_history_selected_ams_map_count > 0)
+    {
+      int cnt = xtouch_history_selected_ams_map_count;
+      if (cnt > XTOUCH_HISTORY_AMS_MAP_MAX)
+        cnt = XTOUCH_HISTORY_AMS_MAP_MAX;
+      for (int i = 0; i < cnt; i++)
+      {
+        const xtouch_history_ams_map_t *src = &xtouch_history_selected_ams_map[i];
+        uint8_t pick_ams = xtouch_history_reprint_pick_ams[i];
+        uint8_t pick_tray = xtouch_history_reprint_pick_tray[i];
+        JsonObject m = mapping.createNestedObject();
+        m["ams"] = src->ams;
+        m["nozzleId"] = src->nozzleId;
+        m["weight"] = src->weight;
+        uint8_t sid_ams = (pick_tray == 254) ? 0 : pick_ams;
+        uint8_t sid_tray = (pick_tray == 254) ? 254 : pick_tray;
+        const char *picked_setting_id = get_tray_setting_id_reprint(sid_ams, sid_tray);
+        if (!(picked_setting_id && picked_setting_id[0]))
+        {
+          Serial.printf("[Cloud] submitReprintTaskByTaskId abort: missing tray setting_id map[%d] ams=%u tray=%u\n", i, (unsigned)sid_ams, (unsigned)sid_tray);
+          return false;
+        }
+        if (!src->filamentType[0])
+        {
+          Serial.printf("[Cloud] submitReprintTaskByTaskId abort: missing filamentType map[%d]\n", i);
+          return false;
+        }
+        if (!(src->sourceColor[0] && strlen(src->sourceColor) >= 6))
+        {
+          Serial.printf("[Cloud] submitReprintTaskByTaskId abort: missing sourceColor map[%d]\n", i);
+          return false;
+        }
+        m["filamentId"] = picked_setting_id;
+        m["filamentType"] = src->filamentType;
+        m["targetFilamentType"] = src->targetFilamentType[0] ? src->targetFilamentType : "";
+        if (pick_tray == 254)
+        {
+          m["amsId"] = 255;
+          m["slotId"] = 0;
+        }
+        else
+        {
+          m["amsId"] = (int)pick_ams;
+          m["slotId"] = (int)pick_tray;
+        }
+        const char *tc = (pick_tray == 254) ? get_tray_color_reprint(0, 254) : get_tray_color_reprint(pick_ams, pick_tray);
+        if (!(tc && tc[0] && strlen(tc) >= 6))
+        {
+          Serial.printf("[Cloud] submitReprintTaskByTaskId abort: missing tray color map[%d] ams=%u tray=%u\n", i, (unsigned)pick_ams, (unsigned)pick_tray);
+          return false;
+        }
+        char srcbuf[16];
+        cloud_format_rrggbbaa(src->sourceColor, src->sourceColor, srcbuf, sizeof(srcbuf));
+        char cbuf[16];
+        cloud_format_rrggbbaa(tc, tc, cbuf, sizeof(cbuf));
+        m["sourceColor"] = srcbuf;
+        m["targetColor"] = cbuf;
+      }
+    }
+    else
+    {
+      Serial.println("[Cloud] submitReprintTaskByTaskId abort: no filament mapping rows (open Reprint screen first)");
+      return false;
+    }
+
+    doc["mode"] = "lan_file";
+
+    if (doc.overflowed())
+    {
+      Serial.println("[Cloud] submitReprintTaskByTaskId abort: json doc overflowed");
+      return false;
+    }
+
+    String body;
+    size_t body_len = measureJson(doc);
+    body.reserve(body_len + 64);
+    serializeJson(doc, body);
+    Serial.println("[Cloud] submitReprintTaskByTaskId body:");
+    Serial.println(body);
+
+    HTTPClient http;
+    http.begin(c, url);
+    http.setReuse(false);
+    http.useHTTP10(true);
+    char auth_buf[320];
+    snprintf(auth_buf, sizeof(auth_buf), "Bearer %s", _auth_token.c_str());
+    http.addHeader("Authorization", auth_buf);
+    http.addHeader("Content-Type", "application/json");
+    http.addHeader("Connection", "close");
+    http.setTimeout(15000);
+    int code = http.POST(body);
+    String response = http.getString();
+    http.end();
+    c.stop();
+
+    if (code >= 200 && code < 300)
+    {
+      Serial.println("[Cloud] submitReprintTaskByTaskId OK");
+      return true;
+    }
+    Serial.printf("[Cloud] submitReprintTaskByTaskId failed code=%d %s\n", code, response.c_str());
+    return false;
+  }
 #endif
 
   void selectPrinter()
@@ -1441,19 +1897,35 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
       return product && (strcmp(product, "H2C") == 0 || strcmp(product, "H2D") == 0 || strcmp(product, "H2S") == 0);
     };
 
+    /* printer.json は Cloud devices を正として再構築する（古い dev_id の残留を防ぐ）。
+     * ただし既存の per-device settings は、生存している dev_id についてのみ引き継ぐ。 */
+    DynamicJsonDocument printers_new(8192);
+    JsonObject root_new = printers_new.to<JsonObject>();
     for (JsonVariant v : devices)
     {
-      if (isExcludedProduct(v)) continue;
+      if (isExcludedProduct(v))
+        continue;
+      const char *dev_id = v["dev_id"].as<const char *>();
+      if (!dev_id || !dev_id[0])
+        continue;
+
       Serial.println("\n===========================================");
       serializeJsonPretty(v, Serial);
-      if (!printers.containsKey(v["dev_id"].as<String>()))
+
+      JsonObject dst = root_new.createNestedObject(dev_id);
+      for (JsonPair kv : v.as<JsonObject>())
+        dst[kv.key()] = kv.value();
+
+      if (printers.containsKey(dev_id))
       {
-        printers[v["dev_id"].as<String>()] = v;
+        JsonObject old_obj = printers[dev_id].as<JsonObject>();
+        if (!old_obj.isNull() && old_obj.containsKey("settings"))
+          dst["settings"] = old_obj["settings"];
       }
     }
 
-    serializeJsonPretty(printers, Serial);
-    xtouch_filesystem_writeJson(SD, xtouch_paths_printers, printers);
+    serializeJsonPretty(printers_new, Serial);
+    xtouch_filesystem_writeJson(SD, xtouch_paths_printers, printers_new);
 
     // 除外後件数を数える（filteredDoc を使わずメモリ節約）
     size_t filteredCount = 0;

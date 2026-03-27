@@ -1,4 +1,5 @@
 #include "ui_comp_historyreprintcomponent.h"
+#include "xtouch/globals.h"
 #include "../ui_msgs.h"
 #include "../ui_helpers.h"
 #include "../ui_events.h"
@@ -15,6 +16,7 @@
 
 static lv_obj_t *s_printer_dd = NULL;
 static lv_timer_t *s_printer_list_style_timer = NULL;
+static lv_timer_t *s_printer_changed_timer = NULL;
 static lv_obj_t *s_cover_img = NULL;
 static lv_obj_t *s_title_lbl = NULL;
 static lv_obj_t *s_info_lbl = NULL;
@@ -36,13 +38,15 @@ static int s_map_row_count;
 static uint8_t s_pending_pick_ams[MAP_DD_MAX];
 static uint8_t s_pending_pick_tray[MAP_DD_MAX];
 static uint8_t s_pending_pick_valid[MAP_DD_MAX];
+static int s_printer_dd_to_slot[XTOUCH_MULTI_PRINTER_MAX];
+static int s_printer_dd_count = 0;
 
 static void rebuild_right_selector(void);
 static lv_obj_t *reprint_make_color_rect(lv_obj_t *parent, lv_color_t col, int w, int h, int border_w, lv_color_t border_col);
 
 static const char *get_tray_color_safe(uint8_t ams, uint8_t tray)
 {
-    const char *c = get_tray_color(ams, tray);
+    const char *c = get_tray_color_reprint(ams, tray);
     return (c && strlen(c) >= 6) ? c : "808080FF";
 }
 
@@ -60,6 +64,32 @@ static void format_ams_slot_short(char *dst, size_t dst_sz, uint8_t ams, uint8_t
     (void)snprintf(dst, dst_sz, "%c-%d", ul, (int)tray + 1);
 }
 
+static int is_a1mini_name(const char *s)
+{
+    if (!s || !s[0])
+        return 0;
+    return (strcasecmp(s, "A1 Mini") == 0 || strcasecmp(s, "A1Mini") == 0 || strcasecmp(s, "A1-Mini") == 0);
+}
+
+static int is_history_group_compatible(const char *printer_product, const char *task_device_model)
+{
+    if (!task_device_model || !task_device_model[0] || !printer_product || !printer_product[0])
+        return 1;
+    if (is_a1mini_name(printer_product) || is_a1mini_name(task_device_model))
+        return strcasecmp(printer_product, task_device_model) == 0;
+
+    static const char *const k_grp[] = { "X1 Carbon", "P1S", "P1P", "P2S", "A1", NULL };
+    int in_p = 0, in_t = 0;
+    for (int i = 0; k_grp[i]; i++)
+    {
+        if (strcasecmp(printer_product, k_grp[i]) == 0)
+            in_p = 1;
+        if (strcasecmp(task_device_model, k_grp[i]) == 0)
+            in_t = 1;
+    }
+    return (in_p && in_t) ? 1 : (strcasecmp(printer_product, task_device_model) == 0);
+}
+
 static void populate_printer_dropdown(lv_obj_t *dd)
 {
     if (!dd)
@@ -69,26 +99,73 @@ static void populate_printer_dropdown(lv_obj_t *dd)
 
     char buf[256];
     buf[0] = '\0';
+    s_printer_dd_count = 0;
+    for (int i = 0; i < XTOUCH_MULTI_PRINTER_MAX; i++)
+        s_printer_dd_to_slot[i] = 0;
 
-    if (xTouchConfig.xTouchPrinterName[0])
-        strlcpy(buf, xTouchConfig.xTouchPrinterName, sizeof(buf));
-    else
-        strlcpy(buf, "This printer", sizeof(buf));
+    const char *task_model = xtouch_history_reprint_task_basic_valid ? xtouch_history_reprint_task_basic.device_model : NULL;
+
+    if (is_history_group_compatible(xtouch_current_printer_dev_product_name, task_model) &&
+        s_printer_dd_count < XTOUCH_MULTI_PRINTER_MAX)
+    {
+        s_printer_dd_to_slot[s_printer_dd_count++] = 0;
+    }
 
     for (int i = 0; i < xtouch_other_printer_count && i < XTOUCH_OTHER_PRINTERS_MAX; i++)
+    {
+        if (!is_history_group_compatible(xtouch_other_printer_dev_product_names[i], task_model))
+            continue;
+        if (s_printer_dd_count >= XTOUCH_MULTI_PRINTER_MAX)
+            break;
+        s_printer_dd_to_slot[s_printer_dd_count++] = i + 1;
+    }
+    if (s_printer_dd_count == 0)
+    {
+        s_printer_dd_to_slot[0] = 0;
+        s_printer_dd_count = 1;
+    }
+
+    for (int di = 0; di < s_printer_dd_count; di++)
     {
         size_t len = strlen(buf);
         if (len + 3 >= sizeof(buf))
             break;
-        buf[len++] = '\n';
-        buf[len] = '\0';
-
-        const other_printer_status_t *p = &otherPrinters[i];
-        strlcpy(buf + len, p->name[0] ? p->name : "Printer", sizeof(buf) - len);
+        if (di > 0)
+        {
+            buf[len++] = '\n';
+            buf[len] = '\0';
+        }
+        int slot = s_printer_dd_to_slot[di];
+        if (slot == 0)
+        {
+            strlcpy(buf + len, xTouchConfig.xTouchPrinterName[0] ? xTouchConfig.xTouchPrinterName : "This printer", sizeof(buf) - len);
+        }
+        else
+        {
+            int oi = slot - 1;
+            const other_printer_status_t *p = &otherPrinters[oi];
+            strlcpy(buf + len, p->name[0] ? p->name : "Printer", sizeof(buf) - len);
+        }
     }
 
     lv_dropdown_set_options(dd, buf);
-    lv_dropdown_set_selected(dd, 0);
+    int selected_idx = 0;
+    for (int di = 0; di < s_printer_dd_count; di++)
+    {
+        if (s_printer_dd_to_slot[di] == xtouch_history_reprint_printer_dd_slot)
+        {
+            selected_idx = di;
+            break;
+        }
+    }
+    lv_dropdown_set_selected(dd, selected_idx);
+    /* コンボボックス表示部（main）側のフォントを固定 */
+    lv_obj_set_style_text_font(dd, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    /* プルダウン list が既に存在している場合は先に適用（未確定でも後段で上書きされる） */
+    lv_obj_t *list = lv_dropdown_get_list(dd);
+    if (list)
+        lv_obj_set_style_text_font(list, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
 }
 
 static lv_color_t printer_row_bg_by_status(int status)
@@ -118,9 +195,10 @@ static void apply_printer_dropdown_list_colors(lv_obj_t *dd)
     if (!list || lv_obj_has_flag(list, LV_OBJ_FLAG_HIDDEN))
         return;
 
-    int n_printers = 1 + xtouch_other_printer_count;
-    if (n_printers > XTOUCH_MULTI_PRINTER_MAX)
-        n_printers = XTOUCH_MULTI_PRINTER_MAX;
+    /* 未指定フォント回避: list/row/子要素すべてにフォントを付ける */
+    lv_obj_set_style_text_font(list, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    int n_printers = s_printer_dd_count;
 
     uint32_t nchild = lv_obj_get_child_cnt(list);
     for (uint32_t i = 0; i < nchild && (int)i < n_printers; i++)
@@ -129,20 +207,23 @@ static void apply_printer_dropdown_list_colors(lv_obj_t *dd)
         if (!row)
             continue;
         int st = XTOUCH_PRINT_STATUS_IDLE;
-        if (i == 0)
+        int slot = s_printer_dd_to_slot[i];
+        if (slot == 0)
             st = bambuStatus.print_status;
-        else if ((int)i - 1 < xtouch_other_printer_count && otherPrinters[(int)i - 1].valid)
-            st = otherPrinters[(int)i - 1].print_status;
+        else if (slot - 1 < xtouch_other_printer_count && otherPrinters[slot - 1].valid)
+            st = otherPrinters[slot - 1].print_status;
 
         lv_color_t bg = printer_row_bg_by_status(st);
         lv_obj_set_style_bg_color(row, bg, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_bg_opa(row, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_text_color(row, lv_color_hex(0xF0F0F0), LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_text_font(row, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
         uint32_t nc = lv_obj_get_child_cnt(row);
         for (uint32_t j = 0; j < nc; j++)
         {
             lv_obj_t *ch = lv_obj_get_child(row, j);
             lv_obj_set_style_text_color(ch, lv_color_hex(0xF0F0F0), LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_text_font(ch, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
         }
     }
 }
@@ -171,13 +252,44 @@ static void on_printer_dd_clicked(lv_event_t *e)
     lv_timer_set_repeat_count(s_printer_list_style_timer, 1);
 }
 
+static void printer_changed_deferred_cb(lv_timer_t *t)
+{
+    (void)t;
+    s_printer_changed_timer = NULL;
+    ui_msg_send(XTOUCH_HISTORY_REPRINT_PRINTER_CHANGED, 0, 0);
+}
+
+static void on_printer_dd_value_changed(lv_event_t *e)
+{
+    if (lv_event_get_code(e) != LV_EVENT_VALUE_CHANGED)
+        return;
+    lv_obj_t *dd = lv_event_get_target(e);
+    if (dd != s_printer_dd)
+        return;
+    int sel = (int)lv_dropdown_get_selected(dd);
+    if (sel < 0 || sel >= s_printer_dd_count)
+        sel = 0;
+    int printer_slot = s_printer_dd_to_slot[sel];
+    xtouch_history_reprint_printer_dd_slot = printer_slot;
+    const char *dev = xTouchConfig.xTouchSerialNumber;
+    if (printer_slot > 0 && printer_slot - 1 < xtouch_other_printer_count)
+        dev = xtouch_other_printer_dev_ids[printer_slot - 1];
+    if (dev && dev[0])
+        xtouch_mqtt_pushall_for_dev_c(dev);
+    if (s_printer_changed_timer)
+    {
+        lv_timer_del(s_printer_changed_timer);
+        s_printer_changed_timer = NULL;
+    }
+    s_printer_changed_timer = lv_timer_create(printer_changed_deferred_cb, 750, NULL);
+    lv_timer_set_repeat_count(s_printer_changed_timer, 1);
+}
+
 static void populate_summary_panel(void)
 {
     if (!s_title_lbl || !s_info_lbl)
         return;
-    if (xtouch_history_selected_index < 0 ||
-        xtouch_history_selected_index >= xtouch_history_count ||
-        !xtouch_history_tasks[xtouch_history_selected_index].valid)
+    if (!xtouch_history_reprint_task_basic_valid)
     {
         lv_label_set_text(s_title_lbl, "-");
         lv_label_set_text(s_info_lbl, "");
@@ -186,7 +298,7 @@ static void populate_summary_panel(void)
         return;
     }
 
-    const xtouch_history_task_t *t = &xtouch_history_tasks[xtouch_history_selected_index];
+    const xtouch_history_task_t *t = &xtouch_history_reprint_task_basic;
     lv_label_set_text(s_title_lbl, t->title[0] ? t->title : "-");
 
     char info[96];
@@ -200,26 +312,18 @@ static void populate_summary_panel(void)
     {
         if (xTouchConfig.xTouchHideAllThumbnails)
         {
-            if (xtouch_thumbnail_slot_dsc[0] != NULL)
-            {
-                lv_img_set_src(s_cover_img, (const lv_img_dsc_t *)xtouch_thumbnail_slot_dsc[0]);
-                lv_obj_clear_flag(s_cover_img, LV_OBJ_FLAG_HIDDEN);
-                lv_obj_invalidate(s_cover_img);
-            }
-            else
-            {
-                lv_img_set_src(s_cover_img, NULL);
-                lv_obj_add_flag(s_cover_img, LV_OBJ_FLAG_HIDDEN);
-            }
+            lv_obj_add_flag(s_cover_img, LV_OBJ_FLAG_HIDDEN);
         }
-        else if (xtouch_history_selected_index < XTOUCH_HISTORY_COVER_SLOTS &&
-                 xtouch_history_cover_dsc[xtouch_history_selected_index] != NULL)
+        else if (xtouch_history_reprint_cover_dsc != NULL)
         {
-            lv_img_set_src(s_cover_img, (const void *)xtouch_history_cover_dsc[xtouch_history_selected_index]);
+            lv_img_set_src(s_cover_img, (const lv_img_dsc_t *)xtouch_history_reprint_cover_dsc);
             lv_obj_clear_flag(s_cover_img, LV_OBJ_FLAG_HIDDEN);
+            lv_obj_invalidate(s_cover_img);
         }
         else
+        {
             lv_obj_add_flag(s_cover_img, LV_OBJ_FLAG_HIDDEN);
+        }
     }
 }
 
@@ -260,17 +364,18 @@ static int build_slot_options(const char *type_filter, char *buf, size_t buf_sz,
     int n = 0;
     buf[0] = '\0';
 
-    if (bambuStatus.ams_exist_bits != 0)
+    long ams_exist_bits = xtouch_reprint_ams_exist_bits();
+    if (ams_exist_bits != 0)
     {
         for (int ams_id = 0; ams_id < XTOUCH_BAMBU_AMS_UNITS; ams_id++)
         {
-            if (((bambuStatus.ams_exist_bits >> ams_id) & 1) == 0)
+            if (((ams_exist_bits >> ams_id) & 1) == 0)
                 continue;
             for (int tray_id = 0; tray_id < XTOUCH_BAMBU_AMS_SLOTS_PER_UNIT; tray_id++)
             {
-                uint32_t st = get_tray_status((uint8_t)ams_id, (uint8_t)tray_id);
+                uint32_t st = (uint32_t)get_tray_status_reprint((uint8_t)ams_id, (uint8_t)tray_id);
                 int loaded = ((st & 1) != 0);
-                char *tt = get_tray_type((uint8_t)ams_id, (uint8_t)tray_id);
+                char *tt = get_tray_type_reprint((uint8_t)ams_id, (uint8_t)tray_id);
                 int selectable = 0;
                 if (loaded)
                 {
@@ -373,10 +478,9 @@ static void on_map_left_card_clicked(lv_event_t *e)
     int mi = (int)(intptr_t)lv_event_get_user_data(e);
     if (mi < 0 || mi >= s_map_row_count)
         return;
+
     s_active_map_idx = mi;
-    s_pending_pick_ams[mi] = xtouch_history_reprint_pick_ams[mi];
-    s_pending_pick_tray[mi] = xtouch_history_reprint_pick_tray[mi];
-    s_pending_pick_valid[mi] = 1;
+    /* 左カード切替では pending を確定値で上書きしない（右AMSの選択表示リセットを防ぐ） */
     for (int i = 0; i < s_map_row_count && i < MAP_DD_MAX; i++)
     {
         if (!s_map_left_card_obj[i])
@@ -409,6 +513,20 @@ static void rebuild_right_selector(void)
     const xtouch_history_ams_map_t *mapm = NULL;
     if (xtouch_history_selected_ams_map_count > 0 && mi < xtouch_history_selected_ams_map_count)
         mapm = &xtouch_history_selected_ams_map[mi];
+    /* プリンタ切替や push_status 反映直後でも、右ペインの候補は都度最新状態で再計算する */
+    {
+        const char *want_type = (mapm && mapm->filamentType[0]) ? mapm->filamentType : NULL;
+        static char s_right_opt_buf[MAP_OPT_BUF];
+        s_map_nopt[mi] = build_slot_options(
+            want_type,
+            s_right_opt_buf,
+            sizeof(s_right_opt_buf),
+            s_map_pick_ams[mi],
+            s_map_pick_tray[mi],
+            s_map_pick_loaded[mi],
+            s_map_pick_selectable[mi],
+            MAP_OPT_MAX);
+    }
     snprintf(title_buf, sizeof(title_buf), "color-%d %s", mi + 1, (mapm && mapm->filamentType[0]) ? mapm->filamentType : "");
     lv_obj_t *top_wrap = lv_obj_create(s_map_right_panel);
     lv_obj_set_width(top_wrap, lv_pct(100));
@@ -457,7 +575,7 @@ static void rebuild_right_selector(void)
     lv_obj_set_style_pad_column(row2, 3, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_clear_flag(row2, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_t *sl = lv_label_create(row2);
-    lv_label_set_text(sl, "SelectedBox");
+    lv_label_set_text(sl, "Selected:");
     lv_obj_set_style_text_color(sl, lv_color_hex(0xBBBBBB), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_font(sl, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
     reprint_make_color_rect(
@@ -468,7 +586,7 @@ static void rebuild_right_selector(void)
     lv_obj_t *set_btn = lv_btn_create(top_wrap);
     lv_obj_set_width(set_btn, 108);
     lv_obj_set_height(set_btn, 68);
-    lv_obj_set_style_pad_right(set_btn, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(set_btn, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(set_btn, lv_color_hex(0xAA3333), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(set_btn, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_width(set_btn, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -500,7 +618,7 @@ static void rebuild_right_selector(void)
     /* AMSごとの枠を先に作る（2列×2段）。存在ビットが無い場合は後段で必要分だけ作る。 */
     for (int ams = 0; ams < XTOUCH_BAMBU_AMS_UNITS; ams++)
     {
-        if (((bambuStatus.ams_exist_bits >> ams) & 1u) == 0)
+        if (((xtouch_reprint_ams_exist_bits() >> ams) & 1u) == 0)
             continue;
         lv_obj_t *panel = lv_obj_create(grid);
         lv_obj_set_width(panel, lv_pct(49));
@@ -544,7 +662,7 @@ static void rebuild_right_selector(void)
         uint8_t ams = s_map_pick_ams[mi][si];
         uint8_t tray = s_map_pick_tray[mi][si];
         uint8_t selectable = s_map_pick_selectable[mi][si];
-        const char *tc = get_tray_color(ams, tray);
+        const char *tc = get_tray_color_reprint(ams, tray);
         lv_color_t sc = reprint_color_from_rrggbbaa(tc && strlen(tc) >= 6 ? tc : "808080FF");
         int sel = selectable && (s_pending_pick_ams[mi] == ams && s_pending_pick_tray[mi] == tray);
         lv_color_t bcol = sel ? lv_color_hex(0xFF4444) : lv_color_hex(0x666666);
@@ -653,23 +771,22 @@ static lv_obj_t *reprint_make_color_rect(lv_obj_t *parent, lv_color_t col, int w
 static void on_reprint_start(lv_event_t *e)
 {
     (void)e;
-    if (xtouch_history_selected_index < 0 ||
-        xtouch_history_selected_index >= xtouch_history_count ||
-        !xtouch_history_tasks[xtouch_history_selected_index].valid)
-    {
-        loadScreen(15);
+    if (!xtouch_history_reprint_task_id_valid)
         return;
-    }
 
     if (xtouch_history_selected_ams_map_count <= 0 && s_map_row_count <= 0)
         return;
 
     int printer_slot = 0;
     if (s_printer_dd)
-        printer_slot = (int)lv_dropdown_get_selected(s_printer_dd);
+    {
+        int sel = (int)lv_dropdown_get_selected(s_printer_dd);
+        if (sel >= 0 && sel < s_printer_dd_count)
+            printer_slot = s_printer_dd_to_slot[sel];
+    }
 
     struct XTOUCH_MESSAGE_DATA payload;
-    payload.data = (unsigned long long)xtouch_history_selected_index;
+    payload.data = 0; /* task_id 経路で再印刷するので index は不要 */
     payload.data2 = (unsigned long long)printer_slot;
     lv_msg_send(XTOUCH_HISTORY_REPRINT_WITH_OPTIONS, &payload);
 }
@@ -700,10 +817,12 @@ lv_obj_t *ui_historyReprintComponent_create(lv_obj_t *comp_parent)
         lv_obj_set_width(row, lv_pct(100));
         lv_obj_set_height(row, LV_SIZE_CONTENT);
         lv_obj_set_flex_flow(row, LV_FLEX_FLOW_ROW);
-        lv_obj_set_flex_align(row, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+        /* サムネとタイトル行頭を揃える */
+        lv_obj_set_flex_align(row, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
         lv_obj_set_style_bg_opa(row, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_border_width(row, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-        lv_obj_set_style_pad_bottom(row, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_pad_column(row, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_pad_bottom(row, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
 
         lv_obj_t *left = lv_obj_create(row);
         lv_obj_set_width(left, 120);
@@ -727,17 +846,22 @@ lv_obj_t *ui_historyReprintComponent_create(lv_obj_t *comp_parent)
         lv_obj_set_flex_align(right, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
         lv_obj_set_style_bg_opa(right, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_border_width(right, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-        lv_obj_set_style_pad_row(right, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_pad_row(right, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
 
         lv_obj_t *title = lv_label_create(right);
         s_title_lbl = title;
         lv_label_set_text(title, "Reprint");
+        lv_obj_set_width(title, lv_pct(100));
+        lv_label_set_long_mode(title, LV_LABEL_LONG_WRAP);
         lv_obj_set_style_text_font(title, &lv_font_notosans_28, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_text_color(title, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_text_line_space(title, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
 
         lv_obj_t *info = lv_label_create(right);
         s_info_lbl = info;
         lv_label_set_text(info, "");
+        lv_obj_set_width(info, lv_pct(100));
+        lv_label_set_long_mode(info, LV_LABEL_LONG_WRAP);
         lv_obj_set_style_text_font(info, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_text_color(info, lv_color_hex(0xCCCCCC), LV_PART_MAIN | LV_STATE_DEFAULT);
     }
@@ -749,7 +873,7 @@ lv_obj_t *ui_historyReprintComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_flex_align(form, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
     lv_obj_set_style_bg_opa(form, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_width(form, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_row(form, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_row(form, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_scrollbar_mode(form, LV_SCROLLBAR_MODE_AUTO);
     lv_obj_clear_flag(form, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_add_flag(form, LV_OBJ_FLAG_SCROLLABLE);
@@ -802,6 +926,7 @@ lv_obj_t *ui_historyReprintComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_border_width(right_pane, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_radius(right_pane, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_all(right_pane, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(right_pane, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_row(right_pane, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_clear_flag(right_pane, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_t *right_body = lv_obj_create(right_pane);
@@ -824,7 +949,9 @@ lv_obj_t *ui_historyReprintComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_bg_opa(right_footer, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_width(right_footer, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_all(right_footer, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(right_footer, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_column(right_footer, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_top(right_footer, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_clear_flag(right_footer, LV_OBJ_FLAG_SCROLLABLE);
 
     lv_obj_t *cancelBtn = lv_btn_create(right_footer);
@@ -879,7 +1006,7 @@ lv_obj_t *ui_historyReprintComponent_create(lv_obj_t *comp_parent)
             lv_obj_set_style_bg_color(hdr, hdr_bg, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_bg_opa(hdr, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_border_width(hdr, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_obj_set_style_pad_left(hdr, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_pad_left(hdr, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_clear_flag(hdr, LV_OBJ_FLAG_SCROLLABLE);
             lv_obj_add_flag(hdr, LV_OBJ_FLAG_EVENT_BUBBLE);
             lv_obj_t *ht = lv_label_create(hdr);
@@ -935,7 +1062,7 @@ lv_obj_t *ui_historyReprintComponent_create(lv_obj_t *comp_parent)
             else
                 lv_label_set_text(lab, "No filament data in task detail.");
             lv_obj_set_style_text_font(lab, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_obj_set_style_pad_all(lab, 12, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_pad_all(lab, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
             s_map_nopt[mi] = 0;
         }
     }
@@ -962,6 +1089,7 @@ lv_obj_t *ui_historyReprintComponent_create(lv_obj_t *comp_parent)
         s_printer_dd = dd;
         populate_printer_dropdown(dd);
         lv_obj_add_event_cb(dd, on_printer_dd_clicked, LV_EVENT_CLICKED, NULL);
+        lv_obj_add_event_cb(dd, on_printer_dd_value_changed, LV_EVENT_VALUE_CHANGED, NULL);
         {
             lv_obj_t *lst = lv_dropdown_get_list(dd);
             if (lst)
