@@ -37,6 +37,8 @@ void xtouch_thumbnail_timer_start(void);
 void xtouch_thumbnail_timer_stop(void);
 /** 次回タイマーから全スロットを取得して上書きするようスケジュール（画面表示時に呼ぶ）。 */
 void xtouch_thumbnail_schedule_fetch_all(void);
+/** SD /tmp の .png キャッシュを削除し、LGFX バッファを無効化（Settings の Clear Cache から呼ぶ）。 */
+void xtouch_thumbnail_clear_sd_cache(void);
 
 /** task_id に応じて xtouch_thumbnail_slot_path[slot] を更新（push_status 受信後などに呼ぶ）。
  *  ファイルが SD に存在する場合のみ path を設定。未 DL の場合は空にして open エラーを防ぐ。 */
@@ -63,6 +65,12 @@ static bool s_thumb_cache_refresh_done[XTOUCH_THUMB_SLOT_MAX];
 /** 起動直後にロゴを先に全スロットへ投入したか */
 static bool s_thumb_boot_logo_seeded = false;
 
+#ifdef __XTOUCH_SCREEN_50__
+/** デコード失敗時の task_id を2世代保持。同一 task_id で連続2回失敗したら /tmp のキャッシュ PNG を削除して再DL可能にする */
+static char s_thumb_decode_tid_gen0[XTOUCH_THUMB_SLOT_MAX][32];
+static char s_thumb_decode_tid_gen1[XTOUCH_THUMB_SLOT_MAX][32];
+#endif
+
 /** task / メイン接続先の変化時: LGFX デコード済み dsc と path・取得フラグを捨てる（古い Home サムネが残るのを防ぐ） */
 inline void xtouch_thumbnail_invalidate_slot(int slot)
 {
@@ -72,6 +80,10 @@ inline void xtouch_thumbnail_invalidate_slot(int slot)
     s_thumb_cache_refresh_done[slot] = false;
     xtouch_thumbnail_slot_dsc[slot] = nullptr;
     xtouch_thumbnail_slot_path[slot][0] = '\0';
+#ifdef __XTOUCH_SCREEN_50__
+    s_thumb_decode_tid_gen0[slot][0] = '\0';
+    s_thumb_decode_tid_gen1[slot][0] = '\0';
+#endif
 }
 
 /** メイン付け替えで otherPrinters の行対応が変わるとき: slot0〜 をまとめて捨てる（Printers だけ並びが変わりサムネがズレるのを防ぐ） */
@@ -431,12 +443,64 @@ void xtouch_thumbnail_timer_stop(void)
     {
         s_thumb_exists[i] = false;
         s_thumb_cache_refresh_done[i] = false;
+#ifdef __XTOUCH_SCREEN_50__
+        s_thumb_decode_tid_gen0[i][0] = '\0';
+        s_thumb_decode_tid_gen1[i][0] = '\0';
+#endif
     }
 }
 
 void xtouch_thumbnail_schedule_fetch_all(void)
 {
     s_thumb_force_fetch_slot = 0;
+}
+
+void xtouch_thumbnail_clear_sd_cache(void)
+{
+#if defined(__XTOUCH_SCREEN_50__)
+    if (SD.cardType() == CARD_NONE)
+        return;
+    File dir = SD.open("/tmp");
+    if (!dir)
+        return;
+    if (!dir.isDirectory())
+    {
+        dir.close();
+        return;
+    }
+    for (;;)
+    {
+        File entry = dir.openNextFile();
+        if (!entry)
+            break;
+        if (!entry.isDirectory())
+        {
+            const char *nm = entry.name();
+            size_t len = nm ? strlen(nm) : 0;
+            if (len >= 4 && strcmp(nm + len - 4, ".png") == 0)
+            {
+                char pathbuf[80];
+                if (nm[0] == '/')
+                    snprintf(pathbuf, sizeof(pathbuf), "%s", nm);
+                else
+                    snprintf(pathbuf, sizeof(pathbuf), "/tmp/%s", nm);
+                entry.close();
+                SD.remove(pathbuf);
+                continue;
+            }
+        }
+        entry.close();
+    }
+    dir.close();
+    xtouch_history_cover_clear();
+    xtouch_thumbnail_invalidate_all_slots();
+    xtouch_thumbnail_update_path_all_slots();
+    if (xTouchConfig.currentScreenIndex == 0 || xTouchConfig.currentScreenIndex == 6)
+        xtouch_thumbnail_schedule_fetch_all();
+    for (int s = 0; s < XTOUCH_THUMB_SLOT_MAX; s++)
+        lv_msg_send(XTOUCH_ON_OTHER_PRINTER_UPDATE, (void *)(intptr_t)(s + 1));
+    ConsoleVerbose.printf("[xPTouch][V][THUMB] clear_sd_cache done\n");
+#endif
 }
 
 /* UI が送るイベントを xtouch 側で購読（mqtt.h の xtouch_mqtt_subscribe_commands と同じパターン） */
@@ -823,6 +887,63 @@ lv_img_dsc_t *xtouch_thumb_get_lgfx_dsc(void)
     return &g_lgfx_thumb_dsc;
 }
 
+#ifdef __XTOUCH_SCREEN_50__
+static void thumb_decode_tid_generations_clear(int slot)
+{
+    if (slot < 0 || slot >= XTOUCH_THUMB_SLOT_MAX)
+        return;
+    s_thumb_decode_tid_gen0[slot][0] = '\0';
+    s_thumb_decode_tid_gen1[slot][0] = '\0';
+}
+
+static void thumb_get_slot_task_id_str(int slot, char *buf, size_t len)
+{
+    if (!buf || len == 0)
+        return;
+    buf[0] = '\0';
+    if (slot == 0)
+    {
+        if (bambuStatus.task_id[0] && strcmp(bambuStatus.task_id, "0") != 0)
+        {
+            strncpy(buf, bambuStatus.task_id, len - 1);
+            buf[len - 1] = '\0';
+        }
+    }
+    else if (slot >= 1 && slot - 1 < xtouch_other_printer_count && otherPrinters[slot - 1].valid)
+    {
+        if (otherPrinters[slot - 1].task_id[0] && strcmp(otherPrinters[slot - 1].task_id, "0") != 0)
+        {
+            strncpy(buf, otherPrinters[slot - 1].task_id, len - 1);
+            buf[len - 1] = '\0';
+        }
+    }
+}
+
+/** SD.open 成功後のデコード失敗で呼ぶ。同一 task_id が gen0/gen1 で一致したらキャッシュ削除 */
+static void thumb_on_decode_failed_after_open(int slot, const char *path)
+{
+    char tid[32];
+    thumb_get_slot_task_id_str(slot, tid, sizeof(tid));
+    if (!tid[0])
+        return;
+    strncpy(s_thumb_decode_tid_gen1[slot], s_thumb_decode_tid_gen0[slot], sizeof(s_thumb_decode_tid_gen1[slot]) - 1);
+    s_thumb_decode_tid_gen1[slot][sizeof(s_thumb_decode_tid_gen1[slot]) - 1] = '\0';
+    strncpy(s_thumb_decode_tid_gen0[slot], tid, sizeof(s_thumb_decode_tid_gen0[slot]) - 1);
+    s_thumb_decode_tid_gen0[slot][sizeof(s_thumb_decode_tid_gen0[slot]) - 1] = '\0';
+
+    if (s_thumb_decode_tid_gen0[slot][0] && s_thumb_decode_tid_gen1[slot][0] &&
+        strcmp(s_thumb_decode_tid_gen0[slot], s_thumb_decode_tid_gen1[slot]) == 0)
+    {
+        ConsoleVerbose.printf("[xPTouch][V][THUMB] corrupt cache x2 tid=%s remove %s\n", tid, path ? path : "");
+        if (path && path[0] && SD.cardType() != CARD_NONE && SD.exists(path))
+            SD.remove(path);
+        thumb_decode_tid_generations_clear(slot);
+        xtouch_thumbnail_slot_path[slot][0] = '\0';
+        s_thumb_cache_refresh_done[slot] = false;
+    }
+}
+#endif
+
 /** 指定スロットの SD 上の PNG を LGFX でデコードし、Printers 画面用スロットバッファに格納。パスは task_id ベースの /tmp/{task_id}.png。 */
 static bool xtouch_load_thumb_slot_with_lgfx(int slot, int out_w, int out_h)
 {
@@ -866,6 +987,9 @@ static bool xtouch_load_thumb_slot_with_lgfx(int slot, int out_w, int out_h)
     {
         file.close();
         xtouch_thumbnail_slot_dsc[slot] = nullptr;
+#ifdef __XTOUCH_SCREEN_50__
+        thumb_on_decode_failed_after_open(slot, path);
+#endif
         return false;
     }
     pngle_ctx.file = &file;
@@ -879,6 +1003,9 @@ static bool xtouch_load_thumb_slot_with_lgfx(int slot, int out_w, int out_h)
         lgfx_pngle_destroy(pngle);
         file.close();
         xtouch_thumbnail_slot_dsc[slot] = nullptr;
+#ifdef __XTOUCH_SCREEN_50__
+        thumb_on_decode_failed_after_open(slot, path);
+#endif
         return false;
     }
     pngle_ctx.img_width = lgfx_pngle_get_width(pngle);
@@ -888,6 +1015,9 @@ static bool xtouch_load_thumb_slot_with_lgfx(int slot, int out_w, int out_h)
         lgfx_pngle_destroy(pngle);
         file.close();
         xtouch_thumbnail_slot_dsc[slot] = nullptr;
+#ifdef __XTOUCH_SCREEN_50__
+        thumb_on_decode_failed_after_open(slot, path);
+#endif
         return false;
     }
     int res = lgfx_pngle_decomp(pngle, xtouch_pngle_draw_cb);
@@ -896,8 +1026,14 @@ static bool xtouch_load_thumb_slot_with_lgfx(int slot, int out_w, int out_h)
     if (res < 0)
     {
         xtouch_thumbnail_slot_dsc[slot] = nullptr;
+#ifdef __XTOUCH_SCREEN_50__
+        thumb_on_decode_failed_after_open(slot, path);
+#endif
         return false;
     }
+#ifdef __XTOUCH_SCREEN_50__
+    thumb_decode_tid_generations_clear(slot);
+#endif
     xtouch_thumbnail_slot_dsc[slot] = (void *)&g_lgfx_thumb_dsc_slot[slot];
     return true;
 }

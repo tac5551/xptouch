@@ -118,6 +118,7 @@ void onControlBedDown(lv_event_t *e) { lv_msg_send(XTOUCH_COMMAND_BED_DOWN, NULL
 /* Settings */
 
 void onSettingsResetDeviceConfirm() { lv_msg_send(XTOUCH_SETTINGS_RESET_DEVICE, NULL); }
+void onSettingsClearCacheConfirm() { lv_msg_send(XTOUCH_SETTINGS_CLEAR_CACHE, NULL); }
 void onSettingsOtaUpdateNowOnYES()
 {
     xtouch_ota_update_flag = true;
@@ -279,6 +280,12 @@ void onMoveHomeScreen(lv_event_t *e) {
 void onSettingsResetDevice(lv_event_t *e)
 {
     ui_confirmPanel_show(LV_SYMBOL_WARNING " REBOOT", onSettingsResetDeviceConfirm);
+}
+
+void onSettingsClearCache(lv_event_t *e)
+{
+    (void)e;
+    ui_confirmPanel_show(LV_SYMBOL_WARNING " Clear Cache", onSettingsClearCacheConfirm);
 }
 
 void onSettingsUnPairConfirm() { lv_msg_send(XTOUCH_SETTINGS_UNPAIR, NULL); }

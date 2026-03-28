@@ -173,10 +173,19 @@ void xtouch_events_onChamberTempSwitch(lv_msg_t *m)
     }
 }
 
+void xtouch_events_onClearCache(lv_msg_t *m)
+{
+    (void)m;
+#if defined(__XTOUCH_SCREEN_50__)
+    xtouch_thumbnail_clear_sd_cache();
+#endif
+}
+
 void xtouch_setupGlobalEvents()
 {
     lv_msg_subscribe(XTOUCH_SETTINGS_RESET_DEVICE, (lv_msg_subscribe_cb_t)xtouch_events_onResetDevice, NULL);
     lv_msg_subscribe(XTOUCH_SETTINGS_OTA_UPDATE_NOW, (lv_msg_subscribe_cb_t)xtouch_events_onOtaUpdateNow, NULL);
+    lv_msg_subscribe(XTOUCH_SETTINGS_CLEAR_CACHE, (lv_msg_subscribe_cb_t)xtouch_events_onClearCache, NULL);
     lv_msg_subscribe(XTOUCH_SETTINGS_UNPAIR, (lv_msg_subscribe_cb_t)xtouch_events_onUnPair, NULL);
     lv_msg_subscribe(XTOUCH_ON_CLOUD_SELECT, (lv_msg_subscribe_cb_t)xtouch_events_onCloudSelect, NULL);
     lv_msg_subscribe(XTOUCH_SETTINGS_BACKLIGHT, (lv_msg_subscribe_cb_t)xtouch_events_onBackLight, NULL);

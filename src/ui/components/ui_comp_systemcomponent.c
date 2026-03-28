@@ -162,10 +162,32 @@ lv_obj_t *ui_systemComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_pad_bottom(cui_reseDeviceButton, 16, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_color(cui_reseDeviceButton, lv_color_hex(0x000), LV_PART_MAIN | LV_STATE_DEFAULT);
 
+#ifdef __XTOUCH_SCREEN_50__
+    lv_obj_t *cui_clearCacheButton = lv_label_create(cui_systemComponent);
+    lv_obj_set_width(cui_clearCacheButton, lv_pct(100));
+    lv_obj_set_height(cui_clearCacheButton, LV_SIZE_CONTENT);
+    lv_obj_set_style_text_font(cui_clearCacheButton, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_label_set_text(cui_clearCacheButton, LV_SYMBOL_REFRESH " Clear Cache");
+    lv_obj_add_flag(cui_clearCacheButton, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_clear_flag(cui_clearCacheButton, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_scrollbar_mode(cui_clearCacheButton, LV_SCROLLBAR_MODE_OFF);
+    lv_obj_set_style_radius(cui_clearCacheButton, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(cui_clearCacheButton, lv_color_hex(0x444444), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(cui_clearCacheButton, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_left(cui_clearCacheButton, 16, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(cui_clearCacheButton, 16, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_top(cui_clearCacheButton, 16, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_bottom(cui_clearCacheButton, 16, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_color(cui_clearCacheButton, lv_color_hex(0xEEEEEE), LV_PART_MAIN | LV_STATE_DEFAULT);
+#endif
+
     lv_obj_add_event_cb(cui_unpairButton, ui_event_comp_settingsComponent_unpairButton, LV_EVENT_CLICKED, NULL);
     lv_obj_add_event_cb(cui_otaNowButton, ui_event_comp_settingsComponent_OtaUpdateNowButton, LV_EVENT_CLICKED, NULL);
     lv_obj_add_event_cb(cui_reseDeviceButton, ui_event_comp_settingsComponent_resetDeviceButton, LV_EVENT_CLICKED, NULL);
     lv_obj_add_event_cb(ui_settings_otaSwitch, ui_event_comp_settingsComponent_onOTA, LV_EVENT_VALUE_CHANGED, NULL);
+#ifdef __XTOUCH_SCREEN_50__
+    lv_obj_add_event_cb(cui_clearCacheButton, ui_event_comp_settingsComponent_clearCacheButton, LV_EVENT_CLICKED, NULL);
+#endif
 
     return cui_systemComponent;
 }

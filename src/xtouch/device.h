@@ -484,6 +484,11 @@ void xtouch_device_onLoadFilament(lv_msg_t *m)
         printf("can't load filament right now\n");
         return;
     }
+    if (bambuStatus.m_tray_now == TRAY_ID_EXTERNAL)
+    {
+        printf("EXT load skip: external filament already active (unload first)\n");
+        return;
+    }
     /* EXT(254) ロード: 設定済み温度を使用し MQTT ams_change_filament で送る */
     uint16_t tar_temp = get_tray_temp(0, TRAY_ID_EXTERNAL);
     const char *tray_type = get_tray_type(0, TRAY_ID_EXTERNAL);
@@ -576,6 +581,12 @@ void xtouch_device_command_ams_load(void *s, lv_msg_t *m)
     uint16_t tray_index = (uint16_t)tmp_ams_id * 4 + tmp_slot_id;
 
     Serial.printf("[AMS load] command_ams_load slot=%u tray_index=%u m_tray_now=%u\n", (unsigned)slot, (unsigned)tray_index, (unsigned)bambuStatus.m_tray_now);
+
+    if (bambuStatus.m_tray_now == TRAY_ID_EXTERNAL)
+    {
+        Serial.println(F("[AMS load] skip: external filament active (unload first)"));
+        return;
+    }
 
     if (bambuStatus.m_tray_now == tray_index)
     {

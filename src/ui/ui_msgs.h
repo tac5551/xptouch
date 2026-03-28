@@ -81,6 +81,8 @@ extern "C"
         XTOUCH_SETTINGS_RESET_DEVICE,
         XTOUCH_SETTINGS_OTA_UPDATE_NOW,
         XTOUCH_SETTINGS_UNPAIR,
+        /** SD /tmp のサムネ・履歴カバー PNG を削除し LGFX キャッシュを無効化（購読は events.h / xtouch） */
+        XTOUCH_SETTINGS_CLEAR_CACHE,
         XTOUCH_SETTINGS_BACKLIGHT,
         XTOUCH_SETTINGS_BACKLIGHT_SET,
         XTOUCH_SETTINGS_TFTOFF_SET,
