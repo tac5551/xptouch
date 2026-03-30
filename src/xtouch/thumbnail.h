@@ -502,13 +502,8 @@ static void xtouch_thumbnail_on_hide_mode_changed(lv_msg_t *m, void *user_data)
     if (xTouchConfig.xTouchHideAllThumbnails)
     {
         xtouch_thumbnail_timer_stop();
-        for (int i = 0; i < XTOUCH_THUMB_SLOT_MAX; i++)
-        {
-            xtouch_thumbnail_slot_path[i][0] = '\0';
-            xtouch_thumbnail_slot_dsc[i] = nullptr;
-            bool ok = xtouch_load_logo_for_slot_with_lgfx(i, XTOUCH_THUMB_LGFX_W, XTOUCH_THUMB_LGFX_H);
-            ConsoleVerbose.printf("[xPTouch][V][THUMB] hide logo slot=%d ok=%d\n", i, ok ? 1 : 0);
-        }
+        /* ロゴは載せずクリア。UI 側でサムネ枠（leftBox）ごと非表示にする。 */
+        xtouch_thumbnail_invalidate_all_slots();
     }
     else
     {

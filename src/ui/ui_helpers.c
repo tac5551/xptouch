@@ -285,17 +285,8 @@ void ui_thumb_set_img_src_from_slot(lv_obj_t *img, int slot)
       return;
    if (xTouchConfig.xTouchHideAllThumbnails)
    {
-      if (xtouch_thumbnail_slot_dsc[slot] != NULL)
-      {
-         lv_obj_clear_flag(img, LV_OBJ_FLAG_HIDDEN);
-         lv_img_set_src(img, (const lv_img_dsc_t *)xtouch_thumbnail_slot_dsc[slot]);
-         lv_obj_invalidate(img);
-      }
-      else
-      {
-         lv_img_set_src(img, NULL);
-         lv_obj_add_flag(img, LV_OBJ_FLAG_HIDDEN);
-      }
+      lv_img_set_src(img, NULL);
+      lv_obj_add_flag(img, LV_OBJ_FLAG_HIDDEN);
       return;
    }
    lv_obj_clear_flag(img, LV_OBJ_FLAG_HIDDEN);

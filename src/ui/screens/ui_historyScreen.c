@@ -61,29 +61,22 @@ static void update_one_row(int idx, lv_obj_t *row)
         {
             if (xTouchConfig.xTouchHideAllThumbnails)
             {
-                if (xtouch_thumbnail_slot_dsc[0] != NULL)
+                lv_obj_add_flag(leftBox, LV_OBJ_FLAG_HIDDEN);
+            }
+            else
+            {
+                lv_obj_clear_flag(leftBox, LV_OBJ_FLAG_HIDDEN);
+                if (idx < XTOUCH_HISTORY_COVER_SLOTS && xtouch_history_cover_dsc[idx] != NULL)
                 {
-                    lv_img_set_src(coverImg, (const lv_img_dsc_t *)xtouch_thumbnail_slot_dsc[0]);
+                    lv_img_set_src(coverImg, (const void *)xtouch_history_cover_dsc[idx]);
                     lv_obj_clear_flag(coverImg, LV_OBJ_FLAG_HIDDEN);
                     lv_obj_add_flag(placeLabel, LV_OBJ_FLAG_HIDDEN);
-                    lv_obj_invalidate(coverImg);
                 }
                 else
                 {
                     lv_obj_add_flag(coverImg, LV_OBJ_FLAG_HIDDEN);
                     lv_obj_clear_flag(placeLabel, LV_OBJ_FLAG_HIDDEN);
                 }
-            }
-            else if (idx < XTOUCH_HISTORY_COVER_SLOTS && xtouch_history_cover_dsc[idx] != NULL)
-            {
-                lv_img_set_src(coverImg, (const void *)xtouch_history_cover_dsc[idx]);
-                lv_obj_clear_flag(coverImg, LV_OBJ_FLAG_HIDDEN);
-                lv_obj_add_flag(placeLabel, LV_OBJ_FLAG_HIDDEN);
-            }
-            else
-            {
-                lv_obj_add_flag(coverImg, LV_OBJ_FLAG_HIDDEN);
-                lv_obj_clear_flag(placeLabel, LV_OBJ_FLAG_HIDDEN);
             }
         }
     }

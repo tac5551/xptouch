@@ -294,7 +294,12 @@ static void populate_summary_panel(void)
         lv_label_set_text(s_title_lbl, "-");
         lv_label_set_text(s_info_lbl, "");
         if (s_cover_img)
+        {
             lv_obj_add_flag(s_cover_img, LV_OBJ_FLAG_HIDDEN);
+            lv_obj_t *left = lv_obj_get_parent(s_cover_img);
+            if (left)
+                lv_obj_add_flag(left, LV_OBJ_FLAG_HIDDEN);
+        }
         return;
     }
 
@@ -310,19 +315,27 @@ static void populate_summary_panel(void)
 
     if (s_cover_img)
     {
+        lv_obj_t *cover_left = lv_obj_get_parent(s_cover_img);
         if (xTouchConfig.xTouchHideAllThumbnails)
         {
             lv_obj_add_flag(s_cover_img, LV_OBJ_FLAG_HIDDEN);
-        }
-        else if (xtouch_history_reprint_cover_dsc != NULL)
-        {
-            lv_img_set_src(s_cover_img, (const lv_img_dsc_t *)xtouch_history_reprint_cover_dsc);
-            lv_obj_clear_flag(s_cover_img, LV_OBJ_FLAG_HIDDEN);
-            lv_obj_invalidate(s_cover_img);
+            if (cover_left)
+                lv_obj_add_flag(cover_left, LV_OBJ_FLAG_HIDDEN);
         }
         else
         {
-            lv_obj_add_flag(s_cover_img, LV_OBJ_FLAG_HIDDEN);
+            if (cover_left)
+                lv_obj_clear_flag(cover_left, LV_OBJ_FLAG_HIDDEN);
+            if (xtouch_history_reprint_cover_dsc != NULL)
+            {
+                lv_img_set_src(s_cover_img, (const lv_img_dsc_t *)xtouch_history_reprint_cover_dsc);
+                lv_obj_clear_flag(s_cover_img, LV_OBJ_FLAG_HIDDEN);
+                lv_obj_invalidate(s_cover_img);
+            }
+            else
+            {
+                lv_obj_add_flag(s_cover_img, LV_OBJ_FLAG_HIDDEN);
+            }
         }
     }
 }

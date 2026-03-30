@@ -194,6 +194,12 @@ static void thumb_refresh_slot(int slot)
     lv_obj_t *img = lv_obj_get_child(leftBox, 0);
     if (!img)
         return;
+    if (xTouchConfig.xTouchHideAllThumbnails)
+    {
+        lv_obj_add_flag(leftBox, LV_OBJ_FLAG_HIDDEN);
+        return;
+    }
+    lv_obj_clear_flag(leftBox, LV_OBJ_FLAG_HIDDEN);
     if (slot >= 0 && slot < XTOUCH_THUMB_SLOT_MAX)
     {
         ui_thumb_set_img_src_from_slot(img, slot);
