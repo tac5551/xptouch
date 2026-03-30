@@ -258,7 +258,7 @@ inline bool downloadThumbnailForSlot(int slot)
 #ifdef XTOUCH_DEBUG_VERBOSE
     if (ok)
     {
-        ConsoleDebug.printf("[xPTouch][V][NET] slot=%d download success\n", slot);
+        ConsoleVerbose.printf("[xPTouch][V][NET] slot=%d download success\n", slot);
     }
     else
     {

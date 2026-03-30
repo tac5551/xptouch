@@ -145,14 +145,14 @@ void xtouch_device_set_print_state(String state)
 
 void xtouch_device_publish(String request)
 {
-#ifdef XTOUCH_DEBUG
-    Serial.println(F("[GCODE] MQTT publish request"));
-    ConsoleDebug.print(F("[xPTouch][D][MQTT] PUB topic="));
-    ConsoleDebug.print(xtouch_mqtt_request_topic);
-    ConsoleDebug.print(F(" len="));
-    ConsoleDebug.print(request.length());
-    ConsoleDebug.print(F(" payload="));
-    ConsoleDebug.println(request);
+#ifdef XTOUCH_DEBUG_VERBOSE
+    ConsoleVerbose.println("[GCODE] MQTT publish request");
+    ConsoleVerbose.print("[xPTouch][V][MQTT] PUB topic=");
+    ConsoleVerbose.print(xtouch_mqtt_request_topic);
+    ConsoleVerbose.print(" len=");
+    ConsoleVerbose.print(request.length());
+    ConsoleVerbose.print(" payload=");
+    ConsoleVerbose.println(request);
 #endif
 
     xtouch_pubSubClient.publish(xtouch_mqtt_request_topic.c_str(), request.c_str());
@@ -206,10 +206,10 @@ void xtouch_device_set_printing_speed(int lvl)
 
 void xtouch_device_gcode_line(String line)
 {
-#ifdef XTOUCH_DEBUG
-    Serial.println(F("[GCODE send]"));
-    Serial.println(line);
-    Serial.println(F("---"));
+#ifdef XTOUCH_DEBUG_VERBOSE
+    ConsoleVerbose.println("[GCODE send]");
+    ConsoleVerbose.println(line);
+    ConsoleVerbose.println("---");
 #endif
     DynamicJsonDocument json(line.length() + 256);
     json["print"]["command"] = "gcode_line";
@@ -487,14 +487,14 @@ void xtouch_device_onLoadFilament(lv_msg_t *m)
     /* EXT(254) ロード: 設定済み温度を使用し MQTT ams_change_filament で送る */
     uint16_t tar_temp = get_tray_temp(0, TRAY_ID_EXTERNAL);
     const char *tray_type = get_tray_type(0, TRAY_ID_EXTERNAL);
-// #ifdef XTOUCH_DEBUG
-//     printf("[EXT load] tray_type=%s tar_temp=%u\n", tray_type ? tray_type : "(null)", (unsigned)tar_temp);
-// #endif
-//     if (tar_temp < 100 || !tray_type || !tray_type[0] || strcmp(tray_type, "null") == 0)
-//     {
-//         ui_confirmPanel_show(LV_SYMBOL_WARNING " Set filament type and temperature\nin AMS View / Edit first.", ui_confirmPanel_hide);
-//         return;
-//     }
+#ifdef XTOUCH_DEBUG_VERBOSE
+    ConsoleVerbose.printf("[EXT load] tray_type=%s tar_temp=%u\n", tray_type ? tray_type : "(null)", (unsigned)tar_temp);
+#endif
+    if (tar_temp < 100 || !tray_type || !tray_type[0] || strcmp(tray_type, "null") == 0)
+    {
+        ui_confirmPanel_show(LV_SYMBOL_WARNING " Set filament type and temperature\nin AMS View / Edit first.", ui_confirmPanel_hide);
+        return;
+    }
     DynamicJsonDocument json(256);
     json["print"]["command"] = "ams_change_filament";
     json["print"]["sequence_id"] = xtouch_device_next_sequence();
@@ -505,12 +505,12 @@ void xtouch_device_onLoadFilament(lv_msg_t *m)
     json["print"]["tar_temp"] = (int)tar_temp;
     String result;
     serializeJson(json, result);
-#ifdef XTOUCH_DEBUG
-    Serial.println(F("[EXT load] MQTT ams_change_filament request"));
-    ConsoleDebug.print(F("[xPTouch][D][MQTT] PUB EXT len="));
-    ConsoleDebug.print(result.length());
-    ConsoleDebug.print(F(" payload="));
-    ConsoleDebug.println(result);
+#ifdef XTOUCH_DEBUG_VERBOSE
+    ConsoleVerbose.println("[EXT load] MQTT ams_change_filament request");
+    ConsoleVerbose.print("[xPTouch][V][MQTT] PUB EXT len=");
+    ConsoleVerbose.print(result.length());
+    ConsoleVerbose.print(" payload=");
+    ConsoleVerbose.println(result);
 #endif
     xtouch_device_publish(result);
 }

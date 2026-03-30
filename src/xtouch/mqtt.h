@@ -287,11 +287,11 @@ void xtouch_mqtt_processPushStatusOther(int slot, JsonDocument &incomingJson)
         const char *tid = print["task_id"].as<const char *>();
         strncpy(otherPrinters[slot].task_id, tid, sizeof(otherPrinters[slot].task_id) - 1);
         otherPrinters[slot].task_id[sizeof(otherPrinters[slot].task_id) - 1] = '\0';
-#ifdef XTOUCH_DEBUG
-        ConsoleDebug.print(F("[xPTouch][D][MQTT] other slot="));
-        ConsoleDebug.print(slot);
-        ConsoleDebug.print(F(" task_id="));
-        ConsoleDebug.println(tid);
+#ifdef XTOUCH_DEBUG_VERBOSE
+        ConsoleVerbose.print(F("[xPTouch][V][MQTT] other slot="));
+        ConsoleVerbose.print(slot);
+        ConsoleVerbose.print(F(" task_id="));
+        ConsoleVerbose.println(tid);
 #endif
     }
     if (print.containsKey("url"))
@@ -299,11 +299,11 @@ void xtouch_mqtt_processPushStatusOther(int slot, JsonDocument &incomingJson)
         const char *url_other = print["url"].as<const char *>();
         strncpy(otherPrinters[slot].image_url, url_other, sizeof(otherPrinters[slot].image_url) - 1);
         otherPrinters[slot].image_url[sizeof(otherPrinters[slot].image_url) - 1] = '\0';
-#ifdef XTOUCH_DEBUG
-        ConsoleDebug.print(F("[xPTouch][D][MQTT] URL other slot="));
-        ConsoleDebug.print(slot);
-        ConsoleDebug.print(F(" url="));
-        ConsoleDebug.println(url_other);
+#ifdef XTOUCH_DEBUG_VERBOSE
+        ConsoleVerbose.print(F("[xPTouch][V][MQTT] URL other slot="));
+        ConsoleVerbose.print(slot);
+        ConsoleVerbose.print(F(" url="));
+        ConsoleVerbose.println(url_other);
 #endif
     }
     if (print.containsKey("layer_num"))
@@ -1299,8 +1299,10 @@ void xtouch_mqtt_parseMessage(char *topic, byte *payload, unsigned int length, b
 
     auto deserializeError = deserializeJson(incomingJson, payload, length, DeserializationOption::Filter(amsFilter));
 
-    // printf("xtouch_mqtt_parseMessage\n");
-    // xtouch_debug_json(incomingJson);
+#ifdef XTOUCH_DEBUG_VERBOSE
+    ConsoleVerbose.println("xtouch_mqtt_parseMessage");
+    xtouch_debug_json(incomingJson);
+#endif
 
     if (!deserializeError)
     {
