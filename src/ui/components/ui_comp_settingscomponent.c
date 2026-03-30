@@ -29,6 +29,15 @@ void ui_event_comp_settingsComponent_resetDeviceButton(lv_event_t *e)
     }
 }
 
+void ui_event_comp_settingsComponent_clearCacheButton(lv_event_t *e)
+{
+    lv_event_code_t event_code = lv_event_get_code(e);
+    if (event_code == LV_EVENT_CLICKED)
+    {
+        onSettingsClearCache(e);
+    }
+}
+
 void ui_event_comp_settingsComponent_onBackLight(lv_event_t *e)
 {
     lv_event_code_t event_code = lv_event_get_code(e);

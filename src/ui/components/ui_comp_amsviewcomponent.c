@@ -184,13 +184,15 @@ static void ui_amsViewComponent_onAmsLockSyncButtons(lv_event_t *e)
             }
         }
         int is_current_tray = (tray_index >= 0 && (uint16_t)tray_index == (uint16_t)bambuStatus.m_tray_now);
+        /* EXT(254)がアクティブな間は手動 UNLOAD まで全スロットの LOAD を禁止（AMS タブの各列も含む） */
+        int ext_active_blocks_all_load = (bambuStatus.m_tray_now == TRAY_ID_EXTERNAL);
         for (uint32_t j = 0; j < m; j++)
         {
             lv_obj_t *btn = lv_obj_get_child(btn_row, j);
             /* EDIT(j==0) は Brand ファイルあり時表示。LOAD(j==1) はフィラメントあり or EXT で表示。LOAD は m_tray_now 一致時は押せない */
             int show_edit = (i >= 1) && bambuStatus.has_public_filaments && (is_ext_slot || loaded);
             int show_load = (i >= 1) && (is_ext_slot || loaded);
-            int disabled = global_disabled || (i >= 1 && (j == 0 ? !show_edit : !show_load)) || (j == 1 && is_current_tray);
+            int disabled = global_disabled || (i >= 1 && (j == 0 ? !show_edit : !show_load)) || (j == 1 && is_current_tray) || (j == 1 && ext_active_blocks_all_load);
             if (disabled)
                 lv_obj_add_state(btn, LV_STATE_DISABLED);
             else

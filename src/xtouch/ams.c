@@ -66,11 +66,8 @@ bool xtouch_has_ams() { return bambuStatus.ams_exist_bits != 0; }
 
 bool xtouch_can_load_filament()
 {
-    bool result = false;
-    if (!xtouch_has_ams())
-        return true;
-
-    return result;
+    /* AMS 未接続・接続のどちらでも外部スプール(EXT)ロードを許可（以前は AMS 有りで常に不可だった） */
+    return true;
 }
 
 bool xtouch_can_unload_filament()

@@ -59,6 +59,7 @@ extern "C"
     void ui_event_comp_settingsComponent_unpairButton(lv_event_t *e);
     void ui_event_comp_settingsComponent_OtaUpdateNowButton(lv_event_t *e);
     void ui_event_comp_settingsComponent_resetDeviceButton(lv_event_t *e);
+    void ui_event_comp_settingsComponent_clearCacheButton(lv_event_t *e);
     void ui_event_comp_settingsComponent_onAuxFan(lv_event_t *e);
     void ui_event_comp_settingsComponent_onChamberFan(lv_event_t *e);
     void ui_event_comp_settingsComponent_onOTA(lv_event_t *e);
