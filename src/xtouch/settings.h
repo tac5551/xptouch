@@ -1,6 +1,8 @@
 #ifndef _XLCD_SETTINGS
 #define _XLCD_SETTINGS
 
+#include "types.h"
+
 void xtouch_settings_save(bool onlyRoot = false)
 {
     DynamicJsonDocument doc(256);
@@ -45,7 +47,7 @@ void xtouch_settings_loadSettings()
     if (!xtouch_filesystem_exist(SD, xtouch_paths_settings))
     {
         DynamicJsonDocument doc(256);
-        xTouchConfig.xTouchBacklightLevel = 128;
+        xTouchConfig.xTouchBacklightLevel = XTOUCH_BACKLIGHT_SLIDER_DEFAULT;
         xTouchConfig.xTouchTFTOFFValue = 15;
         xTouchConfig.xTouchLEDOffValue = 15;
         xTouchConfig.xTouchTFTInvert = false;
@@ -69,7 +71,10 @@ void xtouch_settings_loadSettings()
 
     DynamicJsonDocument settings = xtouch_filesystem_readJson(SD, xtouch_paths_settings);
 
-    xTouchConfig.xTouchBacklightLevel = settings.containsKey("backlight") ? settings["backlight"].as<int>() : 128;
+    xTouchConfig.xTouchBacklightLevel = settings.containsKey("backlight") ? settings["backlight"].as<int>() : XTOUCH_BACKLIGHT_SLIDER_DEFAULT;
+    if (xTouchConfig.xTouchBacklightLevel < XTOUCH_BACKLIGHT_SLIDER_MIN ||
+        xTouchConfig.xTouchBacklightLevel > XTOUCH_BACKLIGHT_SLIDER_MAX)
+        xTouchConfig.xTouchBacklightLevel = XTOUCH_BACKLIGHT_SLIDER_MAX;
     xTouchConfig.xTouchTFTOFFValue = settings.containsKey("tftOff") ? settings["tftOff"].as<int>() : 15;
     xTouchConfig.xTouchLEDOffValue = settings.containsKey("lightOff") ? settings["lightOff"].as<int>() : 15;
     xTouchConfig.xTouchTFTInvert = settings.containsKey("tftInvert") ? settings["tftInvert"].as<bool>() : false;
