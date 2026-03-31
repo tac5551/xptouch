@@ -151,13 +151,15 @@ void ui_filamentComponent_onAMSBits(lv_event_t *e)
 
     lv_obj_t *unload = ui_comp_get_child(target, UI_COMP_FILAMENTCOMPONENT_FILAMENTSCREENFILAMENT_FILAMENTSCREENUNLOAD);
 
-    if (bambuStatus.ams_exist_bits != 0 && bambuStatus.ams_status_main == AMS_STATUS_MAIN_IDLE && bambuStatus.hw_switch_state == 1 && bambuStatus.m_tray_now == 255)
     {
-        lv_obj_clear_state(unload, LV_STATE_DISABLED);
-    }
-    else
-    {
-        lv_obj_add_state(unload, LV_STATE_DISABLED);
+        int tn = bambuStatus.m_tray_now;
+        if (bambuStatus.ams_exist_bits != 0 && bambuStatus.ams_status_main == AMS_STATUS_MAIN_IDLE && bambuStatus.hw_switch_state == 1 &&
+            ((tn >= 0 && tn <= 15) || tn == TRAY_ID_EXTERNAL || tn == 255))
+        {
+            lv_obj_clear_state(unload, LV_STATE_DISABLED);
+        }
+        else
+            lv_obj_add_state(unload, LV_STATE_DISABLED);
     }
 }
 

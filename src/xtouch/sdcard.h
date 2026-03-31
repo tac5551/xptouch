@@ -6,6 +6,7 @@
 #include <SPI.h>
 #include <ArduinoJson.h>
 #include <Arduino.h>
+#include "xtouch/sdcard_status.h"
 
 bool xtouch_sdcard_setup(int8_t sd_cs_pin)
 {
@@ -19,6 +20,7 @@ bool xtouch_sdcard_setup(int8_t sd_cs_pin)
         lv_timer_handler();
 
         ConsoleError.println("[xPTouch][E][SD] Card Mount Failed");
+        xtouch_sdcard_mark_present(false);
         return false;
     }
 
@@ -29,6 +31,7 @@ bool xtouch_sdcard_setup(int8_t sd_cs_pin)
     if (cardType == CARD_NONE)
     {
         ConsoleError.println("[xPTouch][E][SD] No SD card attached");
+        xtouch_sdcard_mark_present(false);
         return false;
     }
 
@@ -56,6 +59,7 @@ bool xtouch_sdcard_setup(int8_t sd_cs_pin)
     xtouch_filesystem_mkdir(SD, xtouch_paths_root);
     xtouch_filesystem_mkdir(SD, "/tmp");
 
+    xtouch_sdcard_mark_present(true);
     return true;
 }
 

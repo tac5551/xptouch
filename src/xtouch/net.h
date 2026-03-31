@@ -18,6 +18,7 @@ void onWiFiEvent(arduino_event_id_t event, arduino_event_info_t info)
 #include <MD5Builder.h>
 #include "bbl-certs.h"
 #include "xtouch/paths.h"
+#include "xtouch/sdcard_status.h"
 
 int downloadFileToSDCard(const char *url, const char *fileName, void (*onProgress)(int) = NULL, void (*onMD5Check)(int) = NULL, const char *otaMD5 = NULL)
 {
@@ -59,7 +60,7 @@ int downloadFileToSDCard(const char *url, const char *fileName, void (*onProgres
     if (httpCode == HTTP_CODE_OK)
     {
         // SD カード未挿入時は書き込みを試みずに終了（Printers 画面アイドル時の書き込みエラー対策）
-        if (SD.cardType() == CARD_NONE)
+        if (!xtouch_sdcard_is_present_cached())
         {
             ConsoleError.println("[xPTouch][E][NET] SD card not present, skip downloadFileToSDCard");
             http.end();
@@ -255,7 +256,7 @@ inline bool downloadThumbnailForSlot(int slot)
     }
 
     int ok = downloadFileToSDCard(url_buf, path);
-#ifdef XTOUCH_DEBUG_VERBOSE
+#ifdef XTOUCH_DEBUG_DETAIL
     if (ok)
     {
         ConsoleVerbose.printf("[xPTouch][V][NET] slot=%d download success\n", slot);

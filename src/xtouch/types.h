@@ -7,9 +7,9 @@
 #define XTOUCH_LCD_MIN_SLEEP_TIME 5
 #define XTOUCH_LIGHT_MIN_SLEEP_TIME 5
 
-/** バックライト。範囲外・欠損時は MAX に寄せる。5" は 220〜255、2.8" は 10〜255。 */
+/** バックライト。範囲外・欠損時は MAX に寄せる。5" は 170〜255（PWM 3600Hz 向け）、2.8" は 10〜255。 */
 #if defined(__XTOUCH_SCREEN_50__)
-#define XTOUCH_BACKLIGHT_SLIDER_MIN 220
+#define XTOUCH_BACKLIGHT_SLIDER_MIN 170
 #define XTOUCH_BACKLIGHT_SLIDER_MAX 255
 #else
 #define XTOUCH_BACKLIGHT_SLIDER_MIN 10

@@ -5,6 +5,7 @@
 #include "debug.h"
 #include <SD.h>
 #include <Arduino.h>
+#include "xtouch/sdcard_status.h"
 
 /* シンプルな Arduino SD ベースの LVGL ファイルシステムドライバ。
  * - 読み込み専用
@@ -17,7 +18,11 @@ static void *fs_open(lv_fs_drv_t *drv, const char *path, lv_fs_mode_t mode)
     if (!path)
         return nullptr;
 
-    ConsoleInfo.printf("[LVFS] open path=\"%s\" mode=%d\n", path, (int)mode);
+    if (!xtouch_sdcard_is_present_cached())
+    {
+        ConsoleDetail.printf("[LVFS] open skipped (SD not present) path=\"%s\"\n", path);
+        return nullptr;
+    }
 
     const char *open_mode;
     if (mode == LV_FS_MODE_WR)
@@ -35,11 +40,11 @@ static void *fs_open(lv_fs_drv_t *drv, const char *path, lv_fs_mode_t mode)
     File *f = new File(SD.open(sd_path, open_mode));
     if (!f || !*f)
     {
-        ConsoleInfo.printf("[LVFS] SD.open FAIL path=\"%s\" sd_path=\"%s\"\n", path, sd_path);
+        ConsoleDetail.printf("[LVFS] SD.open FAIL path=\"%s\" sd_path=\"%s\"\n", path, sd_path);
         if (f) delete f;
         return nullptr;
     }
-    ConsoleInfo.printf("[LVFS] SD.open OK path=\"%s\" sd_path=\"%s\"\n", path, sd_path);
+    ConsoleDetail.printf("[LVFS] SD.open OK path=\"%s\" sd_path=\"%s\"\n", path, sd_path);
     return (void *)f;
 }
 

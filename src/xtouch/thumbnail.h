@@ -7,6 +7,8 @@
 #include "xtouch/types.h"
 #ifdef __XTOUCH_SCREEN_50__
 #include "xtouch/net.h"
+#include "xtouch/sdcard_status.h"
+#include "xtouch/filesystem.h"
 #include <SD.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
@@ -25,6 +27,40 @@ static bool xtouch_load_logo_for_slot_with_lgfx(int slot, int out_w, int out_h);
 #ifndef XTOUCH_HISTORY_COVER_SLOTS
 #define XTOUCH_HISTORY_COVER_SLOTS 10
 #endif
+
+#ifdef __XTOUCH_SCREEN_50__
+/* 起動直後などで /resource/logo.png が無いと無限に open 失敗を繰り返すため、
+ * "無ければ作ってDL" を 1 回だけ試し、結果をキャッシュする */
+static bool s_resource_logo_ensured = false;
+static bool s_resource_logo_ensure_success = false;
+
+static bool xtouch_ensure_resource_logo_exists(void)
+{
+    if (s_resource_logo_ensured)
+        return s_resource_logo_ensure_success;
+
+    const char *path = "/resource/logo.png";
+    if (!xtouch_sdcard_is_present_cached())
+    {
+        s_resource_logo_ensure_success = false;
+        return false;
+    }
+    s_resource_logo_ensured = true;
+    if (SD.exists(path))
+    {
+        s_resource_logo_ensure_success = true;
+        return true;
+    }
+
+    /* /resource フォルダが無い場合は作成 */
+    (void)xtouch_filesystem_mkdir(SD, "/resource");
+
+    const char *url = "https://tac-lab.tech/xptouch-bin/logo.png";
+    int ok = downloadFileToSDCard(url, path);
+    s_resource_logo_ensure_success = (ok != 0) && SD.exists(path);
+    return s_resource_logo_ensure_success;
+}
+#endif /* __XTOUCH_SCREEN_50__ */
 /** History 画面 行別: SD 上の PNG をデコードして xtouch_history_cover_dsc[slot] に格納。path は "/tmp/history_cover_N.png" 等。 */
 bool xtouch_history_cover_load_path(int slot, const char *path);
 /** History cover を全スロットクリア（表示をプレースホルダに戻す）。 */
@@ -271,7 +307,7 @@ static void thumbnail_timer_cb(lv_timer_t *t)
     if (xTouchConfig.xTouchHideAllThumbnails)
         return;
     /* SD が無いときは、サムネイル（DL／ロゴ）処理を一切行わない。HTTP や SD エラーを防ぐため。 */
-    if (SD.cardType() == CARD_NONE)
+    if (!xtouch_sdcard_is_present_cached())
         return;
 
     int idx = xTouchConfig.currentScreenIndex;
@@ -458,7 +494,7 @@ void xtouch_thumbnail_schedule_fetch_all(void)
 void xtouch_thumbnail_clear_sd_cache(void)
 {
 #if defined(__XTOUCH_SCREEN_50__)
-    if (SD.cardType() == CARD_NONE)
+    if (!xtouch_sdcard_is_present_cached())
         return;
     File dir = SD.open("/tmp");
     if (!dir)
@@ -478,6 +514,18 @@ void xtouch_thumbnail_clear_sd_cache(void)
             const char *nm = entry.name();
             size_t len = nm ? strlen(nm) : 0;
             if (len >= 4 && strcmp(nm + len - 4, ".png") == 0)
+            {
+                char pathbuf[80];
+                if (nm[0] == '/')
+                    snprintf(pathbuf, sizeof(pathbuf), "%s", nm);
+                else
+                    snprintf(pathbuf, sizeof(pathbuf), "/tmp/%s", nm);
+                entry.close();
+                SD.remove(pathbuf);
+                continue;
+            }
+            /* サムネ用 tmp JSON も一緒に削除（存在するとキャッシュを再利用してしまうため） */
+            if (len >= 5 && strcmp(nm + len - 5, ".json") == 0)
             {
                 char pathbuf[80];
                 if (nm[0] == '/')
@@ -522,7 +570,7 @@ static void xtouch_thumbnail_on_printers_rebind(void *s, lv_msg_t *m)
     xtouch_thumbnail_update_path_all_slots();
     xtouch_thumbnail_schedule_fetch_all();
 #ifdef __XTOUCH_SCREEN_50__
-    if (SD.cardType() != CARD_NONE)
+    if (xtouch_sdcard_is_present_cached())
     {
         /* タイマー待ちなく SD にある現在 task の PNG を即デコード（cache_refresh_done 依存を回避） */
         for (int slot = 0; slot < XTOUCH_THUMB_SLOT_MAX; slot++)
@@ -598,7 +646,7 @@ static void xtouch_thumbnail_subscribe_events(void)
     lv_msg_subscribe(XTOUCH_PRINTERS_THUMB_TIMER_START, (lv_msg_subscribe_cb_t)xtouch_thumbnail_on_timer_start, NULL);
     lv_msg_subscribe(XTOUCH_PRINTERS_THUMB_TIMER_STOP, (lv_msg_subscribe_cb_t)xtouch_thumbnail_on_timer_stop, NULL);
     lv_msg_subscribe(XTOUCH_THUMBNAILS_HIDE_MODE_CHANGED, (lv_msg_subscribe_cb_t)xtouch_thumbnail_on_hide_mode_changed, NULL);
-    if (!s_thumb_boot_logo_seeded && SD.cardType() != CARD_NONE)
+    if (!s_thumb_boot_logo_seeded && xtouch_sdcard_is_present_cached())
     {
         for (int s = 0; s < XTOUCH_THUMB_SLOT_MAX; s++)
         {
@@ -714,7 +762,7 @@ static void xtouch_pngle_draw_cb(void *user_data, uint32_t x, uint32_t y, uint_f
 
 bool xtouch_history_reprint_cover_load_path(const char *path)
 {
-    if (!path || !path[0] || SD.cardType() == CARD_NONE)
+    if (!path || !path[0] || !xtouch_sdcard_is_present_cached())
     {
         xtouch_history_reprint_cover_clear();
         return false;
@@ -930,7 +978,7 @@ static void thumb_on_decode_failed_after_open(int slot, const char *path)
         strcmp(s_thumb_decode_tid_gen0[slot], s_thumb_decode_tid_gen1[slot]) == 0)
     {
         ConsoleVerbose.printf("[xPTouch][V][THUMB] corrupt cache x2 tid=%s remove %s\n", tid, path ? path : "");
-        if (path && path[0] && SD.cardType() != CARD_NONE && SD.exists(path))
+        if (path && path[0] && xtouch_sdcard_is_present_cached() && SD.exists(path))
             SD.remove(path);
         thumb_decode_tid_generations_clear(slot);
         xtouch_thumbnail_slot_path[slot][0] = '\0';
@@ -958,6 +1006,7 @@ static bool xtouch_load_thumb_slot_with_lgfx(int slot, int out_w, int out_h)
         if (!buf)
         {
             xtouch_thumbnail_slot_dsc[slot] = nullptr;
+            s_thumb_exists[slot] = true; /* logo try を繰り返さない */
             return false;
         }
         g_lgfx_thumb_buf_slot[slot] = buf;
@@ -1041,7 +1090,7 @@ void xtouch_history_cover_clear(void)
 
 bool xtouch_history_cover_load_path(int slot, const char *path)
 {
-    if (slot < 0 || slot >= XTOUCH_HISTORY_COVER_SLOTS || !path || !path[0] || SD.cardType() == CARD_NONE)
+    if (slot < 0 || slot >= XTOUCH_HISTORY_COVER_SLOTS || !path || !path[0] || !xtouch_sdcard_is_present_cached())
     {
         if (slot >= 0 && slot < XTOUCH_HISTORY_COVER_SLOTS)
             xtouch_history_cover_dsc[slot] = nullptr;
@@ -1125,11 +1174,21 @@ static bool xtouch_load_logo_for_slot_with_lgfx(int slot, int out_w, int out_h)
     if (slot < 0 || slot >= XTOUCH_THUMB_SLOT_MAX || out_w <= 0 || out_h <= 0)
         return false;
     /* SD 未挿入時は何もしない（無限に open を繰り返さないようにする） */
-    if (SD.cardType() == CARD_NONE)
+    if (!xtouch_sdcard_is_present_cached())
     {
         ConsoleVerbose.printf("[xPTouch][V][THUMB] logo: SD not present\n");
+        s_thumb_exists[slot] = true; /* Home 側の logo try ループを止める */
         return false;
     }
+
+#ifdef __XTOUCH_SCREEN_50__
+    /* /resource/logo.png が無い場合、初回のみ /resource 作成＋DL を実施する */
+    if (!xtouch_ensure_resource_logo_exists())
+    {
+        s_thumb_exists[slot] = true; /* logo try を繰り返さない */
+        return false;
+    }
+#endif
     size_t px_count = (size_t)out_w * (size_t)out_h;
     lv_color_t *buf = g_lgfx_thumb_buf_slot[slot];
     if (!buf || g_lgfx_thumb_dsc_slot[slot].header.w != out_w || g_lgfx_thumb_dsc_slot[slot].header.h != out_h)
@@ -1160,6 +1219,7 @@ static bool xtouch_load_logo_for_slot_with_lgfx(int slot, int out_w, int out_h)
     {
         ConsoleVerbose.printf("[xPTouch][V][THUMB] logo: SD.open failed path=%s\n", path);
         xtouch_thumbnail_slot_dsc[slot] = nullptr;
+        s_thumb_exists[slot] = true; /* 失敗時は Home 側の try を止める */
         return false;
     }
     pngle_t *pngle = lgfx_pngle_new();
@@ -1168,6 +1228,7 @@ static bool xtouch_load_logo_for_slot_with_lgfx(int slot, int out_w, int out_h)
         file.close();
         ConsoleVerbose.printf("[xPTouch][V][THUMB] logo: lgfx_pngle_new failed\n");
         xtouch_thumbnail_slot_dsc[slot] = nullptr;
+        s_thumb_exists[slot] = true; /* logo try を繰り返さない */
         return false;
     }
     pngle_ctx.file = &file;
@@ -1182,6 +1243,7 @@ static bool xtouch_load_logo_for_slot_with_lgfx(int slot, int out_w, int out_h)
         file.close();
         ConsoleVerbose.printf("[xPTouch][V][THUMB] logo: lgfx_pngle_prepare failed\n");
         xtouch_thumbnail_slot_dsc[slot] = nullptr;
+        s_thumb_exists[slot] = true; /* logo try を繰り返さない */
         return false;
     }
     pngle_ctx.img_width = lgfx_pngle_get_width(pngle);
@@ -1192,6 +1254,7 @@ static bool xtouch_load_logo_for_slot_with_lgfx(int slot, int out_w, int out_h)
         file.close();
         ConsoleError.printf("[xPTouch][E][THUMB] logo: invalid size\n");
         xtouch_thumbnail_slot_dsc[slot] = nullptr;
+        s_thumb_exists[slot] = true; /* logo try を繰り返さない */
         return false;
     }
     int res = lgfx_pngle_decomp(pngle, xtouch_pngle_draw_cb);
@@ -1201,6 +1264,7 @@ static bool xtouch_load_logo_for_slot_with_lgfx(int slot, int out_w, int out_h)
     {
         ConsoleError.printf("[xPTouch][E][THUMB] logo: lgfx_pngle_decomp failed\n");
         xtouch_thumbnail_slot_dsc[slot] = nullptr;
+        s_thumb_exists[slot] = true; /* logo try を繰り返さない */
         return false;
     }
     ConsoleVerbose.printf("[xPTouch][V][THUMB] logo: success slot=%d\n", slot);

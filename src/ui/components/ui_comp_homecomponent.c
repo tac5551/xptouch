@@ -82,8 +82,8 @@ void ui_event_comp_homeComponent_mainScreenReprintButton(lv_event_t *e)
     }
     else
     {
-        memset(xtouch_history_reprint_task_id, 0, XTOUCH_HISTORY_TASK_ID_LEN);
-        xtouch_history_reprint_task_id_valid = 0;
+        ui_confirmPanel_show(LV_SYMBOL_WARNING " No task ID for reprint.\nTry History or wait for status.", ui_confirmPanel_hide);
+        return;
     }
 
     xtouch_history_reprint_detail_fetch_inflight = 0;
@@ -92,6 +92,7 @@ void ui_event_comp_homeComponent_mainScreenReprintButton(lv_event_t *e)
     memset(&xtouch_history_reprint_task_basic, 0, sizeof(xtouch_history_reprint_task_basic));
     xtouch_history_reprint_cover_dsc = NULL;
     xtouch_history_selected_ams_map_count = -1;
+    xtouch_history_reprint_printer_dd_slot = 0; /* ホームは常に選択中プリンタへ（Printers 経路のスロットが残らないように） */
     loadScreen(16);
 #else
     (void)e;

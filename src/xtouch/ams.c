@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include "types.h"
+#include "trays.h"
 
 void xtouch_ams_parse_tray_now(const char *tray_now)
 {
@@ -76,9 +77,11 @@ bool xtouch_can_unload_filament()
     if (!xtouch_has_ams())
         return true;
 
-    if (bambuStatus.ams_status_main == AMS_STATUS_MAIN_IDLE && bambuStatus.hw_switch_state == 1 && bambuStatus.m_tray_now == 255)
     {
-        return true;
+        int tn = bambuStatus.m_tray_now;
+        if (bambuStatus.ams_status_main == AMS_STATUS_MAIN_IDLE && bambuStatus.hw_switch_state == 1 &&
+            ((tn >= 0 && tn <= 15) || tn == TRAY_ID_EXTERNAL || tn == 255))
+            return true;
     }
     return result;
 }

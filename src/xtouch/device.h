@@ -145,14 +145,14 @@ void xtouch_device_set_print_state(String state)
 
 void xtouch_device_publish(String request)
 {
-#ifdef XTOUCH_DEBUG_VERBOSE
-    ConsoleVerbose.println("[GCODE] MQTT publish request");
-    ConsoleVerbose.print("[xPTouch][V][MQTT] PUB topic=");
-    ConsoleVerbose.print(xtouch_mqtt_request_topic);
-    ConsoleVerbose.print(" len=");
-    ConsoleVerbose.print(request.length());
-    ConsoleVerbose.print(" payload=");
-    ConsoleVerbose.println(request);
+#ifdef XTOUCH_DEBUG_DETAIL
+    ConsoleDetail.println("[GCODE] MQTT publish request");
+    ConsoleDetail.print("[xPTouch][D][MQTT] PUB topic=");
+    ConsoleDetail.print(xtouch_mqtt_request_topic);
+    ConsoleDetail.print(" len=");
+    ConsoleDetail.print(request.length());
+    ConsoleDetail.print(" payload=");
+    ConsoleDetail.println(request);
 #endif
 
     xtouch_pubSubClient.publish(xtouch_mqtt_request_topic.c_str(), request.c_str());
@@ -627,10 +627,10 @@ void xtouch_device_command_ams_load(void *s, lv_msg_t *m)
 
 void xtouch_device_command_ams_unload(void *s, lv_msg_t *m)
 {
-    if (bambuStatus.m_tray_now > 15)
-    {
+    int tn = bambuStatus.m_tray_now;
+    /* 0–15=AMS スロット、254=EXT、255=一部 FW の外部相当。>15 でこれら以外は gcode 対象外 */
+    if (tn < 0 || (tn > 15 && tn != TRAY_ID_EXTERNAL && tn != 255))
         return;
-    }
     printf("AMS unload\n");
 
     bambuStatus.ams_status_main = AMS_STATUS_MAIN_FILAMENT_CHANGE;
@@ -767,18 +767,21 @@ void xtouch_device_command_ams_filament_setting(void *s, lv_msg_t *m)
     if (m->payload == NULL)
         return;
     const struct XTOUCH_AMS_FILAMENT_SETTING_PAYLOAD *p = (const struct XTOUCH_AMS_FILAMENT_SETTING_PAYLOAD *)m->payload;
-    int slot_id = (p->ams_id == 255) ? 254 : (p->ams_id * 4 + p->tray_id); /* 0-3 per AMS, 254=External */
-    /* MQTT に送る温度は Cloud で取ってきた値（payload は UI で Cloud 取得分を優先して組み立て済み） */
+
     DynamicJsonDocument json(512);
     json["print"]["sequence_id"] = xtouch_device_next_sequence();
     json["print"]["command"] = "ams_filament_setting";
     json["print"]["ams_id"] = p->ams_id;
     json["print"]["tray_id"] = p->tray_id;
-    json["print"]["slot_id"] = slot_id;
-    /* 純正同様: setting_id はフル（GFSB00_03）、tray_info_idx と filament_id は Cloud の filament_id（GFB00）。 */
+    /* ams_filament_setting: 純正の成功 report は EXT でも slot_id=254。extrusion_cali_sel は EXT で slot_id なし */
+    if (p->ams_id == 255)
+        json["print"]["slot_id"] = TRAY_ID_EXTERNAL;
+    else
+        json["print"]["slot_id"] = p->ams_id * 4 + p->tray_id;
     const char *tray_info_val = (p->filament_id[0] != '\0') ? p->filament_id : p->tray_info_idx;
     json["print"]["tray_info_idx"] = tray_info_val;
-    json["print"]["setting_id"] = p->tray_info_idx;
+    if (p->ams_id != 255)
+        json["print"]["setting_id"] = p->tray_info_idx;
     json["print"]["tray_color"] = p->tray_color;
     json["print"]["nozzle_temp_min"] = p->nozzle_temp_min;
     json["print"]["nozzle_temp_max"] = p->nozzle_temp_max;
@@ -787,9 +790,7 @@ void xtouch_device_command_ams_filament_setting(void *s, lv_msg_t *m)
     serializeJson(json, result);
     xtouch_device_publish(result);
 
-    /* 設定を確定するため extrusion_cali_sel を送る（送らないとキャンセルされる）。
-       純正と同じく slot_id は AMS ごとに 0〜3 を使う（ams_filament_setting と揃える）。 */
-    int cali_slot_id = (p->ams_id == 255) ? 254 : (p->ams_id * 4 + p->tray_id);
+    /* 設定を確定するため extrusion_cali_sel を送る（送らないとキャンセルされる）。EXT は slot_id なしで報告が返る */
     char nozzle_d_buf[8];
     if (bambuStatus.nozzle_diameter > 0.1f && bambuStatus.nozzle_diameter < 1.0f)
         snprintf(nozzle_d_buf, sizeof(nozzle_d_buf), "%.1f", (double)bambuStatus.nozzle_diameter);
@@ -800,23 +801,30 @@ void xtouch_device_command_ams_filament_setting(void *s, lv_msg_t *m)
     json2["print"]["command"] = "extrusion_cali_sel";
     json2["print"]["ams_id"] = p->ams_id;
     json2["print"]["tray_id"] = p->tray_id;
-    json2["print"]["slot_id"] = cali_slot_id;
+    if (p->ams_id != 255)
+        json2["print"]["slot_id"] = p->ams_id * 4 + p->tray_id;
     json2["print"]["filament_id"] = (p->filament_id[0] != '\0') ? p->filament_id : p->tray_info_idx;
     json2["print"]["nozzle_diameter"] = nozzle_d_buf;
+    /* EXT のみ純正 extrusion_cali_sel に合わせて付与（通常 AMS は従来どおりキーなし） */
+    if (p->ams_id == 255)
+        json2["print"]["nozzle_volume_type"] = "normal";
     json2["print"]["cali_idx"] = -1;
     String result2;
     serializeJson(json2, result2);
     xtouch_device_publish(result2);
 
-    /* extrusion_cali_sel が success した後、純正と同様に最小構成の ams_filament_setting を再送して確定させる。 */
-    DynamicJsonDocument json3(192);
-    json3["print"]["sequence_id"] = xtouch_device_next_sequence();
-    json3["print"]["command"] = "ams_filament_setting";
-    json3["print"]["ams_id"] = p->ams_id;
-    json3["print"]["tray_id"] = p->tray_id;
-    String result3;
-    serializeJson(json3, result3);
-    xtouch_device_publish(result3);
+    /* EXT は純正に合わせ再送しない（送ると vt_tray が巻き戻る報告あり）。AMS スロットのみ従来どおり最小 ams_filament_setting で確定 */
+    if (p->ams_id != 255)
+    {
+        DynamicJsonDocument json3(192);
+        json3["print"]["sequence_id"] = xtouch_device_next_sequence();
+        json3["print"]["command"] = "ams_filament_setting";
+        json3["print"]["ams_id"] = p->ams_id;
+        json3["print"]["tray_id"] = p->tray_id;
+        String result3;
+        serializeJson(json3, result3);
+        xtouch_device_publish(result3);
+    }
 
     /* 設定確定後に PushAll をリクエストして最新の AMS/トレイ状態を取得（Reset 時も通常設定時も同様） */
     xtouch_device_pushall();

@@ -45,9 +45,9 @@ static void ams_edit_sd_load_timer_cb(lv_timer_t *t)
     }
     else
     {
-        /* 初回表示: setting_id 逆引き優先、なければ tray_type で選択。tray_id は 0–3。 */
+        /* 初回表示: setting_id 逆引き優先。EXT は tray_id=254（AMS スロット 0 と混同しないこと） */
         uint8_t aid = (ams_edit_current_ams_id == 255) ? 0 : (uint8_t)ams_edit_current_ams_id;
-        uint8_t tray_index = (ams_edit_current_ams_id == 255) ? 0 : (uint8_t)ams_edit_current_tray_id;
+        uint8_t tray_index = (uint8_t)ams_edit_current_tray_id;
         int bi = 0, ti = 0;
         int set = 0;
         if (aid < 8)

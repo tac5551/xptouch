@@ -198,6 +198,7 @@ void onPrintersReprint(lv_event_t *e)
     else
     {
         xtouch_history_reprint_task_id_valid = 0;
+        ui_confirmPanel_show(LV_SYMBOL_WARNING " No task ID for reprint.\nTry History or wait for status.", ui_confirmPanel_hide);
         return;
     }
 

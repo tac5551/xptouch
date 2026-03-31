@@ -8,6 +8,7 @@
 #include <esp_task_wdt.h>
 #include "ui/ui_msgs.h"
 #include "types.h"
+#include "debug.h"
 #include "autogrowstream.h"
 #include "bbl-certs.h"
 // #include "xtouch/ams-status.hpp"
@@ -22,12 +23,100 @@ String xtouch_mqtt_report_topic;
 #include "ams.h"
 #include "device.h"
 #include "trays.h"
+#include <strings.h>
 #ifdef __XTOUCH_SCREEN_50__
 #include "xtouch/thumbnail.h"
 #endif
 #define XTOUCH_MQTT_SERVER_TIMEOUT 20
 #define XTOUCH_MQTT_SERVER_PUSH_STATUS_TIMEOUT 1800
 #define XTOUCH_MQTT_SERVER_JSON_PARSE_SIZE 4192
+
+/** vt_tray 等に nozzle 温度が無いとき、tray_type から ams_change_filament 用の代表温度（>=100） */
+static uint16_t xtouch_mqtt_infer_tar_temp_from_tray_type(const char *tt)
+{
+    if (!tt || !tt[0] || strcmp(tt, "null") == 0)
+        return 0;
+    static const struct
+    {
+        const char *key;
+        uint16_t temp;
+    } kTbl[] = {
+        { "PETG-CF", 265 },
+        { "PETG", 250 },
+        { "PLA-CF", 235 },
+        { "PLA", 220 },
+        { "ABS", 260 },
+        { "ASA", 260 },
+        { "TPU", 230 },
+        { "PA-CF", 265 },
+        { "PA", 255 },
+        { "PC", 270 },
+        { "PVA", 220 },
+    };
+    for (size_t i = 0; i < sizeof(kTbl) / sizeof(kTbl[0]); i++)
+    {
+        size_t n = strlen(kTbl[i].key);
+        if (strncasecmp(tt, kTbl[i].key, n) == 0)
+            return kTbl[i].temp;
+    }
+    return 0;
+}
+
+static void xtouch_mqtt_apply_vt_tray_nozzle_temps(JsonObject vt, const char *traytype)
+{
+    int nt_min = 0, nt_max = 0;
+    if (!vt)
+        return;
+    if (vt.containsKey("nozzle_temp_min"))
+        nt_min = vt["nozzle_temp_min"].as<int>();
+    if (vt.containsKey("nozzle_temp_max"))
+        nt_max = vt["nozzle_temp_max"].as<int>();
+    if (nt_min == 0 && vt.containsKey("nozzle_temperature_range_low"))
+    {
+        JsonVariant v = vt["nozzle_temperature_range_low"];
+        if (v.is<JsonArray>() && v.as<JsonArray>().size() > 0)
+        {
+            JsonVariant first = v.as<JsonArray>()[0];
+            nt_min = first.is<int>() ? first.as<int>() : first.as<String>().toInt();
+        }
+        else
+            nt_min = v.as<int>();
+    }
+    if (nt_max == 0 && vt.containsKey("nozzle_temperature_range_high"))
+    {
+        JsonVariant v = vt["nozzle_temperature_range_high"];
+        if (v.is<JsonArray>() && v.as<JsonArray>().size() > 0)
+        {
+            JsonVariant first = v.as<JsonArray>()[0];
+            nt_max = first.is<int>() ? first.as<int>() : first.as<String>().toInt();
+        }
+        else
+            nt_max = v.as<int>();
+    }
+
+    uint16_t mid = 0;
+    if (nt_min > 0 && nt_max > 0)
+        mid = (uint16_t)((nt_min + nt_max) / 2);
+    else if (nt_max >= 100)
+        mid = (uint16_t)nt_max;
+    else if (nt_min >= 100)
+        mid = (uint16_t)nt_min;
+    if (mid < 100)
+        mid = xtouch_mqtt_infer_tar_temp_from_tray_type(traytype ? traytype : "");
+
+    if (mid >= 100)
+    {
+        set_tray_temp(0, TRAY_ID_EXTERNAL, mid);
+        if (nt_min > 0 && nt_max > 0)
+            set_tray_temp_min_max(0, TRAY_ID_EXTERNAL, (uint16_t)nt_min, (uint16_t)nt_max);
+        else if (nt_min > 0 || nt_max > 0)
+            set_tray_temp_min_max(0, TRAY_ID_EXTERNAL, (uint16_t)(nt_min > 0 ? nt_min : (int)mid - 30),
+                                  (uint16_t)(nt_max > 0 ? nt_max : (int)mid + 25));
+        else
+            set_tray_temp_min_max(0, TRAY_ID_EXTERNAL, (uint16_t)((int)mid > 35 ? (int)mid - 30 : 170),
+                                  (uint16_t)((int)mid + 25));
+    }
+}
 
 /* ---------------------------------------------- */
 bool xtouch_mqtt_firstConnectionDone = false;
@@ -287,11 +376,11 @@ void xtouch_mqtt_processPushStatusOther(int slot, JsonDocument &incomingJson)
         const char *tid = print["task_id"].as<const char *>();
         strncpy(otherPrinters[slot].task_id, tid, sizeof(otherPrinters[slot].task_id) - 1);
         otherPrinters[slot].task_id[sizeof(otherPrinters[slot].task_id) - 1] = '\0';
-#ifdef XTOUCH_DEBUG_VERBOSE
-        ConsoleVerbose.print(F("[xPTouch][V][MQTT] other slot="));
-        ConsoleVerbose.print(slot);
-        ConsoleVerbose.print(F(" task_id="));
-        ConsoleVerbose.println(tid);
+#ifdef XTOUCH_DEBUG_DETAIL
+        ConsoleDetail.print("[xPTouch][D][MQTT] other slot=");
+        ConsoleDetail.print(slot);
+        ConsoleDetail.print(" task_id=");
+        ConsoleDetail.println(tid);
 #endif
     }
     if (print.containsKey("url"))
@@ -299,11 +388,11 @@ void xtouch_mqtt_processPushStatusOther(int slot, JsonDocument &incomingJson)
         const char *url_other = print["url"].as<const char *>();
         strncpy(otherPrinters[slot].image_url, url_other, sizeof(otherPrinters[slot].image_url) - 1);
         otherPrinters[slot].image_url[sizeof(otherPrinters[slot].image_url) - 1] = '\0';
-#ifdef XTOUCH_DEBUG_VERBOSE
-        ConsoleVerbose.print(F("[xPTouch][V][MQTT] URL other slot="));
-        ConsoleVerbose.print(slot);
-        ConsoleVerbose.print(F(" url="));
-        ConsoleVerbose.println(url_other);
+#ifdef XTOUCH_DEBUG_DETAIL
+        ConsoleDetail.print("[xPTouch][D][MQTT] URL other slot=");
+        ConsoleDetail.print(slot);
+        ConsoleDetail.print(" url=");
+        ConsoleDetail.println(url_other);
 #endif
     }
     if (print.containsKey("layer_num"))
@@ -770,19 +859,33 @@ void xtouch_mqtt_processPushStatus(JsonDocument &incomingJson)
             }
             xtouch_mqtt_update_slice_info(incomingJson["print"]["project_id"], incomingJson["print"]["profile_id"], incomingJson["print"]["subtask_id"], plate_index);
 
+            /* subtask_id はスライス用 ID であり Cloud の /my/task/{id} 用 task_id と別物。
+             * print.task_id があるメッセージでここから task_id を上書きすると、完了後に subtask_id が "0"
+             * になりホームの Reprint が task_id を失う。task_id キーが無い端末だけ subtask をフォールバックする */
+            if (!incomingJson["print"].containsKey("task_id"))
             {
                 String new_tid_str = incomingJson["print"]["subtask_id"].as<String>();
                 const char *new_tid = new_tid_str.c_str();
-#ifdef __XTOUCH_SCREEN_50__
-                if (new_tid[0] && strcmp(bambuStatus.task_id, new_tid) != 0)
+                if (!new_tid || !new_tid[0] || strcmp(new_tid, "0") == 0)
                 {
-                    bambuStatus.image_url[0] = '\0';
-                    xtouch_thumbnail_invalidate_slot(0);
-                    xtouch_thumbnail_schedule_fetch_all();
+                    /* Cloud 再印刷用 ID は print.task_id のみ正。subtask のみでフォールバックするが、
+                     * 空/"0" では代替できない（旧 task_id を潰さない）。 */
+                    ConsoleError.println(
+                        F("[xPTouch][E][MQTT] push_status: no print.task_id; subtask_id empty/0 — cannot set cloud task_id"));
                 }
+                else
+                {
+#ifdef __XTOUCH_SCREEN_50__
+                    if (new_tid[0] && strcmp(bambuStatus.task_id, new_tid) != 0)
+                    {
+                        bambuStatus.image_url[0] = '\0';
+                        xtouch_thumbnail_invalidate_slot(0);
+                        xtouch_thumbnail_schedule_fetch_all();
+                    }
 #endif
-                strncpy(bambuStatus.task_id, new_tid, sizeof(bambuStatus.task_id) - 1);
-                bambuStatus.task_id[sizeof(bambuStatus.task_id) - 1] = '\0';
+                    strncpy(bambuStatus.task_id, new_tid, sizeof(bambuStatus.task_id) - 1);
+                    bambuStatus.task_id[sizeof(bambuStatus.task_id) - 1] = '\0';
+                }
             }
         }
 #ifdef __XTOUCH_SCREEN_50__
@@ -1251,20 +1354,22 @@ void xtouch_mqtt_processPushStatus(JsonDocument &incomingJson)
             // printf("AMS tray now  %d\n", bambuStatus.m_tray_now);
         }
 
-        /* vt_tray: 254=External */
+        /* vt_tray: 254=External（従来 type/color のみで tray_temps が 0 のまま→外部フィラメント Load が止まるのを防ぐ） */
         if (incomingJson["print"].containsKey("vt_tray"))
         {
             bambuStatus.ams_support_virtual_tray = true;
+            JsonObject vt = incomingJson["print"]["vt_tray"];
             char color[16];
             char traytype[16];
             memset(color, 0, 16);
             memset(traytype, 0, 16);
-            incomingJson["print"]["vt_tray"]["tray_color"].as<String>().toCharArray(color, 16);
-            incomingJson["print"]["vt_tray"]["tray_type"].as<String>().toCharArray(traytype, 16);
+            vt["tray_color"].as<String>().toCharArray(color, 16);
+            vt["tray_type"].as<String>().toCharArray(traytype, 16);
             color[6] = 0;
             xtouch_mqtt_parse_tray(0, TRAY_ID_EXTERNAL, color, 1);
             set_tray_type(0, TRAY_ID_EXTERNAL, traytype);
             set_tray_color(0, TRAY_ID_EXTERNAL, color);
+            xtouch_mqtt_apply_vt_tray_nozzle_temps(vt, traytype);
         }
         else
         {
@@ -1299,8 +1404,8 @@ void xtouch_mqtt_parseMessage(char *topic, byte *payload, unsigned int length, b
 
     auto deserializeError = deserializeJson(incomingJson, payload, length, DeserializationOption::Filter(amsFilter));
 
-#ifdef XTOUCH_DEBUG_VERBOSE
-    ConsoleVerbose.println("xtouch_mqtt_parseMessage");
+#ifdef XTOUCH_DEBUG_DETAIL
+    ConsoleDetail.println("xtouch_mqtt_parseMessage");
     xtouch_debug_json(incomingJson);
 #endif
 
@@ -1432,10 +1537,10 @@ void xtouch_mqtt_parseMessage(char *topic, byte *payload, unsigned int length, b
 
 void xtouch_pubSubClient_streamCallback(char *topic, byte *payload, unsigned int length)
 {
-    ConsoleVerbose.print(F("[xPTouch][V][MQTT] RECV topic="));
-    ConsoleVerbose.print(topic);
-    ConsoleVerbose.print(F(" len="));
-    ConsoleVerbose.println(length);
+    ConsoleDetail.print("[xPTouch][D][MQTT] RECV topic=");
+    ConsoleDetail.print(topic);
+    ConsoleDetail.print(" len=");
+    ConsoleDetail.println(length);
     // xtouch_mqtt_parseMessage(topic, (byte *)stream.get_buffer(), stream.current_length(), 0);
 
     // if (stream.includes("\"ams\""))

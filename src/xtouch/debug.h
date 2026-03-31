@@ -25,20 +25,27 @@
 #else
 #define XTOUCH_DEBUG_VERBOSE false
 #endif
-#define XTOUCH_DEBUG_LOG XTOUCH_DEBUG_VERBOSE
+/* DETAIL 層（Arduino/ESP32 の CORE_DEBUG_LEVEL 6 相当） */
+#if defined(CORE_DEBUG_LEVEL) && CORE_DEBUG_LEVEL >= 6
+#define XTOUCH_DEBUG_DETAIL true
+#else
+#define XTOUCH_DEBUG_DETAIL false
+#endif
 
 #ifdef __cplusplus
+
+#define ConsoleInfo   if (XTOUCH_DEBUG_INFO || XTOUCH_DEBUG_DEBUG || XTOUCH_DEBUG_VERBOSE) Serial
+#define ConsoleDebug  if (XTOUCH_DEBUG_DEBUG || XTOUCH_DEBUG_VERBOSE) Serial
 #define ConsoleVerbose if (XTOUCH_DEBUG_VERBOSE) Serial
-#define ConsoleInfo   if (XTOUCH_DEBUG_INFO || XTOUCH_DEBUG_DEBUG || XTOUCH_DEBUG_LOG) Serial
-#define ConsoleDebug  if (XTOUCH_DEBUG_DEBUG || XTOUCH_DEBUG_LOG) Serial
+
 #define ConsoleError  if (XTOUCH_DEBUG_ERROR) Serial
-#define ConsoleLog    if (XTOUCH_DEBUG_LOG) Serial
+#define ConsoleDetail if (XTOUCH_DEBUG_DETAIL) Serial
 
 #include <ArduinoJson.h>
 
 static inline void xtouch_debug_json(const JsonDocument &doc)
 {
-#if XTOUCH_DEBUG_DEBUG == true
+#if XTOUCH_DEBUG_DETAIL == true
     String output;
     serializeJsonPretty(doc, output);
     ConsoleDebug.println(output);
@@ -53,16 +60,22 @@ static inline void xtouch_debug_json(const JsonDocument &doc)
         if (XTOUCH_DEBUG_VERBOSE)                                                                  \
             printf(__VA_ARGS__);                                                                   \
     } while (0)
+#define ConsoleDetail_Printf(...)                                                                  \
+    do                                                                                              \
+    {                                                                                               \
+        if (XTOUCH_DEBUG_DETAIL)                                                                  \
+            printf(__VA_ARGS__);                                                                   \
+    } while (0)
 #define ConsoleInfo_Printf(...)                                                                    \
     do                                                                                             \
     {                                                                                              \
-        if (XTOUCH_DEBUG_INFO || XTOUCH_DEBUG_DEBUG || XTOUCH_DEBUG_LOG)                           \
+        if (XTOUCH_DEBUG_INFO || XTOUCH_DEBUG_DEBUG || XTOUCH_DEBUG_VERBOSE)                           \
             printf(__VA_ARGS__);                                                                   \
     } while (0)
 #define ConsoleDebug_Printf(...)                                                                   \
     do                                                                                             \
     {                                                                                              \
-        if (XTOUCH_DEBUG_DEBUG || XTOUCH_DEBUG_LOG)                                                \
+        if (XTOUCH_DEBUG_DEBUG || XTOUCH_DEBUG_VERBOSE)                                                \
             printf(__VA_ARGS__);                                                                   \
     } while (0)
 #define ConsoleError_Printf(...)                                                                   \
@@ -71,12 +84,7 @@ static inline void xtouch_debug_json(const JsonDocument &doc)
         if (XTOUCH_DEBUG_ERROR)                                                                    \
             printf(__VA_ARGS__);                                                                   \
     } while (0)
-#define ConsoleLog_Printf(...)                                                                     \
-    do                                                                                             \
-    {                                                                                              \
-        if (XTOUCH_DEBUG_LOG)                                                                      \
-            printf(__VA_ARGS__);                                                                   \
-    } while (0)
+
 #endif /* __cplusplus */
 
 #endif
