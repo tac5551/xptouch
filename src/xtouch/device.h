@@ -749,6 +749,13 @@ static void xtouch_ams_fetch_slicer_timer_cb(lv_timer_t *t)
     lv_timer_del(t);
 }
 
+/** EXT Reset 直後は即時 pushall が適用前の vt_tray のことがある。AMS View 復帰時に中途半端な表示にならないよう遅延でもう一度要求する */
+static void xtouch_ams_ext_reset_pushall_delayed_cb(lv_timer_t *t)
+{
+    xtouch_device_pushall();
+    lv_timer_del(t);
+}
+
 void xtouch_device_command_ams_fetch_slicer_temp(void *s, lv_msg_t *m)
 {
     if (m->payload == NULL)
@@ -760,13 +767,16 @@ void xtouch_device_command_ams_fetch_slicer_temp(void *s, lv_msg_t *m)
     lv_timer_create(xtouch_ams_fetch_slicer_timer_cb, 50, NULL);
 }
 
-/** Save 時に UI から送られる ams_filament_setting。payload = (const XTOUCH_AMS_FILAMENT_SETTING_PAYLOAD*)。温度は UI がグローバル or SD で設定済み。
- * 送信後に extrusion_cali_sel を送らないと設定がキャンセルされるため、続けて送る。 */
+/** Save / Reset 時に UI から送られる ams_filament_setting。payload = (const XTOUCH_AMS_FILAMENT_SETTING_PAYLOAD*)。
+ * AMS では extrusion_cali_sel を続けて送らないと設定がキャンセルされがち。EXT の Reset（vt_tray クリア）は extrusion_cali_sel を送らない。 */
 void xtouch_device_command_ams_filament_setting(void *s, lv_msg_t *m)
 {
     if (m->payload == NULL)
         return;
     const struct XTOUCH_AMS_FILAMENT_SETTING_PAYLOAD *p = (const struct XTOUCH_AMS_FILAMENT_SETTING_PAYLOAD *)m->payload;
+    /* EXT の Reset（vt_tray クリア）: 空の extrusion_cali_sel が効かない／以前の filament_id で確定してしまうため送らない */
+    const bool ext_vt_reset = (p->ams_id == 255 && p->nozzle_temp_min == 0 && p->nozzle_temp_max == 0 && p->tray_info_idx[0] == '\0' &&
+                               p->tray_type[0] == '\0');
 
     DynamicJsonDocument json(512);
     json["print"]["sequence_id"] = xtouch_device_next_sequence();
@@ -790,30 +800,32 @@ void xtouch_device_command_ams_filament_setting(void *s, lv_msg_t *m)
     serializeJson(json, result);
     xtouch_device_publish(result);
 
-    /* 設定を確定するため extrusion_cali_sel を送る（送らないとキャンセルされる）。EXT は slot_id なしで報告が返る */
-    char nozzle_d_buf[8];
-    if (bambuStatus.nozzle_diameter > 0.1f && bambuStatus.nozzle_diameter < 1.0f)
-        snprintf(nozzle_d_buf, sizeof(nozzle_d_buf), "%.1f", (double)bambuStatus.nozzle_diameter);
-    else
-        snprintf(nozzle_d_buf, sizeof(nozzle_d_buf), "0.4");
-    DynamicJsonDocument json2(384);
-    json2["print"]["sequence_id"] = xtouch_device_next_sequence();
-    json2["print"]["command"] = "extrusion_cali_sel";
-    json2["print"]["ams_id"] = p->ams_id;
-    json2["print"]["tray_id"] = p->tray_id;
-    if (p->ams_id != 255)
-        json2["print"]["slot_id"] = p->ams_id * 4 + p->tray_id;
-    json2["print"]["filament_id"] = (p->filament_id[0] != '\0') ? p->filament_id : p->tray_info_idx;
-    json2["print"]["nozzle_diameter"] = nozzle_d_buf;
-    /* EXT のみ純正 extrusion_cali_sel に合わせて付与（通常 AMS は従来どおりキーなし） */
-    if (p->ams_id == 255)
-        json2["print"]["nozzle_volume_type"] = "normal";
-    json2["print"]["cali_idx"] = -1;
-    String result2;
-    serializeJson(json2, result2);
-    xtouch_device_publish(result2);
+    if (!ext_vt_reset)
+    {
+        /* 設定を確定するため extrusion_cali_sel（EXT Reset 除く）。EXT Save 時は slot_id なし */
+        char nozzle_d_buf[8];
+        if (bambuStatus.nozzle_diameter > 0.1f && bambuStatus.nozzle_diameter < 1.0f)
+            snprintf(nozzle_d_buf, sizeof(nozzle_d_buf), "%.1f", (double)bambuStatus.nozzle_diameter);
+        else
+            snprintf(nozzle_d_buf, sizeof(nozzle_d_buf), "0.4");
+        DynamicJsonDocument json2(384);
+        json2["print"]["sequence_id"] = xtouch_device_next_sequence();
+        json2["print"]["command"] = "extrusion_cali_sel";
+        json2["print"]["ams_id"] = p->ams_id;
+        json2["print"]["tray_id"] = p->tray_id;
+        if (p->ams_id != 255)
+            json2["print"]["slot_id"] = p->ams_id * 4 + p->tray_id;
+        json2["print"]["filament_id"] = (p->filament_id[0] != '\0') ? p->filament_id : p->tray_info_idx;
+        json2["print"]["nozzle_diameter"] = nozzle_d_buf;
+        if (p->ams_id == 255)
+            json2["print"]["nozzle_volume_type"] = "normal";
+        json2["print"]["cali_idx"] = -1;
+        String result2;
+        serializeJson(json2, result2);
+        xtouch_device_publish(result2);
+    }
 
-    /* EXT は純正に合わせ再送しない（送ると vt_tray が巻き戻る報告あり）。AMS スロットのみ従来どおり最小 ams_filament_setting で確定 */
+    /* EXT Save は純正に合わせ再送しない。AMS は最小 ams_filament_setting で確定 */
     if (p->ams_id != 255)
     {
         DynamicJsonDocument json3(192);
@@ -826,8 +838,9 @@ void xtouch_device_command_ams_filament_setting(void *s, lv_msg_t *m)
         xtouch_device_publish(result3);
     }
 
-    /* 設定確定後に PushAll をリクエストして最新の AMS/トレイ状態を取得（Reset 時も通常設定時も同様） */
     xtouch_device_pushall();
+    if (ext_vt_reset)
+        lv_timer_create(xtouch_ams_ext_reset_pushall_delayed_cb, 450, NULL);
 }
 
 /** M620 R# で AMS をリフレッシュ（トレイ情報をプリンターから再取得）。payload = (void*)(uintptr_t)tray_index (0〜15) */

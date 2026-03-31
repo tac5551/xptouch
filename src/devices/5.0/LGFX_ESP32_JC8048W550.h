@@ -86,7 +86,7 @@ public:
       auto cfg = _light_instance.config();
       cfg.pin_bl = GPIO_NUM_2;
       cfg.pwm_channel = 7; 
-      cfg.freq = 3600;
+      cfg.freq = 3000;
      
       _light_instance.config(cfg);
     }

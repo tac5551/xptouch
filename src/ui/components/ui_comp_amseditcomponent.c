@@ -164,13 +164,12 @@ static void on_reset_clicked(lv_event_t *e)
         return;
     /* Bambu 側の挙動に合わせ、setting_id/tray_info_idx を ""、温度を 0 でリセットする */
     struct XTOUCH_AMS_FILAMENT_SETTING_PAYLOAD payload;
+    memset(&payload, 0, sizeof(payload));
     payload.ams_id = ams_edit_current_ams_id;
     payload.tray_id = ams_edit_current_tray_id;
     payload.nozzle_temp_min = 0;
     payload.nozzle_temp_max = 0;
-    payload.tray_info_idx[0] = '\0';
     snprintf(payload.tray_color, sizeof(payload.tray_color), "00000000"); /* RRGGBBAA デフォルトは透明 */
-    payload.tray_type[0] = '\0';              /* tray_type も空にする */
     lv_msg_send(XTOUCH_COMMAND_AMS_FILAMENT_SETTING, &payload);
     if (s_ams_edit_sd_timer)
     {

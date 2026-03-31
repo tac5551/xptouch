@@ -20,9 +20,43 @@ LGFX tft;
 bool xtouch_screen_touchFromPowerOff = false;
 bool xtouch_screen_neoPixelFromPowerOff = false;
 
+static byte xtouch_screen_map_backlight_non_linear(byte brightness)
+{
+    if (brightness == 0)
+        return 0; /* sleep 時はそのまま消灯 */
+
+    const int minv = XTOUCH_BACKLIGHT_SLIDER_MIN;
+    const int maxv = XTOUCH_BACKLIGHT_SLIDER_MAX;
+    if (brightness <= minv)
+        return (byte)minv;
+    if (brightness >= maxv)
+        return (byte)maxv;
+
+    const int range = maxv - minv;
+    const int n = (int)brightness - minv; /* 0..range */
+    const int knee = (range * 90) / 100;  /* 上位 25% でカーブ（強め） */
+    int mapped = n;
+    if (n > knee)
+    {
+        const int top = range - knee;
+        const int x = n - knee;
+        /* 90%付近の急変を抑えるため、上位帯域を三次カーブでより緩やかに上げる */
+        mapped = knee + ((x * x * x + (top * top - 1)) / (top * top));
+    }
+    const int knee2 = (range * 95) / 100; /* 最上位 5% はさらに寝かせる */
+    if (n > knee2)
+    {
+        const int ultra = range - knee2;
+        const int y = n - knee2;
+        /* 95〜100%は四次カーブで一段ゆっくり上げる */
+        mapped = knee2 + ((y * y * y * y + (ultra * ultra * ultra - 1)) / (ultra * ultra * ultra));
+    }
+    return (byte)(minv + mapped);
+}
+
 void xtouch_screen_setBrightness(byte brightness)
 {
-    tft.setBrightness(brightness);
+    tft.setBrightness(xtouch_screen_map_backlight_non_linear(brightness));
 }
 
 void xtouch_screen_sleep()
