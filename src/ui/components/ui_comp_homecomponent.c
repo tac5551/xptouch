@@ -932,11 +932,11 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_bg_color(cui_mainScreenPlayer, lv_color_hex(0x555555), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(cui_mainScreenPlayer, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_width(cui_mainScreenPlayer, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_left(cui_mainScreenPlayer, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_right(cui_mainScreenPlayer, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_top(cui_mainScreenPlayer, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_bottom(cui_mainScreenPlayer, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_row(cui_mainScreenPlayer, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_left(cui_mainScreenPlayer, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(cui_mainScreenPlayer, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_top(cui_mainScreenPlayer, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_bottom(cui_mainScreenPlayer, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_row(cui_mainScreenPlayer, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_column(cui_mainScreenPlayer, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_color(cui_mainScreenPlayer, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(cui_mainScreenPlayer, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1183,7 +1183,8 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
 #if defined(__XTOUCH_SCREEN_S3_050__)
     lv_obj_set_style_pad_column(cui_mainScreenController, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
 #else
-    lv_obj_set_style_pad_column(cui_mainScreenController, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_column(cui_mainScreenController, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+
 #endif
     lv_obj_set_style_text_color(cui_mainScreenController, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(cui_mainScreenController, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1206,6 +1207,10 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
         lv_obj_set_style_bg_color(cui_mainScreenNozzleIcon, lv_color_hex(0x333333), LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_bg_opa(cui_mainScreenNozzleIcon, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_radius(cui_mainScreenNozzleIcon, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_pad_left(cui_mainScreenNozzleIcon, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_pad_right(cui_mainScreenNozzleIcon, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_pad_top(cui_mainScreenNozzleIcon, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_pad_bottom(cui_mainScreenNozzleIcon, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
         ui_thumb_set_img_src_from_slot(cui_mainScreenNozzleIcon, 0);
         ui_homeThumbImg = cui_mainScreenNozzleIcon;
     }
@@ -1240,11 +1245,14 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_flex_align(cui_mainScreenControllerRight, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
     lv_obj_clear_flag(cui_mainScreenControllerRight, LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN);
     lv_obj_set_style_bg_opa(cui_mainScreenControllerRight, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_border_width(cui_mainScreenControllerRight, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+lv_obj_set_style_border_width(cui_mainScreenControllerRight, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_row(cui_mainScreenControllerRight, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_top(cui_mainScreenControllerRight, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_bottom(cui_mainScreenControllerRight, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    /* Pause / Stop 行: 5" は横並び。2.8 は幅が狭いので縦並びにして各ボタンを親幅いっぱい（≈横2倍）にする */
+    lv_obj_set_style_pad_left(cui_mainScreenControllerRight, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(cui_mainScreenControllerRight, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+lv_obj_set_style_bg_color(cui_mainScreenControllerRight, lv_color_hex(0x4444FF), LV_PART_MAIN | LV_STATE_DEFAULT);
+    /* Pause / Stop: 5" は1行に4要素。2.8" は [Play|Stop] 横並び + 下に Finished/Reprint（全幅） */
     lv_obj_t *cui_mainScreenControllerRightBtnRow = lv_obj_create(cui_mainScreenControllerRight);
     lv_obj_set_width(cui_mainScreenControllerRightBtnRow, lv_pct(100));
     lv_obj_set_height(cui_mainScreenControllerRightBtnRow, LV_SIZE_CONTENT);
@@ -1255,8 +1263,10 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
 #else
     lv_obj_set_flex_flow(cui_mainScreenControllerRightBtnRow, LV_FLEX_FLOW_COLUMN);
     lv_obj_set_style_pad_column(cui_mainScreenControllerRightBtnRow, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_row(cui_mainScreenControllerRightBtnRow, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
+    /* Play 行と Finished / Reprint の間の余白を詰める */
+    lv_obj_set_style_pad_row(cui_mainScreenControllerRightBtnRow, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
 #endif
+
     lv_obj_set_flex_align(cui_mainScreenControllerRightBtnRow, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
     lv_obj_clear_flag(cui_mainScreenControllerRightBtnRow, LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN);
     lv_obj_set_style_bg_opa(cui_mainScreenControllerRightBtnRow, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1265,8 +1275,29 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_pad_bottom(cui_mainScreenControllerRight, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
 #endif
 
+#if defined(__XTOUCH_PLATFORM_S3__) && !defined(__XTOUCH_SCREEN_S3_050__)
+    lv_obj_t *cui_homePauseStopRow = lv_obj_create(cui_mainScreenControllerRightBtnRow);
+    lv_obj_set_width(cui_homePauseStopRow, lv_pct(100));
+    lv_obj_set_height(cui_homePauseStopRow, LV_SIZE_CONTENT);
+    lv_obj_set_flex_flow(cui_homePauseStopRow, LV_FLEX_FLOW_ROW);
+    /* 左右が切れないように間隔を縮める */
+    lv_obj_set_style_pad_column(cui_homePauseStopRow, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_row(cui_homePauseStopRow, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_top(cui_homePauseStopRow, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_bottom(cui_homePauseStopRow, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_left(cui_homePauseStopRow, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(cui_homePauseStopRow, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    lv_obj_set_flex_align(cui_homePauseStopRow, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_clear_flag(cui_homePauseStopRow, LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN);
+    lv_obj_set_style_bg_opa(cui_homePauseStopRow, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(cui_homePauseStopRow, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+#endif
+
     lv_obj_t *cui_mainScreenPlayPauseButton;
-#if defined(__XTOUCH_PLATFORM_S3__)
+#if defined(__XTOUCH_PLATFORM_S3__) && !defined(__XTOUCH_SCREEN_S3_050__)
+    cui_mainScreenPlayPauseButton = lv_label_create(cui_homePauseStopRow);
+#elif defined(__XTOUCH_PLATFORM_S3__)
     cui_mainScreenPlayPauseButton = lv_label_create(cui_mainScreenControllerRightBtnRow);
 #else
     cui_mainScreenPlayPauseButton = lv_label_create(cui_mainScreenController);
@@ -1276,8 +1307,10 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
 #if defined(__XTOUCH_SCREEN_S3_050__)
     lv_obj_set_width(cui_mainScreenPlayPauseButton, 120);
 #else
-    lv_obj_set_width(cui_mainScreenPlayPauseButton, lv_pct(100));
-    lv_obj_set_flex_grow(cui_mainScreenPlayPauseButton, 0);
+    /* pct だと親幅が確定する前に潰れることがあるので flex で均等分割 */
+    lv_obj_set_width(cui_mainScreenPlayPauseButton, LV_SIZE_CONTENT);
+    lv_obj_set_flex_grow(cui_mainScreenPlayPauseButton, 1);
+
 #endif
 #else
     lv_obj_set_flex_grow(cui_mainScreenPlayPauseButton, 1);
@@ -1299,8 +1332,9 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_pad_top(cui_mainScreenPlayPauseButton, 12, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_bottom(cui_mainScreenPlayPauseButton, 12, LV_PART_MAIN | LV_STATE_DEFAULT);
 #else
-    lv_obj_set_style_pad_top(cui_mainScreenPlayPauseButton, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_bottom(cui_mainScreenPlayPauseButton, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
+    /* 2.8": コントロール行が高すぎると下の subtask 名が見切れるため高さを詰める */
+    lv_obj_set_style_pad_top(cui_mainScreenPlayPauseButton, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_bottom(cui_mainScreenPlayPauseButton, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
 #endif
     lv_obj_set_style_pad_row(cui_mainScreenPlayPauseButton, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_column(cui_mainScreenPlayPauseButton, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1308,7 +1342,9 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_bg_opa(cui_mainScreenPlayPauseButton, 255, LV_PART_MAIN | LV_STATE_PRESSED);
 
     lv_obj_t *cui_mainScreenStopButton;
-#if defined(__XTOUCH_PLATFORM_S3__)
+#if defined(__XTOUCH_PLATFORM_S3__) && !defined(__XTOUCH_SCREEN_S3_050__)
+    cui_mainScreenStopButton = lv_label_create(cui_homePauseStopRow);
+#elif defined(__XTOUCH_PLATFORM_S3__)
     cui_mainScreenStopButton = lv_label_create(cui_mainScreenControllerRightBtnRow);
 #else
     cui_mainScreenStopButton = lv_label_create(cui_mainScreenController);
@@ -1318,8 +1354,10 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
 #if defined(__XTOUCH_SCREEN_S3_050__)
     lv_obj_set_width(cui_mainScreenStopButton, 120);
 #else
-    lv_obj_set_width(cui_mainScreenStopButton, lv_pct(100));
-    lv_obj_set_flex_grow(cui_mainScreenStopButton, 0);
+    /* 2.8": 横並び行の中で 2等分にする */
+    lv_obj_set_width(cui_mainScreenStopButton, LV_SIZE_CONTENT);
+    lv_obj_set_flex_grow(cui_mainScreenStopButton, 1);
+
 #endif
 #else
     lv_obj_set_flex_grow(cui_mainScreenStopButton, 1);
@@ -1341,8 +1379,8 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_pad_top(cui_mainScreenStopButton, 12, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_bottom(cui_mainScreenStopButton, 12, LV_PART_MAIN | LV_STATE_DEFAULT);
 #else
-    lv_obj_set_style_pad_top(cui_mainScreenStopButton, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_bottom(cui_mainScreenStopButton, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_top(cui_mainScreenStopButton, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_bottom(cui_mainScreenStopButton, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
 #endif
     lv_obj_set_style_pad_row(cui_mainScreenStopButton, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_column(cui_mainScreenStopButton, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1355,7 +1393,12 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
     /* Failed/Finished 時にボタン位置に表示するラベル */
     lv_obj_t *cui_mainScreenFinishedFailedLabel = lv_label_create(cui_mainScreenControllerRightBtnRow);
     lv_obj_set_width(cui_mainScreenFinishedFailedLabel, lv_pct(100));
+#if defined(__XTOUCH_SCREEN_S3_050__)
     lv_obj_set_height(cui_mainScreenFinishedFailedLabel, LV_SIZE_CONTENT);
+#else
+    /* 2.8": hidden 時のレイアウト空き確保を抑える */
+    lv_obj_set_height(cui_mainScreenFinishedFailedLabel, LV_SIZE_CONTENT);
+#endif
     lv_label_set_text(cui_mainScreenFinishedFailedLabel, "Finished");
     lv_obj_set_style_text_font(cui_mainScreenFinishedFailedLabel, lv_font_middle, LV_PART_MAIN | LV_STATE_DEFAULT);
 
@@ -1365,11 +1408,17 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
 
     cui_mainScreenReprintButton = lv_label_create(cui_mainScreenControllerRightBtnRow);
     lv_obj_set_width(cui_mainScreenReprintButton, lv_pct(100));
+#if defined(__XTOUCH_SCREEN_S3_050__)
     lv_obj_set_height(cui_mainScreenReprintButton, LV_SIZE_CONTENT);
+#else
+    /* 2.8": hidden 時のレイアウト空き確保を抑える */
+    lv_obj_set_height(cui_mainScreenReprintButton, LV_SIZE_CONTENT);
+#endif
     lv_label_set_text(cui_mainScreenReprintButton, "Reprint");
 #if defined(__XTOUCH_SCREEN_S3_050__)
-    lv_obj_set_style_text_font(cui_mainScreenReprintButton, lv_font_middle, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(cui_mainScreenReprintButton, lv_font_big, LV_PART_MAIN | LV_STATE_DEFAULT);
 #else
+    /* 2.8: small(14px) は小さすぎる → middle(24px) */
     lv_obj_set_style_text_font(cui_mainScreenReprintButton, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
 #endif
     /* History 一覧の Reprint ボタンと同系（0x2a552a / 押下 0x008800）。背景を不透明にして判別しやすくする */
@@ -1384,8 +1433,8 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_pad_left(cui_mainScreenReprintButton, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_right(cui_mainScreenReprintButton, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
 #if defined(__XTOUCH_SCREEN_S3_050__)
-    lv_obj_set_style_pad_top(cui_mainScreenReprintButton, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_bottom(cui_mainScreenReprintButton, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_top(cui_mainScreenReprintButton, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_bottom(cui_mainScreenReprintButton, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
 #else
     lv_obj_set_style_pad_top(cui_mainScreenReprintButton, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_bottom(cui_mainScreenReprintButton, 4, LV_PART_MAIN | LV_STATE_DEFAULT);

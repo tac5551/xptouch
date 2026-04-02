@@ -189,7 +189,12 @@ lv_obj_t *ui_sidebarComponent_create(lv_obj_t *comp_parent)
     lv_label_set_text(cui_sidebarHomeButtonIcon, "a");
     lv_obj_clear_flag(cui_sidebarHomeButtonIcon, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN); /// Flags
     lv_obj_set_scrollbar_mode(cui_sidebarHomeButtonIcon, LV_SCROLLBAR_MODE_OFF);
-    lv_obj_set_style_text_font(cui_sidebarHomeButtonIcon, lv_icon_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
+    /* 5" は全体でアイコンフォントが大きくなるため、サイドバーだけ 2.8 相当に揃える */
+#if defined(__XTOUCH_SCREEN_S3_050__)
+    lv_obj_set_style_text_font(cui_sidebarHomeButtonIcon, &ui_font_xlcdmin, LV_PART_MAIN | LV_STATE_DEFAULT);
+#else
+    lv_obj_set_style_text_font(cui_sidebarHomeButtonIcon, &ui_font_xlcd, LV_PART_MAIN | LV_STATE_DEFAULT);
+#endif
 
 #ifdef __XTOUCH_PLATFORM_S3__
     lv_obj_t *cui_sidebarPrintersButton;
@@ -226,7 +231,11 @@ lv_obj_t *ui_sidebarComponent_create(lv_obj_t *comp_parent)
     lv_label_set_text(cui_sidebarPrintersButtonIcon, "p");
     lv_obj_clear_flag(cui_sidebarPrintersButtonIcon, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN);
     lv_obj_set_scrollbar_mode(cui_sidebarPrintersButtonIcon, LV_SCROLLBAR_MODE_OFF);
-    lv_obj_set_style_text_font(cui_sidebarPrintersButtonIcon, lv_icon_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
+ #if defined(__XTOUCH_SCREEN_S3_050__)
+    lv_obj_set_style_text_font(cui_sidebarPrintersButtonIcon, &ui_font_xlcdmin, LV_PART_MAIN | LV_STATE_DEFAULT);
+ #else
+    lv_obj_set_style_text_font(cui_sidebarPrintersButtonIcon, &ui_font_xlcd, LV_PART_MAIN | LV_STATE_DEFAULT);
+ #endif
     if (xTouchConfig.xTouchLanOnlyMode || !xTouchConfig.xTouchMultiPrinterMonitorEnabled)
         lv_obj_add_flag(cui_sidebarPrintersButton, LV_OBJ_FLAG_HIDDEN);
 #endif
@@ -265,7 +274,11 @@ lv_obj_t *ui_sidebarComponent_create(lv_obj_t *comp_parent)
     lv_label_set_text(cui_sidebarHistoryButtonIcon, "h");
     lv_obj_clear_flag(cui_sidebarHistoryButtonIcon, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN);
     lv_obj_set_scrollbar_mode(cui_sidebarHistoryButtonIcon, LV_SCROLLBAR_MODE_OFF);
-    lv_obj_set_style_text_font(cui_sidebarHistoryButtonIcon, lv_icon_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
+ #if defined(__XTOUCH_SCREEN_S3_050__)
+    lv_obj_set_style_text_font(cui_sidebarHistoryButtonIcon, &ui_font_xlcdmin, LV_PART_MAIN | LV_STATE_DEFAULT);
+ #else
+    lv_obj_set_style_text_font(cui_sidebarHistoryButtonIcon, &ui_font_xlcd, LV_PART_MAIN | LV_STATE_DEFAULT);
+ #endif
     if (xTouchConfig.xTouchLanOnlyMode || !xTouchConfig.xTouchHistoryEnabled)
         lv_obj_add_flag(cui_sidebarHistoryButton, LV_OBJ_FLAG_HIDDEN);
 #endif
@@ -304,7 +317,11 @@ lv_obj_t *ui_sidebarComponent_create(lv_obj_t *comp_parent)
     lv_label_set_text(cui_sidebarTempButtonIcon, "b");
     lv_obj_clear_flag(cui_sidebarTempButtonIcon, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN); /// Flags
     lv_obj_set_scrollbar_mode(cui_sidebarTempButtonIcon, LV_SCROLLBAR_MODE_OFF);
-    lv_obj_set_style_text_font(cui_sidebarTempButtonIcon, lv_icon_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
+ #if defined(__XTOUCH_SCREEN_S3_050__)
+    lv_obj_set_style_text_font(cui_sidebarTempButtonIcon, &ui_font_xlcdmin, LV_PART_MAIN | LV_STATE_DEFAULT);
+ #else
+    lv_obj_set_style_text_font(cui_sidebarTempButtonIcon, &ui_font_xlcd, LV_PART_MAIN | LV_STATE_DEFAULT);
+ #endif
 
     lv_obj_t *cui_sidebarAmsViewButton;
     cui_sidebarAmsViewButton = lv_obj_create(cui_sidebarComponent);
@@ -340,7 +357,11 @@ lv_obj_t *ui_sidebarComponent_create(lv_obj_t *comp_parent)
     lv_label_set_text(cui_sidebarAmsViewButtonIcon, "n");
     lv_obj_clear_flag(cui_sidebarAmsViewButtonIcon, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN); /// Flags
     lv_obj_set_scrollbar_mode(cui_sidebarAmsViewButtonIcon, LV_SCROLLBAR_MODE_OFF);
-    lv_obj_set_style_text_font(cui_sidebarAmsViewButtonIcon, lv_icon_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
+ #if defined(__XTOUCH_SCREEN_S3_050__)
+    lv_obj_set_style_text_font(cui_sidebarAmsViewButtonIcon, &ui_font_xlcdmin, LV_PART_MAIN | LV_STATE_DEFAULT);
+ #else
+    lv_obj_set_style_text_font(cui_sidebarAmsViewButtonIcon, &ui_font_xlcd, LV_PART_MAIN | LV_STATE_DEFAULT);
+ #endif
 
     lv_obj_t *cui_sidebarSettingsButton;
     cui_sidebarSettingsButton = lv_obj_create(cui_sidebarComponent);
@@ -376,7 +397,11 @@ lv_obj_t *ui_sidebarComponent_create(lv_obj_t *comp_parent)
     lv_label_set_text(cui_sidebarSettingsButtonIcon, "d");
     lv_obj_clear_flag(cui_sidebarSettingsButtonIcon, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN); /// Flags
     lv_obj_set_scrollbar_mode(cui_sidebarSettingsButtonIcon, LV_SCROLLBAR_MODE_OFF);
-    lv_obj_set_style_text_font(cui_sidebarSettingsButtonIcon, lv_icon_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
+ #if defined(__XTOUCH_SCREEN_S3_050__)
+    lv_obj_set_style_text_font(cui_sidebarSettingsButtonIcon, &ui_font_xlcdmin, LV_PART_MAIN | LV_STATE_DEFAULT);
+ #else
+    lv_obj_set_style_text_font(cui_sidebarSettingsButtonIcon, &ui_font_xlcd, LV_PART_MAIN | LV_STATE_DEFAULT);
+ #endif
 
     lv_obj_t **children = lv_mem_alloc(sizeof(lv_obj_t *) * _UI_COMP_SIDEBARCOMPONENT_NUM);
     children[UI_COMP_SIDEBARCOMPONENT_SIDEBARCOMPONENT] = cui_sidebarComponent;
