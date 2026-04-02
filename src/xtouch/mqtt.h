@@ -24,7 +24,7 @@ String xtouch_mqtt_report_topic;
 #include "device.h"
 #include "trays.h"
 #include <strings.h>
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__
 #include "xtouch/thumbnail.h"
 #endif
 #define XTOUCH_MQTT_SERVER_TIMEOUT 20
@@ -137,7 +137,7 @@ static void xtouch_mqtt_configure_client(const char *host);
 void xtouch_cloud_mqtt_connect(void);
 void xtouch_local_mqtt_connect(void);
 
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__
 /** printer.json から選択中以外の dev_id を最大 XTOUCH_OTHER_PRINTERS_MAX 件取得し、other_printer_* を埋める。クラウド MQTT セットアップ時のみ呼ぶ。 */
 void xtouch_mqtt_load_other_printers()
 {
@@ -374,14 +374,17 @@ void xtouch_mqtt_processPushStatusOther(int slot, JsonDocument &incomingJson)
     if (print.containsKey("task_id"))
     {
         const char *tid = print["task_id"].as<const char *>();
-        strncpy(otherPrinters[slot].task_id, tid, sizeof(otherPrinters[slot].task_id) - 1);
-        otherPrinters[slot].task_id[sizeof(otherPrinters[slot].task_id) - 1] = '\0';
+        if (tid && tid[0] && strcmp(tid, "0") != 0)
+        {
+            strncpy(otherPrinters[slot].task_id, tid, sizeof(otherPrinters[slot].task_id) - 1);
+            otherPrinters[slot].task_id[sizeof(otherPrinters[slot].task_id) - 1] = '\0';
 #ifdef XTOUCH_DEBUG_DETAIL
-        ConsoleDetail.print("[xPTouch][D][MQTT] other slot=");
-        ConsoleDetail.print(slot);
-        ConsoleDetail.print(" task_id=");
-        ConsoleDetail.println(tid);
+            ConsoleDetail.print("[xPTouch][D][MQTT] other slot=");
+            ConsoleDetail.print(slot);
+            ConsoleDetail.print(" task_id=");
+            ConsoleDetail.println(tid);
 #endif
+        }
     }
     if (print.containsKey("url"))
     {
@@ -797,26 +800,31 @@ void xtouch_mqtt_processPushStatus(JsonDocument &incomingJson)
         {
             String new_tid_str = incomingJson["print"]["task_id"].as<String>();
             const char *new_tid = new_tid_str.c_str();
-#ifdef __XTOUCH_SCREEN_50__
-            if (new_tid[0] && strcmp(bambuStatus.task_id, new_tid) != 0)
+            /* 空や "0" だけが来たときに上書きしない（印刷完了後にキーだけ残り値が空になると
+             * ホーム Reprint 用の task_id が消える） */
+            if (new_tid && new_tid[0] && strcmp(new_tid, "0") != 0)
             {
-                /* TaskID が変わったら既存 URL・LGFX dsc を捨て、新タスクのサムネ取得をキック（LAN 非ログイン時も）。 */
-                bambuStatus.image_url[0] = '\0';
-                xtouch_thumbnail_invalidate_slot(0);
-                if (cloud.loggedIn)
+#ifdef __XTOUCH_PLATFORM_S3__
+                if (strcmp(bambuStatus.task_id, new_tid) != 0)
                 {
-                    char thumb_url[1024];
-                    if (cloud.getTaskThumbnailUrl(new_tid, thumb_url, sizeof(thumb_url)))
+                    /* TaskID が変わったら既存 URL・LGFX dsc を捨て、新タスクのサムネ取得をキック（LAN 非ログイン時も）。 */
+                    bambuStatus.image_url[0] = '\0';
+                    xtouch_thumbnail_invalidate_slot(0);
+                    if (cloud.loggedIn)
                     {
-                        strncpy(bambuStatus.image_url, thumb_url, sizeof(bambuStatus.image_url) - 1);
-                        bambuStatus.image_url[sizeof(bambuStatus.image_url) - 1] = '\0';
+                        char thumb_url[1024];
+                        if (cloud.getTaskThumbnailUrl(new_tid, thumb_url, sizeof(thumb_url)))
+                        {
+                            strncpy(bambuStatus.image_url, thumb_url, sizeof(bambuStatus.image_url) - 1);
+                            bambuStatus.image_url[sizeof(bambuStatus.image_url) - 1] = '\0';
+                        }
                     }
+                    xtouch_thumbnail_schedule_fetch_all();
                 }
-                xtouch_thumbnail_schedule_fetch_all();
-            }
 #endif
-            strncpy(bambuStatus.task_id, new_tid, sizeof(bambuStatus.task_id) - 1);
-            bambuStatus.task_id[sizeof(bambuStatus.task_id) - 1] = '\0';
+                strncpy(bambuStatus.task_id, new_tid, sizeof(bambuStatus.task_id) - 1);
+                bambuStatus.task_id[sizeof(bambuStatus.task_id) - 1] = '\0';
+            }
         }
 
         if (incomingJson["print"].containsKey("gcode_file"))
@@ -875,7 +883,7 @@ void xtouch_mqtt_processPushStatus(JsonDocument &incomingJson)
                 }
                 else
                 {
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__
                     if (new_tid[0] && strcmp(bambuStatus.task_id, new_tid) != 0)
                     {
                         bambuStatus.image_url[0] = '\0';
@@ -888,15 +896,18 @@ void xtouch_mqtt_processPushStatus(JsonDocument &incomingJson)
                 }
             }
         }
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__
         /* サムネイル取得用。LAN モードでは cloud 未ログインのため task_id だけでは取得不可。url があれば使用。task_id/subtask_id 処理の後に実行。 */
         if (incomingJson["print"].containsKey("url"))
         {
             const char *url = incomingJson["print"]["url"].as<const char *>();
             if (url && url[0])
             {
-#ifdef __XTOUCH_SCREEN_50__
-                if (strncmp(bambuStatus.image_url, url, sizeof(bambuStatus.image_url)) != 0)
+#ifdef __XTOUCH_PLATFORM_S3__
+                /* DL 成功後は image_url を空にしている。空と MQTT の url を比較すると毎回不一致になり
+                 * invalidate が連発し、サムネが一瞬表示されたあとロゴに戻る。中身が既に同じなら捨てない */
+                if (bambuStatus.image_url[0] &&
+                    strncmp(bambuStatus.image_url, url, sizeof(bambuStatus.image_url)) != 0)
                 {
                     xtouch_thumbnail_invalidate_slot(0);
                     xtouch_thumbnail_schedule_fetch_all();
@@ -1418,7 +1429,7 @@ void xtouch_mqtt_parseMessage(char *topic, byte *payload, unsigned int length, b
             xtouch_pubSubClient.disconnect();
         }
 
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__
         /* トピックから dev_id を取得: device/XXXX/report */
         char topic_dev_id[16] = {0};
         if (topic && strncmp(topic, "device/", 7) == 0)
@@ -1469,11 +1480,28 @@ void xtouch_mqtt_parseMessage(char *topic, byte *payload, unsigned int length, b
             if (command == "push_status")
             {
                 xtouch_mqtt_processPushStatus(incomingJson);
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__
                 xtouch_thumbnail_update_path_for_slot(0);
-                /* ホーム表示中に push_status で task_id 取得した場合、サムネイル取得をスケジュール（起動直後印刷中で未取得のとき） */
+                /* ホーム表示中かつ task_id あり: サムネスケジュール。push_status は秒間複数回来るため連打を抑える */
                 if (xTouchConfig.currentScreenIndex == 0 && bambuStatus.task_id[0] && strcmp(bambuStatus.task_id, "0") != 0)
-                    xtouch_thumbnail_schedule_fetch_all();
+                {
+                    static uint32_t s_last_home_thumb_sched_ms;
+                    static char s_last_home_thumb_sched_tid[32];
+                    uint32_t ms = millis();
+                    bool tid_changed = (strcmp(s_last_home_thumb_sched_tid, bambuStatus.task_id) != 0);
+                    if (tid_changed)
+                    {
+                        strncpy(s_last_home_thumb_sched_tid, bambuStatus.task_id, sizeof(s_last_home_thumb_sched_tid) - 1);
+                        s_last_home_thumb_sched_tid[sizeof(s_last_home_thumb_sched_tid) - 1] = '\0';
+                        s_last_home_thumb_sched_ms = ms;
+                        xtouch_thumbnail_schedule_fetch_all();
+                    }
+                    else if (ms - s_last_home_thumb_sched_ms >= 8000u)
+                    {
+                        s_last_home_thumb_sched_ms = ms;
+                        xtouch_thumbnail_schedule_fetch_all();
+                    }
+                }
                 ui_msg_send(XTOUCH_ON_OTHER_PRINTER_UPDATE, 0, 0);
                 if (xTouchConfig.currentScreenIndex == 16 && xtouch_history_reprint_printer_dd_slot == 0)
                     ui_msg_send(XTOUCH_HISTORY_REPRINT_PRINTER_CHANGED, 0, 0);
@@ -1621,7 +1649,7 @@ static void xtouch_mqtt_connect(const char *username, const char *password, cons
             /* メイン機の report は常に購読（1台のみのときもこれで push_status を受信） */
             ESP_LOGI("mqtt", "subscribe self report topic: %s", xtouch_mqtt_report_topic.c_str());
             xtouch_pubSubClient.subscribe(xtouch_mqtt_report_topic.c_str());
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__
             for (int i = 0; i < xtouch_other_printer_count; i++)
             {
                 String other_report = String("device/") + xtouch_other_printer_dev_ids[i] + "/report";
@@ -1736,7 +1764,7 @@ static void xtouch_mqtt_subscribe_commands(void)
     lv_msg_subscribe(XTOUCH_COMMAND_STOP, (lv_msg_subscribe_cb_t)xtouch_device_onStopCommand, NULL);
     lv_msg_subscribe(XTOUCH_COMMAND_PAUSE, (lv_msg_subscribe_cb_t)xtouch_device_onPauseCommand, NULL);
     lv_msg_subscribe(XTOUCH_COMMAND_RESUME, (lv_msg_subscribe_cb_t)xtouch_device_onResumeCommand, NULL);
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__
     lv_msg_subscribe(XTOUCH_COMMAND_PAUSE_SLOT, (lv_msg_subscribe_cb_t)xtouch_device_onPauseSlotCommand, NULL);
     lv_msg_subscribe(XTOUCH_COMMAND_STOP_SLOT, (lv_msg_subscribe_cb_t)xtouch_device_onStopSlotCommand, NULL);
     lv_msg_subscribe(XTOUCH_COMMAND_RESUME_SLOT, (lv_msg_subscribe_cb_t)xtouch_device_onResumeSlotCommand, NULL);
@@ -1784,7 +1812,7 @@ void xtouch_cloud_mqtt_setup()
     delay(32);
 
     xtouch_mqtt_topic_setup();
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__
     xtouch_mqtt_load_other_printers();
 #endif
     xtouch_mqtt_configure_client(cloud.getMqttCloudHost());

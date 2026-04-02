@@ -3,11 +3,16 @@
 #include "../ui_helpers.h"
 #include "../ui_events.h"
 
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__
 
-/* サムネイルのサイズ（ui_printersScreen.c と揃える） */
+/* サムネイルのサイズ（ui_printersScreen.c と揃える）。5" のみ 150 */
+#if defined(__XTOUCH_SCREEN_S3_050__)
 #define ROW_LEFT_THUMB_W 150
 #define ROW_LEFT_THUMB_H 150
+#else
+#define ROW_LEFT_THUMB_W 75
+#define ROW_LEFT_THUMB_H 75
+#endif
 
 static void on_printer_select_temp_focus(lv_event_t *e)
 {
@@ -99,13 +104,13 @@ lv_obj_t *ui_printersComponent_create(lv_obj_t *comp_parent)
         lv_label_set_text(subtaskLabel, "");
         lv_obj_set_style_text_color(subtaskLabel, lv_color_hex(0x999999), LV_PART_MAIN | LV_STATE_DEFAULT);
         /* Small と同じサイズ: 2.8=14px, 5=28px */
-        lv_obj_set_style_text_font(subtaskLabel,
-#if defined(__XTOUCH_SCREEN_28__)
-            &lv_font_notosans_14,
+        
+#if defined(__XTOUCH_SCREEN_S3_050__)
+        lv_obj_set_style_text_font(subtaskLabel,&lv_font_notosans_28,LV_PART_MAIN | LV_STATE_DEFAULT);
 #else
-            &lv_font_notosans_28,
+        lv_obj_set_style_text_font(subtaskLabel,&lv_font_notosans_14,LV_PART_MAIN | LV_STATE_DEFAULT);
 #endif
-            LV_PART_MAIN | LV_STATE_DEFAULT);
+            
         lv_label_set_long_mode(subtaskLabel, LV_LABEL_LONG_CLIP);
 
         lv_obj_t *progressBar = lv_slider_create(rightCol);

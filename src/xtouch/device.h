@@ -417,7 +417,7 @@ void xtouch_device_onResumeCommand(lv_msg_t *m)
     xtouch_device_pushall();
 }
 
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__
 extern "C" void xtouch_mqtt_pushall_all_printers_for_screen_c(void);
 
 static void xtouch_device_print_action_to_slot(int slot, const char *action)
@@ -669,13 +669,13 @@ static bool xtouch_load_local_slicer_temps(const char *setting_id, int *out_min,
     char path[96];
     snprintf(path, sizeof(path), "%s/%s.json", xtouch_paths_filament_json_dir, setting_id);
 
-    if (!SD.exists(path))
+    if (!xtouch_sdcard_exists(path))
     {
         snprintf(s_ams_json_error_buf, sizeof(s_ams_json_error_buf), "No JSON file\n%s", path);
         lv_msg_send(XTOUCH_AMS_EDIT_JSON_ERROR, s_ams_json_error_buf);
         return false;
     }
-    File configFile = SD.open(path);
+    File configFile = xtouch_sdcard_open(path);
     if (!configFile || !configFile.available())
     {
         snprintf(s_ams_json_error_buf, sizeof(s_ams_json_error_buf), "No JSON file\n%s", path);
@@ -940,7 +940,7 @@ void xtouch_device_onPreHeatOffCommand(lv_msg_t *m)
 //     xtouch_device_publish(result);
 // }
 
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__
 /** push_status 受信後など、task_id に応じて xtouch_thumbnail_slot_path[slot] を更新する。thumbnail.h で実装。 */
 void xtouch_thumbnail_update_path_for_slot(int slot);
 /** task / 接続先変化時にサムネ LGFX キャッシュを捨てる。thumbnail.h で実装。 */

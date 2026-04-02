@@ -4,11 +4,12 @@
 #include <stddef.h>
 #include <stdint.h>
 
+
 #define XTOUCH_LCD_MIN_SLEEP_TIME 5
 #define XTOUCH_LIGHT_MIN_SLEEP_TIME 5
 
 /** バックライト。範囲外・欠損時は MAX に寄せる。5" は 170〜255、2.8" は 10〜255。 */
-#if defined(__XTOUCH_SCREEN_50__)
+#if defined(__XTOUCH_SCREEN_S3_050__)
 #define XTOUCH_BACKLIGHT_SLIDER_MIN 170
 #define XTOUCH_BACKLIGHT_SLIDER_MAX 255
 #else
@@ -279,7 +280,7 @@ extern "C"
         int print_error;
     } ClearErrorMessage;
 
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__
 #define XTOUCH_MULTI_PRINTER_MAX 5
 #define XTOUCH_OTHER_PRINTERS_MAX (XTOUCH_MULTI_PRINTER_MAX - 1)
 #define XTOUCH_DEV_PRODUCT_NAME_LEN 24
@@ -314,11 +315,18 @@ extern "C"
 
     /** Cloud 印刷履歴（user-service/my/tasks）1件。UI は参照のみ。再印刷用に model_id/profile_id/plate_index を保持。 */
 #define XTOUCH_HISTORY_TASKS_MAX 20
+#if defined(__XTOUCH_SCREEN_S3_050__)
+#define XTOUCH_HISTORY_UI_ROW_SLOTS XTOUCH_HISTORY_TASKS_MAX
+#else
+    /* History 一覧は行ごとにオブジェクトが多く、小画面プロファイルで 20 行一括生成すると LVGL lv_mem の alloc が NULL になり得る */
+#define XTOUCH_HISTORY_UI_ROW_SLOTS 10
+#endif
 #define XTOUCH_HISTORY_TITLE_LEN 64
 #define XTOUCH_HISTORY_COVER_URL_LEN 1024
 #define XTOUCH_HISTORY_DEVICE_NAME_LEN 32
 #define XTOUCH_HISTORY_DEVICE_MODEL_LEN 24
-#define XTOUCH_HISTORY_TASK_ID_LEN 24
+/** Cloud / MQTT の task id と揃える（History 行と Home の /tmp/{id}.png を一致させる） */
+#define XTOUCH_HISTORY_TASK_ID_LEN 32
 #define XTOUCH_HISTORY_MODEL_ID_LEN 32
 #define XTOUCH_HISTORY_TIME_LEN 32
     /** Bambu 想定: AMS 最大 4 ユニット × 各 4 トレイ = 16 スロット。amsDetailMapping も最大 16 要素 */

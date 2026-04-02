@@ -3,9 +3,9 @@
 
 #include "lvgl.h"
 #include "debug.h"
-#include <SD.h>
 #include <Arduino.h>
 #include "xtouch/sdcard_status.h"
+#include "xtouch/sdcard.h"
 
 /* シンプルな Arduino SD ベースの LVGL ファイルシステムドライバ。
  * - 読み込み専用
@@ -32,12 +32,13 @@ static void *fs_open(lv_fs_drv_t *drv, const char *path, lv_fs_mode_t mode)
     else
         open_mode = FILE_READ;    // "r"
 
-    // LVGL からは "S:/foo/bar.png" 形式で来るので、"S:" を剥がして SD に渡す
+    /* "S:/tmp/x.png" は SD ルートの /tmp/x.png に対応。path+3 で "tmp/..." だけにすると
+     * 相対扱いになり VFS が /sdcard/tmp と解決できず open 失敗することがあるため "S:" のみ除く。 */
     const char *sd_path = path;
     if (path[0] == 'S' && path[1] == ':')
-        sd_path = (path[2] == '/') ? path + 3 : path + 2;
+        sd_path = path + 2;
 
-    File *f = new File(SD.open(sd_path, open_mode));
+    File *f = new File(xtouch_sdcard_open(sd_path, open_mode));
     if (!f || !*f)
     {
         ConsoleDetail.printf("[LVFS] SD.open FAIL path=\"%s\" sd_path=\"%s\"\n", path, sd_path);

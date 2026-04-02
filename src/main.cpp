@@ -1,3 +1,8 @@
+/* Platform macro: auto-detect ESP32-S3 target */
+#if (defined(CONFIG_IDF_TARGET_ESP32S3) || defined(__XTOUCH_SCREEN_S3_028__) || defined(__XTOUCH_SCREEN_S3_050__)) && !defined(__XTOUCH_PLATFORM_S3__)
+#define __XTOUCH_PLATFORM_S3__
+#endif
+
 #include <driver/i2s.h>
 #include <Arduino.h>
 #include <ArduinoJson.h>
@@ -17,9 +22,14 @@
 #include "devices/2.8/screen.h"
 #endif
 
-#if defined(__XTOUCH_SCREEN_50__)
+#if defined(__XTOUCH_SCREEN_S3_050__) 
 #include "devices/5.0/screen.h"
 #endif
+
+#if defined(__XTOUCH_SCREEN_S3_028__)
+#include "devices/s3_2.8/screen.h"
+#endif
+
 
 #include "xtouch/cloud.hpp"
 #include "xtouch/neopixel.h"
@@ -28,7 +38,7 @@
 #include "xtouch/net.h"
 #include "xtouch/firmware.h"
 #include "xtouch/mqtt.h"
-#if defined(__XTOUCH_SCREEN_50__)
+#if defined(__XTOUCH_PLATFORM_S3__)
 #include "xtouch/thumbnail.h"
 #include "xtouch/history.h"
 #include "xtouch/lv_fs_arduino_sd.h"
@@ -44,6 +54,8 @@
 #include "xtouch/ams_edit_temp.h"
 #include "xtouch/filaments_rev.h"
 #include "ui/ui_events.h"
+
+
 
 // #if defined(__XTOUCH_SCREEN_28__)
 // #include "xtouch/m5Stack.h"
@@ -65,17 +77,23 @@ void setup()
 #endif
 
   xtouch_eeprom_setup();
-#if defined(__XTOUCH_SCREEN_50__)
+#if defined(____XTOUCH_SCREEN_S3_050__)
   xtouch_eeprom_rgb_pclk_heal_invalid_storage();
 #endif
   xtouch_globals_init();
   xtouch_screen_setup();
 
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_SCREEN_S3_050__
   lv_font_small_set(&lv_font_montserrat_28);
   lv_font_middle_set(&lv_font_montserrat_32);
   lv_font_big_set(&lv_font_montserrat_48);
   lv_icon_font_small_set(&ui_font_xlcd48);
+#elif defined(__XTOUCH_PLATFORM_S3__)
+  /* S3 で 5" 以外（現状 2.8。将来の小型 S3 も同じプロファイル） */
+  lv_font_small_set(&lv_font_montserrat_14);
+  lv_font_middle_set(&lv_font_montserrat_24);
+  lv_font_big_set(&lv_font_montserrat_28);
+  lv_icon_font_small_set(&ui_font_xlcdmin);
 #else
   lgfx::boards::board_t board = tft.getBoard();
 
@@ -89,21 +107,28 @@ void setup()
   }
 #endif
   xtouch_intro_show();
-  int8_t sd_cs_pin = -1;  
+  int8_t sd_cs_pin = -1;
+  bool sd_mode_1bit = true; /* default: 1bit (2.8 / 5.0) */
   // 2.8": M5Stack のみ 4、それ以外は -1(デフォルト)
-#if defined(__XTOUCH_SCREEN_50__)
-  sd_cs_pin = 10;
+#if defined(__XTOUCH_PLATFORM_S3__)
+  sd_cs_pin = 47;
+  sd_mode_1bit = true; /* S3 platform の既定は 1bit（必要時はフラグで override） */
 #elif defined(__XTOUCH_SCREEN_28__)
   if (tft.getBoard() == (lgfx::boards::board_t)2) {
       sd_cs_pin = 4;
   }else{
       sd_cs_pin = 5;
   }
+  /* 2.8 系は原則 1bit。3.5 専用調査時のみビルドフラグで 4bit を明示有効化する。 */
+  sd_mode_1bit = true;
+#if defined(XTOUCH_SDMMC_FORCE_4BIT)
+  sd_mode_1bit = false;
 #endif
-  while (!xtouch_sdcard_setup(sd_cs_pin))
+#endif
+  while (!xtouch_sdcard_setup(sd_cs_pin, sd_mode_1bit))
     ;
 
-#if defined(__XTOUCH_SCREEN_50__)
+#if defined(__XTOUCH_PLATFORM_S3__)
   xtouch_lcd_json_apply_from_sd_and_reboot();
   lv_fs_arduino_sd_init();  /* LVGL FS ドライバ: Arduino SD を 'S:' として登録 */
   xtouch_thumbnail_subscribe_events();
@@ -126,7 +151,7 @@ void setup()
   xtouch_screen_setupScreenTimer();
   xtouch_screen_setupLEDOffTimer();
   xtouch_setupGlobalEvents();
-    if(xtouch_filesystem_exist(SD, xtouch_paths_provisioning)){
+    if(xtouch_filesystem_exist(xtouch_sdcard_fs(), xtouch_paths_provisioning)){
         ConsoleDebug.println("Provisioning mode initialize");
         xTouchConfig.xTouchProvisioningMode = true;
         if (!cloud.hasAuthTokens()) 
@@ -152,7 +177,7 @@ void setup()
           xtouch_cloud_mqtt_setup();
         }
 
-    }else if(xtouch_filesystem_exist(SD, xtouch_paths_config)){
+    }else if(xtouch_filesystem_exist(xtouch_sdcard_fs(), xtouch_paths_config)){
         ConsoleDebug.println("Lan only mode initialize");
         xTouchConfig.xTouchLanOnlyMode = true;
         xtouch_local_mqtt_setup();
@@ -175,9 +200,13 @@ void setup()
     ConsoleDebug.println("LED 27");
     xTouchConfig.xTouchNeoPixelPinValue = 27;
   }
-#elif defined(__XTOUCH_SCREEN_50__)
+#elif defined(__XTOUCH_SCREEN_S3_050__)
   ConsoleDebug.println("LED 17");
   xTouchConfig.xTouchNeoPixelPinValue = 17;
+#elif defined(__XTOUCH_PLATFORM_S3__)
+  /* 2432S028（LGFX）: FT5x06 の INT=GPIO17。5" と同じ 17 を Neo に使うとタッチと競合する。
+   * ピンは printer.json の neoPixelPin のみ（未設定 0 のときは Neo タイマーは起動しない）。 */
+  ConsoleDebug.println("[NeoPixel] S3 (non-5\"): use neoPixelPin from settings (not GPIO17)");
 #endif
 
   xtouch_neo_pixel_timer_init(xTouchConfig.xTouchNeoPixelPinValue);

@@ -19,7 +19,7 @@
 #define JC8048_BUS_DEFAULT_DE_IDLE_HIGH      1
 #define JC8048_BUS_DEFAULT_PCLK_IDLE_HIGH    1
 
-int screenWidth  = 800;
-int screenHeight = 480;
+int screenWidth  = 240;
+int screenHeight = 320;
 
 #endif

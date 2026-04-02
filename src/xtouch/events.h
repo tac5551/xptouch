@@ -3,6 +3,7 @@
 
 #include "xtouch/webserver.h"
 #include "xtouch/firmware.h"
+#include "xtouch/sdcard.h"
 #include "xtouch/types.h"
 #include "ui/ui_loaders.h"
 
@@ -54,10 +55,10 @@ void xtouch_events_onBackLight(lv_msg_t *m)
 void xtouch_events_onBackLightSet(lv_msg_t *m)
 {
     int32_t value = lv_slider_get_value(ui_settingsBackLightPanelSlider);
-    DynamicJsonDocument settings = xtouch_filesystem_readJson(SD, xtouch_paths_settings);
+    DynamicJsonDocument settings = xtouch_filesystem_readJson(xtouch_sdcard_fs(), xtouch_paths_settings);
     settings["backlight"] = value;
     xTouchConfig.xTouchBacklightLevel = value;
-    xtouch_filesystem_writeJson(SD, xtouch_paths_settings, settings);
+    xtouch_filesystem_writeJson(xtouch_sdcard_fs(), xtouch_paths_settings, settings);
     xtouch_screen_setBrightness(value);
 }
 
@@ -66,10 +67,10 @@ void xtouch_events_onTFTTimerSet(lv_msg_t *m)
     int32_t value = lv_slider_get_value(ui_settingsTFTOFFSlider);
     xtouch_screen_setScreenTimer(value * 1000 * 60);
 
-    DynamicJsonDocument settings = xtouch_filesystem_readJson(SD, xtouch_paths_settings);
+    DynamicJsonDocument settings = xtouch_filesystem_readJson(xtouch_sdcard_fs(), xtouch_paths_settings);
     settings["tftOff"] = value;
     xTouchConfig.xTouchTFTOFFValue = value;
-    xtouch_filesystem_writeJson(SD, xtouch_paths_settings, settings);
+    xtouch_filesystem_writeJson(xtouch_sdcard_fs(), xtouch_paths_settings, settings);
 }
 
 void xtouch_events_onLEDOffTimerSet(lv_msg_t *m)
@@ -77,10 +78,10 @@ void xtouch_events_onLEDOffTimerSet(lv_msg_t *m)
     int32_t value = lv_slider_get_value(ui_settingsLEDOFFSlider);
     xtouch_screen_setLEDOffTimer(value * 1000 * 60);
 
-    DynamicJsonDocument settings = xtouch_filesystem_readJson(SD, xtouch_paths_settings);
+    DynamicJsonDocument settings = xtouch_filesystem_readJson(xtouch_sdcard_fs(), xtouch_paths_settings);
     settings["lightOff"] = value;
     xTouchConfig.xTouchLEDOffValue = value;
-    xtouch_filesystem_writeJson(SD, xtouch_paths_settings, settings);
+    xtouch_filesystem_writeJson(xtouch_sdcard_fs(), xtouch_paths_settings, settings);
 }
 
 
@@ -88,38 +89,38 @@ void xtouch_events_onLEDOffTimerSet(lv_msg_t *m)
 void xtouch_events_onNeoPixelBrightnessSet(lv_msg_t *m)
 {
     int32_t value = lv_slider_get_value(ui_optionalNeoPixelBrightnessSlider);
-    DynamicJsonDocument settings = xtouch_filesystem_readJson(SD, xtouch_paths_settings);
+    DynamicJsonDocument settings = xtouch_filesystem_readJson(xtouch_sdcard_fs(), xtouch_paths_settings);
     settings["neoPixelBrightness"] = value;
     xTouchConfig.xTouchNeoPixelBrightnessValue = value;
-    xtouch_filesystem_writeJson(SD, xtouch_paths_settings, settings);
+    xtouch_filesystem_writeJson(xtouch_sdcard_fs(), xtouch_paths_settings, settings);
     xtouch_neo_pixel_set_brightness(value);
 }
 
 void xtouch_events_onAlarmTimeoutSet(lv_msg_t *m)
 {
     int32_t value = lv_slider_get_value(ui_optionalAlarmTimeoutSlider);
-    DynamicJsonDocument settings = xtouch_filesystem_readJson(SD, xtouch_paths_settings);
+    DynamicJsonDocument settings = xtouch_filesystem_readJson(xtouch_sdcard_fs(), xtouch_paths_settings);
     settings["alarmTimeout"] = value;
     xTouchConfig.xTouchAlarmTimeoutValue = value;
-    xtouch_filesystem_writeJson(SD, xtouch_paths_settings, settings);
+    xtouch_filesystem_writeJson(xtouch_sdcard_fs(), xtouch_paths_settings, settings);
 }
 
 void xtouch_events_onIdleLEDSwitch(lv_msg_t *m)
 {
     bool value = lv_obj_has_state(ui_optional_Idle_ledSwitch, LV_STATE_CHECKED);
-    DynamicJsonDocument settings = xtouch_filesystem_readJson(SD, xtouch_paths_settings);
+    DynamicJsonDocument settings = xtouch_filesystem_readJson(xtouch_sdcard_fs(), xtouch_paths_settings);
     settings["idleLEDEnabled"] = value;
     xTouchConfig.xTouchIdleLEDEnabled = value;
     xtouch_neo_pixel_set_idle_led_enabled(value);
-    xtouch_filesystem_writeJson(SD, xtouch_paths_settings, settings);
+    xtouch_filesystem_writeJson(xtouch_sdcard_fs(), xtouch_paths_settings, settings);
 }
 
 void xtouch_events_onTFTInvert(lv_msg_t *m)
 {
     bool value = lv_obj_has_state(ui_settingsTFTInvertSwitch, LV_STATE_CHECKED);
-    DynamicJsonDocument settings = xtouch_filesystem_readJson(SD, xtouch_paths_settings);
+    DynamicJsonDocument settings = xtouch_filesystem_readJson(xtouch_sdcard_fs(), xtouch_paths_settings);
     settings["tftInvert"] = value ? true : false;
-    xtouch_filesystem_writeJson(SD, xtouch_paths_settings, settings);
+    xtouch_filesystem_writeJson(xtouch_sdcard_fs(), xtouch_paths_settings, settings);
     xTouchConfig.xTouchTFTInvert = value;
     xtouch_screen_invertColors();
 }
@@ -143,9 +144,9 @@ void xtouch_events_onNeoPixelNumSet(lv_msg_t *m)
 {
    int32_t value = lv_slider_get_value(ui_optionalNeoPixelNumSlider);
    ConsoleDebug.printf("xtouch_events_onNeoPixelNumSet: %d", value);
-   DynamicJsonDocument settings = xtouch_filesystem_readJson(SD, xtouch_paths_settings);
+   DynamicJsonDocument settings = xtouch_filesystem_readJson(xtouch_sdcard_fs(), xtouch_paths_settings);
    settings["neoPixelNum"] = value;
-   xtouch_filesystem_writeJson(SD, xtouch_paths_settings, settings);
+   xtouch_filesystem_writeJson(xtouch_sdcard_fs(), xtouch_paths_settings, settings);
    xTouchConfig.xTouchNeoPixelNumValue = value;
 
     if (xTouchConfig.xTouchNeoPixelNumValue > 0)
@@ -176,7 +177,7 @@ void xtouch_events_onChamberTempSwitch(lv_msg_t *m)
 void xtouch_events_onClearCache(lv_msg_t *m)
 {
     (void)m;
-#if defined(__XTOUCH_SCREEN_50__)
+#if defined(__XTOUCH_PLATFORM_S3__)
     xtouch_thumbnail_clear_sd_cache();
 #endif
 }

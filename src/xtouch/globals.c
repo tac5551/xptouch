@@ -16,7 +16,7 @@ int xtouch_filament_current_type_count = 0;
 int xtouch_filament_pipe_holds_brands = 0;
 int xtouch_filament_use_fixed_brands = 1;
 
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__
 other_printer_status_t otherPrinters[XTOUCH_OTHER_PRINTERS_MAX];
 char xtouch_other_printer_dev_ids[XTOUCH_OTHER_PRINTERS_MAX][16];
 char xtouch_current_printer_dev_product_name[XTOUCH_DEV_PRODUCT_NAME_LEN];
@@ -44,7 +44,7 @@ int xtouch_history_reprint_printer_dd_slot = 0;
 void xtouch_globals_init()
 {
     controlMode.inc = 10;
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__
     /* 起動時は pthumb_N.png を指さない。task_id ベースのパスは getThumbPathForSlot() で設定される */
     for (int i = 0; i < XTOUCH_THUMB_SLOT_MAX; i++)
         xtouch_thumbnail_slot_path[i][0] = '\0';

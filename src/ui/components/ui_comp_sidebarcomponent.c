@@ -10,7 +10,7 @@ void ui_event_comp_sidebarComponent_sidebarHomeButton(lv_event_t *e)
         onSidebarHome(e);
     }
 }
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__
 void ui_event_comp_sidebarComponent_sidebarPrintersButton(lv_event_t *e)
 {
     lv_event_code_t event_code = lv_event_get_code(e);
@@ -64,7 +64,7 @@ void ui_event_comp_sidebarComponent_sidebarSettingsButton(lv_event_t *e)
     }
 }
 
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__
 void ui_sidebarComponent_updatePrintersVisibility(void)
 {
     if (ui_sidebarComponent == NULL)
@@ -95,7 +95,7 @@ void ui_sidebarComponent_updateHistoryVisibility(void)
 void ui_sidebarComponent_set_active(int index)
 {
     lv_obj_t *target;
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__
     uint32_t indexes[6] = {
         UI_COMP_SIDEBARCOMPONENT_SIDEBARHOMEBUTTON,
         UI_COMP_SIDEBARCOMPONENT_SIDEBARPRINTERSBUTTON,
@@ -129,7 +129,12 @@ lv_obj_t *ui_sidebarComponent_create(lv_obj_t *comp_parent)
 
     lv_obj_t *cui_sidebarComponent;
     cui_sidebarComponent = lv_obj_create(comp_parent);
+    /* 5" のみ幅を割合で細く。2.8 等は従来どおり 48px（320×10% だと細すぎるため） */
+#if defined(__XTOUCH_SCREEN_S3_050__)
     lv_obj_set_width(cui_sidebarComponent, lv_pct(10));
+#else
+    lv_obj_set_width(cui_sidebarComponent, 48);
+#endif
     lv_obj_set_height(cui_sidebarComponent, lv_pct(100));
     lv_obj_set_x(cui_sidebarComponent, 387);
     lv_obj_set_y(cui_sidebarComponent, 178);
@@ -186,7 +191,7 @@ lv_obj_t *ui_sidebarComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_scrollbar_mode(cui_sidebarHomeButtonIcon, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_style_text_font(cui_sidebarHomeButtonIcon, lv_icon_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__
     lv_obj_t *cui_sidebarPrintersButton;
     cui_sidebarPrintersButton = lv_obj_create(cui_sidebarComponent);
     lv_obj_set_width(cui_sidebarPrintersButton, lv_pct(100));
@@ -226,7 +231,7 @@ lv_obj_t *ui_sidebarComponent_create(lv_obj_t *comp_parent)
         lv_obj_add_flag(cui_sidebarPrintersButton, LV_OBJ_FLAG_HIDDEN);
 #endif
 
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__
     lv_obj_t *cui_sidebarHistoryButton;
     cui_sidebarHistoryButton = lv_obj_create(cui_sidebarComponent);
     lv_obj_set_width(cui_sidebarHistoryButton, lv_pct(100));
@@ -377,7 +382,7 @@ lv_obj_t *ui_sidebarComponent_create(lv_obj_t *comp_parent)
     children[UI_COMP_SIDEBARCOMPONENT_SIDEBARCOMPONENT] = cui_sidebarComponent;
     children[UI_COMP_SIDEBARCOMPONENT_SIDEBARHOMEBUTTON] = cui_sidebarHomeButton;
     children[UI_COMP_SIDEBARCOMPONENT_SIDEBARHOMEBUTTON_SIDEBARHOMEBUTTONICON] = cui_sidebarHomeButtonIcon;
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__
     children[UI_COMP_SIDEBARCOMPONENT_SIDEBARPRINTERSBUTTON] = cui_sidebarPrintersButton;
     children[UI_COMP_SIDEBARCOMPONENT_SIDEBARPRINTERSBUTTON_SIDEBARPRINTERSBUTTONICON] = cui_sidebarPrintersButtonIcon;
     children[UI_COMP_SIDEBARCOMPONENT_SIDEBARHISTORYBUTTON] = cui_sidebarHistoryButton;
@@ -392,7 +397,7 @@ lv_obj_t *ui_sidebarComponent_create(lv_obj_t *comp_parent)
     lv_obj_add_event_cb(cui_sidebarComponent, get_component_child_event_cb, LV_EVENT_GET_COMP_CHILD, children);
     lv_obj_add_event_cb(cui_sidebarComponent, del_component_child_event_cb, LV_EVENT_DELETE, children);
     lv_obj_add_event_cb(cui_sidebarHomeButton, ui_event_comp_sidebarComponent_sidebarHomeButton, LV_EVENT_ALL, children);
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__
     lv_obj_add_event_cb(cui_sidebarPrintersButton, ui_event_comp_sidebarComponent_sidebarPrintersButton, LV_EVENT_ALL, children);
     lv_obj_add_event_cb(cui_sidebarHistoryButton, ui_event_comp_sidebarComponent_sidebarHistoryButton, LV_EVENT_ALL, children);
 #endif

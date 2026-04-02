@@ -29,8 +29,10 @@ const char *xtouch_paths_pair         = XTOUCH_PATH_ROOT "/printer-pair.json";
 #define XTOUCH_OTA_HOST "tac-lab.tech"
 const char *xtouch_paths_firmware_ota_host = XTOUCH_OTA_HOST;
 const char *xtouch_paths_firmware_ota_json = XTOUCH_PATH_ROOT "/ota.json";
-#ifdef __XTOUCH_SCREEN_50__
+#if defined(__XTOUCH_SCREEN_S3_050__)
 const char *xtouch_paths_firmware_ota_file = "https://" XTOUCH_OTA_HOST "/xptouch-bin/5.0/ota/ota.json";
+#elif defined(__XTOUCH_PLATFORM_S3__)
+const char *xtouch_paths_firmware_ota_file = "https://" XTOUCH_OTA_HOST "/xptouch-bin/s3_2.8/ota/ota.json";
 #else
 const char *xtouch_paths_firmware_ota_file = "https://" XTOUCH_OTA_HOST "/xptouch-bin/2.8/ota/ota.json";
 #endif

@@ -87,7 +87,7 @@ void ui_event_comp_optionalComponent_onPreheat(lv_event_t *e)
     }
 }
 
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__
 void ui_event_comp_optionalComponent_onMultiPrinterMonitor(lv_event_t *e)
 {
     lv_event_code_t event_code = lv_event_get_code(e);
@@ -98,7 +98,7 @@ void ui_event_comp_optionalComponent_onMultiPrinterMonitor(lv_event_t *e)
 }
 #endif
 
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__
 void ui_event_comp_optionalComponent_onHistory(lv_event_t *e)
 {
     lv_event_code_t event_code = lv_event_get_code(e);
@@ -253,7 +253,7 @@ lv_obj_t *ui_optionalComponent_create(lv_obj_t *comp_parent)
     }
     //---Preheat End------------------------------
 
-#if defined(__XTOUCH_SCREEN_50__)
+#if defined(__XTOUCH_PLATFORM_S3__)
     //---Multi Printer Monitor (Printers) Start------------------------------
     lv_obj_t *cui_optional_multiPrinterMonitor;
     cui_optional_multiPrinterMonitor = lv_obj_create(cui_optionalComponent);
@@ -635,7 +635,7 @@ lv_obj_t *ui_optionalComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_radius(cui_optional_ds18b20Title, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_color(cui_optional_ds18b20Title, lv_color_hex(0xffffff), LV_PART_MAIN | LV_STATE_DEFAULT);
 
-#if defined(__XTOUCH_SCREEN_50__)
+#if defined(__XTOUCH_PLATFORM_S3__)
 #define _UI_CHAMBER_TEMP_PIN 18
 #else
 #define _UI_CHAMBER_TEMP_PIN 22
@@ -741,7 +741,7 @@ lv_obj_t *ui_optionalComponent_create(lv_obj_t *comp_parent)
     children[UI_COMP_OPTIONALCOMPONENT_PREHEAT_LABEL] = cui_optional_preheatLabel;
     children[UI_COMP_OPTIONALCOMPONENT_PREHEAT_SWITCH] = ui_optional_preheatSwitch;
 
-#if defined(__XTOUCH_SCREEN_50__)
+#if defined(__XTOUCH_PLATFORM_S3__)
     children[UI_COMP_OPTIONALCOMPONENT_MULTI_PRINTER_MONITOR] = cui_optional_multiPrinterMonitor;
     children[UI_COMP_OPTIONALCOMPONENT_MULTI_PRINTER_MONITOR_LABEL] = cui_optional_multiPrinterMonitorLabel;
     children[UI_COMP_OPTIONALCOMPONENT_MULTI_PRINTER_MONITOR_SWITCH] = ui_optional_multiPrinterMonitorSwitch;
@@ -772,7 +772,7 @@ lv_obj_t *ui_optionalComponent_create(lv_obj_t *comp_parent)
     lv_obj_add_event_cb(ui_optional_chamberSensorSwitch, ui_event_comp_optionalComponent_onChamberTemp, LV_EVENT_VALUE_CHANGED, NULL);
     lv_obj_add_event_cb(ui_optional_stackChanSwitch, ui_event_comp_optionalComponent_onStackChan, LV_EVENT_VALUE_CHANGED, NULL);
     lv_obj_add_event_cb(ui_optional_preheatSwitch, ui_event_comp_optionalComponent_onPreheat, LV_EVENT_VALUE_CHANGED, NULL);
-#if defined(__XTOUCH_SCREEN_50__)
+#if defined(__XTOUCH_PLATFORM_S3__)
     lv_obj_add_event_cb(ui_optional_multiPrinterMonitorSwitch, ui_event_comp_optionalComponent_onMultiPrinterMonitor, LV_EVENT_VALUE_CHANGED, NULL);
     lv_obj_add_event_cb(ui_optional_historySwitch, ui_event_comp_optionalComponent_onHistory, LV_EVENT_VALUE_CHANGED, NULL);
     lv_obj_add_event_cb(ui_optional_hideThumbnailsSwitch, ui_event_comp_optionalComponent_onHideThumbnails, LV_EVENT_VALUE_CHANGED, NULL);

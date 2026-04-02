@@ -10,14 +10,14 @@
 #ifdef __cplusplus
 #include <stdio.h>
 #include <FS.h>
-#include <SD.h>
+#include "xtouch/sdcard.h"
 #include "xtouch/bblp.h"
 
 /** path のテキストをパイプバッファに読み込むだけ。パースは呼ばない。 */
 static inline bool xtouch_filaments_read_file_to_buf(const char *path) {
     xTouchFilamentsPipeLen = 0;
-    if (!path || !path[0] || !SD.exists(path)) return false;
-    File f = SD.open(path);
+    if (!path || !path[0] || !xtouch_sdcard_exists(path)) return false;
+    File f = xtouch_sdcard_open(path);
     if (!f || !f.available()) { if (f) f.close(); return false; }
     unsigned int n = 0;
     while (f.available() && n < XTOUCH_FILAMENTS_PIPE_BUF_SIZE - 1) {
@@ -96,7 +96,7 @@ static inline void xtouch_filaments_ensure_brands_loaded_impl(void) {
     /* ノズルサイズは使わず1セット: filaments_brands.txt */
     char path[96];
     snprintf(path, sizeof(path), "%s/filaments_brands.txt", xtouch_paths_filament_dir);
-    if (SD.exists(path) && xtouch_filaments_read_file_to_buf(path)) {
+    if (xtouch_sdcard_exists(path) && xtouch_filaments_read_file_to_buf(path)) {
         const char *p = xTouchFilamentsPipeBuf;
         const char *end = p + xTouchFilamentsPipeLen;
         int nb = 0;

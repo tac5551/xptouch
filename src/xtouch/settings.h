@@ -2,6 +2,7 @@
 #define _XLCD_SETTINGS
 
 #include "types.h"
+#include "xtouch/sdcard.h"
 
 void xtouch_settings_save(bool onlyRoot = false)
 {
@@ -25,7 +26,7 @@ void xtouch_settings_save(bool onlyRoot = false)
     doc["neoPixelPin"] = xTouchConfig.xTouchNeoPixelPinValue;
     doc["alarmTimeout"] = xTouchConfig.xTouchAlarmTimeoutValue;
     doc["idleLEDEnabled"] = xTouchConfig.xTouchIdleLEDEnabled;
-    xtouch_filesystem_writeJson(SD, xtouch_paths_settings, doc);
+    xtouch_filesystem_writeJson(xtouch_sdcard_fs(), xtouch_paths_settings, doc);
 
     if (onlyRoot)
     {
@@ -39,12 +40,12 @@ void xtouch_settings_save(bool onlyRoot = false)
 
     DynamicJsonDocument printers = cloud.loadPrinters();
     printers[xTouchConfig.xTouchSerialNumber]["settings"] = printersSettings;
-    xtouch_filesystem_writeJson(SD, xtouch_paths_printers, printers);
+    xtouch_filesystem_writeJson(xtouch_sdcard_fs(), xtouch_paths_printers, printers);
 }
 
 void xtouch_settings_loadSettings()
 {
-    if (!xtouch_filesystem_exist(SD, xtouch_paths_settings))
+    if (!xtouch_filesystem_exist(xtouch_sdcard_fs(), xtouch_paths_settings))
     {
         DynamicJsonDocument doc(256);
         xTouchConfig.xTouchBacklightLevel = XTOUCH_BACKLIGHT_SLIDER_DEFAULT;
@@ -69,7 +70,7 @@ void xtouch_settings_loadSettings()
         xtouch_settings_save(true);
     }
 
-    DynamicJsonDocument settings = xtouch_filesystem_readJson(SD, xtouch_paths_settings);
+    DynamicJsonDocument settings = xtouch_filesystem_readJson(xtouch_sdcard_fs(), xtouch_paths_settings);
 
     xTouchConfig.xTouchBacklightLevel = settings.containsKey("backlight") ? settings["backlight"].as<int>() : XTOUCH_BACKLIGHT_SLIDER_DEFAULT;
     if (xTouchConfig.xTouchBacklightLevel < XTOUCH_BACKLIGHT_SLIDER_MIN ||

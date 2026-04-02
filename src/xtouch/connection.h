@@ -5,25 +5,26 @@
 #include "mbedtls/base64.h"
 #include <ArduinoJson.h>
 #include "filesystem.h"
+#include "sdcard.h"
 #include "paths.h"
 
 bool xtouch_wifi_setup()
 {
     DynamicJsonDocument wifiConfig(1024);
     bool cloud_mode = false;
-    if(xtouch_filesystem_exist(SD, xtouch_paths_provisioning)){
+    if(xtouch_filesystem_exist(xtouch_sdcard_fs(), xtouch_paths_provisioning)){
         cloud_mode = true;
         lv_label_set_text(introScreenCaption, wifiConfig.isNull() ? LV_SYMBOL_SD_CARD "provisioning mode" : LV_SYMBOL_WARNING " Inaccurate provisioning.json and xtouch.json");
         lv_obj_set_style_text_color(introScreenCaption, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_timer_handler();
         lv_task_handler();
-        wifiConfig = xtouch_filesystem_readJson(SD, xtouch_paths_provisioning);
-    }else if(xtouch_filesystem_exist(SD, xtouch_paths_config)){
+        wifiConfig = xtouch_filesystem_readJson(xtouch_sdcard_fs(), xtouch_paths_provisioning);
+    }else if(xtouch_filesystem_exist(xtouch_sdcard_fs(), xtouch_paths_config)){
         lv_label_set_text(introScreenCaption, wifiConfig.isNull() ? LV_SYMBOL_SD_CARD "Lan only mode" : LV_SYMBOL_WARNING " Inaccurate xtouch.json");
         lv_obj_set_style_text_color(introScreenCaption, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_timer_handler();
         lv_task_handler();
-        wifiConfig = xtouch_filesystem_readJson(SD, xtouch_paths_config);
+        wifiConfig = xtouch_filesystem_readJson(xtouch_sdcard_fs(), xtouch_paths_config);
         strcpy(xTouchConfig.xTouchAccessCode, wifiConfig["mqtt"]["accessCode"].as<const char *>());
         strcpy(xTouchConfig.xTouchSerialNumber, wifiConfig["mqtt"]["serialNumber"].as<const char *>());
         strcpy(xTouchConfig.xTouchHost, wifiConfig["mqtt"]["host"].as<const char *>());

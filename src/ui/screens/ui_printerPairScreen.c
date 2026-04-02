@@ -84,7 +84,11 @@ void ui_printerPairScreen_screen_init(void)
     lv_label_set_text(ui_printerPairScreenSubmitIcon, "q");
     lv_obj_set_style_text_color(ui_printerPairScreenSubmitIcon, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(ui_printerPairScreenSubmitIcon, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+#if defined(__XTOUCH_SCREEN_S3_050__)
     lv_obj_set_style_text_font(ui_printerPairScreenSubmitIcon, &ui_font_xlcd, LV_PART_MAIN | LV_STATE_DEFAULT);
+#else
+    lv_obj_set_style_text_font(ui_printerPairScreenSubmitIcon, &ui_font_xlcdmin, LV_PART_MAIN | LV_STATE_DEFAULT);
+#endif
 
     lv_obj_add_event_cb(ui_printerPairScreenSubmitButton, ui_event_printerPairScreenSubmitButton, LV_EVENT_ALL, NULL);
 }

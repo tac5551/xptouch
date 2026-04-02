@@ -7,9 +7,10 @@
 
 #include "xtouch/paths.h"
 #include "xtouch/filesystem.h"
+#include "xtouch/sdcard.h"
 #include "xtouch/eeprom.h"
 
-#if defined(__XTOUCH_SCREEN_50__)
+#if defined(__XTOUCH_SCREEN_S3_050__)
 
 #define XTOUCH_LCD_JSON_DOC_CAP 768
 
@@ -121,10 +122,10 @@ static bool lcd_json_apply_u8(JsonObject o, const char *key, uint8_t *t, unsigne
  */
 void xtouch_lcd_json_apply_from_sd_and_reboot(void)
 {
-    if (!xtouch_filesystem_exist(SD, xtouch_paths_lcd_json))
+    if (!xtouch_filesystem_exist(xtouch_sdcard_fs(), xtouch_paths_lcd_json))
         return;
 
-    DynamicJsonDocument doc = xtouch_filesystem_readJson(SD, xtouch_paths_lcd_json, false, XTOUCH_LCD_JSON_DOC_CAP);
+    DynamicJsonDocument doc = xtouch_filesystem_readJson(xtouch_sdcard_fs(), xtouch_paths_lcd_json, false, XTOUCH_LCD_JSON_DOC_CAP);
     JsonObject o = doc.as<JsonObject>();
     if (o.isNull())
     {
@@ -149,7 +150,7 @@ void xtouch_lcd_json_apply_from_sd_and_reboot(void)
                 return;
             }
             lcd_json_serial_dump_eeprom_fields(verify_dis);
-            if (!xtouch_filesystem_deleteFile(SD, xtouch_paths_lcd_json))
+            if (!xtouch_filesystem_deleteFile(xtouch_sdcard_fs(), xtouch_paths_lcd_json))
             {
                 Serial.println("[lcd.json] LCD EEPROM area cleared but delete failed — not rebooting");
                 return;
@@ -237,7 +238,7 @@ void xtouch_lcd_json_apply_from_sd_and_reboot(void)
     }
     lcd_json_serial_dump_eeprom_fields(verify);
 
-    if (!xtouch_filesystem_deleteFile(SD, xtouch_paths_lcd_json))
+    if (!xtouch_filesystem_deleteFile(xtouch_sdcard_fs(), xtouch_paths_lcd_json))
     {
         Serial.println("[lcd.json] EEPROM ok but delete failed — not rebooting");
         return;

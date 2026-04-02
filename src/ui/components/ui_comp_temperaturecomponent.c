@@ -364,7 +364,7 @@ lv_obj_t *ui_temperatureComponent_create(lv_obj_t *comp_parent)
     lv_obj_t *cui_temperatureComponentTemps;
     cui_temperatureComponentTemps = lv_obj_create(cui_temperatureComponent);
     lv_obj_set_height(cui_temperatureComponentTemps, lv_pct(100));
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_SCREEN_S3_050__
     lv_obj_set_flex_grow(cui_temperatureComponentTemps, 4); /* 5インチ: 表示側:テンキー=4:6、CHAMBER 折り返し防止 */
 #else
     lv_obj_set_flex_grow(cui_temperatureComponentTemps, 3);
@@ -536,7 +536,7 @@ lv_obj_t *ui_temperatureComponent_create(lv_obj_t *comp_parent)
     lv_obj_t *cui_temperatureComponentFans;
     cui_temperatureComponentFans = lv_obj_create(cui_temperatureComponent);
     lv_obj_set_height(cui_temperatureComponentFans, lv_pct(100));
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_SCREEN_S3_050__
     lv_obj_set_flex_grow(cui_temperatureComponentFans, 4); /* 5インチ: 表示側:テンキー=4:6 */
 #else
     lv_obj_set_flex_grow(cui_temperatureComponentFans, 3);
@@ -830,7 +830,7 @@ lv_obj_t *ui_temperatureComponent_create(lv_obj_t *comp_parent)
     lv_obj_t *cui_temperatureComponentKeyboard;
     cui_temperatureComponentKeyboard = lv_obj_create(cui_temperatureComponent);
     lv_obj_set_height(cui_temperatureComponentKeyboard, lv_pct(100));
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_SCREEN_S3_050__
     lv_obj_set_flex_grow(cui_temperatureComponentKeyboard, 6); /* 5インチ: 表示側:テンキー=4:6、CHAMBER 折り返し防止 */
 #else
     lv_obj_set_flex_grow(cui_temperatureComponentKeyboard, 7); /* 2.8インチ等: 表示側:テンキー=3:7 */

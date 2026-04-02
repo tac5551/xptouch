@@ -8,7 +8,7 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__
 
 #define MAP_DD_MAX XTOUCH_HISTORY_AMS_MAP_MAX
 #define MAP_OPT_MAX 24
@@ -838,18 +838,31 @@ lv_obj_t *ui_historyReprintComponent_create(lv_obj_t *comp_parent)
         lv_obj_set_style_pad_bottom(row, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
 
         lv_obj_t *left = lv_obj_create(row);
+#if defined(__XTOUCH_SCREEN_S3_050__)
         lv_obj_set_width(left, 120);
         lv_obj_set_height(left, 120);
+#else
+        lv_obj_set_width(left, 60);
+        lv_obj_set_height(left, 60);
+#endif
         lv_obj_set_style_bg_color(left, lv_color_hex(0x222222), LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_border_width(left, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_radius(left, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_clear_flag(left, LV_OBJ_FLAG_SCROLLABLE);
         s_cover_img = lv_img_create(left);
         lv_obj_center(s_cover_img);
-        lv_img_set_size_mode(s_cover_img, LV_IMG_SIZE_MODE_REAL);
-        lv_obj_set_size(s_cover_img, 120, 120);
-        /* 元画像(150x150)を120x120枠へ縮小表示 */
-        lv_img_set_zoom(s_cover_img, 205); /* 256=100% */
+        lv_img_set_size_mode(s_cover_img, LV_IMG_SIZE_MODE_VIRTUAL);
+        lv_obj_set_size(
+            s_cover_img,
+#if defined(__XTOUCH_SCREEN_S3_050__)
+            120,
+            120
+#else
+            60,
+            60
+#endif
+        );
+        lv_img_set_zoom(s_cover_img, 256);
         lv_obj_add_flag(s_cover_img, LV_OBJ_FLAG_HIDDEN);
 
         lv_obj_t *right = lv_obj_create(row);
@@ -866,7 +879,13 @@ lv_obj_t *ui_historyReprintComponent_create(lv_obj_t *comp_parent)
         lv_label_set_text(title, "Reprint");
         lv_obj_set_width(title, lv_pct(100));
         lv_label_set_long_mode(title, LV_LABEL_LONG_WRAP);
-        lv_obj_set_style_text_font(title, &lv_font_notosans_28, LV_PART_MAIN | LV_STATE_DEFAULT);
+        
+#if defined(__XTOUCH_SCREEN_S3_050__)
+           lv_obj_set_style_text_font(title,&lv_font_notosans_28, LV_PART_MAIN | LV_STATE_DEFAULT);
+#else
+           lv_obj_set_style_text_font(title, &lv_font_notosans_14, LV_PART_MAIN | LV_STATE_DEFAULT);
+#endif
+        
         lv_obj_set_style_text_color(title, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_text_line_space(title, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
 

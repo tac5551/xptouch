@@ -2,6 +2,7 @@
 #define _XLCD_TOUCH
 
 #include "setting.h"
+#include "xtouch/sdcard.h"
 
 XTouchPanelConfig x_touch_touchConfig;
 
@@ -41,7 +42,7 @@ ScreenPoint getScreenCoords(int16_t x, int16_t y)
 void xtouch_loadTouchConfig(XTouchPanelConfig &config)
 {
     // Open file for reading
-    File file = xtouch_filesystem_open(SD, xtouch_paths_touch);
+    File file = xtouch_filesystem_open(xtouch_sdcard_fs(), xtouch_paths_touch);
 
     // Allocate a temporary JsonDocument
     // Don't forget to change the capacity to match your requirements.
@@ -68,13 +69,13 @@ void xtouch_saveTouchConfig(XTouchPanelConfig &config)
     doc["yCalM"] = config.yCalM;
     doc["xCalC"] = config.xCalC;
     doc["yCalC"] = config.yCalC;
-    xtouch_filesystem_writeJson(SD, xtouch_paths_touch, doc);
+    xtouch_filesystem_writeJson(xtouch_sdcard_fs(), xtouch_paths_touch, doc);
 }
 
 void xtouch_resetTouchConfig()
 {
     ConsoleInfo.println(F("[xPTouch][I][TOUCH] Reset touch config"));
-    xtouch_filesystem_deleteFile(SD, xtouch_paths_touch);
+    xtouch_filesystem_deleteFile(xtouch_sdcard_fs(), xtouch_paths_touch);
     delay(500);
     ESP.restart();
 }
@@ -82,7 +83,7 @@ void xtouch_resetTouchConfig()
 bool hasTouchConfig()
 {
     ConsoleInfo.println(F("[xPTouch][I][TOUCH] Checking for touch config"));
-    return xtouch_filesystem_exist(SD, xtouch_paths_touch);
+    return xtouch_filesystem_exist(xtouch_sdcard_fs(), xtouch_paths_touch);
 }
 
 void xtouch_touch_setup()

@@ -23,7 +23,7 @@ bool xtouch_filesystem_deleteFile(fs::FS &fs, const char *path)
 
 bool xtouch_filesystem_mkdir(fs::FS &fs, const char *path)
 {
-    if (!xtouch_filesystem_exist(SD, path))
+    if (!xtouch_filesystem_exist(fs, path))
     {
         return fs.mkdir(path);
     }

@@ -8,7 +8,7 @@
 #include "SPIFFS.h"
 
 /* 5インチ: TFT flip + freq_write + 任意 Bus_RGB タイミング（lcd.json と EEPROM） */
-#if defined(__XTOUCH_SCREEN_50__)
+#if defined(__XTOUCH_SCREEN_S3_050__)
 #define XTOUCH_SETTING_BODY_DISABLED
 #include "devices/5.0/setting.h"
 #undef XTOUCH_SETTING_BODY_DISABLED
@@ -70,7 +70,7 @@ void xtouch_eeprom_setup()
         return;
     }
 
-#if defined(__XTOUCH_SCREEN_50__)
+#if defined(__XTOUCH_SCREEN_S3_050__)
     File f = SPIFFS.open(xtouch_paths_eeprom, FILE_READ);
     if (!f)
         return;
@@ -94,7 +94,7 @@ void xtouch_eeprom_setup()
 #endif
 }
 
-#if defined(__XTOUCH_SCREEN_50__)
+#if defined(__XTOUCH_SCREEN_S3_050__)
 /** 工場デフォルトの 11 バイト（EEPROM 9..19 と同順）を out に書く */
 static inline void xtouch_eeprom_lcd_timing_defaults_u8(uint8_t *out11)
 {
@@ -143,7 +143,7 @@ uint8_t xtouch_eeprom_read(int address)
     return buf[address];
 }
 
-#if defined(__XTOUCH_SCREEN_50__)
+#if defined(__XTOUCH_SCREEN_S3_050__)
 
 static inline uint32_t xtouch_u32_from_le(const uint8_t *p)
 {
@@ -210,6 +210,6 @@ void xtouch_eeprom_rgb_pclk_heal_invalid_storage(void)
                   (unsigned long)r);
 }
 
-#endif /* __XTOUCH_SCREEN_50__ */
+#endif /* __XTOUCH_SCREEN_S3_050__ */
 
 #endif

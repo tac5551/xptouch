@@ -21,7 +21,7 @@ void ui_printerPairScreen_screen_init(void);
 void ui_amsViewScreen_screen_init(void);
 void ui_utilNozzleChangeScreen_screen_init(void);
 void ui_utilScreen_screen_init(void);
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__
 void ui_printersScreen_screen_init(void);
 void ui_historyScreen_screen_init(void);
 void ui_historyReprintScreen_screen_init(void);
@@ -62,7 +62,7 @@ lv_obj_t *ui_printerPairScreen;
 lv_obj_t *ui_printerPairScreenRoller;
 lv_obj_t *ui_printerPairScreenSubmitButton;
 lv_obj_t *ui_mainScreenChamberTempValue;
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__
 lv_obj_t *ui_printersScreen;
 lv_obj_t *ui_printersContentPanel;
 lv_obj_t *ui_printersListContainer = NULL;
@@ -77,7 +77,7 @@ lv_obj_t *ui____initial_actions0;
 
 
 
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_SCREEN_S3_050__
  static const lv_font_t *_lv_font_small_ptr = &lv_font_montserrat_28;
  static const lv_font_t *_lv_font_middle_ptr = &lv_font_montserrat_32;
  static const lv_font_t *_lv_font_big_ptr = &lv_font_montserrat_48;
@@ -86,7 +86,7 @@ lv_obj_t *ui____initial_actions0;
  static const lv_font_t *_lv_font_small_ptr = &lv_font_montserrat_14;
  static const lv_font_t *_lv_font_middle_ptr = &lv_font_montserrat_24;
  static const lv_font_t *_lv_font_big_ptr = &lv_font_montserrat_28;
- static const lv_font_t *_lv_icon_font_small_ptr = &ui_font_xlcd;
+ static const lv_font_t *_lv_icon_font_small_ptr = &ui_font_xlcdmin;
 #endif
 
 

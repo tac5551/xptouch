@@ -8,7 +8,7 @@
 
 #ifdef __cplusplus
 #include <ArduinoJson.h>
-#include <SD.h>
+#include "xtouch/sdcard.h"
 #include <string.h>
 
 extern "C" {
@@ -34,10 +34,10 @@ int xtouch_public_filaments_rev_lookup(const char *filament_id, char *out_brand,
     out_brand[0] = '\0';
     out_type[0] = '\0';
 
-    if (!SD.exists(xtouch_paths_filaments_rev))
+    if (!xtouch_sdcard_exists(xtouch_paths_filaments_rev))
         return 0;
 
-    File f = SD.open(xtouch_paths_filaments_rev, FILE_READ);
+    File f = xtouch_sdcard_open(xtouch_paths_filaments_rev, FILE_READ);
     if (!f || !f.available())
     {
         if (f)

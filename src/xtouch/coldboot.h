@@ -20,12 +20,13 @@
 // https://github.com/espressif/arduino-esp32/blob/master/libraries/ESP32/examples/ResetReason
 
 #include <Arduino.h>
+#include "xtouch/sdcard.h"
 
 void xtouch_coldboot_check()
 {
     if (rtc_get_reset_reason(0) == POWERON_RESET)
     {
-        DynamicJsonDocument config = xtouch_filesystem_readJson(SD, xtouch_paths_provisioning);
+        DynamicJsonDocument config = xtouch_filesystem_readJson(xtouch_sdcard_fs(), xtouch_paths_provisioning);
         int coldbootTimeout = config.containsKey("coldboot") ? config["coldboot"].as<int>() : 5000;
         lv_label_set_text(introScreenCaption, LV_SYMBOL_POWER "  xPTouch");
         lv_obj_set_style_text_color(introScreenCaption, lv_color_hex(0x555555), LV_PART_MAIN | LV_STATE_DEFAULT);

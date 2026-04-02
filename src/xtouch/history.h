@@ -2,9 +2,9 @@
  * History 画面用: Cloud 履歴取得・再印刷のイベント購読。
  * UI は XTOUCH_HISTORY_FETCH / XTOUCH_HISTORY_REPRINT_WITH_OPTIONS を送信し、
  * ここで購読して cloud.getMyTasks / cloud.submitReprintTask を呼ぶ。
- * サムネイル DL は別タスクで 1 枚ずつ行い、完了するたびにメインでロードして UI を更新する（ブロックしない）。
+ * サムネイル DL は thumbnail.h の thumb_dl ワーカー（Home と共通キュー）で 1 枚ずつ行い、完了するたびにメインでロードする。
  */
-#if defined(__XTOUCH_SCREEN_50__)
+#if defined(__XTOUCH_PLATFORM_S3__)
 
 #include "ui/ui_msgs.h"
 #include "types.h"
@@ -12,7 +12,7 @@
 #include "xtouch/net.h"
 #include "xtouch/thumbnail.h"
 #include "xtouch/trays.h"
-#include <SD.h>
+#include "xtouch/sdcard.h"
 #include <cstdio>
 #include <cstring>
 #include <strings.h>
@@ -30,7 +30,6 @@
 /** 最大リトライ回数（初回含めてこの回数まで試す） */
 #define XTOUCH_HISTORY_FETCH_RETRY_MAX 3
 
-static QueueHandle_t s_history_download_queue = NULL;
 static QueueHandle_t s_history_done_queue = NULL;
 static lv_timer_t *s_history_done_timer = NULL;
 static QueueHandle_t s_history_fetch_queue = NULL;
@@ -171,53 +170,27 @@ static void xtouch_history_enqueue_fetch_cb(lv_timer_t *t)
     xQueueSend(s_history_fetch_queue, &req, 0);
 }
 
-/* task_id をファイル名に使うため英数字のみにし、path に /tmp/{id}.png を書き込む。
- * Home / Printers と完全に同じファイル名で共有キャッシュとする。戻り値: 0=OK */
+/* task_id → path は net.h の getThumbPathForTaskId に集約（Home の getThumbPathForSlot と同一文字列になる）。戻り値: 0=OK */
 static int xtouch_history_cover_path_for_task_id(const char *task_id, char *path, size_t path_size)
 {
   if (!task_id || !path || path_size < 16)
     return -1;
-  char safe[XTOUCH_HISTORY_TASK_ID_LEN];
-  size_t j = 0;
-  for (size_t i = 0; task_id[i] != '\0' && j < sizeof(safe) - 1; i++)
-  {
-    char c = task_id[i];
-    if ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '_')
-      safe[j++] = c;
-  }
-  safe[j] = '\0';
-  if (j == 0)
+  if (!getThumbPathForTaskId(task_id, path, path_size))
     return -1;
-  (void)snprintf(path, path_size, "/tmp/%s.png", safe);
   return 0;
 }
 
-/* ワーカータスク: DL キューから row を取り、1 枚だけ DL して done キューに投げる（メインをブロックしない） */
-static void xtouch_history_cover_task(void *pv)
+/** History 行のカバーを thumb_dl 共有キューへ投入（url/path はワーカーがそのまま使う） */
+static void xtouch_history_enqueue_cover_row(int row)
 {
-  (void)pv;
-  int row;
-  for (;;)
-  {
-    if (xQueueReceive(s_history_download_queue, &row, portMAX_DELAY) != pdTRUE)
-      continue;
-    if (xTouchConfig.xTouchHideAllThumbnails)
-      continue;
-    if (row < 0 || row >= XTOUCH_HISTORY_COVER_SLOTS)
-      continue;
-    if (row >= xtouch_history_count || !xtouch_history_tasks[row].cover_url[0])
-      continue;
-    char path[64];
-    if (xtouch_history_cover_path_for_task_id(xtouch_history_tasks[row].task_id, path, sizeof(path)) != 0)
-      continue;
-    if (SD.exists(path))
-    {
-      xQueueSend(s_history_done_queue, &row, 0);
-      continue;
-    }
-    if (downloadFileToSDCard(xtouch_history_tasks[row].cover_url, path) != 0)
-      xQueueSend(s_history_done_queue, &row, 0);
-  }
+  if (row < 0 || row >= XTOUCH_HISTORY_COVER_SLOTS)
+    return;
+  if (row >= xtouch_history_count || !xtouch_history_tasks[row].cover_url[0])
+    return;
+  char path[64];
+  if (xtouch_history_cover_path_for_task_id(xtouch_history_tasks[row].task_id, path, sizeof(path)) != 0)
+    return;
+  (void)xtouch_thumbnail_enqueue_sd_download(XTOUCH_DL_KIND_HISTORY, row, xtouch_history_tasks[row].cover_url, path);
 }
 
 /* ワーカータスク: fetch キューから要求を取り、Cloud から履歴を取得して結果を done キューに投げる（UI/LVGL をブロックしない） */
@@ -268,7 +241,7 @@ static void xtouch_history_detail_task(void *pv)
         char path[64];
         if (xtouch_history_cover_path_for_task_id(tid, path, sizeof(path)) == 0)
         {
-          if (!SD.exists(path))
+          if (!xtouch_sdcard_exists(path))
             (void)downloadFileToSDCard(xtouch_history_reprint_task_basic.cover_url, path);
         }
       }
@@ -306,8 +279,6 @@ static void xtouch_history_on_cover_dl_cancel(lv_msg_t *m, void *user_data)
 {
   (void)m;
   (void)user_data;
-  if (s_history_download_queue)
-    xQueueReset(s_history_download_queue);
   if (s_history_done_queue)
     xQueueReset(s_history_done_queue);
 }
@@ -358,8 +329,6 @@ static void xtouch_history_fetch_done_timer_cb(lv_timer_t *t)
   xtouch_history_cover_clear();
   lv_msg_send(XTOUCH_HISTORY_LIST_REFRESH, NULL);
 
-  if (s_history_download_queue)
-    xQueueReset(s_history_download_queue);
   if (!xTouchConfig.xTouchHideAllThumbnails)
   {
     int n = (xtouch_history_count < XTOUCH_HISTORY_COVER_SLOTS) ? xtouch_history_count : XTOUCH_HISTORY_COVER_SLOTS;
@@ -367,7 +336,7 @@ static void xtouch_history_fetch_done_timer_cb(lv_timer_t *t)
     {
       if (!xtouch_history_tasks[row].cover_url[0])
         continue;
-      xQueueSend(s_history_download_queue, &row, 0);
+      xtouch_history_enqueue_cover_row(row);
     }
   }
 }
@@ -390,7 +359,7 @@ static void xtouch_history_detail_done_timer_cb(lv_timer_t *t)
   {
     char path[64];
     if (xtouch_history_cover_path_for_task_id(xtouch_history_reprint_task_id, path, sizeof(path)) == 0 &&
-        SD.exists(path))
+        xtouch_sdcard_exists(path))
     {
       (void)xtouch_history_reprint_cover_load_path(path);
     }
@@ -501,8 +470,6 @@ static void xtouch_history_on_thumbnails_hide_changed(lv_msg_t *m, void *user_da
   if (xTouchConfig.xTouchHideAllThumbnails)
   {
     xtouch_history_cover_clear();
-    if (s_history_download_queue)
-      xQueueReset(s_history_download_queue);
   }
   else
   {
@@ -512,10 +479,10 @@ static void xtouch_history_on_thumbnails_hide_changed(lv_msg_t *m, void *user_da
       char path[64];
       if (xtouch_history_cover_path_for_task_id(xtouch_history_tasks[row].task_id, path, sizeof(path)) != 0)
         continue;
-      if (SD.exists(path))
+      if (xtouch_sdcard_exists(path))
         (void)xtouch_history_cover_load_path(row, path);
-      else if (xtouch_history_tasks[row].cover_url[0] && s_history_download_queue)
-        xQueueSend(s_history_download_queue, &row, 0);
+      else if (xtouch_history_tasks[row].cover_url[0])
+        xtouch_history_enqueue_cover_row(row);
     }
   }
   struct XTOUCH_MESSAGE_DATA eventData = { 0, 0 };
@@ -525,18 +492,17 @@ static void xtouch_history_on_thumbnails_hide_changed(lv_msg_t *m, void *user_da
 
 static void xtouch_history_subscribe_events_impl(void)
 {
-  if (s_history_download_queue == NULL)
+  if (s_history_done_queue == NULL)
   {
-    s_history_download_queue = xQueueCreate(XTOUCH_HISTORY_COVER_QUEUE_LEN, sizeof(int));
     s_history_done_queue = xQueueCreate(XTOUCH_HISTORY_COVER_QUEUE_LEN, sizeof(int));
     s_history_fetch_queue = xQueueCreate(2, sizeof(xtouch_history_fetch_req_t));
     s_history_fetch_done_queue = xQueueCreate(2, sizeof(xtouch_history_fetch_res_t));
     s_history_detail_queue = xQueueCreate(1, sizeof(xtouch_history_detail_req_t));
     s_history_detail_done_queue = xQueueCreate(1, sizeof(xtouch_history_detail_res_t));
-    if (s_history_download_queue && s_history_done_queue && s_history_fetch_queue && s_history_fetch_done_queue &&
-        s_history_detail_queue && s_history_detail_done_queue)
+    if (s_history_done_queue && s_history_fetch_queue && s_history_fetch_done_queue && s_history_detail_queue &&
+        s_history_detail_done_queue)
     {
-      xTaskCreate(xtouch_history_cover_task, "hist_cover", XTOUCH_HISTORY_COVER_TASK_STACK_WORDS, NULL, 1, NULL);
+      xtouch_thumbnail_register_history_cover_done_queue(s_history_done_queue);
       s_history_done_timer = lv_timer_create(xtouch_history_cover_done_timer_cb, XTOUCH_HISTORY_COVER_POLL_MS, NULL);
       lv_timer_set_repeat_count(s_history_done_timer, -1);
       xTaskCreate(xtouch_history_fetch_task, "hist_fetch", XTOUCH_HISTORY_COVER_TASK_STACK_WORDS, NULL, 1, NULL);

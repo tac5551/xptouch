@@ -4,7 +4,7 @@
 #include "../ui_msgs.h"
 #include "../ui_helpers.h"
 
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__
 
 static const char *history_status_str(int s)
 {
@@ -121,7 +121,7 @@ void ui_history_on_list_refresh(lv_msg_t *m, void *user_data)
     (void)user_data;
     if (ui_historyListContainer == NULL || xTouchConfig.currentScreenIndex != 15)
         return;
-    for (int i = 0; i < XTOUCH_HISTORY_TASKS_MAX; i++)
+    for (int i = 0; i < XTOUCH_HISTORY_UI_ROW_SLOTS; i++)
     {
         lv_obj_t *row = lv_obj_get_child(ui_historyListContainer, i);
         if (row == NULL)

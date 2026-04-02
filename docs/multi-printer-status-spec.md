@@ -4,7 +4,7 @@
 
 **採用方針**: **A) 同一ブローカーで「複数デバイス分の購読」を最大5台まで**（接続1本・複数トピック購読）。  
 **最大台数**: とりあえず **5** で固定（メイン1 + 他4 = 合計5。定数例: `#define XTOUCH_MULTI_PRINTER_MAX 5`）。  
-**対象環境**: **5インチ専用**で実装する（`#ifdef __XTOUCH_SCREEN_50__` でガード）。2.8インチはヒープが厳しい想定のため除外し、余裕が確認できたらガード外しを検討する。
+**対象環境**: **ESP32-S3 系**で実装する（`#ifdef __XTOUCH_PLATFORM_S3__` でガード）。従来の非 S3 ボード（例: `esp32dev`）は対象外。S3 の 2.8 / 5 インチは同一マクロで含め、ヒープや UI は別途調整する。
 
 **クラウド vs LAN**  
 - **クラウド時のみ**「1接続・複数トピック」で複数台の状態取得が可能。Bambu Cloud は1ブローカーに全デバイスが載るため、同一接続で `device/ID1/report`, `device/ID2/report`, ... を購読すればよい。  
@@ -47,7 +47,7 @@
 
 ### 2.4 ビルド環境
 
-- **platformio.ini**: 2.8インチ = `esp32dev`、5インチ = `esp32-s3dev`。新機能は **5インチのみ有効**（`#ifdef __XTOUCH_SCREEN_50__` でガード）。2.8インチはヒープが厳しい想定のため最初から含めず、後から余裕が確認できればガード外しを検討する。
+- **platformio.ini**: 例として非 S3 = `esp32dev`、S3 = `esp32-s3dev-50` / `esp32-s3dev-28` など。新機能は **S3 ビルドのみ有効**（`#ifdef __XTOUCH_PLATFORM_S3__` でガード。`platformio.ini` で S3 環境に `-D__XTOUCH_PLATFORM_S3__` を付与する）。
 
 ---
 
@@ -66,7 +66,7 @@
 
 ### 4.1 対象環境・上限
 
-- **5インチ専用**。`#ifdef __XTOUCH_SCREEN_50__` でガードし、他プリンター用のデータ・購読・UI は 5インチビルドでのみ有効にする。2.8インチはヒープを守るため対象外；余裕が確認できたらガード外しを検討する。
+- **ESP32-S3 専用**。`#ifdef __XTOUCH_PLATFORM_S3__` でガードし、他プリンター用のデータ・購読・UI は S3 ビルドでのみ有効にする。非 S3 はメモリ・接続前提が異なるため対象外。
 - 購読するプリンター数は **最大 5 台**（メイン 1 + 他 4）。実装では `#define XTOUCH_MULTI_PRINTER_MAX 5` などで固定してよい。
 
 ### 4.2 MQTT
@@ -99,7 +99,7 @@
 - **クラウド**: `xtouch_cloud_mqtt_setup()` の流れで、`xtouch_mqtt_topic_setup()` に加え `xtouch_mqtt_load_other_printers()` で他 dev_id を取得し、接続後に `device/{dev_id}/report` を追加で subscribe。接続は 1 本のまま、subscribe するトピックを増やすだけ。
 - **LAN**: `xtouch_local_mqtt_setup()` では従来どおり選択中 1 台のみ。他プリンターの購読・一覧は行わない（複数台対応はクラウド時のみ）。
 
-### 4.6 UI（5インチのみ）
+### 4.6 UI（S3 のみ）
 
 - 他プリンターの状態は、`bambuStatus` と同様に「Main が更新したデータを UI が参照」する形にする（UI-CONVENTIONS に従う）。
 - 例: ホーム画面の横や別画面に「他プリンター一覧」（名前・進捗・状態）を表示。表示用データは `otherPrinters[]` を参照。
@@ -108,7 +108,7 @@
 ### 4.7 メモリ・ソケット
 
 - 1 接続・複数トピックなら、ソケットは 1 本のまま。  
-- 追加するのは「最大 4 台分の軽量構造体 + トピック文字列」程度。5インチ（ESP32-S3）では許容範囲と想定。2.8インチはヒープが厳しい想定のため 5 インチ専用とし、ガードで 2.8 ビルドには含めない。
+- 追加するのは「最大 4 台分の軽量構造体 + トピック文字列」程度。ESP32-S3 では許容範囲と想定。非 S3 ビルドには含めない（`__XTOUCH_PLATFORM_S3__`）。
 
 ---
 
@@ -116,11 +116,11 @@
 
 | ファイル | 変更内容 |
 |----------|----------|
-| **src/xtouch/types.h** | `#ifdef __XTOUCH_SCREEN_50__` で他プリンター用の軽量構造体と配列（または extern 宣言）を追加。 |
-| **src/xtouch/globals.h or globals.c** | 5inch 時のみ `otherPrinters[]` の実体を定義。 |
-| **src/xtouch/mqtt.h** | 5inch 時のみ: 他 dev_id 一覧取得、複数 report トピックの subscribe、コールバック内でトピック解析→メイン/他で振り分け、他用のパース処理。 |
+| **src/xtouch/types.h** | `#ifdef __XTOUCH_PLATFORM_S3__` で他プリンター用の軽量構造体と配列（または extern 宣言）を追加。 |
+| **src/xtouch/globals.h or globals.c** | S3 時のみ `otherPrinters[]` の実体を定義。 |
+| **src/xtouch/mqtt.h** | S3 時のみ: 他 dev_id 一覧取得、複数 report トピックの subscribe、コールバック内でトピック解析→メイン/他で振り分け、他用のパース処理。 |
 | **src/xtouch/cloud.hpp** | 他プリンター一覧取得のヘルパ（getOtherDeviceIds など）があればここか paths 経由。必須ではない。 |
-| **UI（5inch 専用）** | 他プリンター一覧用コンポーネント/画面を追加し、`otherPrinters[]` を参照。イベントは lv_msg で Main 経由。 |
+| **UI（S3 専用）** | 他プリンター一覧用コンポーネント/画面を追加し、`otherPrinters[]` を参照。イベントは lv_msg で Main 経由。 |
 
 ---
 
@@ -128,6 +128,6 @@
 
 - **コーディングルール**: xtouch は .h で実装・main で include。UI は xtouch を直接呼ばず lv_msg と共有状態（bambuStatus / 他プリンター用配列）のみ参照。
 - **MQTT（方針A）**: 接続は 1 本のまま、同一ブローカーで「選択中 1 台 + 他最大4台」の report トピックを購読し、最大5台分の状態取得を実現する。
-- **対象環境**: **5インチ専用**（`#ifdef __XTOUCH_SCREEN_50__` でガード）。ヒープが厳しそうな 2.8インチは対象外とし、余裕が確認できたらガード外しを検討する。
+- **対象環境**: **ESP32-S3**（`#ifdef __XTOUCH_PLATFORM_S3__` でガード）。非 S3 ボードは対象外。
 
 この方針で実装に進むと、クラウドに設定されている選択中以外のプリンターの状態も取得でき、かつ「MQTT を最大5台程度」という要件を満たせます。

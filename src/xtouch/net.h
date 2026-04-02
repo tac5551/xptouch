@@ -19,9 +19,21 @@ void onWiFiEvent(arduino_event_id_t event, arduino_event_info_t info)
 #include "bbl-certs.h"
 #include "xtouch/paths.h"
 #include "xtouch/sdcard_status.h"
+#include "xtouch/sdcard.h"
+#ifdef __XTOUCH_PLATFORM_S3__
+#include "xtouch/cloud.hpp"
+#endif
 
 int downloadFileToSDCard(const char *url, const char *fileName, void (*onProgress)(int) = NULL, void (*onMD5Check)(int) = NULL, const char *otaMD5 = NULL)
 {
+#ifdef __XTOUCH_PLATFORM_S3__
+    /* Cloud API（HttpLockGuard）と同時に別 WiFiClientSecure を張ると mbedTLS の内部ヒープが枯渇し (-32512)、接続失敗する */
+    cloud.httpLockExternal();
+    struct NetDownloadHttpUnlock
+    {
+        ~NetDownloadHttpUnlock() { cloud.httpUnlockExternal(); }
+    } net_download_http_unlock;
+#endif
 
     WiFiClientSecure wifiClient;
     /* サムネイルなど S3 向け、および OTA ホスト(xtouch_paths_firmware_ota_host)向けは証明書を検証せずに取得する。
@@ -67,7 +79,10 @@ int downloadFileToSDCard(const char *url, const char *fileName, void (*onProgres
             return 0;
         }
 
-        File file = SD.open(fileName, FILE_WRITE);
+        (void)xtouch_sdcard_ensure_parent_dir(fileName);
+
+        bool wrote_ok = false;
+        File file = xtouch_sdcard_open(fileName, FILE_WRITE);
         if (file)
         {
             Stream *response = &http.getStream();
@@ -75,26 +90,62 @@ int downloadFileToSDCard(const char *url, const char *fileName, void (*onProgres
             int responseSize = 0;
             int lastProgress = 0;
 
-            // Define a buffer size (e.g., 512 bytes)
             const int bufferSize = 512;
             uint8_t buffer[bufferSize];
             int bytesRead;
+            bool stream_ok = true;
 
             while ((bytesRead = response->readBytes(buffer, bufferSize)) > 0)
             {
-                int progress = (responseSize * 100) / responseTotalSize;
+                int progress = (responseTotalSize > 0) ? ((responseSize * 100) / responseTotalSize) : 0;
                 if (onProgress && progress != lastProgress)
                 {
                     onProgress(progress);
                 }
 
-                file.write(buffer, bytesRead);
+                size_t wr = file.write(buffer, (size_t)bytesRead);
+                if (wr != (size_t)bytesRead)
+                {
+                    ConsoleVerbose.println("[xPTouch][V][NET] SD write short, abort stream");
+                    stream_ok = false;
+                    break;
+                }
                 responseSize += bytesRead;
                 lastProgress = progress;
             }
 
             file.close();
-            success = true;
+            wrote_ok = stream_ok;
+
+            if (!stream_ok)
+                xtouch_sdcard_remove(fileName);
+
+            if (wrote_ok && (otaMD5 == NULL || onMD5Check == NULL))
+            {
+                success = true;
+                if (responseTotalSize > 0 && responseSize != responseTotalSize)
+                {
+                    ConsoleVerbose.printf("[xPTouch][V][NET] download incomplete %d/%d\n", responseSize, responseTotalSize);
+                    success = false;
+                    xtouch_sdcard_remove(fileName);
+                }
+                if (success && isThumbnail)
+                {
+                    File vf = xtouch_sdcard_open(fileName, FILE_READ);
+                    if (!vf || vf.size() < 64)
+                    {
+                        if (vf)
+                            vf.close();
+                        ConsoleVerbose.println("[xPTouch][V][NET] thumbnail verify failed after write");
+                        success = false;
+                        xtouch_sdcard_remove(fileName);
+                    }
+                    else
+                    {
+                        vf.close();
+                    }
+                }
+            }
         }
         else
         {
@@ -105,19 +156,26 @@ int downloadFileToSDCard(const char *url, const char *fileName, void (*onProgres
         {
             onMD5Check(-1);
 
-            File fileMD5 = SD.open(fileName, FILE_READ);
-            md5Checker.begin();
-            md5Checker.addStream(fileMD5, fileMD5.size());
-            md5Checker.calculate();
-            fileMD5.close();
+            File fileMD5 = xtouch_sdcard_open(fileName, FILE_READ);
+            if (!fileMD5)
+            {
+                success = false;
+            }
+            else
+            {
+                md5Checker.begin();
+                md5Checker.addStream(fileMD5, fileMD5.size());
+                md5Checker.calculate();
+                fileMD5.close();
 
-            success = strcmp(otaMD5, md5Checker.toString().c_str()) == 0;
+                success = strcmp(otaMD5, md5Checker.toString().c_str()) == 0;
+            }
 
             onMD5Check(success);
         }
-        else
+        else if (!wrote_ok)
         {
-            success = true;
+            success = false;
         }
     }
 
@@ -127,14 +185,36 @@ int downloadFileToSDCard(const char *url, const char *fileName, void (*onProgres
     return success;
 }
 
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__
 
 #include "esp_attr.h"
 #include "xtouch/types.h"
 #include "xtouch/globals.h"
 #include "esp_log.h"
-#include "xtouch/cloud.hpp"
-#include <SD.h>
+
+/** 任意の task_id から History / Home 共通の SD パス `/tmp/{sanitized}.png` を生成する（1 箇所に集約）。
+ *  旧: History は safe が 23 文字上限、Home は `%.28s` で切り詰めており、長い id で別ファイル扱いになり Home が再 DL していた。 */
+inline bool getThumbPathForTaskId(const char *tid, char *buf, size_t len)
+{
+    if (!buf || len == 0)
+        return false;
+    buf[0] = '\0';
+    if (!tid || !tid[0] || strcmp(tid, "0") == 0)
+        return false;
+    char safe[32];
+    size_t j = 0;
+    for (size_t i = 0; tid[i] != '\0' && j < sizeof(safe) - 1; i++)
+    {
+        char c = tid[i];
+        if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_')
+            safe[j++] = c;
+    }
+    safe[j] = '\0';
+    if (j == 0)
+        return false;
+    snprintf(buf, len, "/tmp/%s.png", safe);
+    return buf[0] != '\0';
+}
 
 /** スロットの task_id をファイル名に使う。task_id が無効な場合は buf に空文字を書き込む（pthumb_N は廃止）。 */
 inline void getThumbPathForSlot(int slot, char *buf, size_t len)
@@ -149,17 +229,7 @@ inline void getThumbPathForSlot(int slot, char *buf, size_t len)
         tid = (otherPrinters[slot - 1].task_id[0] && strcmp(otherPrinters[slot - 1].task_id, "0") != 0) ? otherPrinters[slot - 1].task_id : nullptr;
     if (!tid || !tid[0])
         return;
-    char safe[32];
-    size_t j = 0;
-    for (size_t i = 0; tid[i] != '\0' && j < sizeof(safe) - 1; i++)
-    {
-        char c = tid[i];
-        if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_')
-            safe[j++] = c;
-    }
-    safe[j] = '\0';
-    if (j > 0)
-        snprintf(buf, len, "/tmp/%.28s.png", safe);
+    (void)getThumbPathForTaskId(tid, buf, len);
 }
 
 /** 指定スロットのサムネイル URL と保存 path を取得（メインスレッドで呼ぶ。Cloud 解決で bambuStatus/otherPrinters を更新する）。
@@ -171,7 +241,7 @@ inline bool getThumbnailUrlAndPathForSlot(int slot, char *url_out, size_t url_si
     url_out[0] = path_out[0] = '\0';
 
     const char *url = nullptr;
-#if defined(__XTOUCH_SCREEN_50__) && defined(CONFIG_SPIRAM)
+#if defined(__XTOUCH_PLATFORM_S3__) && defined(CONFIG_SPIRAM)
     static EXT_RAM_ATTR char resolved_url[1024];
 #else
     static char resolved_url[1024];
@@ -247,7 +317,7 @@ inline bool downloadThumbnailForSlot(int slot)
     char path[64];
     if (!getThumbnailUrlAndPathForSlot(slot, url_buf, sizeof(url_buf), path, sizeof(path)))
         return false;
-    if (SD.exists(path))
+    if (xtouch_sdcard_exists(path))
     {
         /* 既に同じ TaskID のファイルがあれば DL しない。UI 用 path を設定 */
         if (slot >= 0 && slot < XTOUCH_THUMB_SLOT_MAX)

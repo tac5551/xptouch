@@ -10,7 +10,7 @@ extern "C"
 
     /* sidebar */
     void onSidebarHome(lv_event_t *e);
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__
     void onSidebarPrinters(lv_event_t *e);
 #endif
     void onSidebarTemp(lv_event_t *e);
@@ -63,7 +63,7 @@ extern "C"
     void onOptionalChamberSensor(lv_event_t *e);
     void onOptionalStackChan(lv_event_t *e);
     void onOptionalPreheat(lv_event_t *e);
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__
     void onOptionalMultiPrinterMonitor(lv_event_t *e);
     void onOptionalHistory(lv_event_t *e);
     void onOptionalHideAllThumbnails(lv_event_t *e);
@@ -77,7 +77,7 @@ extern "C"
 
     void onMoveHomeScreen(lv_event_t *e);
     void onMoveAmsViewScreen(lv_event_t *e);
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__
     void onPrintersPause(lv_event_t *e);
     void onPrintersStop(lv_event_t *e);
     void onPrintersReprint(lv_event_t *e);

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <set>
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__
 #include "esp_attr.h"
 #endif
 #include <WiFi.h>
@@ -12,6 +12,7 @@
 // #include "date.h"
 #include "bbl-certs.h"
 #include "filesystem.h"
+#include "sdcard.h"
 #include "paths.h"
 #include "globals.h"
 #include "freertos/FreeRTOS.h"
@@ -190,7 +191,7 @@ static bool cloud_parse_json_bool_key(const char *json, size_t len, const char *
   return p && (size_t)(p - json) < len;
 }
 
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__
 #include <cstdlib>
 #include <stdint.h>
 extern "C" const char *get_tray_color(uint8_t ams_id, uint8_t tray_id);
@@ -600,7 +601,7 @@ static int cloud_parse_reprint_mapping_from_buffer(const char *data, size_t len,
   return cnt;
 }
 
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__
 /** Task 詳細の filaments[].id が "2" のような内部IDのとき、POST の filamentId（GFLxx 等）に寄せる */
 static bool cloud_filament_id_looks_like_bambu_code(const char *s)
 {
@@ -848,6 +849,10 @@ public:
   String _email;
   bool loggedIn = false;
 
+  /** downloadFileToSDCard 等の別 TLS 接続と mbedTLS 内部ヒープを競合させない（並行で SSL -32512 になるのを防ぐ） */
+  void httpLockExternal() { httpLock(); }
+  void httpUnlockExternal() { httpUnlock(); }
+
   bool getDeviceList(DynamicJsonDocument *&doc)
   {
     HttpLockGuard _g(this);
@@ -984,7 +989,7 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
   String getUsername() const
   {
     // cloud-username
-    DynamicJsonDocument config = xtouch_filesystem_readJson(SD, xtouch_paths_provisioning, false, 2048);
+    DynamicJsonDocument config = xtouch_filesystem_readJson(xtouch_sdcard_fs(), xtouch_paths_provisioning, false, 2048);
     return config["cloud-username"].as<String>();
   }
 
@@ -1084,7 +1089,7 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
   /** GET /v1/iot-service/api/user/task/{task_id} から plates[0].thumbnail.url を取得する。 */
   bool getTaskThumbnailUrl(const char *task_id, char *out_url, size_t out_size)
   {
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__
     HttpLockGuard _g(this);
 #endif
     if (!task_id || !*task_id || !out_url || out_size == 0)
@@ -1131,7 +1136,7 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
     /* Cloud個別デバッグ: task レスポンス全体を SD に保存 */
     char dump_path[64];
     snprintf(dump_path, sizeof(dump_path), "/tmp/task_%s.json", task_id);
-    File dump = SD.open(dump_path, FILE_WRITE);
+    File dump = xtouch_sdcard_open(dump_path, FILE_WRITE);
     if (dump)
     {
       dump.print(response);
@@ -1145,7 +1150,7 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
     size_t raw_len = response.length();
 
     /* S3 の署名付き URL 用 2KB。5inch(PSRAM あり)のときは PSRAM に配置。 */
-#if defined(__XTOUCH_SCREEN_50__) && defined(CONFIG_SPIRAM)
+#if defined(__XTOUCH_PLATFORM_S3__) && defined(CONFIG_SPIRAM)
     static EXT_RAM_ATTR char url_buf[2048];
 #else
     static char url_buf[2048];
@@ -1177,7 +1182,7 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
     return true;
   }
 
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__
   /** GET /v1/user-service/my/tasks（deviceId なし）。フィルタ後 want 件に達するまで after で追取得。生 hits は累計 50 件までで打ち切り（after 引数ありは 1 回のみ・上限なし）。 */
   bool getMyTasks(int limit, const char *after = nullptr)
   {
@@ -1916,7 +1921,7 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
     }
 
     serializeJsonPretty(printers_new, Serial);
-    xtouch_filesystem_writeJson(SD, xtouch_paths_printers, printers_new);
+    xtouch_filesystem_writeJson(xtouch_sdcard_fs(), xtouch_paths_printers, printers_new);
 
     // 除外後件数を数える（filteredDoc を使わずメモリ節約）
     size_t filteredCount = 0;
@@ -2003,30 +2008,30 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
   void savePrinterPair(String usn, String modelName, String printerName)
   {
 
-    DynamicJsonDocument doc = xtouch_filesystem_readJson(SD, xtouch_paths_pair, false);
+    DynamicJsonDocument doc = xtouch_filesystem_readJson(xtouch_sdcard_fs(), xtouch_paths_pair, false);
 
     doc["paired"] = usn.c_str();
     doc["model"] = modelName.c_str();
     doc["printerName"] = printerName.c_str();
 
-    xtouch_filesystem_writeJson(SD, xtouch_paths_pair, doc);
+    xtouch_filesystem_writeJson(xtouch_sdcard_fs(), xtouch_paths_pair, doc);
     strncpy(xTouchConfig.xTouchPairedSerialNumber, usn.c_str(), sizeof(xTouchConfig.xTouchPairedSerialNumber) - 1);
     xTouchConfig.xTouchPairedSerialNumber[sizeof(xTouchConfig.xTouchPairedSerialNumber) - 1] = '\0';
   }
 
   bool isPaired()
   {
-    if (!xtouch_filesystem_exist(SD, xtouch_paths_pair))
+    if (!xtouch_filesystem_exist(xtouch_sdcard_fs(), xtouch_paths_pair))
     {
       return false;
     }
-    DynamicJsonDocument doc = xtouch_filesystem_readJson(SD, xtouch_paths_pair, false);
+    DynamicJsonDocument doc = xtouch_filesystem_readJson(xtouch_sdcard_fs(), xtouch_paths_pair, false);
     return doc["paired"].as<String>() != "";
   }
 
   void loadPair()
   {
-    DynamicJsonDocument doc = xtouch_filesystem_readJson(SD, xtouch_paths_pair, false);
+    DynamicJsonDocument doc = xtouch_filesystem_readJson(xtouch_sdcard_fs(), xtouch_paths_pair, false);
     setCurrentDevice(doc["paired"].as<String>());
     setCurrentModel(doc["model"].as<String>());
     setPrinterName(doc["printerName"].as<String>());
@@ -2072,49 +2077,49 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
 
   DynamicJsonDocument loadPrinters()
   {
-    return xtouch_filesystem_readJson(SD, xtouch_paths_printers, false, XTOUCH_PRINTERS_JSON_DOC_CAP);
+    return xtouch_filesystem_readJson(xtouch_sdcard_fs(), xtouch_paths_printers, false, XTOUCH_PRINTERS_JSON_DOC_CAP);
   }
 
   void clearDeviceList()
   {
     DynamicJsonDocument pairDoc(32);
-    xtouch_filesystem_writeJson(SD, xtouch_paths_printers, pairDoc);
+    xtouch_filesystem_writeJson(xtouch_sdcard_fs(), xtouch_paths_printers, pairDoc);
   }
 
   void clearPairList()
   {
-    xtouch_filesystem_deleteFile(SD, xtouch_paths_pair);
+    xtouch_filesystem_deleteFile(xtouch_sdcard_fs(), xtouch_paths_pair);
   }
   void clearTokens()
   {
-    DynamicJsonDocument config = xtouch_filesystem_readJson(SD, xtouch_paths_provisioning, false, 2048);
+    DynamicJsonDocument config = xtouch_filesystem_readJson(xtouch_sdcard_fs(), xtouch_paths_provisioning, false, 2048);
     config["cloud-authToken"] = "";
-    xtouch_filesystem_writeJson(SD, xtouch_paths_provisioning, config);
+    xtouch_filesystem_writeJson(xtouch_sdcard_fs(), xtouch_paths_provisioning, config);
   }
 
   void unpair()
   {
     ConsoleInfo.println("[xPTouch][I][SSDP] Unpairing device");
-    DynamicJsonDocument pairFile = xtouch_filesystem_readJson(SD, xtouch_paths_pair, false);
+    DynamicJsonDocument pairFile = xtouch_filesystem_readJson(xtouch_sdcard_fs(), xtouch_paths_pair, false);
     pairFile["paired"] = "";
-    xtouch_filesystem_writeJson(SD, xtouch_paths_pair, pairFile);
+    xtouch_filesystem_writeJson(xtouch_sdcard_fs(), xtouch_paths_pair, pairFile);
     ESP.restart();
   }
 
   void saveAuthTokens()
   {
-    DynamicJsonDocument config = xtouch_filesystem_readJson(SD, xtouch_paths_provisioning);
+    DynamicJsonDocument config = xtouch_filesystem_readJson(xtouch_sdcard_fs(), xtouch_paths_provisioning);
     config["cloud-authToken"] = _auth_token;
-    xtouch_filesystem_writeJson(SD, xtouch_paths_provisioning, config, false, 2048);
+    xtouch_filesystem_writeJson(xtouch_sdcard_fs(), xtouch_paths_provisioning, config, false, 2048);
     ESP.restart();
   }
 
   void loadAuthTokens()
   {
     ConsoleVerbose.println(ESP.getFreeHeap());
-    DynamicJsonDocument config = xtouch_filesystem_readJson(SD, xtouch_paths_provisioning, false, 2048);
+    DynamicJsonDocument config = xtouch_filesystem_readJson(xtouch_sdcard_fs(), xtouch_paths_provisioning, false, 2048);
     _auth_token = config["cloud-authToken"].as<String>();
-    DynamicJsonDocument wifiConfig = xtouch_filesystem_readJson(SD, xtouch_paths_provisioning);
+    DynamicJsonDocument wifiConfig = xtouch_filesystem_readJson(xtouch_sdcard_fs(), xtouch_paths_provisioning);
     _region = wifiConfig["cloud-region"].as<const char *>();
     _email = wifiConfig["cloud-email"].as<String>();
     loggedIn = true;
@@ -2122,11 +2127,11 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
 
   bool hasAuthTokens()
   {
-    if (!xtouch_filesystem_exist(SD, xtouch_paths_provisioning))
+    if (!xtouch_filesystem_exist(xtouch_sdcard_fs(), xtouch_paths_provisioning))
     {
       return false;
     }
-    DynamicJsonDocument config = xtouch_filesystem_readJson(SD, xtouch_paths_provisioning, false, 2048);
+    DynamicJsonDocument config = xtouch_filesystem_readJson(xtouch_sdcard_fs(), xtouch_paths_provisioning, false, 2048);
     return config["cloud-authToken"].as<String>() != "";
   }
 };

@@ -35,7 +35,7 @@ void ui_introScreen_screen_init()
     lv_obj_set_style_text_align(introScreenCaption, LV_TEXT_ALIGN_CENTER, 0);
     lv_obj_set_style_text_color(introScreenCaption, lv_color_hex(0x555555), LV_PART_MAIN | LV_STATE_DEFAULT);
 
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_SCREEN_S3_050__
     lv_obj_set_style_pad_top(introScreenCaption, 88, LV_PART_MAIN | LV_STATE_DEFAULT);
 #else
     lv_obj_set_style_pad_top(introScreenCaption, 68, LV_PART_MAIN | LV_STATE_DEFAULT);

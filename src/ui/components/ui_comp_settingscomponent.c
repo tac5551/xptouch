@@ -475,7 +475,7 @@ lv_obj_t *ui_settingsComponent_create(lv_obj_t *comp_parent)
     lv_label_set_text(cui_screenInvertLabel, LV_SYMBOL_IMAGE " Invert Colors");
     lv_obj_set_scrollbar_mode(cui_screenInvertLabel, LV_SCROLLBAR_MODE_OFF);
 
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__
     lv_obj_add_flag(cui_screenInvertSetting, LV_OBJ_FLAG_HIDDEN);
 #endif
 

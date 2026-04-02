@@ -20,7 +20,7 @@ extern int xtouch_filament_current_brand_index;
 extern int xtouch_filament_current_type_count;
 extern int xtouch_filament_pipe_holds_brands;
 extern int xtouch_filament_use_fixed_brands;
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__
 extern other_printer_status_t otherPrinters[XTOUCH_OTHER_PRINTERS_MAX];
 extern char xtouch_other_printer_dev_ids[XTOUCH_OTHER_PRINTERS_MAX][16];
 extern int xtouch_other_printer_count;

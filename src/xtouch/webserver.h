@@ -6,7 +6,7 @@
 #include "ESPmDNS.h"
 #include <ESPAsyncWebServer.h>
 #include "FS.h"
-#include "SD.h"
+#include "xtouch/sdcard.h"
 #include "xtouch/cloud.hpp"
 #include "xtouch/mqtt.h"
 
@@ -111,7 +111,7 @@ void xtouch_webserver_begin()
             DeserializationError error = deserializeJson(jsonDoc, data, len);
             serializeJsonPretty(jsonDoc, Serial);
 
-            xtouch_filesystem_writeJson(SD, xtouch_paths_provisioning, jsonDoc);
+            xtouch_filesystem_writeJson(xtouch_sdcard_fs(), xtouch_paths_provisioning, jsonDoc);
 
             request->send(200, "application/json", "{\"status\":\"ok\"}");
 

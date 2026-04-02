@@ -1,7 +1,7 @@
 
 #include "ui.h"
 
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__
 static bool s_home_thumb_global_subscribed = false;
 /** IMAGE 受信（サムネ DL 完了）時に Home 表示中なら slot 0 を必ず再描画する。オブジェクト購読が届かない場合の保険。 */
 static void on_home_thumb_global(lv_msg_t *m, void *user_data)
@@ -59,7 +59,7 @@ void fillScreenData(int screen)
 
 void loadScreen(int screen)
 {
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__
     const int prev_screen = xTouchConfig.currentScreenIndex;
 
     ui_printersListContainer = NULL;
@@ -76,7 +76,7 @@ void loadScreen(int screen)
 
     xTouchConfig.currentScreenIndex = screen;
     lv_obj_t *current = lv_scr_act();
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__
     if (current == ui_homeScreen)
         ui_homeThumbImg = NULL;
 #endif
@@ -94,7 +94,7 @@ void loadScreen(int screen)
     case 0:
         ui_homeScreen_screen_init();
         lv_disp_load_scr(ui_homeScreen);
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__
         if (!s_home_thumb_global_subscribed)
         {
             lv_msg_subscribe(XTOUCH_ON_OTHER_PRINTER_UPDATE, (lv_msg_subscribe_cb_t)on_home_thumb_global, NULL);
@@ -127,7 +127,7 @@ void loadScreen(int screen)
         ui_printerPairScreen_screen_init();
         lv_disp_load_scr(ui_printerPairScreen);
         break;
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__
     case 6:
         if (xTouchConfig.xTouchLanOnlyMode) {
             screen = 0;
@@ -176,7 +176,7 @@ void loadScreen(int screen)
         ui_amsEditColorScreen_screen_init();
         lv_disp_load_scr(ui_amsEditColorScreen);
         break;
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__
     case 15:
         ui_historyScreen_screen_init();
         lv_disp_load_scr(ui_historyScreen);
@@ -193,7 +193,7 @@ void loadScreen(int screen)
     // 5inch: 0=Home,1=Printers,2=Temp,3=AMS,4=Settings (History はオプション機能)
     // 2.8inch: 0=Home,1=Temp,2=AMS,3=Settings
     int sidebar_index = -1;
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__
     switch (screen)
     {
     case 0:
@@ -249,7 +249,7 @@ void loadScreen(int screen)
     }
 }
 
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__
 static void on_settings_save_sidebar(const void *payload, void *user_data)
 {
     (void)payload;
@@ -272,7 +272,7 @@ void initTopLayer()
     lv_obj_add_flag(ui_confirmComponent, LV_OBJ_FLAG_HIDDEN);
     ui_hmsComponent = ui_hmsPanel_create(lv_layer_top());
     lv_obj_add_flag(ui_hmsComponent, LV_OBJ_FLAG_HIDDEN);
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__
     lv_msg_subscribe(XTOUCH_SETTINGS_SAVE, (lv_msg_subscribe_cb_t)on_settings_save_sidebar, NULL);
     lv_msg_subscribe(XTOUCH_HISTORY_REPRINT_DONE, (lv_msg_subscribe_cb_t)on_reprint_done_goto_home, NULL);
 #endif

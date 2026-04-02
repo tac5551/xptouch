@@ -4,10 +4,15 @@
 #include "../ui_msgs.h"
 #include "../ui_helpers.h"
 
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__
 
+#if defined(__XTOUCH_SCREEN_S3_050__)
 #define ROW_LEFT_THUMB_W 150
 #define ROW_LEFT_THUMB_H 150
+#else
+#define ROW_LEFT_THUMB_W 75
+#define ROW_LEFT_THUMB_H 75
+#endif
 
 static const char *print_status_str(int s)
 {

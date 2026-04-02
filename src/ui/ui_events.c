@@ -8,7 +8,7 @@ void initialActions(lv_event_t *e) {}
 
 /* -----------Sidebar-------------- */
 void onSidebarHome(lv_event_t *e) { loadScreen(0); }
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__
 void onSidebarPrinters(lv_event_t *e) { if (!xTouchConfig.xTouchLanOnlyMode && xTouchConfig.xTouchMultiPrinterMonitorEnabled) loadScreen(6); }
 void onSidebarHistory(lv_event_t *e) { (void)e; if (!xTouchConfig.xTouchLanOnlyMode && xTouchConfig.xTouchHistoryEnabled) loadScreen(15); }
 #endif
@@ -135,7 +135,7 @@ void onMoveAmsViewScreen(lv_event_t *e)
     loadScreen(7);
 }
 
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__
 static int _printers_slot = 0;
 
 static void onPrintersPauseConfirm(void)
@@ -340,7 +340,7 @@ void onOptionalPreheat(lv_event_t *e)
     lv_msg_send(XTOUCH_SETTINGS_SAVE, NULL);
 }
 
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__
 void onOptionalMultiPrinterMonitor(lv_event_t *e)
 {
     xTouchConfig.xTouchMultiPrinterMonitorEnabled = !xTouchConfig.xTouchMultiPrinterMonitorEnabled;
@@ -348,7 +348,7 @@ void onOptionalMultiPrinterMonitor(lv_event_t *e)
 }
 #endif
 
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__
 void onOptionalHistory(lv_event_t *e)
 {
     lv_obj_t *sw = lv_event_get_target(e);

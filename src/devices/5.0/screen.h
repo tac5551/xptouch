@@ -1,16 +1,16 @@
 #ifndef _XLCD_SCREEN
 #define _XLCD_SCREEN
 
-#include "LGFX_ESP32_JC8048W550.h"
+//#include "LGFX_ESP32_JC8048W550.h"
+#include "LGFX_ESP32S3_2432S028.hpp"
 #include <LovyanGFX.h>
 
 #include "setting.h"
-#include "xtouch/eeprom.h"
 
 static lv_disp_draw_buf_t draw_buf;
 static lv_color_t *disp_draw_buf1;
 static lv_color_t *disp_draw_buf2;
-LGFX tft;
+LGFX_ESP32S3_2432S028 tft;
 
 #include "ui/ui.h"
 #include "touch.h"
@@ -20,51 +20,19 @@ LGFX tft;
 bool xtouch_screen_touchFromPowerOff = false;
 bool xtouch_screen_neoPixelFromPowerOff = false;
 
-static byte xtouch_screen_map_backlight_non_linear(byte brightness)
-{
-    if (brightness == 0)
-        return 0; /* sleep 時はそのまま消灯 */
-
-    const int minv = XTOUCH_BACKLIGHT_SLIDER_MIN;
-    const int maxv = XTOUCH_BACKLIGHT_SLIDER_MAX;
-    if (brightness <= minv)
-        return (byte)minv;
-    if (brightness >= maxv)
-        return (byte)maxv;
-
-    const int range = maxv - minv;
-    const int n = (int)brightness - minv; /* 0..range */
-    const int knee = (range * 90) / 100;  /* 上位 25% でカーブ（強め） */
-    int mapped = n;
-    if (n > knee)
-    {
-        const int top = range - knee;
-        const int x = n - knee;
-        /* 90%付近の急変を抑えるため、上位帯域を三次カーブでより緩やかに上げる */
-        mapped = knee + ((x * x * x + (top * top - 1)) / (top * top));
-    }
-    const int knee2 = (range * 95) / 100; /* 最上位 5% はさらに寝かせる */
-    if (n > knee2)
-    {
-        const int ultra = range - knee2;
-        const int y = n - knee2;
-        /* 95〜100%は四次カーブで一段ゆっくり上げる */
-        mapped = knee2 + ((y * y * y * y + (ultra * ultra * ultra - 1)) / (ultra * ultra * ultra));
-    }
-    return (byte)(minv + mapped);
-}
-
 void xtouch_screen_setBrightness(byte brightness)
 {
-    tft.setBrightness(xtouch_screen_map_backlight_non_linear(brightness));
+    tft.setBrightness(brightness);
 }
+
+
 
 void xtouch_screen_sleep()
 {
     xtouch_screen_touchFromPowerOff = true;
     if (xTouchConfig.xTouchStackChanEnabled == true)
     {
-        loadScreen(9);
+         loadScreen(9);
     }
     else
     {
@@ -75,7 +43,9 @@ void xtouch_screen_sleep()
 void xtouch_screen_wakeUp()
 {
     ConsoleInfo.println("[xPTouch][I][SCREEN] Wake Up");
-    lv_timer_reset(xtouch_screen_onScreenOffTimer);
+    if (xtouch_screen_onScreenOffTimer != NULL) { // NULLチェックを追加
+        lv_timer_reset(xtouch_screen_onScreenOffTimer);
+    }
     xtouch_screen_touchFromPowerOff = false;
     loadScreen(0);
     xtouch_screen_setBrightness(xTouchConfig.xTouchBacklightLevel);
@@ -95,11 +65,13 @@ void xtouch_screen_onScreenTimeout(lv_timer_t *timer)
 
     ConsoleInfo.println("[xPTouch][I][SCREEN] Screen Off");
     xtouch_screen_sleep();
+
 }
 
 void xtouch_screen_onLEDOff(lv_timer_t *timer)
 {
-    if (bambuStatus.print_status == XTOUCH_PRINT_STATUS_RUNNING)
+
+    if (bambuStatus.print_status == XTOUCH_PRINT_STATUS_RUNNING && bambuStatus.camera_timelapse == true)
     {
         return;
     }
@@ -156,7 +128,6 @@ void xtouch_screen_stopLEDOffTimer()
     lv_timer_pause(xtouch_screen_onLEDOffTimer);
     lv_timer_reset(xtouch_screen_onLEDOffTimer);
 }
-
 void xtouch_screen_setLEDOffTimer(uint32_t period)
 {
     ConsoleInfo.println("[xPTouch][I][LED] LED off SetPeriod");
@@ -193,7 +164,7 @@ void xtouch_screen_toggleTFTFlip()
 void xtouch_screen_setupTFTFlip()
 {
     byte eepromTFTFlip = xtouch_screen_getTFTFlip();
-    tft.setRotation(eepromTFTFlip == 1 ? 2 : 0);
+    tft.setRotation(eepromTFTFlip == 1 ? 3 : 1);
 }
 
 void xtouch_screen_dispFlush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p)
@@ -218,7 +189,10 @@ void xtouch_screen_touchRead(lv_indev_drv_t *indev_driver, lv_indev_data_t *data
     bool touched = tft.getTouch(&touchX, &touchY);
     if (touched)
     {
-        lv_timer_reset(xtouch_screen_onScreenOffTimer);
+        if (xtouch_screen_onScreenOffTimer != NULL) { // NULLチェック
+            lv_timer_reset(xtouch_screen_onScreenOffTimer);
+        }
+
         // dont pass first touch after power on
         if (xtouch_screen_touchFromPowerOff)
         {
@@ -244,44 +218,44 @@ void xtouch_screen_setup()
     ConsoleInfo.println("[xPTouch][I][SCREEN] Setup screen");
 
     {
-        uint8_t buf[XTOUCH_EEPROM_SIZE];
-        xtouch_eeprom_read_all(buf);
-        uint32_t raw = xtouch_u32_from_le(buf + XTOUCH_EEPROM_POS_RGB_PCLK_HZ);
-        uint32_t pclk = xtouch_eeprom_rgb_pclk_hz_read();
-        auto bus_cfg = tft._bus_instance.config();
-        bus_cfg.freq_write = pclk;
-        if (xtouch_eeprom_lcd_ext_timing_valid(buf))
-        {
-            bus_cfg.hsync_polarity = buf[XTOUCH_EEPROM_POS_LCD_TIMING_BASE + 0] != 0;
-            bus_cfg.hsync_front_porch = (int8_t)buf[XTOUCH_EEPROM_POS_LCD_TIMING_BASE + 1];
-            bus_cfg.hsync_pulse_width = (int8_t)buf[XTOUCH_EEPROM_POS_LCD_TIMING_BASE + 2];
-            bus_cfg.hsync_back_porch = (int8_t)buf[XTOUCH_EEPROM_POS_LCD_TIMING_BASE + 3];
-            bus_cfg.vsync_polarity = buf[XTOUCH_EEPROM_POS_LCD_TIMING_BASE + 4] != 0;
-            bus_cfg.vsync_front_porch = (int8_t)buf[XTOUCH_EEPROM_POS_LCD_TIMING_BASE + 5];
-            bus_cfg.vsync_pulse_width = (int8_t)buf[XTOUCH_EEPROM_POS_LCD_TIMING_BASE + 6];
-            bus_cfg.vsync_back_porch = (int8_t)buf[XTOUCH_EEPROM_POS_LCD_TIMING_BASE + 7];
-            bus_cfg.pclk_active_neg = buf[XTOUCH_EEPROM_POS_LCD_TIMING_BASE + 8] != 0;
-            bus_cfg.de_idle_high = buf[XTOUCH_EEPROM_POS_LCD_TIMING_BASE + 9] != 0;
-            bus_cfg.pclk_idle_high = buf[XTOUCH_EEPROM_POS_LCD_TIMING_BASE + 10] != 0;
-        }
-        else
-        {
-            bus_cfg.hsync_polarity = JC8048_BUS_DEFAULT_HSYNC_POLARITY;
-            bus_cfg.hsync_front_porch = JC8048_BUS_DEFAULT_HSYNC_FRONT_PORCH;
-            bus_cfg.hsync_pulse_width = JC8048_BUS_DEFAULT_HSYNC_PULSE_WIDTH;
-            bus_cfg.hsync_back_porch = JC8048_BUS_DEFAULT_HSYNC_BACK_PORCH;
-            bus_cfg.vsync_polarity = JC8048_BUS_DEFAULT_VSYNC_POLARITY;
-            bus_cfg.vsync_front_porch = JC8048_BUS_DEFAULT_VSYNC_FRONT_PORCH;
-            bus_cfg.vsync_pulse_width = JC8048_BUS_DEFAULT_VSYNC_PULSE_WIDTH;
-            bus_cfg.vsync_back_porch = JC8048_BUS_DEFAULT_VSYNC_BACK_PORCH;
-            bus_cfg.pclk_active_neg = JC8048_BUS_DEFAULT_PCLK_ACTIVE_NEG;
-            bus_cfg.de_idle_high = JC8048_BUS_DEFAULT_DE_IDLE_HIGH;
-            bus_cfg.pclk_idle_high = JC8048_BUS_DEFAULT_PCLK_IDLE_HIGH;
-        }
+        //uint8_t buf[XTOUCH_EEPROM_SIZE];
+        //xtouch_eeprom_read_all(buf);
+        //uint32_t raw = xtouch_u32_from_le(buf + XTOUCH_EEPROM_POS_RGB_PCLK_HZ);
+        //uint32_t pclk = xtouch_eeprom_rgb_pclk_hz_read();
+        // auto bus_cfg = tft._bus_instance.config();
+        // bus_cfg.freq_write = pclk;
+        // if (xtouch_eeprom_lcd_ext_timing_valid(buf))
+        // {
+        //     bus_cfg.hsync_polarity = buf[XTOUCH_EEPROM_POS_LCD_TIMING_BASE + 0] != 0;
+        //     bus_cfg.hsync_front_porch = (int8_t)buf[XTOUCH_EEPROM_POS_LCD_TIMING_BASE + 1];
+        //     bus_cfg.hsync_pulse_width = (int8_t)buf[XTOUCH_EEPROM_POS_LCD_TIMING_BASE + 2];
+        //     bus_cfg.hsync_back_porch = (int8_t)buf[XTOUCH_EEPROM_POS_LCD_TIMING_BASE + 3];
+        //     bus_cfg.vsync_polarity = buf[XTOUCH_EEPROM_POS_LCD_TIMING_BASE + 4] != 0;
+        //     bus_cfg.vsync_front_porch = (int8_t)buf[XTOUCH_EEPROM_POS_LCD_TIMING_BASE + 5];
+        //     bus_cfg.vsync_pulse_width = (int8_t)buf[XTOUCH_EEPROM_POS_LCD_TIMING_BASE + 6];
+        //     bus_cfg.vsync_back_porch = (int8_t)buf[XTOUCH_EEPROM_POS_LCD_TIMING_BASE + 7];
+        //     bus_cfg.pclk_active_neg = buf[XTOUCH_EEPROM_POS_LCD_TIMING_BASE + 8] != 0;
+        //     bus_cfg.de_idle_high = buf[XTOUCH_EEPROM_POS_LCD_TIMING_BASE + 9] != 0;
+        //     bus_cfg.pclk_idle_high = buf[XTOUCH_EEPROM_POS_LCD_TIMING_BASE + 10] != 0;
+        // }
+        // else
+        // {
+        //     bus_cfg.hsync_polarity = JC8048_BUS_DEFAULT_HSYNC_POLARITY;
+        //     bus_cfg.hsync_front_porch = JC8048_BUS_DEFAULT_HSYNC_FRONT_PORCH;
+        //     bus_cfg.hsync_pulse_width = JC8048_BUS_DEFAULT_HSYNC_PULSE_WIDTH;
+        //     bus_cfg.hsync_back_porch = JC8048_BUS_DEFAULT_HSYNC_BACK_PORCH;
+        //     bus_cfg.vsync_polarity = JC8048_BUS_DEFAULT_VSYNC_POLARITY;
+        //     bus_cfg.vsync_front_porch = JC8048_BUS_DEFAULT_VSYNC_FRONT_PORCH;
+        //     bus_cfg.vsync_pulse_width = JC8048_BUS_DEFAULT_VSYNC_PULSE_WIDTH;
+        //     bus_cfg.vsync_back_porch = JC8048_BUS_DEFAULT_VSYNC_BACK_PORCH;
+        //     bus_cfg.pclk_active_neg = JC8048_BUS_DEFAULT_PCLK_ACTIVE_NEG;
+        //     bus_cfg.de_idle_high = JC8048_BUS_DEFAULT_DE_IDLE_HIGH;
+        //     bus_cfg.pclk_idle_high = JC8048_BUS_DEFAULT_PCLK_IDLE_HIGH;
+        // }
         //tft._bus_instance.config(bus_cfg);
-        ConsoleInfo.printf("[xPTouch][I][SCREEN] Bus EEPROM raw_pclk=0x%08lX eff_Hz=%lu timing_ext=%u\n",
-                           (unsigned long)raw, (unsigned long)pclk,
-                           (unsigned)xtouch_eeprom_lcd_ext_timing_valid(buf));
+        // ConsoleInfo.printf("[xPTouch][I][SCREEN] Bus EEPROM raw_pclk=0x%08lX eff_Hz=%lu timing_ext=%u\n",
+        //                    (unsigned long)raw, (unsigned long)pclk,
+        //                    (unsigned)xtouch_eeprom_lcd_ext_timing_valid(buf));
     }
 
     tft.begin();
@@ -303,8 +277,8 @@ void xtouch_screen_setup()
     /*Initialize the display*/
     static lv_disp_drv_t disp_drv;
     lv_disp_drv_init(&disp_drv);
-    disp_drv.hor_res = screenWidth;
-    disp_drv.ver_res = screenHeight;
+    disp_drv.hor_res = screenHeight;
+    disp_drv.ver_res = screenWidth;
     disp_drv.flush_cb = xtouch_screen_dispFlush;
     disp_drv.draw_buf = &draw_buf;
     lv_disp_drv_register(&disp_drv);

@@ -5,19 +5,25 @@
 #include <string.h>
 #include "ui/ui_msgs.h"
 #include "xtouch/types.h"
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__ 
 #include "xtouch/net.h"
 #include "xtouch/sdcard_status.h"
+#include "xtouch/sdcard.h"
 #include "xtouch/filesystem.h"
-#include <SD.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
 #include "freertos/task.h"
 #endif
 
 #define XTOUCH_THUMB_SLOT_MAX 5
+/* LGFX デコード解像度はホーム／Printers の lv_img 表示（75 または 150 の正方形）と一致させる（5" のみ 150） */
+#if defined(__XTOUCH_SCREEN_S3_050__)
 #define XTOUCH_THUMB_LGFX_W 150
 #define XTOUCH_THUMB_LGFX_H 150
+#else
+#define XTOUCH_THUMB_LGFX_W 75
+#define XTOUCH_THUMB_LGFX_H 75
+#endif
 /** DL 開始を遅らせる ms。この間は画面遷移など UI が応答する */
 #define XTOUCH_THUMB_FETCH_DELAY_MS 200
 
@@ -28,7 +34,7 @@ static bool xtouch_load_logo_for_slot_with_lgfx(int slot, int out_w, int out_h);
 #define XTOUCH_HISTORY_COVER_SLOTS 10
 #endif
 
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__ 
 /* 起動直後などで /resource/logo.png が無いと無限に open 失敗を繰り返すため、
  * "無ければ作ってDL" を 1 回だけ試し、結果をキャッシュする */
 static bool s_resource_logo_ensured = false;
@@ -46,21 +52,21 @@ static bool xtouch_ensure_resource_logo_exists(void)
         return false;
     }
     s_resource_logo_ensured = true;
-    if (SD.exists(path))
+    if (xtouch_sdcard_exists(path))
     {
         s_resource_logo_ensure_success = true;
         return true;
     }
 
     /* /resource フォルダが無い場合は作成 */
-    (void)xtouch_filesystem_mkdir(SD, "/resource");
+    (void)xtouch_filesystem_mkdir(xtouch_sdcard_fs(), "/resource");
 
     const char *url = "https://tac-lab.tech/xptouch-bin/logo.png";
     int ok = downloadFileToSDCard(url, path);
-    s_resource_logo_ensure_success = (ok != 0) && SD.exists(path);
+    s_resource_logo_ensure_success = (ok != 0) && xtouch_sdcard_exists(path);
     return s_resource_logo_ensure_success;
 }
-#endif /* __XTOUCH_SCREEN_50__ */
+#endif /* __XTOUCH_PLATFORM_S3__  */
 /** History 画面 行別: SD 上の PNG をデコードして xtouch_history_cover_dsc[slot] に格納。path は "/tmp/history_cover_N.png" 等。 */
 bool xtouch_history_cover_load_path(int slot, const char *path);
 /** History cover を全スロットクリア（表示をプレースホルダに戻す）。 */
@@ -84,7 +90,7 @@ inline void xtouch_thumbnail_update_path_for_slot(int slot)
     getThumbPathForSlot(slot, path, sizeof(path));
     if (slot >= 0 && slot < XTOUCH_THUMB_SLOT_MAX)
     {
-        if (SD.exists(path))
+        if (xtouch_sdcard_exists(path))
             snprintf(xtouch_thumbnail_slot_path[slot], XTOUCH_THUMB_PATH_LEN, "S:%s", path);
         else
             xtouch_thumbnail_slot_path[slot][0] = '\0';
@@ -101,10 +107,13 @@ static bool s_thumb_cache_refresh_done[XTOUCH_THUMB_SLOT_MAX];
 /** 起動直後にロゴを先に全スロットへ投入したか */
 static bool s_thumb_boot_logo_seeded = false;
 
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__ 
 /** デコード失敗時の task_id を2世代保持。同一 task_id で連続2回失敗したら /tmp のキャッシュ PNG を削除して再DL可能にする */
 static char s_thumb_decode_tid_gen0[XTOUCH_THUMB_SLOT_MAX][32];
 static char s_thumb_decode_tid_gen1[XTOUCH_THUMB_SLOT_MAX][32];
+/** DL 失敗後、同スロットで再キューするまでの最短時刻（SD エラー時の同一 URL 連打を抑える） */
+static uint32_t s_thumb_dl_retry_not_before_ms[XTOUCH_THUMB_SLOT_MAX];
+#define XTOUCH_THUMB_DL_FAIL_COOLDOWN_MS 15000u
 #endif
 
 /** task / メイン接続先の変化時: LGFX デコード済み dsc と path・取得フラグを捨てる（古い Home サムネが残るのを防ぐ） */
@@ -116,9 +125,10 @@ inline void xtouch_thumbnail_invalidate_slot(int slot)
     s_thumb_cache_refresh_done[slot] = false;
     xtouch_thumbnail_slot_dsc[slot] = nullptr;
     xtouch_thumbnail_slot_path[slot][0] = '\0';
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__ 
     s_thumb_decode_tid_gen0[slot][0] = '\0';
     s_thumb_decode_tid_gen1[slot][0] = '\0';
+    s_thumb_dl_retry_not_before_ms[slot] = 0;
 #endif
 }
 
@@ -135,17 +145,42 @@ inline void xtouch_thumbnail_update_path_all_slots(void)
         xtouch_thumbnail_update_path_for_slot(s);
 }
 
-#ifdef __XTOUCH_SCREEN_50__
-#define XTOUCH_THUMB_DL_QUEUE_LEN 5
+#ifdef __XTOUCH_PLATFORM_S3__ 
+/** History 一覧カバーと Home/Printers サムネで同一ワーカーを共有（並列 HTTPS+SD を避ける） */
+#define XTOUCH_DL_KIND_THUMB 0
+#define XTOUCH_DL_KIND_HISTORY 1
+#define XTOUCH_THUMB_DL_QUEUE_LEN 14
 #define XTOUCH_THUMB_DL_TASK_STACK_WORDS 8192
 struct thumb_dl_item
 {
-    int slot;
+    uint8_t kind;
+    int id; /* THUMB: slot 0..4; HISTORY: row 0..XTOUCH_HISTORY_COVER_SLOTS-1 */
     char url[1024];
     char path[64];
 };
 static QueueHandle_t s_thumb_download_queue = nullptr;
 static QueueHandle_t s_thumb_done_queue = nullptr;
+/** History の cover done（行番号）。subscribe 時に history.h から登録 */
+static QueueHandle_t s_thumb_history_done_queue = nullptr;
+
+inline void xtouch_thumbnail_register_history_cover_done_queue(QueueHandle_t q)
+{
+    s_thumb_history_done_queue = q;
+}
+
+static inline bool xtouch_thumbnail_enqueue_sd_download(uint8_t kind, int id, const char *url, const char *path)
+{
+    if (!s_thumb_download_queue || !url || !path || !url[0] || !path[0])
+        return false;
+    struct thumb_dl_item item;
+    item.kind = kind;
+    item.id = id;
+    strncpy(item.url, url, sizeof(item.url) - 1);
+    item.url[sizeof(item.url) - 1] = '\0';
+    strncpy(item.path, path, sizeof(item.path) - 1);
+    item.path[sizeof(item.path) - 1] = '\0';
+    return xQueueSend(s_thumb_download_queue, &item, 0) == pdTRUE;
+}
 #endif
 
 /** types（bambuStatus / otherPrinters）だけを見てスロットに URL または task_id があるか判定。UI は呼ばない。 */
@@ -157,6 +192,15 @@ static bool thumbnail_slot_has_url_or_task(int slot, int cloud_logged_in)
             return true;
         if (cloud_logged_in && bambuStatus.task_id[0] && strcmp(bambuStatus.task_id, "0") != 0)
             return true;
+#ifdef __XTOUCH_PLATFORM_S3__
+        /* image_url を空にしたあとも /tmp/{task_id}.png があれば「取得済み」（LAN で task_id だけの判定が漏れるのを防ぐ） */
+        {
+            char path[64];
+            getThumbPathForSlot(0, path, sizeof(path));
+            if (path[0] && xtouch_sdcard_exists(path))
+                return true;
+        }
+#endif
         return false;
     }
     int idx = slot - 1;
@@ -166,6 +210,14 @@ static bool thumbnail_slot_has_url_or_task(int slot, int cloud_logged_in)
         return true;
     if (cloud_logged_in && otherPrinters[idx].task_id[0] && strcmp(otherPrinters[idx].task_id, "0") != 0)
         return true;
+#ifdef __XTOUCH_PLATFORM_S3__
+    {
+        char path[64];
+        getThumbPathForSlot(slot, path, sizeof(path));
+        if (path[0] && xtouch_sdcard_exists(path))
+            return true;
+    }
+#endif
     return false;
 }
 
@@ -179,10 +231,10 @@ static bool thumbnail_needs_download(int slot)
     getThumbPathForSlot(slot, path, sizeof(path));
     if (!path[0])
         return false;
-    return !SD.exists(path);
+    return !xtouch_sdcard_exists(path);
 }
 
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__ 
 /* ワーカータスク: DL キューから 1 件取り、downloadFileToSDCard のみ実行して done に投げる（メインをブロックしない） */
 static void thumb_dl_task(void *pv)
 {
@@ -192,46 +244,54 @@ static void thumb_dl_task(void *pv)
     {
         if (xQueueReceive(s_thumb_download_queue, &item, portMAX_DELAY) != pdTRUE)
             continue;
-        if (item.slot < 0 || item.slot >= XTOUCH_THUMB_SLOT_MAX)
+
+        if (item.kind == XTOUCH_DL_KIND_HISTORY)
+        {
+            if (xTouchConfig.xTouchHideAllThumbnails)
+                continue;
+            if (item.id < 0 || item.id >= XTOUCH_HISTORY_COVER_SLOTS)
+                continue;
+            if (xtouch_sdcard_exists(item.path))
+            {
+                if (s_thumb_history_done_queue)
+                    xQueueSend(s_thumb_history_done_queue, &item.id, 0);
+                continue;
+            }
+            if (downloadFileToSDCard(item.url, item.path) != 0)
+            {
+                if (s_thumb_history_done_queue)
+                    xQueueSend(s_thumb_history_done_queue, &item.id, 0);
+            }
             continue;
+        }
+
+        if (item.kind != XTOUCH_DL_KIND_THUMB)
+            continue;
+        if (item.id < 0 || item.id >= XTOUCH_THUMB_SLOT_MAX)
+            continue;
+        /* History 等で同一 path が既にあれば HTTP しない（キュー滞留中にファイルができた場合も含む） */
+        if (xtouch_sdcard_exists(item.path))
+        {
+            s_thumb_dl_retry_not_before_ms[item.id] = 0;
+            xQueueSend(s_thumb_done_queue, &item.id, 0);
+            continue;
+        }
         if (downloadFileToSDCard(item.url, item.path) != 0)
         {
-            ConsoleVerbose.printf("[xPTouch][V][THUMB] dl_ok slot=%d path=%s\n", item.slot, item.path);
+            ConsoleVerbose.printf("[xPTouch][V][THUMB] dl_ok slot=%d path=%s\n", item.id, item.path);
+            s_thumb_dl_retry_not_before_ms[item.id] = 0;
             /* 成功時も UI 更新のため done キューに流す。
-             * さらに、成功後は image_url を消しておき、今後このスロットでは SD 上の PNG のみを使うようにする。 */
-            if (item.slot == 0)
-            {
-                bambuStatus.image_url[0] = '\0';
-            }
-            else
-            {
-                int idx = item.slot - 1;
-                if (idx >= 0 && idx < xtouch_other_printer_count)
-                {
-                    otherPrinters[idx].image_url[0] = '\0';
-                }
-            }
-            xQueueSend(s_thumb_done_queue, &item.slot, 0);
+             * image_url は消さない。消すと getThumbnailUrlAndPathForSlot が毎回 isCurrentTaskForDevice + getTaskThumbnailUrl を叩き HTTP が連打される。
+             * 再DLは thumbnail_needs_download（SD にファイル無し）のときだけ。 */
+            xQueueSend(s_thumb_done_queue, &item.id, 0);
         }
         else
         {
-            ConsoleVerbose.printf("[xPTouch][V][THUMB] dl_ng slot=%d\n", item.slot);
-            /* ダウンロード失敗時はこのスロットの URL / task_id をクリアし、以後はロゴにフォールバックさせる（リトライしない）。 */
-            if (item.slot == 0)
-            {
-                bambuStatus.image_url[0] = '\0';
-                bambuStatus.task_id[0] = '\0';
-            }
-            else
-            {
-                int idx = item.slot - 1;
-                if (idx >= 0 && idx < xtouch_other_printer_count)
-                {
-                    otherPrinters[idx].image_url[0] = '\0';
-                    otherPrinters[idx].task_id[0] = '\0';
-                }
-            }
-            xQueueSend(s_thumb_done_queue, &item.slot, 0);
+            ConsoleVerbose.printf("[xPTouch][V][THUMB] dl_ng slot=%d (cooldown %ums)\n", item.id, (unsigned)XTOUCH_THUMB_DL_FAIL_COOLDOWN_MS);
+            /* task_id / image_url は消さない（Reprint 等で必要）。クールダウン後に thumbnail_do_slot が再キュー。 */
+            uint32_t m = millis();
+            s_thumb_dl_retry_not_before_ms[item.id] = m + XTOUCH_THUMB_DL_FAIL_COOLDOWN_MS;
+            xQueueSend(s_thumb_done_queue, &item.id, 0);
         }
     }
 }
@@ -247,10 +307,13 @@ static void thumbnail_do_slot_cb(lv_timer_t *t)
         return;
     if (s < 0 || s >= XTOUCH_THUMB_SLOT_MAX || !s_thumb_download_queue || !s_thumb_done_queue)
         return;
+    if (millis() < s_thumb_dl_retry_not_before_ms[s])
+        return;
     if (!thumbnail_needs_download(s))
         return;
     struct thumb_dl_item item;
-    item.slot = s;
+    item.kind = XTOUCH_DL_KIND_THUMB;
+    item.id = s;
     if (!getThumbnailUrlAndPathForSlot(s, item.url, sizeof(item.url), item.path, sizeof(item.path)))
         return;
     if (xQueueSend(s_thumb_download_queue, &item, 0) != pdTRUE)
@@ -260,7 +323,7 @@ static void thumbnail_do_slot_cb(lv_timer_t *t)
 static void thumbnail_do_slot_cb(lv_timer_t *t) { (void)t; }
 #endif
 
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__ 
 /** 1 回だけ実行: サムネ更新メッセージを送る。タイマーコールバックの外で送って描画を確実に反映させる。 */
 static void thumbnail_send_update_one_shot_cb(lv_timer_t *t)
 {
@@ -273,10 +336,84 @@ static void thumbnail_send_update_one_shot_cb(lv_timer_t *t)
 }
 #endif
 
+/** Home/Printers 共通: task 無しスロットは SD の /tmp/{task_id}.png があれば表示、なければロゴ */
+static void thumbnail_tick_logo_or_sd_cache_slots(void)
+{
+    for (int s = 0; s < XTOUCH_THUMB_SLOT_MAX; s++)
+    {
+        if (!s_thumb_exists[s] && !thumbnail_slot_has_url_or_task(s, cloud.loggedIn ? 1 : 0))
+        {
+            char path[64];
+            getThumbPathForSlot(s, path, sizeof(path));
+            bool ok = false;
+            if (path[0] && xtouch_sdcard_exists(path))
+            {
+                ConsoleVerbose.printf("[xPTouch][V][THUMB] slot cached path=%d %s\n", s, path);
+                ok = xtouch_load_thumb_slot_with_lgfx(s, XTOUCH_THUMB_LGFX_W, XTOUCH_THUMB_LGFX_H);
+            }
+            if (!ok)
+            {
+                ConsoleVerbose.printf("[xPTouch][V][THUMB] slot logo fallback=%d\n", s);
+                ok = xtouch_load_logo_for_slot_with_lgfx(s, XTOUCH_THUMB_LGFX_W, XTOUCH_THUMB_LGFX_H);
+            }
+            if (ok)
+            {
+                s_thumb_exists[s] = true;
+                lv_msg_send(XTOUCH_ON_OTHER_PRINTER_UPDATE, (void *)(intptr_t)(s + 1));
+            }
+        }
+    }
+}
+
+/** Home/Printers 共通: URL あり・SD に既存 PNG があるスロットを 1 回だけデコード */
+static void thumbnail_tick_refresh_existing_files_once(void)
+{
+    for (int s = 0; s < XTOUCH_THUMB_SLOT_MAX; s++)
+    {
+        if (s_thumb_cache_refresh_done[s])
+            continue;
+        if (!thumbnail_slot_has_url_or_task(s, cloud.loggedIn ? 1 : 0))
+            continue;
+        char path[64];
+        getThumbPathForSlot(s, path, sizeof(path));
+        if (!path[0] || !xtouch_sdcard_exists(path))
+            continue;
+        xtouch_thumbnail_update_path_for_slot(s);
+        if (xtouch_load_thumb_slot_with_lgfx(s, XTOUCH_THUMB_LGFX_W, XTOUCH_THUMB_LGFX_H))
+        {
+            s_thumb_cache_refresh_done[s] = true;
+            s_thumb_exists[s] = true;
+            lv_msg_send(XTOUCH_ON_OTHER_PRINTER_UPDATE, (void *)(intptr_t)(s + 1));
+        }
+    }
+}
+
+/** ラウンドロビンで「要 DL」のスロットを 1 つだけキューへ。Home/Printers とも 500ms に 1 回まで（25ms タイマー連打を防ぐ） */
+static uint32_t s_thumb_dl_rr_last_tick = 0;
+static void thumbnail_try_schedule_one_download_round_robin(void)
+{
+    uint32_t now = lv_tick_get();
+    if (now - s_thumb_dl_rr_last_tick < 500u)
+        return;
+    s_thumb_dl_rr_last_tick = now;
+    for (int i = 0; i < XTOUCH_THUMB_SLOT_MAX; i++)
+    {
+        int s = (s_thumb_next_slot + i) % XTOUCH_THUMB_SLOT_MAX;
+        if (thumbnail_needs_download(s))
+        {
+            ConsoleVerbose.printf("[xPTouch][V][THUMB] rr schedule slot=%d\n", s);
+            lv_timer_t *once = lv_timer_create(thumbnail_do_slot_cb, XTOUCH_THUMB_FETCH_DELAY_MS, (void *)(intptr_t)s);
+            lv_timer_set_repeat_count(once, 1);
+            s_thumb_next_slot = (s + 1) % XTOUCH_THUMB_SLOT_MAX;
+            break;
+        }
+    }
+}
+
 static void thumbnail_timer_cb(lv_timer_t *t)
 {
     (void)t;
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__ 
     if (s_thumb_done_queue)
     {
         int slot;
@@ -311,124 +448,20 @@ static void thumbnail_timer_cb(lv_timer_t *t)
         return;
 
     int idx = xTouchConfig.currentScreenIndex;
-    /* Home(0): URL/TaskID が無いスロットにはロゴを一度だけロード。
-     * URL/TaskID があるスロットは 1 回だけ DL を試み、失敗したらロゴにフォールバック（リトライしない）。 */
+    /* Home(0) と Printers(6) で同じ順序・同じレート制限（以前は Printers だけ DL 予約が毎ティック走っていた） */
+    if (idx == 0 || idx == 6)
+    {
+        thumbnail_tick_logo_or_sd_cache_slots();
+        thumbnail_tick_refresh_existing_files_once();
+    }
+
     if (idx == 0)
     {
-        for (int s = 0; s < XTOUCH_THUMB_SLOT_MAX; s++)
-        {
-            if (!s_thumb_exists[s] && !thumbnail_slot_has_url_or_task(s, cloud.loggedIn ? 1 : 0))
-            {
-                /* 起動直後など URL/TaskID がまだ無い場合でも、既に SD に
-                 * /tmp/{task_id}.png が残っていればそれを優先して表示する。
-                 * どちらも無いスロットだけロゴにフォールバック。 */
-                char path[64];
-                getThumbPathForSlot(s, path, sizeof(path));
-                bool ok = false;
-                if (path[0] && SD.exists(path))
-                {
-                    ConsoleVerbose.printf("[xPTouch][V][THUMB] home cached slot=%d path=%s\n", s, path);
-                    ok = xtouch_load_thumb_slot_with_lgfx(s, XTOUCH_THUMB_LGFX_W, XTOUCH_THUMB_LGFX_H);
-                }
-                if (!ok)
-                {
-                    ConsoleVerbose.printf("[xPTouch][V][THUMB] home logo slot=%d\n", s);
-                    ok = xtouch_load_logo_for_slot_with_lgfx(s, XTOUCH_THUMB_LGFX_W, XTOUCH_THUMB_LGFX_H);
-                }
-                if (ok)
-                {
-                    s_thumb_exists[s] = true;
-                    lv_msg_send(XTOUCH_ON_OTHER_PRINTER_UPDATE, (void *)(intptr_t)(s + 1));
-                }
-            }
-        }
-        /* URL/TaskID はあるが DL 不要（SD に既にファイルがある）スロットは、そのファイルで 1 回だけ再描画する。 */
-        for (int s = 0; s < XTOUCH_THUMB_SLOT_MAX; s++)
-        {
-            if (s_thumb_cache_refresh_done[s])
-                continue;
-            if (!thumbnail_slot_has_url_or_task(s, cloud.loggedIn ? 1 : 0))
-                continue;
-            char path[64];
-            getThumbPathForSlot(s, path, sizeof(path));
-            if (!path[0] || !SD.exists(path))
-                continue;
-            xtouch_thumbnail_update_path_for_slot(s);
-            if (xtouch_load_thumb_slot_with_lgfx(s, XTOUCH_THUMB_LGFX_W, XTOUCH_THUMB_LGFX_H))
-            {
-                s_thumb_cache_refresh_done[s] = true;
-                s_thumb_exists[s] = true;
-                lv_msg_send(XTOUCH_ON_OTHER_PRINTER_UPDATE, (void *)(intptr_t)(s + 1));
-            }
-        }
-        static uint32_t s_home_thumb_last = 0;
-        uint32_t now = lv_tick_get();
-        if (now - s_home_thumb_last >= 500u)
-        {
-            s_home_thumb_last = now;
-            for (int i = 0; i < XTOUCH_THUMB_SLOT_MAX; i++)
-            {
-                int s = (s_thumb_next_slot + i) % XTOUCH_THUMB_SLOT_MAX;
-                if (thumbnail_needs_download(s))
-                {
-                    lv_timer_t *once = lv_timer_create(thumbnail_do_slot_cb, XTOUCH_THUMB_FETCH_DELAY_MS, (void *)(intptr_t)s);
-                    lv_timer_set_repeat_count(once, 1);
-                    s_thumb_next_slot = (s + 1) % XTOUCH_THUMB_SLOT_MAX;
-                    break;
-                }
-            }
-        }
+        thumbnail_try_schedule_one_download_round_robin();
         return;
     }
     if (idx != 6)
         return;
-
-    /* Printers画面でも、URL/TaskID が無いスロットにはデフォルトロゴを一度だけロードしておく。 */
-    for (int s = 0; s < XTOUCH_THUMB_SLOT_MAX; s++)
-    {
-        if (!s_thumb_exists[s] && !thumbnail_slot_has_url_or_task(s, cloud.loggedIn ? 1 : 0))
-        {
-            /* Home と同様、まずは SD 上の /tmp/{task_id}.png を優先表示し、
-             * 何も無いスロットだけロゴにフォールバックする。 */
-            char path[64];
-            getThumbPathForSlot(s, path, sizeof(path));
-            bool ok = false;
-            if (path[0] && SD.exists(path))
-            {
-                ConsoleVerbose.printf("[xPTouch][V][THUMB] printers cached slot=%d path=%s\n", s, path);
-                ok = xtouch_load_thumb_slot_with_lgfx(s, XTOUCH_THUMB_LGFX_W, XTOUCH_THUMB_LGFX_H);
-            }
-            if (!ok)
-            {
-                ConsoleVerbose.printf("[xPTouch][V][THUMB] printers logo slot=%d\n", s);
-                ok = xtouch_load_logo_for_slot_with_lgfx(s, XTOUCH_THUMB_LGFX_W, XTOUCH_THUMB_LGFX_H);
-            }
-            if (ok)
-            {
-                s_thumb_exists[s] = true;
-                lv_msg_send(XTOUCH_ON_OTHER_PRINTER_UPDATE, (void *)(intptr_t)(s + 1));
-            }
-        }
-    }
-    /* Printers でも URL/TaskID はあるが SD に既にファイルがあるスロットは、そのファイルで 1 回だけ再描画する。 */
-    for (int s = 0; s < XTOUCH_THUMB_SLOT_MAX; s++)
-    {
-        if (s_thumb_cache_refresh_done[s])
-            continue;
-        if (!thumbnail_slot_has_url_or_task(s, cloud.loggedIn ? 1 : 0))
-            continue;
-        char path[64];
-        getThumbPathForSlot(s, path, sizeof(path));
-        if (!path[0] || !SD.exists(path))
-            continue;
-        xtouch_thumbnail_update_path_for_slot(s);
-        if (xtouch_load_thumb_slot_with_lgfx(s, XTOUCH_THUMB_LGFX_W, XTOUCH_THUMB_LGFX_H))
-        {
-            s_thumb_cache_refresh_done[s] = true;
-            s_thumb_exists[s] = true;
-            lv_msg_send(XTOUCH_ON_OTHER_PRINTER_UPDATE, (void *)(intptr_t)(s + 1));
-        }
-    }
 
     if (s_thumb_force_fetch_slot < XTOUCH_THUMB_SLOT_MAX)
     {
@@ -443,18 +476,7 @@ static void thumbnail_timer_cb(lv_timer_t *t)
         return;
     }
 
-    for (int i = 0; i < XTOUCH_THUMB_SLOT_MAX; i++)
-    {
-        int s = (s_thumb_next_slot + i) % XTOUCH_THUMB_SLOT_MAX;
-        if (thumbnail_needs_download(s))
-        {
-            ConsoleVerbose.printf("[xPTouch][V][THUMB] timer: start slot=%d\n", s);
-            s_thumb_next_slot = (s + 1) % XTOUCH_THUMB_SLOT_MAX;
-            lv_timer_t *once = lv_timer_create(thumbnail_do_slot_cb, XTOUCH_THUMB_FETCH_DELAY_MS, (void *)(intptr_t)s);
-            lv_timer_set_repeat_count(once, 1);
-            break;
-        }
-    }
+    thumbnail_try_schedule_one_download_round_robin();
 }
 
 void xtouch_thumbnail_timer_start(void)
@@ -463,7 +485,8 @@ void xtouch_thumbnail_timer_start(void)
         return;
     ConsoleVerbose.printf("[xPTouch][V][THUMB] timer_start\n");
     /* ディレイほぼなし: 1スロット処理後すぐ次スロットを試行 */
-    s_thumb_timer = lv_timer_create(thumbnail_timer_cb, 1, nullptr);
+    /* 1ms だと LVGL タスクがほぼサムネ処理のみになり HTTP/SD が連打されやすい */
+    s_thumb_timer = lv_timer_create(thumbnail_timer_cb, 25, nullptr);
     lv_timer_set_repeat_count(s_thumb_timer, -1);
 }
 
@@ -479,7 +502,7 @@ void xtouch_thumbnail_timer_stop(void)
     {
         s_thumb_exists[i] = false;
         s_thumb_cache_refresh_done[i] = false;
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__ 
         s_thumb_decode_tid_gen0[i][0] = '\0';
         s_thumb_decode_tid_gen1[i][0] = '\0';
 #endif
@@ -493,10 +516,10 @@ void xtouch_thumbnail_schedule_fetch_all(void)
 
 void xtouch_thumbnail_clear_sd_cache(void)
 {
-#if defined(__XTOUCH_SCREEN_50__)
+#if defined(__XTOUCH_PLATFORM_S3__ )
     if (!xtouch_sdcard_is_present_cached())
         return;
-    File dir = SD.open("/tmp");
+    File dir = xtouch_sdcard_open("/tmp");
     if (!dir)
         return;
     if (!dir.isDirectory())
@@ -521,7 +544,7 @@ void xtouch_thumbnail_clear_sd_cache(void)
                 else
                     snprintf(pathbuf, sizeof(pathbuf), "/tmp/%s", nm);
                 entry.close();
-                SD.remove(pathbuf);
+                xtouch_sdcard_remove(pathbuf);
                 continue;
             }
             /* サムネ用 tmp JSON も一緒に削除（存在するとキャッシュを再利用してしまうため） */
@@ -533,7 +556,7 @@ void xtouch_thumbnail_clear_sd_cache(void)
                 else
                     snprintf(pathbuf, sizeof(pathbuf), "/tmp/%s", nm);
                 entry.close();
-                SD.remove(pathbuf);
+                xtouch_sdcard_remove(pathbuf);
                 continue;
             }
         }
@@ -569,7 +592,7 @@ static void xtouch_thumbnail_on_printers_rebind(void *s, lv_msg_t *m)
     xtouch_thumbnail_invalidate_all_slots();
     xtouch_thumbnail_update_path_all_slots();
     xtouch_thumbnail_schedule_fetch_all();
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__ 
     if (xtouch_sdcard_is_present_cached())
     {
         /* タイマー待ちなく SD にある現在 task の PNG を即デコード（cache_refresh_done 依存を回避） */
@@ -579,7 +602,7 @@ static void xtouch_thumbnail_on_printers_rebind(void *s, lv_msg_t *m)
                 continue;
             char path[64];
             getThumbPathForSlot(slot, path, sizeof(path));
-            if (!path[0] || !SD.exists(path))
+            if (!path[0] || !xtouch_sdcard_exists(path))
                 continue;
             xtouch_thumbnail_update_path_for_slot(slot);
             if (xtouch_load_thumb_slot_with_lgfx(slot, XTOUCH_THUMB_LGFX_W, XTOUCH_THUMB_LGFX_H))
@@ -632,7 +655,7 @@ static void xtouch_thumbnail_on_hide_mode_changed(lv_msg_t *m, void *user_data)
 /** Printers 画面用イベント購読を登録。main の setup で一度呼ぶ */
 static void xtouch_thumbnail_subscribe_events(void)
 {
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__ 
     if (s_thumb_download_queue == nullptr)
     {
         s_thumb_download_queue = xQueueCreate(XTOUCH_THUMB_DL_QUEUE_LEN, sizeof(struct thumb_dl_item));
@@ -665,7 +688,6 @@ static void xtouch_thumbnail_subscribe_events(void)
 /* ========== LGFX で PNG をデコードして LVGL の lv_img 用バッファに出す ========== */
 #include <esp32-hal-psram.h>
 #include <LovyanGFX.h>
-#include <SD.h>
 #include "lgfx/utility/lgfx_pngle.h"
 
 static lv_color_t *g_lgfx_thumb_buf = nullptr;
@@ -676,8 +698,14 @@ lv_img_dsc_t g_lgfx_thumb_dsc;
 /* Printers 画面用: スロット毎のバッファと descriptor。xtouch_thumbnail_slot_dsc は types.h で extern（C から参照）。 */
 static lv_color_t *g_lgfx_thumb_buf_slot[XTOUCH_THUMB_SLOT_MAX] = { nullptr };
 static lv_img_dsc_t g_lgfx_thumb_dsc_slot[XTOUCH_THUMB_SLOT_MAX];
+/* History 行の leftBox（ROW_LEFT_W/H）と同じ正方形でデコード。150×75 だと横長に見える */
+#if defined(__XTOUCH_SCREEN_S3_050__)
 #define XTOUCH_HISTORY_COVER_W 150
 #define XTOUCH_HISTORY_COVER_H 150
+#else
+#define XTOUCH_HISTORY_COVER_W 75
+#define XTOUCH_HISTORY_COVER_H 75
+#endif
 
 /* History 画面用: 行別 cover 画像用バッファと descriptor（最大 XTOUCH_HISTORY_COVER_SLOTS 件）。 */
 static lv_color_t *g_history_cover_buf[XTOUCH_HISTORY_COVER_SLOTS] = { nullptr };
@@ -691,6 +719,8 @@ void *xtouch_history_reprint_cover_dsc = nullptr;
 
 /* Reprint 画面上半分用: 1枚だけデコードして表示する */
 static lv_color_t *g_history_reprint_cover_buf = nullptr;
+static int g_history_reprint_cover_buf_w = 0;
+static int g_history_reprint_cover_buf_h = 0;
 static lv_img_dsc_t g_history_reprint_cover_dsc;
 
 /* 下で定義される pngle callback の前方宣言（Reprint decode のため） */
@@ -701,6 +731,13 @@ static void xtouch_pngle_draw_cb(void *user_data, uint32_t x, uint32_t y, uint_f
 void xtouch_history_reprint_cover_clear(void)
 {
     xtouch_history_reprint_cover_dsc = nullptr;
+    if (g_history_reprint_cover_buf)
+    {
+        free(g_history_reprint_cover_buf);
+        g_history_reprint_cover_buf = nullptr;
+    }
+    g_history_reprint_cover_buf_w = g_history_reprint_cover_buf_h = 0;
+    memset(&g_history_reprint_cover_dsc, 0, sizeof(g_history_reprint_cover_dsc));
 }
 
 bool xtouch_history_reprint_cover_load_path(const char *path);
@@ -790,7 +827,7 @@ bool xtouch_history_reprint_cover_load_path(const char *path)
     g_history_reprint_cover_dsc.data = (const uint8_t *)g_history_reprint_cover_buf;
     g_history_reprint_cover_dsc.data_size = sizeof(lv_color_t) * px_count;
 
-    File file = SD.open(path, "r");
+    File file = xtouch_sdcard_open(path, "r");
     if (!file)
     {
         xtouch_history_reprint_cover_clear();
@@ -873,10 +910,10 @@ bool xtouch_load_thumb_with_lgfx(const char *path, int out_w, int out_h)
     g_lgfx_thumb_dsc.data = (const uint8_t *)g_lgfx_thumb_buf;
     g_lgfx_thumb_dsc.data_size = sizeof(lv_color_t) * px_count;
 
-    File file = SD.open(path, "r");
+    File file = xtouch_sdcard_open(path, "r");
     if (!file)
     {
-        Serial.println("[thumb] SD.open failed");
+        Serial.println("[thumb] SD_MMC.open failed");
         return false;
     }
 
@@ -930,7 +967,7 @@ lv_img_dsc_t *xtouch_thumb_get_lgfx_dsc(void)
     return &g_lgfx_thumb_dsc;
 }
 
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__ 
 static void thumb_decode_tid_generations_clear(int slot)
 {
     if (slot < 0 || slot >= XTOUCH_THUMB_SLOT_MAX)
@@ -978,8 +1015,8 @@ static void thumb_on_decode_failed_after_open(int slot, const char *path)
         strcmp(s_thumb_decode_tid_gen0[slot], s_thumb_decode_tid_gen1[slot]) == 0)
     {
         ConsoleVerbose.printf("[xPTouch][V][THUMB] corrupt cache x2 tid=%s remove %s\n", tid, path ? path : "");
-        if (path && path[0] && xtouch_sdcard_is_present_cached() && SD.exists(path))
-            SD.remove(path);
+        if (path && path[0] && xtouch_sdcard_is_present_cached() && xtouch_sdcard_exists(path))
+            xtouch_sdcard_remove(path);
         thumb_decode_tid_generations_clear(slot);
         xtouch_thumbnail_slot_path[slot][0] = '\0';
         s_thumb_cache_refresh_done[slot] = false;
@@ -1020,7 +1057,8 @@ static bool xtouch_load_thumb_slot_with_lgfx(int slot, int out_w, int out_h)
     g_lgfx_thumb_dsc_slot[slot].data_size = sizeof(lv_color_t) * px_count;
 
     xtouch_pngle_ctx_t pngle_ctx;
-    File file = SD.open(path, "r");
+    /* History の xtouch_history_cover_load_path と同じく、task 用 PNG を path で開く（/tmp ディレクトリを開いてはいけない） */
+    File file = xtouch_sdcard_open(path, "r");
     if (!file)
     {
         xtouch_thumbnail_slot_dsc[slot] = nullptr;
@@ -1031,7 +1069,7 @@ static bool xtouch_load_thumb_slot_with_lgfx(int slot, int out_w, int out_h)
     {
         file.close();
         xtouch_thumbnail_slot_dsc[slot] = nullptr;
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__ 
         thumb_on_decode_failed_after_open(slot, path);
 #endif
         return false;
@@ -1047,7 +1085,7 @@ static bool xtouch_load_thumb_slot_with_lgfx(int slot, int out_w, int out_h)
         lgfx_pngle_destroy(pngle);
         file.close();
         xtouch_thumbnail_slot_dsc[slot] = nullptr;
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__ 
         thumb_on_decode_failed_after_open(slot, path);
 #endif
         return false;
@@ -1059,7 +1097,7 @@ static bool xtouch_load_thumb_slot_with_lgfx(int slot, int out_w, int out_h)
         lgfx_pngle_destroy(pngle);
         file.close();
         xtouch_thumbnail_slot_dsc[slot] = nullptr;
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__ 
         thumb_on_decode_failed_after_open(slot, path);
 #endif
         return false;
@@ -1070,12 +1108,12 @@ static bool xtouch_load_thumb_slot_with_lgfx(int slot, int out_w, int out_h)
     if (res < 0)
     {
         xtouch_thumbnail_slot_dsc[slot] = nullptr;
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__ 
         thumb_on_decode_failed_after_open(slot, path);
 #endif
         return false;
     }
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__ 
     thumb_decode_tid_generations_clear(slot);
 #endif
     xtouch_thumbnail_slot_dsc[slot] = (void *)&g_lgfx_thumb_dsc_slot[slot];
@@ -1085,7 +1123,15 @@ static bool xtouch_load_thumb_slot_with_lgfx(int slot, int out_w, int out_h)
 void xtouch_history_cover_clear(void)
 {
     for (int i = 0; i < XTOUCH_HISTORY_COVER_SLOTS; i++)
+    {
         xtouch_history_cover_dsc[i] = nullptr;
+        if (g_history_cover_buf[i])
+        {
+            free(g_history_cover_buf[i]);
+            g_history_cover_buf[i] = nullptr;
+        }
+        memset(&g_history_cover_dsc[i], 0, sizeof(g_history_cover_dsc[i]));
+    }
 }
 
 bool xtouch_history_cover_load_path(int slot, const char *path)
@@ -1121,7 +1167,7 @@ bool xtouch_history_cover_load_path(int slot, const char *path)
     g_history_cover_dsc[slot].data_size = sizeof(lv_color_t) * px_count;
 
     xtouch_pngle_ctx_t pngle_ctx;
-    File file = SD.open(path, "r");
+    File file = xtouch_sdcard_open(path, "r");
     if (!file)
     {
         xtouch_history_cover_dsc[slot] = nullptr;
@@ -1181,7 +1227,7 @@ static bool xtouch_load_logo_for_slot_with_lgfx(int slot, int out_w, int out_h)
         return false;
     }
 
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__ 
     /* /resource/logo.png が無い場合、初回のみ /resource 作成＋DL を実施する */
     if (!xtouch_ensure_resource_logo_exists())
     {
@@ -1214,7 +1260,7 @@ static bool xtouch_load_logo_for_slot_with_lgfx(int slot, int out_w, int out_h)
     const char *path = "/resource/logo.png";
     ConsoleVerbose.printf("[xPTouch][V][THUMB] logo: try slot=%d path=%s\n", slot, path);
     xtouch_pngle_ctx_t pngle_ctx;
-    File file = SD.open(path, "r");
+    File file = xtouch_sdcard_open(path, "r");
     if (!file)
     {
         ConsoleVerbose.printf("[xPTouch][V][THUMB] logo: SD.open failed path=%s\n", path);

@@ -2,7 +2,7 @@
 #include "../ui_msgs.h"
 #include "../ui_helpers.h"
 
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__
 
 static lv_timer_t *s_reprint_detail_fetch_timer = NULL;
 static lv_timer_t *s_reprint_detail_reload_timer = NULL;

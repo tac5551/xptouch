@@ -147,7 +147,7 @@ void set_tray_setting_id(uint8_t ams_id, uint8_t tray_id, const char *setting_id
     tray_setting_id[ams_id][tray_id + 1][TRAY_SETTING_ID_LEN - 1] = '\0';
 }
 
-#if defined(__XTOUCH_SCREEN_50__)
+#if defined(__XTOUCH_PLATFORM_S3__ )
 
 static int xtouch_reprint_other_array_index(void)
 {
@@ -218,4 +218,4 @@ const char *get_tray_setting_id_reprint(uint8_t ams_id, uint8_t tray_id)
         return "";
     return xtouch_other_printer_trays[o][ams_id][tray_id].tray_setting_id;
 }
-#endif /* __XTOUCH_SCREEN_50__ */
+#endif /* __XTOUCH_PLATFORM_S3__ */

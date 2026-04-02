@@ -52,7 +52,7 @@ extern "C"
   void ui_utilNozzleChangeScreen_screen_init(void);
   void ui_amsEditScreen_screen_init(void);
   void ui_amsEditColorScreen_screen_init(void);
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__
   void ui_printersScreen_screen_init(void);
   void ui_historyScreen_screen_init(void);
   void ui_historyReprintScreen_screen_init(void);
@@ -134,7 +134,7 @@ extern "C"
   lv_obj_t *ui_amsEditComponent;
   lv_obj_t *ui_amsEditColorScreen;
   lv_obj_t *ui_amsEditColorComponent;
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__
   lv_obj_t *ui_printersScreen;
   lv_obj_t *ui_printersContentPanel;
   extern lv_obj_t *ui_printersListContainer;
@@ -151,14 +151,17 @@ extern "C"
   lv_obj_t *ui____initial_actions0;
 
   LV_FONT_DECLARE(ui_font_xlcd);
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_SCREEN_S3_050__ 
   LV_FONT_DECLARE(ui_font_xlcd48);
 #endif
 
   LV_FONT_DECLARE(ui_font_xlcdmin);
-#if defined(__XTOUCH_SCREEN_50__)
+#if defined(__XTOUCH_SCREEN_S3_050__)
   /* 5インチのみ: 日本語ファイル名用 Noto 28 */
+  /* TODO: __XTOUCH_SCREEN_S3_028__ 向けに日本語フォント（例: Noto 14/16）を追加し、機種別に切り替える */
   LV_FONT_DECLARE(lv_font_notosans_28);
+#elif defined(__XTOUCH_SCREEN_S3_028__)
+  LV_FONT_DECLARE(lv_font_notosans_14);
 #endif
 
   // 関数の宣言

@@ -111,7 +111,7 @@ extern "C"
 
     void _ui_seconds_to_timeleft(uint32_t seconds, char *ret);
 
-#ifdef __XTOUCH_SCREEN_50__
+#ifdef __XTOUCH_PLATFORM_S3__
     /** Printers/Home 共通: types の xtouch_thumbnail_slot_dsc/path を使って img にスロットのサムネを描画 */
     void ui_thumb_set_img_src_from_slot(lv_obj_t *img, int slot);
 #endif
