@@ -7,6 +7,8 @@
 static lv_timer_t *s_reprint_detail_fetch_timer = NULL;
 static lv_timer_t *s_reprint_detail_reload_timer = NULL;
 static lv_obj_t *s_historyReprintComponentRoot = NULL;
+/** 再描画時に component の親として使う（flex 用 content 列） */
+static lv_obj_t *s_historyReprintContentCol = NULL;
 
 static void ui_history_reprint_detail_reload_timer_cb(lv_timer_t *t)
 {
@@ -21,7 +23,8 @@ static void ui_history_reprint_detail_reload_timer_cb(lv_timer_t *t)
             lv_obj_del(s_historyReprintComponentRoot);
             s_historyReprintComponentRoot = NULL;
         }
-        s_historyReprintComponentRoot = ui_historyReprintComponent_create(ui_historyReprintScreen);
+        s_historyReprintComponentRoot = ui_historyReprintComponent_create(
+            s_historyReprintContentCol ? s_historyReprintContentCol : ui_historyReprintScreen);
     }
     lv_timer_del(t);
 }
@@ -66,14 +69,26 @@ void ui_historyReprintScreen_screen_init(void)
     lv_obj_set_style_pad_column(ui_historyReprintScreen, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_sidebarComponent = ui_sidebarComponent_create(ui_historyReprintScreen);
-    lv_obj_set_x(ui_sidebarComponent, 387);
-    lv_obj_set_y(ui_sidebarComponent, 178);
+
+    lv_obj_t *content_col = lv_obj_create(ui_historyReprintScreen);
+    s_historyReprintContentCol = content_col;
+    lv_obj_set_height(content_col, lv_pct(100));
+    lv_obj_set_flex_grow(content_col, 1);
+    lv_obj_set_flex_flow(content_col, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_flex_align(content_col, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
+    lv_obj_clear_flag(content_col, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_style_pad_left(content_col, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(content_col, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_top(content_col, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_bottom(content_col, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(content_col, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(content_col, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     /* loadScreen() が前画面（この screen 自身も含む）を lv_obj_clean/lv_obj_del で破棄しているため、
      * static で保持している s_historyReprintComponentRoot は dangling pointer になり得る。
      * ここで lv_obj_del すると二重削除になって LVGL 側で panic するので、参照だけ NULL 化する。 */
     s_historyReprintComponentRoot = NULL;
-    s_historyReprintComponentRoot = ui_historyReprintComponent_create(ui_historyReprintScreen);
+    s_historyReprintComponentRoot = ui_historyReprintComponent_create(content_col);
 
     lv_msg_subsribe_obj(XTOUCH_HISTORY_REPRINT_DETAIL_READY, ui_historyReprintScreen, NULL);
     lv_obj_add_event_cb(ui_historyReprintScreen, ui_event_history_reprint_on_detail_ready, LV_EVENT_MSG_RECEIVED, NULL);

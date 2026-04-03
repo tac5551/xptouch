@@ -81,32 +81,13 @@ static void update_one_row(int slot, lv_obj_t *row)
 
     lv_label_set_text(nameLabel, name);
 
-    /* プリンタ名の下に subtask_name（ファイル名）の先頭を表示 */
+    /* プリンタ名の下に subtask_name（ファイル名）。長いときはラベルが横スクロール */
     const char *subtask_src = "";
     if (slot == 0)
         subtask_src = bambuStatus.subtask_name[0] ? bambuStatus.subtask_name : "";
     else if (slot - 1 < xtouch_other_printer_count && otherPrinters[slot - 1].valid)
         subtask_src = otherPrinters[slot - 1].subtask_name[0] ? otherPrinters[slot - 1].subtask_name : "";
-    {
-        char subBuf[24];
-        int n = 0;
-        while (n < 20 && subtask_src[n] != '\0')
-        {
-            subBuf[n] = subtask_src[n];
-            n++;
-        }
-        subBuf[n] = '\0';
-        if (subtask_src[n] != '\0')
-        {
-            if (n > 3)
-                n = 17;
-            subBuf[n++] = '.';
-            subBuf[n++] = '.';
-            subBuf[n++] = '.';
-            subBuf[n] = '\0';
-        }
-        lv_label_set_text(subtaskLabel, subBuf);
-    }
+    lv_label_set_text(subtaskLabel, subtask_src);
 
     lv_slider_set_value(progressBar, percent, LV_ANIM_OFF);
     /* 印刷中(RUNNING/PAUSED/PREPARE)のみゲージ表示。それ以外(IDLE/FINISHED/FAILED 等)は非表示。 */

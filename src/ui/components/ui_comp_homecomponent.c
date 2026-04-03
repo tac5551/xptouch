@@ -250,12 +250,15 @@ void onXTouchAMSUpdate(lv_event_t *e)
     char *tray_type = get_tray_type(tmp_ams_id, tmp_tray_id);
 
     lv_label_set_text(target, "");
+    /* status 下位の tray_id ニブルは xtouch_mqtt_parse_tray で渡した index と一致する想定 */
     int match = (tmp_tray_id == TRAY_ID_EXTERNAL) ? 1 : (tmp_tray_id == tray_id);
     if (match)
     {
         uint32_t color_code = (uint32_t)((tray_status >> 8) & 0xFFFFFF);
-        lv_color_t color = (color_code != 0) ? lv_color_hex(color_code) : lv_color_hex(0x444444);
-        lv_color_t color_inv = (color_code != 0) ? lv_color_hex((0xFFFFFF - color_code) & 0xFFFFFF) : lv_color_hex(0xFFFFFF);
+        /* Home だけ: 0x000000 は「未設定」ではなく黒。色 0 かつ未ロードのときだけ灰 */
+        int has_fill = (loaded || color_code != 0u);
+        lv_color_t color = has_fill ? lv_color_hex(color_code) : lv_color_hex(0x444444);
+        lv_color_t color_inv = has_fill ? lv_color_hex((0xFFFFFFu - color_code) & 0xFFFFFFu) : lv_color_hex(0xFFFFFF);
 
         lv_obj_set_style_bg_color(target, color, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_text_color(target, color_inv, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -268,14 +271,25 @@ void onXTouchAMSUpdate(lv_event_t *e)
         else
             lv_label_set_text(target, "-");
 
+        /* Filament / AMS View と同じ: m_tray_now は ams*4+tray。下位2bitだけ比較すると別AMSユニットで左端が誤ハイライト */
         int is_current = (tmp_tray_id == TRAY_ID_EXTERNAL && bambuStatus.m_tray_now == TRAY_ID_EXTERNAL) ||
-                        (tmp_tray_id <= 3 && bambuStatus.m_tray_now >= 0 && bambuStatus.m_tray_now <= 15 &&
-                         (uint8_t)(bambuStatus.m_tray_now & 3) == tmp_tray_id);
+                         (tmp_tray_id <= 3 && bambuStatus.m_tray_now >= 0 && bambuStatus.m_tray_now <= 15 &&
+                          (uint8_t)(bambuStatus.m_tray_now >> 2) == tmp_ams_id &&
+                          (uint8_t)(bambuStatus.m_tray_now & 3) == tmp_tray_id);
         if (is_current)
         {
             lv_obj_set_style_border_color(target, color_inv, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_border_width(target, AMS_BORDER, LV_PART_MAIN | LV_STATE_DEFAULT);
         }
+    }
+    else
+    {
+        /* match 失敗時も前フレームの bg が残ると「色ずれ」に見える */
+        lv_obj_set_style_bg_color(target, lv_color_hex(0x444444), LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_text_color(target, lv_color_hex(0x888888), LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_border_color(target, lv_color_hex(0x333333), LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_border_width(target, AMS_BORDER, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_label_set_text(target, "-");
     }
 }
 
@@ -443,27 +457,7 @@ void onXTouchPrintStatus(lv_event_t *e)
     {
         lv_obj_t *subtaskLabel = comp_homeComponent[UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPLAYER_MAINSCREENCONTROLLER_MAINSCREENSUBTASKLABEL];
         if (subtaskLabel)
-        {
-            static char subtaskBuf[24];
-            const char *src = bambuStatus.subtask_name[0] ? bambuStatus.subtask_name : "";
-            int n = 0;
-            while (n < 20 && src[n] != '\0')
-            {
-                subtaskBuf[n] = src[n];
-                n++;
-            }
-            subtaskBuf[n] = '\0';
-            if (src[n] != '\0')
-            {
-                if (n > 3)
-                    n = 17;
-                subtaskBuf[n++] = '.';
-                subtaskBuf[n++] = '.';
-                subtaskBuf[n++] = '.';
-                subtaskBuf[n] = '\0';
-            }
-            lv_label_set_text(subtaskLabel, subtaskBuf);
-        }
+            lv_label_set_text(subtaskLabel, bambuStatus.subtask_name[0] ? bambuStatus.subtask_name : "");
     }
 #endif
 
@@ -1245,14 +1239,13 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_flex_align(cui_mainScreenControllerRight, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
     lv_obj_clear_flag(cui_mainScreenControllerRight, LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN);
     lv_obj_set_style_bg_opa(cui_mainScreenControllerRight, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-lv_obj_set_style_border_width(cui_mainScreenControllerRight, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(cui_mainScreenControllerRight, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_row(cui_mainScreenControllerRight, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_top(cui_mainScreenControllerRight, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_bottom(cui_mainScreenControllerRight, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_left(cui_mainScreenControllerRight, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_right(cui_mainScreenControllerRight, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-lv_obj_set_style_bg_color(cui_mainScreenControllerRight, lv_color_hex(0x4444FF), LV_PART_MAIN | LV_STATE_DEFAULT);
-    /* Pause / Stop: 5" は1行に4要素。2.8" は [Play|Stop] 横並び + 下に Finished/Reprint（全幅） */
+    lv_obj_set_style_bg_color(cui_mainScreenControllerRight, lv_color_hex(0x444444), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_t *cui_mainScreenControllerRightBtnRow = lv_obj_create(cui_mainScreenControllerRight);
     lv_obj_set_width(cui_mainScreenControllerRightBtnRow, lv_pct(100));
     lv_obj_set_height(cui_mainScreenControllerRightBtnRow, LV_SIZE_CONTENT);
@@ -1446,7 +1439,7 @@ lv_obj_set_style_bg_color(cui_mainScreenControllerRight, lv_color_hex(0x4444FF),
     lv_obj_set_style_bg_opa(cui_mainScreenReprintButton, 255, LV_PART_MAIN | LV_STATE_PRESSED);
     lv_obj_add_flag(cui_mainScreenReprintButton, LV_OBJ_FLAG_HIDDEN);
 
-    /* ボタン下に subtask_name の先頭を表示（最大約20文字想定で省略） */
+    /* ボタン下に subtask_name（ファイル名）。長いときは横スクロール（History Reprint のタイトルと同様） */
     lv_obj_t *cui_mainScreenSubtaskLabel = lv_label_create(cui_mainScreenControllerRight);
     lv_obj_set_width(cui_mainScreenSubtaskLabel, lv_pct(100));
     lv_obj_set_height(cui_mainScreenSubtaskLabel, LV_SIZE_CONTENT);
@@ -1460,7 +1453,8 @@ lv_obj_set_style_bg_color(cui_mainScreenControllerRight, lv_color_hex(0x4444FF),
 #endif
         
     lv_obj_set_style_text_color(cui_mainScreenSubtaskLabel, lv_color_hex(0xaaaaaa), LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_label_set_long_mode(cui_mainScreenSubtaskLabel, LV_LABEL_LONG_CLIP);
+    lv_obj_set_style_text_line_space(cui_mainScreenSubtaskLabel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_label_set_long_mode(cui_mainScreenSubtaskLabel, LV_LABEL_LONG_SCROLL_CIRCULAR);
 #endif
 
     lv_obj_t *cui_mainScreenProgressBar;

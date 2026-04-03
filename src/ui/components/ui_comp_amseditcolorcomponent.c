@@ -14,8 +14,14 @@ static const uint32_t s_palette_colors[25] = {
 };
 
 #define AMS_EDIT_COLOR_COUNT 25
+/* 5インチは横10、2.8インチ等は横5（幅に合わせる） */
+#if defined(__XTOUCH_SCREEN_S3_050__)
 #define AMS_EDIT_COLOR_COLS 10
 #define AMS_EDIT_COLOR_CHIP_SIZE 54 /* 36px の 1.5 倍 */
+#else
+#define AMS_EDIT_COLOR_COLS 5
+#define AMS_EDIT_COLOR_CHIP_SIZE 43 /* 5" の 54 に対し 4/5 相当・固定 */
+#endif
 
 static void on_palette_clicked(lv_event_t *e)
 {
@@ -57,7 +63,7 @@ lv_obj_t *ui_amsEditColorComponent_create(lv_obj_t *comp_parent)
 
 
 
-    /* 10 列でパレット表示（25 色なら 3 行） */
+    /* 5": 10 列×3 行 / それ以外: 5 列×5 行 */
     int row_count = (AMS_EDIT_COLOR_COUNT + AMS_EDIT_COLOR_COLS - 1) / AMS_EDIT_COLOR_COLS;
     for (int row = 0; row < row_count; row++)
     {

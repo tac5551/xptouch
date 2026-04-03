@@ -6,4 +6,6 @@
 int screenWidth = 240;
 int screenHeight = 320;
 
+#include "sd_spi_pins.h"
+
 #endif

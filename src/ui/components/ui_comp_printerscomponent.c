@@ -9,9 +9,27 @@
 #if defined(__XTOUCH_SCREEN_S3_050__)
 #define ROW_LEFT_THUMB_W 150
 #define ROW_LEFT_THUMB_H 150
+/* History の Reprint と同じ: ラベル周りの内側パッド＋十分な幅（狭い btnArea だと flex で横潰れ） */
+#define PRINTERS_50_REPRINT_SELECT_W 156
+#define PRINTERS_50_REPRINT_SELECT_H 52
+#define PRINTERS_50_REPRINT_SELECT_PAD_H 14
+#define PRINTERS_50_REPRINT_SELECT_PAD_V 12
+#define PRINTERS_50_BTN_AREA_W 288 /* pause+gap+stop+gap+reprint が収まる固定幅 */
+#define PRINTERS_50_TOP_ICON_BTN_W 56
 #else
 #define ROW_LEFT_THUMB_W 75
 #define ROW_LEFT_THUMB_H 75
+#endif
+
+/* 2.8" のみ一覧を詰める（5" は従来値のまま・再テスト不要にする） */
+#if !defined(__XTOUCH_SCREEN_S3_050__)
+#define PRINTERS_28_LIST_PANEL_W_PCT 100
+#define PRINTERS_28_ROW_PAD 2
+#define PRINTERS_28_ROW_PAD_COLUMN 2 /* サムネ–中央ペイン–ボタンペイン間 */
+#define PRINTERS_28_COMP_PAD_LR 0
+#define PRINTERS_28_COMP_PAD_TB 4
+/* サムネ 75px: Reprint+Select+隙間がこれを超えると行が潰れる */
+#define PRINTERS_28_REPRINT_SELECT_BTN_H 36
 #endif
 
 static void on_printer_select_temp_focus(lv_event_t *e)
@@ -28,15 +46,23 @@ lv_obj_t *ui_printersComponent_create(lv_obj_t *comp_parent)
 {
     /* コンテンツ全体のパネル（従来の ui_printersContentPanel 相当） */
     lv_obj_t *cui_printersComponent = lv_obj_create(comp_parent);
+#if defined(__XTOUCH_SCREEN_S3_050__)
     lv_obj_set_width(cui_printersComponent, lv_pct(90));
-    lv_obj_set_height(cui_printersComponent, lv_pct(100));
-    lv_obj_set_flex_grow(cui_printersComponent, 1);
-    lv_obj_set_flex_flow(cui_printersComponent, LV_FLEX_FLOW_COLUMN);
-    lv_obj_set_flex_align(cui_printersComponent, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
     lv_obj_set_style_pad_left(cui_printersComponent, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_right(cui_printersComponent, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_top(cui_printersComponent, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_bottom(cui_printersComponent, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+#else
+    lv_obj_set_width(cui_printersComponent, lv_pct(PRINTERS_28_LIST_PANEL_W_PCT));
+    lv_obj_set_style_pad_left(cui_printersComponent, PRINTERS_28_COMP_PAD_LR, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(cui_printersComponent, PRINTERS_28_COMP_PAD_LR, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_top(cui_printersComponent, PRINTERS_28_COMP_PAD_TB, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_bottom(cui_printersComponent, PRINTERS_28_COMP_PAD_TB, LV_PART_MAIN | LV_STATE_DEFAULT);
+#endif
+    lv_obj_set_height(cui_printersComponent, lv_pct(100));
+    lv_obj_set_flex_grow(cui_printersComponent, 1);
+    lv_obj_set_flex_flow(cui_printersComponent, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_flex_align(cui_printersComponent, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
     lv_obj_set_style_bg_color(cui_printersComponent, lv_color_hex(0x333333), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_width(cui_printersComponent, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
 
@@ -63,9 +89,18 @@ lv_obj_t *ui_printersComponent_create(lv_obj_t *comp_parent)
         lv_obj_set_width(row, lv_pct(100));
         lv_obj_set_height(row, LV_SIZE_CONTENT);
         lv_obj_set_flex_flow(row, LV_FLEX_FLOW_ROW);
-        lv_obj_set_flex_align(row, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
         lv_obj_set_style_bg_color(row, lv_color_hex(0x444444), LV_PART_MAIN | LV_STATE_DEFAULT);
+#if defined(__XTOUCH_SCREEN_S3_050__)
+        lv_obj_set_flex_align(row, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
         lv_obj_set_style_pad_all(row, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
+#else
+        /* 上揃え: サムネよりテキスト列が低いとき CROSS=CENTER だと上下に大きな空きが出る */
+        lv_obj_set_flex_align(row, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
+        lv_obj_set_style_pad_all(row, PRINTERS_28_ROW_PAD, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_pad_left(row, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_pad_right(row, 0, LV_PART_MAIN | LV_STATE_DEFAULT); /* リスト右端の無駄な空きを減らす */
+        lv_obj_set_style_pad_column(row, PRINTERS_28_ROW_PAD_COLUMN, LV_PART_MAIN | LV_STATE_DEFAULT);
+#endif
         lv_obj_set_style_border_width(row, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_clear_flag(row, LV_OBJ_FLAG_SCROLLABLE);
         lv_obj_set_scrollbar_mode(row, LV_SCROLLBAR_MODE_OFF);
@@ -78,10 +113,17 @@ lv_obj_t *ui_printersComponent_create(lv_obj_t *comp_parent)
         lv_obj_set_style_border_width(leftBox, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_radius(leftBox, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_clear_flag(leftBox, LV_OBJ_FLAG_SCROLLABLE);
+#if !defined(__XTOUCH_SCREEN_S3_050__)
+        lv_obj_set_style_pad_all(leftBox, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+#endif
         lv_obj_t *img = lv_img_create(leftBox);
         lv_obj_center(img);
         lv_img_set_size_mode(img, LV_IMG_SIZE_MODE_REAL);
+#if defined(__XTOUCH_SCREEN_S3_050__)
         lv_obj_set_size(img, ROW_LEFT_THUMB_W - 4, ROW_LEFT_THUMB_H - 4);
+#else
+        lv_obj_set_size(img, ROW_LEFT_THUMB_W - 2, ROW_LEFT_THUMB_H - 2);
+#endif
 
         /* 右: 名前 / 進捗バー / レイヤー・残り時間 */
         lv_obj_t *rightCol = lv_obj_create(row);
@@ -91,7 +133,14 @@ lv_obj_t *ui_printersComponent_create(lv_obj_t *comp_parent)
         lv_obj_set_flex_align(rightCol, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
         lv_obj_set_style_bg_opa(rightCol, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_border_width(rightCol, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+#if defined(__XTOUCH_SCREEN_S3_050__)
         lv_obj_set_style_pad_row(rightCol, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
+#else
+        /* 横の隙間は詰めるが、上下の行間は従来どおり確保 */
+        lv_obj_set_style_pad_row(rightCol, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_pad_left(rightCol, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_pad_right(rightCol, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+#endif
         lv_obj_clear_flag(rightCol, LV_OBJ_FLAG_SCROLLABLE);
 
         lv_obj_t *nameLabel = lv_label_create(rightCol);
@@ -99,10 +148,12 @@ lv_obj_t *ui_printersComponent_create(lv_obj_t *comp_parent)
         lv_obj_set_style_text_color(nameLabel, lv_color_hex(0xDDDDDD), LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_text_font(nameLabel, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-        /* プリンタ名の下: ファイル名（subtask_name）の先頭 */
+        /* プリンタ名の下: ファイル名（subtask_name）。長いときは横スクロール */
         lv_obj_t *subtaskLabel = lv_label_create(rightCol);
+        lv_obj_set_width(subtaskLabel, lv_pct(100));
         lv_label_set_text(subtaskLabel, "");
         lv_obj_set_style_text_color(subtaskLabel, lv_color_hex(0x999999), LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_text_line_space(subtaskLabel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
         /* Small と同じサイズ: 2.8=14px, 5=28px */
         
 #if defined(__XTOUCH_SCREEN_S3_050__)
@@ -111,7 +162,7 @@ lv_obj_t *ui_printersComponent_create(lv_obj_t *comp_parent)
         lv_obj_set_style_text_font(subtaskLabel,&lv_font_notosans_14,LV_PART_MAIN | LV_STATE_DEFAULT);
 #endif
             
-        lv_label_set_long_mode(subtaskLabel, LV_LABEL_LONG_CLIP);
+        lv_label_set_long_mode(subtaskLabel, LV_LABEL_LONG_SCROLL_CIRCULAR);
 
         lv_obj_t *progressBar = lv_slider_create(rightCol);
         lv_slider_set_range(progressBar, 0, 100);
@@ -138,30 +189,41 @@ lv_obj_t *ui_printersComponent_create(lv_obj_t *comp_parent)
         /* 右端: 上段=一時停止/停止, 下段=Select の2段レイアウト */
         lv_obj_t *btnArea = lv_obj_create(row);
 #if defined(__XTOUCH_SCREEN_S3_050__)
-        lv_obj_set_width(btnArea, 154);
+        lv_obj_set_width(btnArea, PRINTERS_50_BTN_AREA_W);
 #else
-        /* 2.8" は右端ボタン幅を詰めて中央カラム（ファイル名）を確保 */
-        lv_obj_set_width(btnArea, 120);
+        /* 固定幅だと中身より広くなりファイル名側が狭い。内容幅＋行内右寄せで Reprint 近づける */
+        lv_obj_set_width(btnArea, LV_SIZE_CONTENT);
 #endif
         lv_obj_set_height(btnArea, LV_SIZE_CONTENT);
         lv_obj_set_flex_flow(btnArea, LV_FLEX_FLOW_COLUMN);
+#if defined(__XTOUCH_SCREEN_S3_050__)
         lv_obj_set_flex_align(btnArea, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
         lv_obj_set_style_pad_row(btnArea, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_pad_column(btnArea, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
+#else
+        /* COLUMN: main=縦 START（上から）、cross=横 END（子を右端に寄せる） */
+        lv_obj_set_flex_align(btnArea, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_END, LV_FLEX_ALIGN_START);
+        lv_obj_set_style_pad_row(btnArea, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_pad_column(btnArea, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+#endif
         lv_obj_set_style_bg_opa(btnArea, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_pad_all(btnArea, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_border_width(btnArea, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_clear_flag(btnArea, LV_OBJ_FLAG_SCROLLABLE);
 
         lv_obj_t *topBtns = lv_obj_create(btnArea);
+#if defined(__XTOUCH_SCREEN_S3_050__)
         lv_obj_set_width(topBtns, lv_pct(100));
         lv_obj_set_height(topBtns, LV_SIZE_CONTENT);
         lv_obj_set_flex_flow(topBtns, LV_FLEX_FLOW_ROW);
         lv_obj_set_flex_align(topBtns, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
-#if defined(__XTOUCH_SCREEN_S3_050__)
         lv_obj_set_style_pad_column(topBtns, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
 #else
-        lv_obj_set_style_pad_column(topBtns, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_width(topBtns, LV_SIZE_CONTENT);
+        lv_obj_set_height(topBtns, LV_SIZE_CONTENT);
+        lv_obj_set_flex_flow(topBtns, LV_FLEX_FLOW_ROW);
+        lv_obj_set_flex_align(topBtns, LV_FLEX_ALIGN_END, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+        lv_obj_set_style_pad_column(topBtns, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
 #endif
         lv_obj_set_style_bg_opa(topBtns, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_pad_all(topBtns, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -169,15 +231,28 @@ lv_obj_t *ui_printersComponent_create(lv_obj_t *comp_parent)
         lv_obj_clear_flag(topBtns, LV_OBJ_FLAG_SCROLLABLE);
 
         lv_obj_t *bottomBtns = lv_obj_create(btnArea);
+#if defined(__XTOUCH_SCREEN_S3_050__)
         lv_obj_set_width(bottomBtns, lv_pct(100));
         lv_obj_set_height(bottomBtns, LV_SIZE_CONTENT);
         lv_obj_set_flex_flow(bottomBtns, LV_FLEX_FLOW_ROW);
         lv_obj_set_flex_align(bottomBtns, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
         lv_obj_set_style_pad_column(bottomBtns, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
+#else
+        lv_obj_set_width(bottomBtns, LV_SIZE_CONTENT);
+        lv_obj_set_height(bottomBtns, LV_SIZE_CONTENT);
+        lv_obj_set_flex_flow(bottomBtns, LV_FLEX_FLOW_ROW);
+        lv_obj_set_flex_align(bottomBtns, LV_FLEX_ALIGN_END, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+        lv_obj_set_style_pad_column(bottomBtns, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+#endif
         lv_obj_set_style_bg_opa(bottomBtns, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_pad_all(bottomBtns, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+#if defined(__XTOUCH_SCREEN_S3_050__)
         lv_obj_set_style_pad_top(bottomBtns, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_pad_bottom(bottomBtns, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
+#else
+        lv_obj_set_style_pad_top(bottomBtns, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_pad_bottom(bottomBtns, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+#endif
 
         lv_obj_set_style_border_width(bottomBtns, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_clear_flag(bottomBtns, LV_OBJ_FLAG_SCROLLABLE);
@@ -185,9 +260,9 @@ lv_obj_t *ui_printersComponent_create(lv_obj_t *comp_parent)
         /* 一時停止ボタン: コンテナ＋ラベルでアイコンを上下中央に */
         lv_obj_t *pauseBtn = lv_obj_create(topBtns);
 #if defined(__XTOUCH_SCREEN_S3_050__)
-        lv_obj_set_width(pauseBtn, lv_pct(40));
+        lv_obj_set_width(pauseBtn, PRINTERS_50_TOP_ICON_BTN_W);
 #else
-        lv_obj_set_width(pauseBtn, 42);
+        lv_obj_set_width(pauseBtn, 30);
 #endif
         lv_obj_set_height(pauseBtn, LV_SIZE_CONTENT);
         lv_obj_set_flex_flow(pauseBtn, LV_FLEX_FLOW_COLUMN);
@@ -211,9 +286,9 @@ lv_obj_t *ui_printersComponent_create(lv_obj_t *comp_parent)
         /* 停止ボタン: コンテナ＋ラベルでアイコンを上下中央に */
         lv_obj_t *stopBtn = lv_obj_create(topBtns);
 #if defined(__XTOUCH_SCREEN_S3_050__)
-        lv_obj_set_width(stopBtn, lv_pct(40));
+        lv_obj_set_width(stopBtn, PRINTERS_50_TOP_ICON_BTN_W);
 #else
-        lv_obj_set_width(stopBtn, 42);
+        lv_obj_set_width(stopBtn, 30);
 #endif
         lv_obj_set_height(stopBtn, LV_SIZE_CONTENT);
         lv_obj_set_flex_flow(stopBtn, LV_FLEX_FLOW_COLUMN);
@@ -237,11 +312,15 @@ lv_obj_t *ui_printersComponent_create(lv_obj_t *comp_parent)
         /* メイン操作プリンタの一時切替（ペアは pair.json のまま） */
         lv_obj_t *reprintBtn = lv_obj_create(topBtns);
 #if defined(__XTOUCH_SCREEN_S3_050__)
-        lv_obj_set_width(reprintBtn, 100);
+        lv_obj_set_width(reprintBtn, PRINTERS_50_REPRINT_SELECT_W);
 #else
-        lv_obj_set_width(reprintBtn, 72);
+        lv_obj_set_width(reprintBtn, 56); /* 2.8" 専用の狭い btn 列向け */
 #endif
-        lv_obj_set_height(reprintBtn, 52);
+#if defined(__XTOUCH_SCREEN_S3_050__)
+        lv_obj_set_height(reprintBtn, PRINTERS_50_REPRINT_SELECT_H);
+#else
+        lv_obj_set_height(reprintBtn, PRINTERS_28_REPRINT_SELECT_BTN_H);
+#endif
         lv_obj_set_flex_flow(reprintBtn, LV_FLEX_FLOW_COLUMN);
         lv_obj_set_flex_align(reprintBtn, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
         lv_obj_add_flag(reprintBtn, LV_OBJ_FLAG_CLICKABLE);
@@ -251,7 +330,12 @@ lv_obj_t *ui_printersComponent_create(lv_obj_t *comp_parent)
         lv_obj_set_style_bg_color(reprintBtn, lv_color_hex(0x2a552a), LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_bg_color(reprintBtn, lv_color_hex(0x008800), LV_PART_MAIN | LV_STATE_PRESSED);
         lv_obj_set_style_bg_opa(reprintBtn, 255, LV_PART_MAIN | LV_STATE_PRESSED);
-        lv_obj_set_style_pad_all(reprintBtn, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+#if defined(__XTOUCH_SCREEN_S3_050__)
+        lv_obj_set_style_pad_hor(reprintBtn, PRINTERS_50_REPRINT_SELECT_PAD_H, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_pad_ver(reprintBtn, PRINTERS_50_REPRINT_SELECT_PAD_V, LV_PART_MAIN | LV_STATE_DEFAULT);
+#else
+        lv_obj_set_style_pad_all(reprintBtn, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+#endif
         lv_obj_set_user_data(reprintBtn, (void *)(intptr_t)i);
         lv_obj_add_flag(reprintBtn, LV_OBJ_FLAG_HIDDEN);
         lv_obj_t *reprintLbl = lv_label_create(reprintBtn);
@@ -261,31 +345,61 @@ lv_obj_t *ui_printersComponent_create(lv_obj_t *comp_parent)
         lv_obj_clear_flag(reprintLbl, LV_OBJ_FLAG_SCROLLABLE);
         lv_obj_set_style_text_align(reprintLbl, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_text_font(reprintLbl, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
+#if defined(__XTOUCH_SCREEN_S3_050__)
+        lv_obj_set_style_pad_all(reprintLbl, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+#else
+        lv_obj_set_style_pad_left(reprintLbl, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_pad_right(reprintLbl, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
+#endif
+#if !defined(__XTOUCH_SCREEN_S3_050__)
+        lv_obj_set_style_pad_top(reprintLbl, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_pad_bottom(reprintLbl, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+#endif
 
         lv_obj_t *selectBtn = lv_obj_create(bottomBtns);
 #if defined(__XTOUCH_SCREEN_S3_050__)
-        lv_obj_set_width(selectBtn, 148);
-        lv_obj_set_height(selectBtn, 70);
+        lv_obj_set_width(selectBtn, PRINTERS_50_REPRINT_SELECT_W);
 #else
-        lv_obj_set_width(selectBtn, lv_pct(100));
-        lv_obj_set_height(selectBtn, 52);
+        lv_obj_set_width(selectBtn, 56);
+#endif
+#if defined(__XTOUCH_SCREEN_S3_050__)
+        lv_obj_set_height(selectBtn, PRINTERS_50_REPRINT_SELECT_H);
+#else
+        lv_obj_set_height(selectBtn, PRINTERS_28_REPRINT_SELECT_BTN_H);
 #endif
         lv_obj_set_flex_flow(selectBtn, LV_FLEX_FLOW_COLUMN);
         lv_obj_set_flex_align(selectBtn, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
         lv_obj_add_flag(selectBtn, LV_OBJ_FLAG_CLICKABLE);
+        lv_obj_clear_flag(selectBtn, LV_OBJ_FLAG_SCROLLABLE);
+        lv_obj_set_scrollbar_mode(selectBtn, LV_SCROLLBAR_MODE_OFF);
         lv_obj_set_style_radius(selectBtn, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_border_width(selectBtn, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_border_color(selectBtn, lv_color_hex(0x56a5ff), LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_bg_color(selectBtn, lv_color_hex(0x56a5ff), LV_PART_MAIN | LV_STATE_PRESSED);
         lv_obj_set_style_bg_opa(selectBtn, 255, LV_PART_MAIN | LV_STATE_PRESSED);
-        lv_obj_set_style_pad_all(selectBtn, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
+#if defined(__XTOUCH_SCREEN_S3_050__)
+        lv_obj_set_style_pad_hor(selectBtn, PRINTERS_50_REPRINT_SELECT_PAD_H, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_pad_ver(selectBtn, PRINTERS_50_REPRINT_SELECT_PAD_V, LV_PART_MAIN | LV_STATE_DEFAULT);
+#else
+        lv_obj_set_style_pad_all(selectBtn, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+#endif
         lv_obj_t *selectLbl = lv_label_create(selectBtn);
         lv_label_set_text(selectLbl, "Select");
-        lv_obj_set_width(selectLbl, 140);
-        lv_label_set_long_mode(selectLbl, LV_LABEL_LONG_WRAP);
+        lv_obj_set_width(selectLbl, LV_SIZE_CONTENT);
+        lv_label_set_long_mode(selectLbl, LV_LABEL_LONG_CLIP);
         lv_obj_clear_flag(selectLbl, LV_OBJ_FLAG_SCROLLABLE);
         lv_obj_set_style_text_align(selectLbl, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_text_font(selectLbl, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
+#if defined(__XTOUCH_SCREEN_S3_050__)
+        lv_obj_set_style_pad_all(selectLbl, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+#else
+        lv_obj_set_style_pad_left(selectLbl, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_pad_right(selectLbl, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
+#endif
+#if !defined(__XTOUCH_SCREEN_S3_050__)
+        lv_obj_set_style_pad_top(selectLbl, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_pad_bottom(selectLbl, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+#endif
         if (i == 0)
             lv_obj_add_flag(selectBtn, LV_OBJ_FLAG_HIDDEN); /* update_one_row で一時切替時のみ表示 */
 

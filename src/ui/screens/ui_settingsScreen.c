@@ -91,10 +91,7 @@ void ui_settingsScreen_screen_init(void)
     lv_obj_set_x(ui_systemComponent, 0);
     lv_obj_set_y(ui_systemComponent, 0);
 
-#ifdef __XTOUCH_SCREEN_28__
-    lv_obj_set_width(ui_sidebarComponent, 48);
-#endif
-#ifdef __XTOUCH_SCREEN_3248__
+#if !defined(__XTOUCH_SCREEN_S3_050__)
     lv_obj_set_width(ui_sidebarComponent, 48);
 #endif
 }

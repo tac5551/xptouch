@@ -19,7 +19,7 @@ void ui_amsViewScreen_screen_init(void)  {
     ui_amsViewComponent = ui_amsViewComponent_create(ui_amsViewScreen);
     lv_obj_set_x(ui_amsViewComponent, 386);
     lv_obj_set_y(ui_amsViewComponent, 178);
-#ifdef __XTOUCH_SCREEN_28__
+#if !defined(__XTOUCH_SCREEN_S3_050__)
     lv_obj_set_width(ui_sidebarComponent, 48);
 #endif
 

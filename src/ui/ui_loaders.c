@@ -222,7 +222,8 @@ void loadScreen(int screen)
     default:
         break;
     }
-    if (sidebar_index >= 1 && screen != 6 && screen != 15)
+    /* 15=History / 16=Reprint は History ボタン(index 2)のまま。++ すると Temp(index 3)が光る */
+    if (sidebar_index >= 1 && screen != 6 && screen != 15 && screen != 16)
         sidebar_index++;
 #else
     switch (screen)

@@ -41,7 +41,7 @@ void ui_amsEditColorScreen_screen_init(void)
     lv_obj_set_x(ui_amsEditColorComponent, 0);
     lv_obj_set_y(ui_amsEditColorComponent, 0);
 
-#ifdef __XTOUCH_SCREEN_28__
+#if !defined(__XTOUCH_SCREEN_S3_050__)
     lv_obj_set_width(ui_sidebarComponent, 48);
 #endif
 }

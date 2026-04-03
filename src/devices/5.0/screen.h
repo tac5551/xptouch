@@ -1,16 +1,14 @@
 #ifndef _XLCD_SCREEN
 #define _XLCD_SCREEN
 
-//#include "LGFX_ESP32_JC8048W550.h"
-#include "LGFX_ESP32S3_2432S028.hpp"
-#include <LovyanGFX.h>
-
 #include "setting.h"
+#include "LGFX_ESP32_JC8048W550.h"
+#include <LovyanGFX.h>
 
 static lv_disp_draw_buf_t draw_buf;
 static lv_color_t *disp_draw_buf1;
 static lv_color_t *disp_draw_buf2;
-LGFX_ESP32S3_2432S028 tft;
+LGFX tft;
 
 #include "ui/ui.h"
 #include "touch.h"
@@ -164,7 +162,7 @@ void xtouch_screen_toggleTFTFlip()
 void xtouch_screen_setupTFTFlip()
 {
     byte eepromTFTFlip = xtouch_screen_getTFTFlip();
-    tft.setRotation(eepromTFTFlip == 1 ? 3 : 1);
+    tft.setRotation(eepromTFTFlip == 1 ? 2 : 0);
 }
 
 void xtouch_screen_dispFlush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p)
@@ -277,8 +275,8 @@ void xtouch_screen_setup()
     /*Initialize the display*/
     static lv_disp_drv_t disp_drv;
     lv_disp_drv_init(&disp_drv);
-    disp_drv.hor_res = screenHeight;
-    disp_drv.ver_res = screenWidth;
+    disp_drv.hor_res = screenWidth;
+    disp_drv.ver_res = screenHeight;
     disp_drv.flush_cb = xtouch_screen_dispFlush;
     disp_drv.draw_buf = &draw_buf;
     lv_disp_drv_register(&disp_drv);

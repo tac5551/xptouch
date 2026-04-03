@@ -18,18 +18,14 @@
 #include "xtouch/sdcard.h"
 #include "xtouch/hms.h"
 
-#if defined(__XTOUCH_SCREEN_28__)
-#include "devices/2.8/screen.h"
-#endif
 
 #if defined(__XTOUCH_SCREEN_S3_050__) 
 #include "devices/5.0/screen.h"
-#endif
-
-#if defined(__XTOUCH_SCREEN_S3_028__)
+#elif defined(__XTOUCH_SCREEN_S3_028__)
 #include "devices/s3_2.8/screen.h"
+#else
+#include "devices/2.8/screen.h"
 #endif
-
 
 #include "xtouch/cloud.hpp"
 #include "xtouch/neopixel.h"
@@ -77,7 +73,7 @@ void setup()
 #endif
 
   xtouch_eeprom_setup();
-#if defined(____XTOUCH_SCREEN_S3_050__)
+#if defined(__XTOUCH_SCREEN_S3_050__)
   xtouch_eeprom_rgb_pclk_heal_invalid_storage();
 #endif
   xtouch_globals_init();
@@ -108,21 +104,18 @@ void setup()
 #endif
   xtouch_intro_show();
   int8_t sd_cs_pin = -1;
-  bool sd_mode_1bit = true; /* default: 1bit (2.8 / 5.0) */
-  // 2.8": M5Stack のみ 4、それ以外は -1(デフォルト)
-#if defined(__XTOUCH_PLATFORM_S3__)
-  sd_cs_pin = 47;
-  sd_mode_1bit = true; /* S3 platform の既定は 1bit（必要時はフラグで override） */
-#elif defined(__XTOUCH_SCREEN_28__)
-  if (tft.getBoard() == (lgfx::boards::board_t)2) {
-      sd_cs_pin = 4;
-  }else{
-      sd_cs_pin = 5;
-  }
-  /* 2.8 系は原則 1bit。3.5 専用調査時のみビルドフラグで 4bit を明示有効化する。 */
-  sd_mode_1bit = true;
-#if defined(XTOUCH_SDMMC_FORCE_4BIT)
+  bool sd_mode_1bit = true;
+#if defined(__XTOUCH_SCREEN_S3_028__)
   sd_mode_1bit = false;
+#else
+#if defined(__XTOUCH_SCREEN_S3_050__)
+  sd_cs_pin = 10; /* TF CS。SCK/MOSI/MISO は devices/5.0/sd_spi_pins.h */
+#elif defined(__XTOUCH_SCREEN_28__)
+  if (tft.getBoard() == (lgfx::boards::board_t)2)
+    sd_cs_pin = 4;
+  else
+    sd_cs_pin = 5;
+  sd_mode_1bit = true;
 #endif
 #endif
   while (!xtouch_sdcard_setup(sd_cs_pin, sd_mode_1bit))
@@ -130,7 +123,7 @@ void setup()
 
 #if defined(__XTOUCH_PLATFORM_S3__)
   xtouch_lcd_json_apply_from_sd_and_reboot();
-  lv_fs_arduino_sd_init();  /* LVGL FS ドライバ: Arduino SD を 'S:' として登録 */
+  lv_fs_arduino_sd_init(); 
   xtouch_thumbnail_subscribe_events();
   xtouch_history_subscribe_events();
 #endif

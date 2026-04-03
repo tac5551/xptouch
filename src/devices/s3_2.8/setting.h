@@ -22,4 +22,6 @@
 int screenWidth  = 240;
 int screenHeight = 320;
 
+#include "sd_mmc_pins.h"
+
 #endif

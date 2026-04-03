@@ -2,9 +2,13 @@
 #define _XLCD_SDCARD_STATUS
 
 #include <Arduino.h>
+#if defined(__XTOUCH_SCREEN_28__) || defined(__XTOUCH_SCREEN_S3_050__)
+#include <SD.h>
+#else
 #include <SD_MMC.h>
+#endif
 
-/* SD カードの存在チェックは SD.cardType() が低レイヤ初期化を引き起こしやすいので、
+/* SD カードの存在チェックは cardType() が低レイヤ初期化を引き起こしやすいので、
  * 描画/タイマーのたびに呼ばないように「キャッシュして間引く」ためのユーティリティ。
  *
  * - 初回: xtouch_sdcard_setup() 側で mark_present(true) される
@@ -25,7 +29,11 @@ static inline bool xtouch_sdcard_is_present_cached(uint32_t interval_ms = 1000)
     if (now - s_sd_last_check_ms < interval_ms)
         return s_sd_present_cached;
     s_sd_last_check_ms = now;
+#if defined(__XTOUCH_SCREEN_28__) || defined(__XTOUCH_SCREEN_S3_050__)
+    s_sd_present_cached = (SD.cardType() != CARD_NONE);
+#else
     s_sd_present_cached = (SD_MMC.cardType() != CARD_NONE);
+#endif
     return s_sd_present_cached;
 }
 

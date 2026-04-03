@@ -255,6 +255,43 @@ lv_color_t _ui_get_complementary_color(lv_color_t color)
    return compl_color;
 }
 
+void ui_img_zoom_to_fit_box(lv_obj_t *img, lv_coord_t box_w, lv_coord_t box_h)
+{
+#if LV_USE_IMG == 0
+   (void)img;
+   (void)box_w;
+   (void)box_h;
+#else
+   if (!img)
+      return;
+   if (box_w <= 0 || box_h <= 0)
+   {
+      lv_img_set_zoom(img, LV_IMG_ZOOM_NONE);
+      return;
+   }
+   const void *src = lv_img_get_src(img);
+   if (!src)
+   {
+      lv_img_set_zoom(img, LV_IMG_ZOOM_NONE);
+      return;
+   }
+   lv_img_header_t header;
+   if (lv_img_decoder_get_info(src, &header) != LV_RES_OK || header.w <= 0 || header.h <= 0)
+   {
+      lv_img_set_zoom(img, LV_IMG_ZOOM_NONE);
+      return;
+   }
+   uint32_t zx = (uint32_t)box_w * 256u / (uint32_t)header.w;
+   uint32_t zy = (uint32_t)box_h * 256u / (uint32_t)header.h;
+   uint32_t z = (zx < zy) ? zx : zy;
+   if (z < 1u)
+      z = 1u;
+   if (z > 65535u)
+      z = 65535u;
+   lv_img_set_zoom(img, (uint16_t)z);
+#endif
+}
+
 void _ui_seconds_to_timeleft(uint32_t seconds, char *ret)
 {
    int days = seconds / 86400;
@@ -298,6 +335,7 @@ void ui_thumb_set_img_src_from_slot(lv_obj_t *img, int slot)
       lv_img_set_src(img, (const lv_img_dsc_t *)xtouch_thumbnail_slot_dsc[slot]);
    else if (xtouch_thumbnail_slot_path[slot][0] != '\0')
       lv_img_set_src(img, xtouch_thumbnail_slot_path[slot]);
+   ui_img_zoom_to_fit_box(img, lv_obj_get_width(img), lv_obj_get_height(img));
    lv_obj_invalidate(img);
 }
 #endif

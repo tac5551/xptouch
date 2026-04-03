@@ -8,8 +8,11 @@
 #if defined(__XTOUCH_SCREEN_S3_050__)
 #define ROW_LEFT_W 150
 #define ROW_LEFT_H 150
-#define HISTORY_REPRINT_BTN_W 96
-#define HISTORY_REPRINT_BTN_H 40
+/* 5" は lv_font_small が大きめのため、ラベル周りに十分な内側パッドでボタンらしく */
+#define HISTORY_REPRINT_BTN_PAD_H 14
+#define HISTORY_REPRINT_BTN_PAD_V 12
+#define HISTORY_REPRINT_BTN_W 156
+#define HISTORY_REPRINT_BTN_H 52
 #else
 #define ROW_LEFT_W 75
 #define ROW_LEFT_H 75
@@ -25,8 +28,12 @@ lv_obj_t *ui_historyComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_flex_grow(cui_historyComponent, 1);
     lv_obj_set_flex_flow(cui_historyComponent, LV_FLEX_FLOW_COLUMN);
     lv_obj_set_flex_align(cui_historyComponent, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
+#if defined(__XTOUCH_SCREEN_S3_050__)
+    lv_obj_set_style_pad_hor(cui_historyComponent, HISTORY_REPRINT_BTN_PAD_H, LV_PART_MAIN | LV_STATE_DEFAULT);
+#else
     lv_obj_set_style_pad_left(cui_historyComponent, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_right(cui_historyComponent, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
+#endif
     lv_obj_set_style_pad_top(cui_historyComponent, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_bottom(cui_historyComponent, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(cui_historyComponent, lv_color_hex(0x333333), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -56,7 +63,14 @@ lv_obj_t *ui_historyComponent_create(lv_obj_t *comp_parent)
         lv_obj_set_flex_flow(row, LV_FLEX_FLOW_ROW);
         lv_obj_set_flex_align(row, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
         lv_obj_set_style_bg_color(row, lv_color_hex(0x444444), LV_PART_MAIN | LV_STATE_DEFAULT);
+#if defined(__XTOUCH_SCREEN_S3_050__)
+        lv_obj_set_style_pad_hor(row, HISTORY_REPRINT_BTN_PAD_H, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_pad_top(row, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_pad_bottom(row, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_pad_column(row, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+#else
         lv_obj_set_style_pad_all(row, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
+#endif
         lv_obj_set_style_border_width(row, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_clear_flag(row, LV_OBJ_FLAG_SCROLLABLE);
         lv_obj_set_scrollbar_mode(row, LV_SCROLLBAR_MODE_OFF);
@@ -90,6 +104,7 @@ lv_obj_t *ui_historyComponent_create(lv_obj_t *comp_parent)
         lv_obj_clear_flag(rightCol, LV_OBJ_FLAG_SCROLLABLE);
 
         lv_obj_t *titleLabel = lv_label_create(rightCol);
+        lv_obj_set_width(titleLabel, lv_pct(100));
         lv_label_set_text(titleLabel, "-");
         lv_obj_set_style_text_color(titleLabel, lv_color_hex(0xDDDDDD), LV_PART_MAIN | LV_STATE_DEFAULT);
 #if defined(__XTOUCH_SCREEN_S3_050__)
@@ -97,14 +112,20 @@ lv_obj_t *ui_historyComponent_create(lv_obj_t *comp_parent)
 #else
            lv_obj_set_style_text_font(titleLabel, &lv_font_notosans_14, LV_PART_MAIN | LV_STATE_DEFAULT);
 #endif
-
-        lv_label_set_long_mode(titleLabel, LV_LABEL_LONG_CLIP);
+        lv_obj_set_style_text_line_space(titleLabel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+        /* ジョブ名（title）が長いときは横スクロール（Home / Printers のファイル名と同様） */
+        lv_label_set_long_mode(titleLabel, LV_LABEL_LONG_SCROLL_CIRCULAR);
 
         lv_obj_t *printerLabel = lv_label_create(rightCol);
         lv_label_set_text(printerLabel, "");
+        lv_obj_set_width(printerLabel, lv_pct(100));
         lv_obj_set_style_text_color(printerLabel, lv_color_hex(0xAAAAAA), LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_text_font(printerLabel, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
+#if defined(__XTOUCH_SCREEN_S3_050__)
+        lv_label_set_long_mode(printerLabel, LV_LABEL_LONG_SCROLL_CIRCULAR);
+#else
         lv_label_set_long_mode(printerLabel, LV_LABEL_LONG_CLIP);
+#endif
 
         lv_obj_t *dateLabel = lv_label_create(rightCol);
         lv_label_set_text(dateLabel, "");
@@ -130,10 +151,15 @@ lv_obj_t *ui_historyComponent_create(lv_obj_t *comp_parent)
         lv_obj_set_style_bg_opa(reprintBtn, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_bg_color(reprintBtn, lv_color_hex(0x008800), LV_PART_MAIN | LV_STATE_PRESSED);
         lv_obj_set_style_bg_opa(reprintBtn, 255, LV_PART_MAIN | LV_STATE_PRESSED);
+#if defined(__XTOUCH_SCREEN_S3_050__)
+        lv_obj_set_style_pad_hor(reprintBtn, HISTORY_REPRINT_BTN_PAD_H, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_pad_ver(reprintBtn, HISTORY_REPRINT_BTN_PAD_V, LV_PART_MAIN | LV_STATE_DEFAULT);
+#endif
         lv_obj_set_user_data(reprintBtn, (void *)(intptr_t)i);
         lv_obj_t *reprintLbl = lv_label_create(reprintBtn);
         lv_label_set_text(reprintLbl, "Reprint");
         lv_obj_set_style_text_font(reprintLbl, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_pad_all(reprintLbl, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
 
         lv_obj_add_event_cb(reprintBtn, onHistoryReprint, LV_EVENT_CLICKED, NULL);
     }

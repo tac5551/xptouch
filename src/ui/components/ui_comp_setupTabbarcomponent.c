@@ -1,6 +1,13 @@
 #include "../ui.h"
 #include "ui_comp_setupTabbarcomponent.h"
 
+/* 5" 以外はタブ行を厚くしてタップしやすくする */
+#if defined(__XTOUCH_SCREEN_S3_050__)
+#define SETUP_TABBAR_H_PCT 15
+#else
+#define SETUP_TABBAR_H_PCT 22
+#endif
+
 typedef struct {
     lv_obj_t *general_panel;
     lv_obj_t *option_panel;
@@ -45,6 +52,9 @@ static lv_obj_t *create_tab_button(lv_obj_t *parent, const char *label, int inde
     lv_obj_t *btn = lv_obj_create(parent);
     lv_obj_set_flex_grow(btn, 1);
     lv_obj_set_height(btn, lv_pct(100));
+#if !defined(__XTOUCH_SCREEN_S3_050__)
+    lv_obj_set_style_min_height(btn, 44, LV_PART_MAIN | LV_STATE_DEFAULT);
+#endif
     lv_obj_clear_flag(btn, LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM);
     lv_obj_set_style_radius(btn, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(btn, lv_color_hex(0x333333), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -56,8 +66,13 @@ static lv_obj_t *create_tab_button(lv_obj_t *parent, const char *label, int inde
     lv_obj_set_style_text_color(btn, lv_color_hex(0x111111), LV_PART_MAIN | LV_STATE_CHECKED);
     lv_obj_set_style_pad_left(btn, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_right(btn, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
+#if defined(__XTOUCH_SCREEN_S3_050__)
     lv_obj_set_style_pad_top(btn, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_bottom(btn, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
+#else
+    lv_obj_set_style_pad_top(btn, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_bottom(btn, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
+#endif
 
     lv_obj_t *lbl = lv_label_create(btn);
     lv_label_set_text(lbl, label);
@@ -90,7 +105,7 @@ lv_obj_t *ui_setupTabbarComponent_create(lv_obj_t *comp_parent, lv_obj_t *genera
 {
     lv_obj_t *cui = lv_obj_create(comp_parent);
     lv_obj_set_width(cui, lv_pct(100));
-    lv_obj_set_height(cui, lv_pct(15));
+    lv_obj_set_height(cui, lv_pct(SETUP_TABBAR_H_PCT));
     lv_obj_set_flex_flow(cui, LV_FLEX_FLOW_ROW);
     lv_obj_set_flex_align(cui, LV_FLEX_ALIGN_SPACE_EVENLY, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
     lv_obj_clear_flag(cui, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE);

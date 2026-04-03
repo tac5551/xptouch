@@ -111,6 +111,12 @@ extern "C"
 
     void _ui_seconds_to_timeleft(uint32_t seconds, char *ret);
 
+    /**
+     * lv_img（LV_IMG_SIZE_MODE_VIRTUAL 想定）: 画像全体が (box_w x box_h) に収まるよう等倍率 zoom を設定。
+     * LVGL はデフォルトでは縮小せず枠外はクリップされるため、src 設定後に呼ぶ。
+     */
+    void ui_img_zoom_to_fit_box(lv_obj_t *img, lv_coord_t box_w, lv_coord_t box_h);
+
 #ifdef __XTOUCH_PLATFORM_S3__
     /** Printers/Home 共通: types の xtouch_thumbnail_slot_dsc/path を使って img にスロットのサムネを描画 */
     void ui_thumb_set_img_src_from_slot(lv_obj_t *img, int slot);

@@ -69,6 +69,7 @@ static void update_one_row(int idx, lv_obj_t *row)
                 if (idx < XTOUCH_HISTORY_COVER_SLOTS && xtouch_history_cover_dsc[idx] != NULL)
                 {
                     lv_img_set_src(coverImg, (const void *)xtouch_history_cover_dsc[idx]);
+                    ui_img_zoom_to_fit_box(coverImg, lv_obj_get_width(leftBox), lv_obj_get_height(leftBox));
                     lv_obj_clear_flag(coverImg, LV_OBJ_FLAG_HIDDEN);
                     lv_obj_add_flag(placeLabel, LV_OBJ_FLAG_HIDDEN);
                 }
