@@ -160,7 +160,7 @@ extern "C"
   /* 5インチのみ: 日本語ファイル名用 Noto 28 */
   /* TODO: __XTOUCH_SCREEN_S3_028__ 向けに日本語フォント（例: Noto 14/16）を追加し、機種別に切り替える */
   LV_FONT_DECLARE(lv_font_notosans_28);
-#elif defined(__XTOUCH_SCREEN_S3_028__)
+#elif defined(__XTOUCH_SCREEN_S3_028__) || defined(__XTOUCH_SCREEN_S3_3248__)
   LV_FONT_DECLARE(lv_font_notosans_14);
 #endif
 

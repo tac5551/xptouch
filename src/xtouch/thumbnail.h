@@ -16,7 +16,7 @@
 #endif
 
 #define XTOUCH_THUMB_SLOT_MAX 5
-/* LGFX デコード解像度はホーム／Printers の lv_img 表示（75 または 150 の正方形）と一致させる（5" のみ 150） */
+/* サムネデコード解像度はホーム／Printers の lv_img 表示（75 または 150 の正方形）と一致させる（5" のみ 150） */
 #if defined(__XTOUCH_SCREEN_S3_050__)
 #define XTOUCH_THUMB_LGFX_W 150
 #define XTOUCH_THUMB_LGFX_H 150
@@ -27,7 +27,7 @@
 /** DL 開始を遅らせる ms。この間は画面遷移など UI が応答する */
 #define XTOUCH_THUMB_FETCH_DELAY_MS 200
 
-static bool xtouch_load_thumb_slot_with_lgfx(int slot, int out_w, int out_h);       /* 実装は LGFX + pngle 内 */
+static bool xtouch_load_thumb_slot_with_lgfx(int slot, int out_w, int out_h);       /* 実装は本ヘッダ内（kikuchan/pngle） */
 static bool xtouch_load_logo_for_slot_with_lgfx(int slot, int out_w, int out_h);    /* /resource/logo.png 用（同じく pngle 経路） */
 
 #ifndef XTOUCH_HISTORY_COVER_SLOTS
@@ -79,7 +79,7 @@ void xtouch_thumbnail_timer_start(void);
 void xtouch_thumbnail_timer_stop(void);
 /** 次回タイマーから全スロットを取得して上書きするようスケジュール（画面表示時に呼ぶ）。 */
 void xtouch_thumbnail_schedule_fetch_all(void);
-/** SD /tmp の .png キャッシュを削除し、LGFX バッファを無効化（Settings の Clear Cache から呼ぶ）。 */
+/** SD /tmp の .png キャッシュを削除し、サムネ用デコードバッファを無効化（Settings の Clear Cache から呼ぶ）。 */
 void xtouch_thumbnail_clear_sd_cache(void);
 
 /** task_id に応じて xtouch_thumbnail_slot_path[slot] を更新（push_status 受信後などに呼ぶ）。
@@ -116,7 +116,7 @@ static uint32_t s_thumb_dl_retry_not_before_ms[XTOUCH_THUMB_SLOT_MAX];
 #define XTOUCH_THUMB_DL_FAIL_COOLDOWN_MS 15000u
 #endif
 
-/** task / メイン接続先の変化時: LGFX デコード済み dsc と path・取得フラグを捨てる（古い Home サムネが残るのを防ぐ） */
+/** task / メイン接続先の変化時: デコード済み dsc と path・取得フラグを捨てる（古い Home サムネが残るのを防ぐ） */
 inline void xtouch_thumbnail_invalidate_slot(int slot)
 {
     if (slot < 0 || slot >= XTOUCH_THUMB_SLOT_MAX)
@@ -583,7 +583,7 @@ static void xtouch_thumbnail_on_schedule_fetch(lv_msg_t *m, void *user_data)
     xtouch_thumbnail_schedule_fetch_all();
 }
 
-/** Printers 入室時: 並び替え後も slot の LGFX が前世代のまま残るのを防ぐ */
+/** Printers 入室時: 並び替え後も slot のサムネバッファが前世代のまま残るのを防ぐ */
 static void xtouch_thumbnail_on_printers_rebind(void *s, lv_msg_t *m)
 {
     (void)s;
@@ -685,289 +685,7 @@ static void xtouch_thumbnail_subscribe_events(void)
 }
 #endif
 
-/* ========== LGFX で PNG をデコードして LVGL の lv_img 用バッファに出す ========== */
-#include <esp32-hal-psram.h>
-#include <LovyanGFX.h>
-#include "lgfx/utility/lgfx_pngle.h"
-
-static lv_color_t *g_lgfx_thumb_buf = nullptr;
-static int g_lgfx_thumb_buf_w = 0;
-static int g_lgfx_thumb_buf_h = 0;
-lv_img_dsc_t g_lgfx_thumb_dsc;
-
-/* Printers 画面用: スロット毎のバッファと descriptor。xtouch_thumbnail_slot_dsc は types.h で extern（C から参照）。 */
-static lv_color_t *g_lgfx_thumb_buf_slot[XTOUCH_THUMB_SLOT_MAX] = { nullptr };
-static lv_img_dsc_t g_lgfx_thumb_dsc_slot[XTOUCH_THUMB_SLOT_MAX];
-/* History 行の leftBox（ROW_LEFT_W/H）と同じ正方形でデコード。150×75 だと横長に見える */
-#if defined(__XTOUCH_SCREEN_S3_050__)
-#define XTOUCH_HISTORY_COVER_W 150
-#define XTOUCH_HISTORY_COVER_H 150
-#else
-#define XTOUCH_HISTORY_COVER_W 75
-#define XTOUCH_HISTORY_COVER_H 75
-#endif
-
-/* History 画面用: 行別 cover 画像用バッファと descriptor（最大 XTOUCH_HISTORY_COVER_SLOTS 件）。 */
-static lv_color_t *g_history_cover_buf[XTOUCH_HISTORY_COVER_SLOTS] = { nullptr };
-static lv_img_dsc_t g_history_cover_dsc[XTOUCH_HISTORY_COVER_SLOTS];
-
-extern "C" {
-void *xtouch_thumbnail_slot_dsc[XTOUCH_THUMB_SLOT_MAX] = { nullptr, nullptr, nullptr, nullptr, nullptr };
-void *xtouch_history_cover_dsc[XTOUCH_HISTORY_COVER_SLOTS] = {};
-void *xtouch_history_reprint_cover_dsc = nullptr;
-}
-
-/* Reprint 画面上半分用: 1枚だけデコードして表示する */
-static lv_color_t *g_history_reprint_cover_buf = nullptr;
-static int g_history_reprint_cover_buf_w = 0;
-static int g_history_reprint_cover_buf_h = 0;
-static lv_img_dsc_t g_history_reprint_cover_dsc;
-
-/* 下で定義される pngle callback の前方宣言（Reprint decode のため） */
-struct xtouch_pngle_ctx_t;
-static uint32_t xtouch_pngle_read_cb(void *user_data, uint8_t *buf, uint32_t len);
-static void xtouch_pngle_draw_cb(void *user_data, uint32_t x, uint32_t y, uint_fast8_t div_x, size_t len, const uint8_t *argb);
-
-void xtouch_history_reprint_cover_clear(void)
-{
-    xtouch_history_reprint_cover_dsc = nullptr;
-    if (g_history_reprint_cover_buf)
-    {
-        free(g_history_reprint_cover_buf);
-        g_history_reprint_cover_buf = nullptr;
-    }
-    g_history_reprint_cover_buf_w = g_history_reprint_cover_buf_h = 0;
-    memset(&g_history_reprint_cover_dsc, 0, sizeof(g_history_reprint_cover_dsc));
-}
-
-bool xtouch_history_reprint_cover_load_path(const char *path);
-
-struct xtouch_pngle_ctx_t
-{
-    File *file;
-    lv_color_t *buf;
-    int width;
-    int height;
-    uint32_t img_width;
-    uint32_t img_height;
-};
-
-static uint32_t xtouch_pngle_read_cb(void *user_data, uint8_t *buf, uint32_t len)
-{
-    xtouch_pngle_ctx_t *ctx = (xtouch_pngle_ctx_t *)user_data;
-    return (uint32_t)ctx->file->read(buf, len);
-}
-
-static void xtouch_pngle_draw_cb(void *user_data, uint32_t x, uint32_t y, uint_fast8_t div_x, size_t len, const uint8_t *argb)
-{
-    xtouch_pngle_ctx_t *ctx = (xtouch_pngle_ctx_t *)user_data;
-    if (div_x != 1)
-        return;
-    if (ctx->img_width == 0 || ctx->img_height == 0)
-        return;
-    uint32_t iw = ctx->img_width;
-    uint32_t ih = ctx->img_height;
-    int ow = ctx->width;
-    int oh = ctx->height;
-
-    for (size_t i = 0; i < len; ++i, argb += 4)
-    {
-        uint32_t sx = x + (uint32_t)i;
-        uint32_t sy = y;
-        uint32_t dx_min = (sx * (uint32_t)ow) / iw;
-        uint32_t dx_max = ((sx + 1) * (uint32_t)ow + iw - 1) / iw;
-        uint32_t dy_min = (sy * (uint32_t)oh) / ih;
-        uint32_t dy_max = ((sy + 1) * (uint32_t)oh + ih - 1) / ih;
-        if (dx_max > (uint32_t)ow)
-            dx_max = (uint32_t)ow;
-        if (dy_max > (uint32_t)oh)
-            dy_max = (uint32_t)oh;
-        if (dx_min >= dx_max)
-            dx_max = dx_min + 1;
-        if (dy_min >= dy_max)
-            dy_max = dy_min + 1;
-
-        uint16_t rgb565 = (uint16_t)(((argb[1] & 0xF8) << 8) | ((argb[2] & 0xFC) << 3) | (argb[3] >> 3));
-        for (uint32_t dy = dy_min; dy < dy_max; ++dy)
-        {
-            lv_color_t *row = &ctx->buf[dy * ow];
-            for (uint32_t dx = dx_min; dx < dx_max; ++dx)
-                row[dx].full = rgb565;
-        }
-    }
-}
-
-bool xtouch_history_reprint_cover_load_path(const char *path)
-{
-    if (!path || !path[0] || !xtouch_sdcard_is_present_cached())
-    {
-        xtouch_history_reprint_cover_clear();
-        return false;
-    }
-
-    const int out_w = XTOUCH_HISTORY_COVER_W;
-    const int out_h = XTOUCH_HISTORY_COVER_H;
-    const size_t px_count = (size_t)out_w * (size_t)out_h;
-
-    if (!g_history_reprint_cover_buf)
-    {
-        g_history_reprint_cover_buf = (lv_color_t *)ps_malloc(sizeof(lv_color_t) * px_count);
-        if (!g_history_reprint_cover_buf)
-        {
-            xtouch_history_reprint_cover_clear();
-            return false;
-        }
-    }
-
-    memset(g_history_reprint_cover_buf, 0, sizeof(lv_color_t) * px_count);
-    g_history_reprint_cover_dsc.header.always_zero = 0;
-    g_history_reprint_cover_dsc.header.w = (lv_coord_t)out_w;
-    g_history_reprint_cover_dsc.header.h = (lv_coord_t)out_h;
-    g_history_reprint_cover_dsc.header.cf = LV_IMG_CF_TRUE_COLOR;
-    g_history_reprint_cover_dsc.data = (const uint8_t *)g_history_reprint_cover_buf;
-    g_history_reprint_cover_dsc.data_size = sizeof(lv_color_t) * px_count;
-
-    File file = xtouch_sdcard_open(path, "r");
-    if (!file)
-    {
-        xtouch_history_reprint_cover_clear();
-        return false;
-    }
-
-    pngle_t *pngle = lgfx_pngle_new();
-    if (!pngle)
-    {
-        file.close();
-        xtouch_history_reprint_cover_clear();
-        return false;
-    }
-
-    xtouch_pngle_ctx_t pngle_ctx;
-    pngle_ctx.file = &file;
-    pngle_ctx.buf = g_history_reprint_cover_buf;
-    pngle_ctx.width = out_w;
-    pngle_ctx.height = out_h;
-    pngle_ctx.img_width = 0;
-    pngle_ctx.img_height = 0;
-
-    if (lgfx_pngle_prepare(pngle, xtouch_pngle_read_cb, &pngle_ctx) < 0)
-    {
-        lgfx_pngle_destroy(pngle);
-        file.close();
-        xtouch_history_reprint_cover_clear();
-        return false;
-    }
-
-    pngle_ctx.img_width = lgfx_pngle_get_width(pngle);
-    pngle_ctx.img_height = lgfx_pngle_get_height(pngle);
-    if (pngle_ctx.img_width == 0 || pngle_ctx.img_height == 0)
-    {
-        lgfx_pngle_destroy(pngle);
-        file.close();
-        xtouch_history_reprint_cover_clear();
-        return false;
-    }
-
-    int res = lgfx_pngle_decomp(pngle, xtouch_pngle_draw_cb);
-    file.close();
-    lgfx_pngle_destroy(pngle);
-    if (res < 0)
-    {
-        xtouch_history_reprint_cover_clear();
-        return false;
-    }
-
-    xtouch_history_reprint_cover_dsc = (void *)&g_history_reprint_cover_dsc;
-    return true;
-}
-
-bool xtouch_load_thumb_with_lgfx(const char *path, int out_w, int out_h)
-{
-    if (out_w <= 0 || out_h <= 0)
-        return false;
-
-    size_t px_count = (size_t)out_w * (size_t)out_h;
-    if (!g_lgfx_thumb_buf || g_lgfx_thumb_buf_w != out_w || g_lgfx_thumb_buf_h != out_h)
-    {
-        if (g_lgfx_thumb_buf)
-            free(g_lgfx_thumb_buf);
-        g_lgfx_thumb_buf = (lv_color_t *)ps_malloc(sizeof(lv_color_t) * px_count);
-        if (!g_lgfx_thumb_buf)
-        {
-            Serial.println("[thumb] ps_malloc failed");
-            g_lgfx_thumb_buf_w = g_lgfx_thumb_buf_h = 0;
-            return false;
-        }
-        g_lgfx_thumb_buf_w = out_w;
-        g_lgfx_thumb_buf_h = out_h;
-    }
-    memset(g_lgfx_thumb_buf, 0, sizeof(lv_color_t) * px_count);
-
-    g_lgfx_thumb_dsc.header.always_zero = 0;
-    g_lgfx_thumb_dsc.header.w = (lv_coord_t)out_w;
-    g_lgfx_thumb_dsc.header.h = (lv_coord_t)out_h;
-    g_lgfx_thumb_dsc.header.cf = LV_IMG_CF_TRUE_COLOR;
-    g_lgfx_thumb_dsc.data = (const uint8_t *)g_lgfx_thumb_buf;
-    g_lgfx_thumb_dsc.data_size = sizeof(lv_color_t) * px_count;
-
-    File file = xtouch_sdcard_open(path, "r");
-    if (!file)
-    {
-        Serial.println("[thumb] SD_MMC.open failed");
-        return false;
-    }
-
-    pngle_t *pngle = lgfx_pngle_new();
-    if (!pngle)
-    {
-        file.close();
-        Serial.println("[thumb] lgfx_pngle_new failed");
-        return false;
-    }
-
-    xtouch_pngle_ctx_t pngle_ctx;
-    pngle_ctx.file = &file;
-    pngle_ctx.buf = g_lgfx_thumb_buf;
-    pngle_ctx.width = out_w;
-    pngle_ctx.height = out_h;
-    pngle_ctx.img_width = 0;
-    pngle_ctx.img_height = 0;
-
-    if (lgfx_pngle_prepare(pngle, xtouch_pngle_read_cb, &pngle_ctx) < 0)
-    {
-        lgfx_pngle_destroy(pngle);
-        file.close();
-        Serial.println("[thumb] lgfx_pngle_prepare failed");
-        return false;
-    }
-
-    pngle_ctx.img_width = lgfx_pngle_get_width(pngle);
-    pngle_ctx.img_height = lgfx_pngle_get_height(pngle);
-    if (pngle_ctx.img_width == 0 || pngle_ctx.img_height == 0)
-    {
-        lgfx_pngle_destroy(pngle);
-        file.close();
-        return false;
-    }
-
-    int res = lgfx_pngle_decomp(pngle, xtouch_pngle_draw_cb);
-    file.close();
-    lgfx_pngle_destroy(pngle);
-
-    if (res < 0)
-    {
-        Serial.println("[thumb] lgfx_pngle_decomp failed");
-        return false;
-    }
-    return true;
-}
-
-lv_img_dsc_t *xtouch_thumb_get_lgfx_dsc(void)
-{
-    return &g_lgfx_thumb_dsc;
-}
-
-#ifdef __XTOUCH_PLATFORM_S3__ 
+#ifdef __XTOUCH_PLATFORM_S3__
 static void thumb_decode_tid_generations_clear(int slot)
 {
     if (slot < 0 || slot >= XTOUCH_THUMB_SLOT_MAX)
@@ -1024,100 +742,281 @@ static void thumb_on_decode_failed_after_open(int slot, const char *path)
 }
 #endif
 
-/** 指定スロットの SD 上の PNG を LGFX でデコードし、Printers 画面用スロットバッファに格納。パスは task_id ベースの /tmp/{task_id}.png。 */
-static bool xtouch_load_thumb_slot_with_lgfx(int slot, int out_w, int out_h)
+/* ========== kikuchan/pngle で PNG をデコードして LVGL の lv_img 用バッファに出す ========== */
+
+#include <esp32-hal-psram.h>
+#include <string.h>
+#include "pngle.h"
+
+#if defined(__XTOUCH_SCREEN_S3_050__)
+#define XTOUCH_HISTORY_COVER_W 150
+#define XTOUCH_HISTORY_COVER_H 150
+#else
+#define XTOUCH_HISTORY_COVER_W 75
+#define XTOUCH_HISTORY_COVER_H 75
+#endif
+
+static lv_color_t *g_lgfx_thumb_buf = nullptr;
+static int g_lgfx_thumb_buf_w = 0;
+static int g_lgfx_thumb_buf_h = 0;
+lv_img_dsc_t g_lgfx_thumb_dsc;
+static lv_color_t *g_lgfx_thumb_buf_slot[XTOUCH_THUMB_SLOT_MAX] = { nullptr };
+static lv_img_dsc_t g_lgfx_thumb_dsc_slot[XTOUCH_THUMB_SLOT_MAX];
+static lv_color_t *g_history_cover_buf[XTOUCH_HISTORY_COVER_SLOTS] = { nullptr };
+static lv_img_dsc_t g_history_cover_dsc[XTOUCH_HISTORY_COVER_SLOTS];
+
+extern "C" {
+void *xtouch_thumbnail_slot_dsc[XTOUCH_THUMB_SLOT_MAX] = { nullptr, nullptr, nullptr, nullptr, nullptr };
+void *xtouch_history_cover_dsc[XTOUCH_HISTORY_COVER_SLOTS] = {};
+void *xtouch_history_reprint_cover_dsc = nullptr;
+}
+
+static lv_color_t *g_history_reprint_cover_buf = nullptr;
+static int g_history_reprint_cover_buf_w = 0;
+static int g_history_reprint_cover_buf_h = 0;
+static lv_img_dsc_t g_history_reprint_cover_dsc;
+
+struct xtouch_pngle_ctx_t
 {
-    if (slot < 0 || slot >= XTOUCH_THUMB_SLOT_MAX || out_w <= 0 || out_h <= 0)
-        return false;
-    char path[64];
-    getThumbPathForSlot(slot, path, sizeof(path));
-    if (!path[0])
-        return false;
-    size_t px_count = (size_t)out_w * (size_t)out_h;
-    lv_color_t *buf = g_lgfx_thumb_buf_slot[slot];
-    if (!buf || g_lgfx_thumb_dsc_slot[slot].header.w != out_w || g_lgfx_thumb_dsc_slot[slot].header.h != out_h)
+    File *file;
+    lv_color_t *buf;
+    int width;
+    int height;
+    uint32_t img_width;
+    uint32_t img_height;
+};
+
+static void xtouch_pngle_kikuchan_on_init(pngle_t *pngle, uint32_t w, uint32_t h)
+{
+    xtouch_pngle_ctx_t *ctx = (xtouch_pngle_ctx_t *)pngle_get_user_data(pngle);
+    if (ctx)
     {
-        if (buf)
-            free(buf);
-        buf = (lv_color_t *)ps_malloc(sizeof(lv_color_t) * px_count);
-        if (!buf)
+        ctx->img_width = w;
+        ctx->img_height = h;
+    }
+}
+
+static void xtouch_pngle_kikuchan_draw_cb(pngle_t *pngle, uint32_t x, uint32_t y, uint32_t w, uint32_t h, const uint8_t rgba[4])
+{
+    xtouch_pngle_ctx_t *ctx = (xtouch_pngle_ctx_t *)pngle_get_user_data(pngle);
+    (void)pngle;
+    if (!ctx || !ctx->buf)
+        return;
+    if (rgba[3] == 0)
+        return;
+    if (ctx->img_width == 0 || ctx->img_height == 0)
+        return;
+    uint32_t iw = ctx->img_width;
+    uint32_t ih = ctx->img_height;
+    int ow = ctx->width;
+    int oh = ctx->height;
+    uint16_t rgb565 = (uint16_t)(((rgba[0] & 0xF8) << 8) | ((rgba[1] & 0xFC) << 3) | (rgba[2] >> 3));
+
+    for (uint32_t iy = 0; iy < h; ++iy)
+    {
+        uint32_t sy = y + iy;
+        if (sy >= ih)
+            break;
+        for (uint32_t ix = 0; ix < w; ++ix)
         {
-            xtouch_thumbnail_slot_dsc[slot] = nullptr;
-            s_thumb_exists[slot] = true; /* logo try を繰り返さない */
+            uint32_t sx = x + ix;
+            if (sx >= iw)
+                break;
+            uint32_t dx_min = (sx * (uint32_t)ow) / iw;
+            uint32_t dx_max = ((sx + 1) * (uint32_t)ow + iw - 1) / iw;
+            uint32_t dy_min = (sy * (uint32_t)oh) / ih;
+            uint32_t dy_max = ((sy + 1) * (uint32_t)oh + ih - 1) / ih;
+            if (dx_max > (uint32_t)ow)
+                dx_max = (uint32_t)ow;
+            if (dy_max > (uint32_t)oh)
+                dy_max = (uint32_t)oh;
+            if (dx_min >= dx_max)
+                dx_max = dx_min + 1;
+            if (dy_min >= dy_max)
+                dy_max = dy_min + 1;
+
+            for (uint32_t dy = dy_min; dy < dy_max; ++dy)
+            {
+                lv_color_t *row = &ctx->buf[dy * ow];
+                for (uint32_t dx = dx_min; dx < dx_max; ++dx)
+                    row[dx].full = rgb565;
+            }
+        }
+    }
+}
+
+static bool xtouch_kikuchan_feed_file(pngle_t *pngle, File *file)
+{
+    uint8_t buf[4096];
+    size_t remain = 0;
+    for (;;)
+    {
+        size_t space = sizeof(buf) - remain;
+        size_t n = (space > 0) ? file->read(buf + remain, space) : 0;
+        remain += n;
+        if (remain == 0)
+            break;
+        int fed = pngle_feed(pngle, buf, remain);
+        if (fed < 0)
+            return false;
+        size_t consumed = (size_t)fed;
+        if (consumed > remain)
+            return false;
+        remain -= consumed;
+        if (consumed > 0 && remain > 0)
+            memmove(buf, buf + consumed, remain);
+        if (n == 0 && remain == 0)
+            break;
+    }
+    return true;
+}
+
+static bool xtouch_decode_png_kikuchan(File *file, xtouch_pngle_ctx_t *ctx)
+{
+    pngle_t *pngle = pngle_new();
+    if (!pngle)
+        return false;
+    pngle_set_user_data(pngle, ctx);
+    pngle_set_init_callback(pngle, xtouch_pngle_kikuchan_on_init);
+    pngle_set_draw_callback(pngle, xtouch_pngle_kikuchan_draw_cb);
+    ctx->img_width = 0;
+    ctx->img_height = 0;
+    file->seek(0);
+    if (!xtouch_kikuchan_feed_file(pngle, file))
+    {
+        pngle_destroy(pngle);
+        return false;
+    }
+    if (ctx->img_width == 0 || ctx->img_height == 0)
+    {
+        pngle_destroy(pngle);
+        return false;
+    }
+    pngle_destroy(pngle);
+    return true;
+}
+
+void xtouch_history_reprint_cover_clear(void)
+{
+    xtouch_history_reprint_cover_dsc = nullptr;
+    if (g_history_reprint_cover_buf)
+    {
+        free(g_history_reprint_cover_buf);
+        g_history_reprint_cover_buf = nullptr;
+    }
+    g_history_reprint_cover_buf_w = g_history_reprint_cover_buf_h = 0;
+    memset(&g_history_reprint_cover_dsc, 0, sizeof(g_history_reprint_cover_dsc));
+}
+
+bool xtouch_history_reprint_cover_load_path(const char *path)
+{
+    if (!path || !path[0] || !xtouch_sdcard_is_present_cached())
+    {
+        xtouch_history_reprint_cover_clear();
+        return false;
+    }
+
+    const int out_w = XTOUCH_HISTORY_COVER_W;
+    const int out_h = XTOUCH_HISTORY_COVER_H;
+    const size_t px_count = (size_t)out_w * (size_t)out_h;
+
+    if (!g_history_reprint_cover_buf)
+    {
+        g_history_reprint_cover_buf = (lv_color_t *)ps_malloc(sizeof(lv_color_t) * px_count);
+        if (!g_history_reprint_cover_buf)
+        {
+            xtouch_history_reprint_cover_clear();
             return false;
         }
-        g_lgfx_thumb_buf_slot[slot] = buf;
     }
-    memset(buf, 0, sizeof(lv_color_t) * px_count);
-    g_lgfx_thumb_dsc_slot[slot].header.always_zero = 0;
-    g_lgfx_thumb_dsc_slot[slot].header.w = (lv_coord_t)out_w;
-    g_lgfx_thumb_dsc_slot[slot].header.h = (lv_coord_t)out_h;
-    g_lgfx_thumb_dsc_slot[slot].header.cf = LV_IMG_CF_TRUE_COLOR;
-    g_lgfx_thumb_dsc_slot[slot].data = (const uint8_t *)buf;
-    g_lgfx_thumb_dsc_slot[slot].data_size = sizeof(lv_color_t) * px_count;
 
-    xtouch_pngle_ctx_t pngle_ctx;
-    /* History の xtouch_history_cover_load_path と同じく、task 用 PNG を path で開く（/tmp ディレクトリを開いてはいけない） */
+    memset(g_history_reprint_cover_buf, 0, sizeof(lv_color_t) * px_count);
+    g_history_reprint_cover_dsc.header.always_zero = 0;
+    g_history_reprint_cover_dsc.header.w = (lv_coord_t)out_w;
+    g_history_reprint_cover_dsc.header.h = (lv_coord_t)out_h;
+    g_history_reprint_cover_dsc.header.cf = LV_IMG_CF_TRUE_COLOR;
+    g_history_reprint_cover_dsc.data = (const uint8_t *)g_history_reprint_cover_buf;
+    g_history_reprint_cover_dsc.data_size = sizeof(lv_color_t) * px_count;
+
     File file = xtouch_sdcard_open(path, "r");
     if (!file)
     {
-        xtouch_thumbnail_slot_dsc[slot] = nullptr;
+        xtouch_history_reprint_cover_clear();
         return false;
     }
-    pngle_t *pngle = lgfx_pngle_new();
-    if (!pngle)
-    {
-        file.close();
-        xtouch_thumbnail_slot_dsc[slot] = nullptr;
-#ifdef __XTOUCH_PLATFORM_S3__ 
-        thumb_on_decode_failed_after_open(slot, path);
-#endif
-        return false;
-    }
+
+    xtouch_pngle_ctx_t pngle_ctx;
     pngle_ctx.file = &file;
-    pngle_ctx.buf = buf;
+    pngle_ctx.buf = g_history_reprint_cover_buf;
     pngle_ctx.width = out_w;
     pngle_ctx.height = out_h;
-    pngle_ctx.img_width = 0;
-    pngle_ctx.img_height = 0;
-    if (lgfx_pngle_prepare(pngle, xtouch_pngle_read_cb, &pngle_ctx) < 0)
+
+    if (!xtouch_decode_png_kikuchan(&file, &pngle_ctx))
     {
-        lgfx_pngle_destroy(pngle);
         file.close();
-        xtouch_thumbnail_slot_dsc[slot] = nullptr;
-#ifdef __XTOUCH_PLATFORM_S3__ 
-        thumb_on_decode_failed_after_open(slot, path);
-#endif
+        xtouch_history_reprint_cover_clear();
         return false;
     }
-    pngle_ctx.img_width = lgfx_pngle_get_width(pngle);
-    pngle_ctx.img_height = lgfx_pngle_get_height(pngle);
-    if (pngle_ctx.img_width == 0 || pngle_ctx.img_height == 0)
-    {
-        lgfx_pngle_destroy(pngle);
-        file.close();
-        xtouch_thumbnail_slot_dsc[slot] = nullptr;
-#ifdef __XTOUCH_PLATFORM_S3__ 
-        thumb_on_decode_failed_after_open(slot, path);
-#endif
-        return false;
-    }
-    int res = lgfx_pngle_decomp(pngle, xtouch_pngle_draw_cb);
     file.close();
-    lgfx_pngle_destroy(pngle);
-    if (res < 0)
+    xtouch_history_reprint_cover_dsc = (void *)&g_history_reprint_cover_dsc;
+    return true;
+}
+
+bool xtouch_load_thumb_with_lgfx(const char *path, int out_w, int out_h)
+{
+    if (out_w <= 0 || out_h <= 0)
+        return false;
+
+    size_t px_count = (size_t)out_w * (size_t)out_h;
+    if (!g_lgfx_thumb_buf || g_lgfx_thumb_buf_w != out_w || g_lgfx_thumb_buf_h != out_h)
     {
-        xtouch_thumbnail_slot_dsc[slot] = nullptr;
-#ifdef __XTOUCH_PLATFORM_S3__ 
-        thumb_on_decode_failed_after_open(slot, path);
-#endif
+        if (g_lgfx_thumb_buf)
+            free(g_lgfx_thumb_buf);
+        g_lgfx_thumb_buf = (lv_color_t *)ps_malloc(sizeof(lv_color_t) * px_count);
+        if (!g_lgfx_thumb_buf)
+        {
+            Serial.println("[thumb] ps_malloc failed");
+            g_lgfx_thumb_buf_w = g_lgfx_thumb_buf_h = 0;
+            return false;
+        }
+        g_lgfx_thumb_buf_w = out_w;
+        g_lgfx_thumb_buf_h = out_h;
+    }
+    memset(g_lgfx_thumb_buf, 0, sizeof(lv_color_t) * px_count);
+
+    g_lgfx_thumb_dsc.header.always_zero = 0;
+    g_lgfx_thumb_dsc.header.w = (lv_coord_t)out_w;
+    g_lgfx_thumb_dsc.header.h = (lv_coord_t)out_h;
+    g_lgfx_thumb_dsc.header.cf = LV_IMG_CF_TRUE_COLOR;
+    g_lgfx_thumb_dsc.data = (const uint8_t *)g_lgfx_thumb_buf;
+    g_lgfx_thumb_dsc.data_size = sizeof(lv_color_t) * px_count;
+
+    File file = xtouch_sdcard_open(path, "r");
+    if (!file)
+    {
+        Serial.println("[thumb] SD_MMC.open failed");
         return false;
     }
-#ifdef __XTOUCH_PLATFORM_S3__ 
-    thumb_decode_tid_generations_clear(slot);
-#endif
-    xtouch_thumbnail_slot_dsc[slot] = (void *)&g_lgfx_thumb_dsc_slot[slot];
+
+    xtouch_pngle_ctx_t pngle_ctx;
+    pngle_ctx.file = &file;
+    pngle_ctx.buf = g_lgfx_thumb_buf;
+    pngle_ctx.width = out_w;
+    pngle_ctx.height = out_h;
+
+    if (!xtouch_decode_png_kikuchan(&file, &pngle_ctx))
+    {
+        file.close();
+        Serial.println("[thumb] pngle decode failed");
+        return false;
+    }
+    file.close();
     return true;
+}
+
+lv_img_dsc_t *xtouch_thumb_get_lgfx_dsc(void)
+{
+    return &g_lgfx_thumb_dsc;
 }
 
 void xtouch_history_cover_clear(void)
@@ -1166,72 +1065,102 @@ bool xtouch_history_cover_load_path(int slot, const char *path)
     g_history_cover_dsc[slot].data = (const uint8_t *)buf;
     g_history_cover_dsc[slot].data_size = sizeof(lv_color_t) * px_count;
 
-    xtouch_pngle_ctx_t pngle_ctx;
     File file = xtouch_sdcard_open(path, "r");
     if (!file)
     {
         xtouch_history_cover_dsc[slot] = nullptr;
         return false;
     }
-    pngle_t *pngle = lgfx_pngle_new();
-    if (!pngle)
+    xtouch_pngle_ctx_t pngle_ctx;
+    pngle_ctx.file = &file;
+    pngle_ctx.buf = buf;
+    pngle_ctx.width = out_w;
+    pngle_ctx.height = out_h;
+    if (!xtouch_decode_png_kikuchan(&file, &pngle_ctx))
     {
         file.close();
         xtouch_history_cover_dsc[slot] = nullptr;
+        return false;
+    }
+    file.close();
+    xtouch_history_cover_dsc[slot] = (void *)&g_history_cover_dsc[slot];
+    return true;
+}
+
+static bool xtouch_load_thumb_slot_with_lgfx(int slot, int out_w, int out_h)
+{
+    if (slot < 0 || slot >= XTOUCH_THUMB_SLOT_MAX || out_w <= 0 || out_h <= 0)
+        return false;
+    char path[64];
+    getThumbPathForSlot(slot, path, sizeof(path));
+    if (!path[0])
+        return false;
+    size_t px_count = (size_t)out_w * (size_t)out_h;
+    lv_color_t *buf = g_lgfx_thumb_buf_slot[slot];
+    if (!buf || g_lgfx_thumb_dsc_slot[slot].header.w != out_w || g_lgfx_thumb_dsc_slot[slot].header.h != out_h)
+    {
+        if (buf)
+            free(buf);
+        buf = (lv_color_t *)ps_malloc(sizeof(lv_color_t) * px_count);
+        if (!buf)
+        {
+            xtouch_thumbnail_slot_dsc[slot] = nullptr;
+            s_thumb_exists[slot] = true;
+            return false;
+        }
+        g_lgfx_thumb_buf_slot[slot] = buf;
+    }
+    memset(buf, 0, sizeof(lv_color_t) * px_count);
+    g_lgfx_thumb_dsc_slot[slot].header.always_zero = 0;
+    g_lgfx_thumb_dsc_slot[slot].header.w = (lv_coord_t)out_w;
+    g_lgfx_thumb_dsc_slot[slot].header.h = (lv_coord_t)out_h;
+    g_lgfx_thumb_dsc_slot[slot].header.cf = LV_IMG_CF_TRUE_COLOR;
+    g_lgfx_thumb_dsc_slot[slot].data = (const uint8_t *)buf;
+    g_lgfx_thumb_dsc_slot[slot].data_size = sizeof(lv_color_t) * px_count;
+
+    xtouch_pngle_ctx_t pngle_ctx;
+    File file = xtouch_sdcard_open(path, "r");
+    if (!file)
+    {
+        xtouch_thumbnail_slot_dsc[slot] = nullptr;
         return false;
     }
     pngle_ctx.file = &file;
     pngle_ctx.buf = buf;
     pngle_ctx.width = out_w;
     pngle_ctx.height = out_h;
-    pngle_ctx.img_width = 0;
-    pngle_ctx.img_height = 0;
-    if (lgfx_pngle_prepare(pngle, xtouch_pngle_read_cb, &pngle_ctx) < 0)
+    if (!xtouch_decode_png_kikuchan(&file, &pngle_ctx))
     {
-        lgfx_pngle_destroy(pngle);
         file.close();
-        xtouch_history_cover_dsc[slot] = nullptr;
+        xtouch_thumbnail_slot_dsc[slot] = nullptr;
+#ifdef __XTOUCH_PLATFORM_S3__
+        thumb_on_decode_failed_after_open(slot, path);
+#endif
         return false;
     }
-    pngle_ctx.img_width = lgfx_pngle_get_width(pngle);
-    pngle_ctx.img_height = lgfx_pngle_get_height(pngle);
-    if (pngle_ctx.img_width == 0 || pngle_ctx.img_height == 0)
-    {
-        lgfx_pngle_destroy(pngle);
-        file.close();
-        xtouch_history_cover_dsc[slot] = nullptr;
-        return false;
-    }
-    int res = lgfx_pngle_decomp(pngle, xtouch_pngle_draw_cb);
     file.close();
-    lgfx_pngle_destroy(pngle);
-    if (res < 0)
-    {
-        xtouch_history_cover_dsc[slot] = nullptr;
-        return false;
-    }
-    xtouch_history_cover_dsc[slot] = (void *)&g_history_cover_dsc[slot];
+#ifdef __XTOUCH_PLATFORM_S3__
+    thumb_decode_tid_generations_clear(slot);
+#endif
+    xtouch_thumbnail_slot_dsc[slot] = (void *)&g_lgfx_thumb_dsc_slot[slot];
     return true;
 }
 
-/** デフォルトロゴ (/resource/logo.png) を LGFX + pngle でデコードし、指定スロット用バッファに格納。 */
 static bool xtouch_load_logo_for_slot_with_lgfx(int slot, int out_w, int out_h)
 {
     if (slot < 0 || slot >= XTOUCH_THUMB_SLOT_MAX || out_w <= 0 || out_h <= 0)
         return false;
-    /* SD 未挿入時は何もしない（無限に open を繰り返さないようにする） */
     if (!xtouch_sdcard_is_present_cached())
     {
         ConsoleVerbose.printf("[xPTouch][V][THUMB] logo: SD not present\n");
-        s_thumb_exists[slot] = true; /* Home 側の logo try ループを止める */
+        s_thumb_exists[slot] = true;
         return false;
     }
 
-#ifdef __XTOUCH_PLATFORM_S3__ 
-    /* /resource/logo.png が無い場合、初回のみ /resource 作成＋DL を実施する */
+#ifdef __XTOUCH_PLATFORM_S3__
     if (!xtouch_ensure_resource_logo_exists())
     {
-        s_thumb_exists[slot] = true; /* logo try を繰り返さない */
+        s_thumb_exists[slot] = true;
         return false;
     }
 #endif
@@ -1265,57 +1194,26 @@ static bool xtouch_load_logo_for_slot_with_lgfx(int slot, int out_w, int out_h)
     {
         ConsoleVerbose.printf("[xPTouch][V][THUMB] logo: SD.open failed path=%s\n", path);
         xtouch_thumbnail_slot_dsc[slot] = nullptr;
-        s_thumb_exists[slot] = true; /* 失敗時は Home 側の try を止める */
-        return false;
-    }
-    pngle_t *pngle = lgfx_pngle_new();
-    if (!pngle)
-    {
-        file.close();
-        ConsoleVerbose.printf("[xPTouch][V][THUMB] logo: lgfx_pngle_new failed\n");
-        xtouch_thumbnail_slot_dsc[slot] = nullptr;
-        s_thumb_exists[slot] = true; /* logo try を繰り返さない */
+        s_thumb_exists[slot] = true;
         return false;
     }
     pngle_ctx.file = &file;
     pngle_ctx.buf = buf;
     pngle_ctx.width = out_w;
     pngle_ctx.height = out_h;
-    pngle_ctx.img_width = 0;
-    pngle_ctx.img_height = 0;
-    if (lgfx_pngle_prepare(pngle, xtouch_pngle_read_cb, &pngle_ctx) < 0)
+    if (!xtouch_decode_png_kikuchan(&file, &pngle_ctx))
     {
-        lgfx_pngle_destroy(pngle);
         file.close();
-        ConsoleVerbose.printf("[xPTouch][V][THUMB] logo: lgfx_pngle_prepare failed\n");
+        ConsoleError.printf("[xPTouch][E][THUMB] logo: pngle decode failed\n");
         xtouch_thumbnail_slot_dsc[slot] = nullptr;
-        s_thumb_exists[slot] = true; /* logo try を繰り返さない */
+        s_thumb_exists[slot] = true;
         return false;
     }
-    pngle_ctx.img_width = lgfx_pngle_get_width(pngle);
-    pngle_ctx.img_height = lgfx_pngle_get_height(pngle);
-    if (pngle_ctx.img_width == 0 || pngle_ctx.img_height == 0)
-    {
-        lgfx_pngle_destroy(pngle);
-        file.close();
-        ConsoleError.printf("[xPTouch][E][THUMB] logo: invalid size\n");
-        xtouch_thumbnail_slot_dsc[slot] = nullptr;
-        s_thumb_exists[slot] = true; /* logo try を繰り返さない */
-        return false;
-    }
-    int res = lgfx_pngle_decomp(pngle, xtouch_pngle_draw_cb);
     file.close();
-    lgfx_pngle_destroy(pngle);
-    if (res < 0)
-    {
-        ConsoleError.printf("[xPTouch][E][THUMB] logo: lgfx_pngle_decomp failed\n");
-        xtouch_thumbnail_slot_dsc[slot] = nullptr;
-        s_thumb_exists[slot] = true; /* logo try を繰り返さない */
-        return false;
-    }
     ConsoleVerbose.printf("[xPTouch][V][THUMB] logo: success slot=%d\n", slot);
     xtouch_thumbnail_slot_dsc[slot] = (void *)&g_lgfx_thumb_dsc_slot[slot];
     return true;
 }
+
 
 #endif /* _XTOUCH_THUMBNAIL_H */

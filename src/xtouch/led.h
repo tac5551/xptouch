@@ -14,6 +14,8 @@ bool xtouch_led_initialized = false;
 #include "devices/2.8/screen.h"
 #elif defined(__XTOUCH_SCREEN_S3_028__)
 #include "devices/s3_2.8/screen.h"
+#elif defined(__XTOUCH_SCREEN_S3_3248__)
+#include "devices/s3_3248w535/screen.h"
 #elif defined(__XTOUCH_SCREEN_S3_050__)
 #include "devices/5.0/screen.h"
 #endif
@@ -31,8 +33,8 @@ void xtouch_led_set(int red, int green, int blue)
 
 void xtouch_led_init(void)
 {
-    lgfx::boards::board_t board = tft.getBoard();
 #if defined(__XTOUCH_SCREEN_28__)
+    lgfx::boards::board_t board = tft.getBoard();
     if (board == lgfx::boards::board_t::board_Guition_ESP32_2432W328R || board == lgfx::boards::board_t::board_Guition_ESP32_2432W328C)
     {
         ConsoleDebug.println("LED GPIO 4, 16, 17");

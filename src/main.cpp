@@ -1,5 +1,5 @@
 /* Platform macro: auto-detect ESP32-S3 target */
-#if (defined(CONFIG_IDF_TARGET_ESP32S3) || defined(__XTOUCH_SCREEN_S3_028__) || defined(__XTOUCH_SCREEN_S3_050__)) && !defined(__XTOUCH_PLATFORM_S3__)
+#if (defined(CONFIG_IDF_TARGET_ESP32S3) || defined(__XTOUCH_SCREEN_S3_028__) || defined(__XTOUCH_SCREEN_S3_050__) || defined(__XTOUCH_SCREEN_S3_3248__)) && !defined(__XTOUCH_PLATFORM_S3__)
 #define __XTOUCH_PLATFORM_S3__
 #endif
 
@@ -21,6 +21,8 @@
 
 #if defined(__XTOUCH_SCREEN_S3_050__) 
 #include "devices/5.0/screen.h"
+#elif defined(__XTOUCH_SCREEN_S3_3248__)
+#include "devices/s3_3248w535/screen.h"
 #elif defined(__XTOUCH_SCREEN_S3_028__)
 #include "devices/s3_2.8/screen.h"
 #else
@@ -67,6 +69,13 @@ void xtouch_intro_show(void)
 void setup()
 {
   Serial.begin(115200);
+  /* platformio で -DXTOUCH_BOOT_SERIAL_DELAY_MS=... を付けたときだけ（主に S3 USB CDC 再接続用） */
+#if defined(XTOUCH_BOOT_SERIAL_DELAY_MS) && (XTOUCH_BOOT_SERIAL_DELAY_MS > 0)
+  delay(XTOUCH_BOOT_SERIAL_DELAY_MS);
+#endif
+#if defined(__XTOUCH_SCREEN_S3_3248__)
+  Serial.println("\r\n[xPTouch] boot JC3248 (USB CDC)");
+#endif
 #if defined(XTOUCH_DEBUG) || XTOUCH_USE_SERIAL == true || XTOUCH_DEBUG_ERROR == true || XTOUCH_DEBUG_DEBUG == true || XTOUCH_DEBUG_INFO == true|| XTOUCH_DEBUG_VERBOSE == true
   Serial.begin(115200);
   ConsoleDebug.println("Serial started");
@@ -77,7 +86,13 @@ void setup()
   xtouch_eeprom_rgb_pclk_heal_invalid_storage();
 #endif
   xtouch_globals_init();
+#if defined(__XTOUCH_SCREEN_S3_3248__)
+  Serial.println("[xPTouch] enter xtouch_screen_setup (LCD+LVGL)");
+#endif
   xtouch_screen_setup();
+#if defined(__XTOUCH_SCREEN_S3_3248__)
+  Serial.println("[xPTouch] leave xtouch_screen_setup OK");
+#endif
 
 #ifdef __XTOUCH_SCREEN_S3_050__
   lv_font_small_set(&lv_font_montserrat_28);
@@ -103,6 +118,14 @@ void setup()
   }
 #endif
   xtouch_intro_show();
+#if defined(__XTOUCH_SCREEN_S3_3248__)
+  for (int i = 0; i < 80; i++)
+  {
+    lv_timer_handler();
+    if ((i % 16) == 0)
+      delay(2);
+  }
+#endif
   int8_t sd_cs_pin = -1;
   bool sd_mode_1bit = true;
 #if defined(__XTOUCH_SCREEN_S3_028__)

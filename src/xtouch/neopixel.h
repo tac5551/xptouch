@@ -13,6 +13,8 @@ int NeoPixelCount = PIXEL_COUNT;
 #include "devices/2.8/screen.h"
 #elif defined(__XTOUCH_SCREEN_S3_028__)
 #include "devices/s3_2.8/screen.h"
+#elif defined(__XTOUCH_SCREEN_S3_3248__)
+#include "devices/s3_3248w535/screen.h"
 #elif defined(__XTOUCH_SCREEN_S3_050__)
 #include "devices/5.0/screen.h"
 #endif

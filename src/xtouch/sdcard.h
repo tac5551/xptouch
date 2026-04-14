@@ -22,6 +22,8 @@
 #include "SD_MMC.h"
 #if defined(__XTOUCH_SCREEN_S3_028__)
 #include "../devices/s3_2.8/sd_mmc_pins.h"
+#elif defined(__XTOUCH_SCREEN_S3_3248__)
+#include "../devices/s3_3248w535/sd_mmc_pins.h"
 #else
 #ifndef XTOUCH_SD_SCK
 #define XTOUCH_SD_SCK 38
@@ -132,7 +134,7 @@ bool xtouch_sdcard_setup(int8_t sd_cs_pin, bool mode1bit = true)
 #if defined(__XTOUCH_SCREEN_28__)
         cs = 5;
 #else
-        cs = 10;
+        cs = 10; /* S3 5" / JC3248W535 暫定 */
 #endif
     }
     SPI.begin(XTOUCH_SD_SPI_SCK, XTOUCH_SD_SPI_MISO, XTOUCH_SD_SPI_MOSI, cs);
