@@ -11,6 +11,64 @@ env = DefaultEnvironment()
 
 flag_file = ".prebuild_executed"
 
+def run_icon_font_generation():
+    """BMP から ui_font_xlcd*.c を生成（ビルド前必須）"""
+    jobs = [
+        {
+            "input_dir": "tool/icon_export/ui_font_xlcd",
+            "output": "src/ui/fonts/ui_font_xlcd.c",
+            "font_name": "ui_font_xlcd",
+            "macro_name": "UI_FONT_XLCD",
+        },
+        {
+            "input_dir": "tool/icon_export/ui_font_xlcd48",
+            "output": "src/ui/fonts/ui_font_xlcd48.c",
+            "font_name": "ui_font_xlcd48",
+            "macro_name": "UI_FONT_XLCD48",
+        },
+        {
+            "input_dir": "tool/icon_export/ui_font_xlcdmin",
+            "output": "src/ui/fonts/ui_font_xlcdmin.c",
+            "font_name": "ui_font_xlcdmin",
+            "macro_name": "UI_FONT_XLCDMIN",
+        },
+    ]
+
+    for job in jobs:
+        cmd = [
+            sys.executable,
+            "tool/bmp_to_ui_font_xlcd.py",
+            "--input-dir",
+            job["input_dir"],
+            "--output",
+            job["output"],
+            "--font-name",
+            job["font_name"],
+            "--macro-name",
+            job["macro_name"],
+        ]
+        print(f"[pre-build] icon font generate: {job['font_name']}")
+        try:
+            result = subprocess.run(
+                cmd,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                check=True,
+                capture_output=True,
+            )
+        except subprocess.CalledProcessError as e:
+            print(f"[pre-build][ERROR] icon font generate failed: {job['font_name']}")
+            if e.stdout:
+                print(e.stdout)
+            if e.stderr:
+                print(e.stderr)
+            raise
+        if result.stdout:
+            print(result.stdout)
+        if result.stderr:
+            print(result.stderr)
+
 # MarkFlag機能: Prebuildが一度だけ実行されるようにする
 def is_prebuild_already_executed():
     """ファイルベースでPrebuildが既に実行されたかチェック"""
@@ -154,6 +212,8 @@ def prebuild():
         if is_prebuild_already_executed():
             print("Prebuild already executed - skipping")
             return
+
+        run_icon_font_generation()
 
         result = subprocess.run(['node', 'scripts/download-errors.js'],
                                 text=True, check=True, capture_output=True)

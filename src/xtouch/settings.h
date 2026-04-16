@@ -14,6 +14,7 @@ void xtouch_settings_save(bool onlyRoot = false)
     doc["ota"] = xTouchConfig.xTouchOTAEnabled;
     doc["wop"] = xTouchConfig.xTouchWakeOnPrint;
     doc["wdp"] = xTouchConfig.xTouchWakeDuringPrint;
+    doc["chamberLedOnWake"] = xTouchConfig.xTouchChamberLedOnWake;
     doc["chamberTempDiff"] = xTouchConfig.xTouchChamberSensorReadingDiff;
 
     doc["stackChanEnabled"] = xTouchConfig.xTouchStackChanEnabled;
@@ -55,6 +56,7 @@ void xtouch_settings_loadSettings()
         xTouchConfig.xTouchOTAEnabled = false;
         xTouchConfig.xTouchWakeOnPrint = false;
         xTouchConfig.xTouchWakeDuringPrint = false;
+        xTouchConfig.xTouchChamberLedOnWake = false;
         xTouchConfig.xTouchChamberSensorReadingDiff = 0;
 
         xTouchConfig.xTouchStackChanEnabled = false;
@@ -82,6 +84,7 @@ void xtouch_settings_loadSettings()
     xTouchConfig.xTouchOTAEnabled = settings.containsKey("ota") ? settings["ota"].as<bool>() : false;
     xTouchConfig.xTouchWakeOnPrint = settings.containsKey("wop") ? settings["wop"].as<bool>() : false;
     xTouchConfig.xTouchWakeDuringPrint = settings.containsKey("wdp") ? settings["wdp"].as<bool>() : false;
+    xTouchConfig.xTouchChamberLedOnWake = settings.containsKey("chamberLedOnWake") ? settings["chamberLedOnWake"].as<bool>() : false;
     xTouchConfig.xTouchChamberSensorReadingDiff = settings.containsKey("chamberTempDiff") ? settings["chamberTempDiff"].as<int8_t>() : 0;
 
     xTouchConfig.xTouchStackChanEnabled = settings.containsKey("stackChanEnabled") ? settings["stackChanEnabled"].as<bool>() : false;

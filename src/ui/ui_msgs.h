@@ -54,6 +54,8 @@ extern "C"
         XTOUCH_COMMAND_LEFT,
         XTOUCH_COMMAND_UP,
         XTOUCH_COMMAND_DOWN,
+        /** AXIS: モーター解除（M18。Bambu 系でも一般的。購読は mqtt.h / device.h） */
+        XTOUCH_COMMAND_MOTOR_UNLOCK,
         XTOUCH_COMMAND_BED_UP,
         XTOUCH_COMMAND_BED_DOWN,
         XTOUCH_COMMAND_BED_TARGET_TEMP,

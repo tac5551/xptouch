@@ -203,6 +203,8 @@ extern "C"
         int xTouchLEDOffValue;
         bool xTouchWakeOnPrint;
         bool xTouchWakeDuringPrint;
+        /** スリープ復帰時に Chamber LED が Off なら On にする（General 設定） */
+        bool xTouchChamberLedOnWake;
         int currentScreenIndex;
  
         bool xTouchStackChanEnabled;

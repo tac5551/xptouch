@@ -43,6 +43,7 @@ extern "C"
     void onControlUp(lv_event_t *e);
     void onControlHome(lv_event_t *e);
     void onControlDown(lv_event_t *e);
+    void onControlMotorUnlock(lv_event_t *e);
     void onControlBedUp(lv_event_t *e);
     void onControlBedDown(lv_event_t *e);
     void onControlRight(lv_event_t *e);
@@ -54,6 +55,7 @@ extern "C"
     void onSettingsClearAccesCodeCache(lv_event_t *e);
     void onSettingsAuxFan(lv_event_t *e);
     void onSettingsChamberFan(lv_event_t *e);
+    void onSettingsChamberLedWake(lv_event_t *e);
     void onSettingsTFTFlip(lv_event_t *e);
     void onSettingsUnPair(lv_event_t *e);
     void onSettingsOTA(lv_event_t *e);

@@ -49,6 +49,10 @@ void xtouch_screen_wakeUp()
     xtouch_screen_touchFromPowerOff = false;
     loadScreen(0);
     xtouch_screen_setBrightness(xTouchConfig.xTouchBacklightLevel);
+    if (xTouchConfig.xTouchChamberLedOnWake && !bambuStatus.chamberLed)
+    {
+        lv_msg_send(XTOUCH_COMMAND_LIGHT_TOGGLE, NULL);
+    }
 }
 
 void xtouch_screen_onScreenTimeout(lv_timer_t *timer)

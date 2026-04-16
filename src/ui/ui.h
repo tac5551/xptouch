@@ -90,6 +90,7 @@ extern "C"
   lv_obj_t *ui_settingsTFTFlipSwitch;
   lv_obj_t *ui_settings_auxFanSwitch;
   lv_obj_t *ui_settings_chamberFanSwitch;
+  lv_obj_t *ui_settings_chamberLedWakeSwitch;
   // lv_obj_t *ui_settings_chamberSensorSwitch;
   lv_obj_t *ui_settings_otaSwitch;
   

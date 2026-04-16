@@ -90,15 +90,15 @@ def post_build_manifest(version_value):
 
 
 def post_build_copy_ota_fw(version):
-    ota_bin_source = "./.pio/build/esp32-s3dev/firmware.bin"
+    ota_bin_source = "./.pio/build/esp32-s3dev-50/firmware.bin"
     ota_bin_target = f"../xptouch-bin/5.0/ota/xptouch.{version}.bin"
     print(f"copy to ota : cp {ota_bin_source} {ota_bin_target}")
     shutil.copy(ota_bin_source,ota_bin_target)
     #subprocess.run(['cp', ota_bin_source, ota_bin_target])
 
-    fw_bin_source = "./.pio/build/esp32-s3dev/firmware.bin"
+    fw_bin_source = "./.pio/build/esp32-s3dev-50/firmware.bin"
     fw_bin_target = f"../xptouch-bin/5.0/fw/firmware.bin"
-    print(f"copy to fw : cp {ota_bin_source} {ota_bin_target}")
+    print(f"copy to fw : cp {fw_bin_source} {fw_bin_target}")
     shutil.copy(fw_bin_source,fw_bin_target)
     #subprocess.run(['cp', fw_bin_source, fw_bin_target])
 
@@ -124,7 +124,7 @@ def post_build_merge_bin(version):
         '0x10000', 'firmware.bin'
     ]
     print(f"command {esptool_cmd}" )
-    subprocess.run(esptool_cmd, cwd="./.pio/build/esp32-s3dev")
+    subprocess.run(esptool_cmd, cwd="./.pio/build/esp32-s3dev-50")
 
 
 def post_build_action(source, target, env):

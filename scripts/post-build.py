@@ -129,7 +129,7 @@ def post_build_copy_ota_fw(version):
 
     fw_bin_source = "./.pio/build/esp32dev/firmware.bin"
     fw_bin_target = f"../xptouch-bin/2.8/fw/firmware.bin"
-    print(f"copy to fw : cp {ota_bin_source} {ota_bin_target}")
+    print(f"copy to fw : cp {fw_bin_source} {fw_bin_target}")
     shutil.copy(fw_bin_source,fw_bin_target)
     #subprocess.run(['cp', fw_bin_source, fw_bin_target])
 

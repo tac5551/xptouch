@@ -228,7 +228,7 @@ lv_obj_t *ui_sidebarComponent_create(lv_obj_t *comp_parent)
     cui_sidebarPrintersButtonIcon = lv_label_create(cui_sidebarPrintersButton);
     lv_obj_set_width(cui_sidebarPrintersButtonIcon, LV_SIZE_CONTENT);
     lv_obj_set_height(cui_sidebarPrintersButtonIcon, LV_SIZE_CONTENT);
-    lv_label_set_text(cui_sidebarPrintersButtonIcon, "p");
+    lv_label_set_text(cui_sidebarPrintersButtonIcon, "B");
     lv_obj_clear_flag(cui_sidebarPrintersButtonIcon, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN);
     lv_obj_set_scrollbar_mode(cui_sidebarPrintersButtonIcon, LV_SCROLLBAR_MODE_OFF);
  #if defined(__XTOUCH_SCREEN_S3_050__)
@@ -271,7 +271,7 @@ lv_obj_t *ui_sidebarComponent_create(lv_obj_t *comp_parent)
     cui_sidebarHistoryButtonIcon = lv_label_create(cui_sidebarHistoryButton);
     lv_obj_set_width(cui_sidebarHistoryButtonIcon, LV_SIZE_CONTENT);
     lv_obj_set_height(cui_sidebarHistoryButtonIcon, LV_SIZE_CONTENT);
-    lv_label_set_text(cui_sidebarHistoryButtonIcon, "h");
+    lv_label_set_text(cui_sidebarHistoryButtonIcon, "C");
     lv_obj_clear_flag(cui_sidebarHistoryButtonIcon, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN);
     lv_obj_set_scrollbar_mode(cui_sidebarHistoryButtonIcon, LV_SCROLLBAR_MODE_OFF);
  #if defined(__XTOUCH_SCREEN_S3_050__)
@@ -314,7 +314,7 @@ lv_obj_t *ui_sidebarComponent_create(lv_obj_t *comp_parent)
     cui_sidebarTempButtonIcon = lv_label_create(cui_sidebarTempButton);
     lv_obj_set_width(cui_sidebarTempButtonIcon, LV_SIZE_CONTENT);  /// 100
     lv_obj_set_height(cui_sidebarTempButtonIcon, LV_SIZE_CONTENT); /// 24
-    lv_label_set_text(cui_sidebarTempButtonIcon, "b");
+    lv_label_set_text(cui_sidebarTempButtonIcon, "p");
     lv_obj_clear_flag(cui_sidebarTempButtonIcon, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN); /// Flags
     lv_obj_set_scrollbar_mode(cui_sidebarTempButtonIcon, LV_SCROLLBAR_MODE_OFF);
  #if defined(__XTOUCH_SCREEN_S3_050__)

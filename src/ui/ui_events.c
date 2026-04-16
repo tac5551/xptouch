@@ -112,6 +112,7 @@ void onControlLeft(lv_event_t *e) { lv_msg_send(XTOUCH_COMMAND_LEFT, NULL); }
 void onControlRight(lv_event_t *e) { lv_msg_send(XTOUCH_COMMAND_RIGHT, NULL); }
 void onControlUp(lv_event_t *e) { lv_msg_send(XTOUCH_COMMAND_UP, NULL); }
 void onControlDown(lv_event_t *e) { lv_msg_send(XTOUCH_COMMAND_DOWN, NULL); }
+void onControlMotorUnlock(lv_event_t *e) { lv_msg_send(XTOUCH_COMMAND_MOTOR_UNLOCK, NULL); }
 void onControlBedUp(lv_event_t *e) { lv_msg_send(XTOUCH_COMMAND_BED_UP, NULL); }
 void onControlBedDown(lv_event_t *e) { lv_msg_send(XTOUCH_COMMAND_BED_DOWN, NULL); }
 
@@ -316,6 +317,12 @@ void onSettingsAuxFan(lv_event_t *e)
 void onSettingsChamberFan(lv_event_t *e)
 {
     xTouchConfig.xTouchChamberFanEnabled = !xTouchConfig.xTouchChamberFanEnabled;
+    lv_msg_send(XTOUCH_SETTINGS_SAVE, NULL);
+}
+
+void onSettingsChamberLedWake(lv_event_t *e)
+{
+    xTouchConfig.xTouchChamberLedOnWake = !xTouchConfig.xTouchChamberLedOnWake;
     lv_msg_send(XTOUCH_SETTINGS_SAVE, NULL);
 }
 

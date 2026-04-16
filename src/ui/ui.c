@@ -82,6 +82,11 @@ lv_obj_t *ui____initial_actions0;
  static const lv_font_t *_lv_font_middle_ptr = &lv_font_montserrat_32;
  static const lv_font_t *_lv_font_big_ptr = &lv_font_montserrat_48;
  static const lv_font_t *_lv_icon_font_small_ptr = &ui_font_xlcd48;
+#elif defined(__XTOUCH_SCREEN_S3_3248__)
+ static const lv_font_t *_lv_font_small_ptr = &lv_font_montserrat_14;
+ static const lv_font_t *_lv_font_middle_ptr = &lv_font_montserrat_24;
+ static const lv_font_t *_lv_font_big_ptr = &lv_font_montserrat_28;
+ static const lv_font_t *_lv_icon_font_small_ptr = &ui_font_xlcd;
 #else
  static const lv_font_t *_lv_font_small_ptr = &lv_font_montserrat_14;
  static const lv_font_t *_lv_font_middle_ptr = &lv_font_montserrat_24;

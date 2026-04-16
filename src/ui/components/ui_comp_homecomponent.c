@@ -1201,7 +1201,7 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
         lv_obj_set_style_bg_color(cui_mainScreenNozzleIcon, lv_color_hex(0x333333), LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_bg_opa(cui_mainScreenNozzleIcon, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_radius(cui_mainScreenNozzleIcon, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
-        lv_obj_set_style_pad_left(cui_mainScreenNozzleIcon, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_pad_left(cui_mainScreenNozzleIcon, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_pad_right(cui_mainScreenNozzleIcon, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_pad_top(cui_mainScreenNozzleIcon, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_pad_bottom(cui_mainScreenNozzleIcon, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1420,7 +1420,9 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_text_line_space(cui_mainScreenReprintButton, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_label_set_long_mode(cui_mainScreenReprintButton, LV_LABEL_LONG_CLIP);
     lv_obj_set_style_radius(cui_mainScreenReprintButton, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_border_width(cui_mainScreenReprintButton, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(cui_mainScreenReprintButton, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_color(cui_mainScreenReprintButton, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_opa(cui_mainScreenReprintButton, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(cui_mainScreenReprintButton, lv_color_hex(0x2a552a), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(cui_mainScreenReprintButton, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_left(cui_mainScreenReprintButton, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1437,6 +1439,8 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
     lv_obj_clear_flag(cui_mainScreenReprintButton, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN);
     lv_obj_set_style_bg_color(cui_mainScreenReprintButton, lv_color_hex(0x008800), LV_PART_MAIN | LV_STATE_PRESSED);
     lv_obj_set_style_bg_opa(cui_mainScreenReprintButton, 255, LV_PART_MAIN | LV_STATE_PRESSED);
+    lv_obj_set_style_border_width(cui_mainScreenReprintButton, 1, LV_PART_MAIN | LV_STATE_PRESSED);
+    lv_obj_set_style_border_color(cui_mainScreenReprintButton, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_PRESSED);
     lv_obj_add_flag(cui_mainScreenReprintButton, LV_OBJ_FLAG_HIDDEN);
 
     /* ボタン下に subtask_name（ファイル名）。長いときは横スクロール（History Reprint のタイトルと同様） */

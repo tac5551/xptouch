@@ -65,3 +65,56 @@ Symbols:
 履璃離陸立律慄略柳流留竜粒隆硫侶旅虜慮了両良料涼猟陵量僚領寮療瞭糧力緑林厘倫輪隣
 臨瑠涙累塁類令礼冷励戻例鈴零霊隷齢麗暦歴列劣烈裂恋連廉練錬呂炉賂路露老労弄郎朗浪
 廊楼漏籠六録麓論和話賄脇惑枠湾腕
+
+---
+
+## icon_export の BMP から ui_font_xlcd*.c を作る手順（スクリプト運用）
+
+対象 BMP:
+
+- `tool/icon_export/ui_font_xlcd/icon_A_0041.bmp`
+- `tool/icon_export/ui_font_xlcd/icon_B_0042.bmp`
+
+### 1) 事前準備
+
+- 生成スクリプト: `tool/bmp_to_ui_font_xlcd.py`
+- 依存: `pip install pillow`
+- BMP ファイル名は `*_XXXX.bmp` 形式（`XXXX` は Unicode 16 進）
+  - 例: `icon_A_0041.bmp` -> `U+0041`
+- 既定では安全のため必須グリフ `0-4`, `a-z`, `A`, `B` が不足するとエラーで中断
+  - 必要時のみ `--allow-partial` を付ける
+
+### 2) ui_font_xlcd.c（24px）生成
+
+```powershell
+python tool/bmp_to_ui_font_xlcd.py `
+  --input-dir "tool/icon_export/ui_font_xlcd" `
+  --output "src/ui/fonts/ui_font_xlcd.c" `
+  --font-name "ui_font_xlcd" `
+  --macro-name "UI_FONT_XLCD"
+```
+
+### 3) ui_font_xlcd48.c（48px）生成
+
+```powershell
+python tool/bmp_to_ui_font_xlcd.py `
+  --input-dir "tool/icon_export/ui_font_xlcd48" `
+  --output "src/ui/fonts/ui_font_xlcd48.c" `
+  --font-name "ui_font_xlcd48" `
+  --macro-name "UI_FONT_XLCD48"
+```
+
+### 4) ui_font_xlcdmin.c（16px）生成
+
+```powershell
+python tool/bmp_to_ui_font_xlcd.py `
+  --input-dir "tool/icon_export/ui_font_xlcdmin" `
+  --output "src/ui/fonts/ui_font_xlcdmin.c" `
+  --font-name "ui_font_xlcdmin" `
+  --macro-name "UI_FONT_XLCDMIN"
+```
+
+注意:
+
+- 本スクリプトは既存 `ui_font_xlcd*.c` とバイナリ完全一致はしない（運用互換重視）。
+- `img_logo_to_bmp.py` は `C -> BMP` 専用で、逆変換には使えない。

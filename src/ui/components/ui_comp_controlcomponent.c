@@ -35,6 +35,7 @@ void ui_event_comp_controlComponent_controlScreenUp(lv_event_t *e)
 }
 
 void ui_event_comp_controlComponent_controlScreenHomeConfirm() { onControlHome(NULL); }
+void ui_event_comp_controlComponent_controlScreenMotorUnlockConfirm(void) { onControlMotorUnlock(NULL); }
 void ui_event_comp_controlComponent_controlScreenHome(lv_event_t *e)
 {
     lv_event_code_t event_code = lv_event_get_code(e);
@@ -83,6 +84,17 @@ void ui_event_comp_controlComponent_controlScreenRight(lv_event_t *e)
     if (event_code == LV_EVENT_CLICKED)
     {
         onControlRight(e);
+    }
+}
+
+void ui_event_comp_controlComponent_controlScreenMotorUnlock(lv_event_t *e)
+{
+    lv_event_code_t event_code = lv_event_get_code(e);
+    lv_obj_t *target = lv_event_get_target(e);
+    lv_obj_t **comp_controlComponent = lv_event_get_user_data(e);
+    if (event_code == LV_EVENT_CLICKED)
+    {
+        ui_confirmPanel_show(LV_SYMBOL_WARNING " Disable stepper motors?\n(M18)", ui_event_comp_controlComponent_controlScreenMotorUnlockConfirm);
     }
 }
 
@@ -233,29 +245,42 @@ lv_obj_t *ui_controlComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_text_color(cui_controlScreenLeftIcon, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_color(cui_controlScreenLeftIcon, lv_color_hex(0x444444), LV_PART_MAIN | LV_STATE_DISABLED);
 
-    lv_obj_t *cui_controlScreenDummy0;
-    cui_controlScreenDummy0 = lv_obj_create(cui_controlScreenColA);
-    lv_obj_set_width(cui_controlScreenDummy0, lv_pct(100));
-    lv_obj_set_flex_grow(cui_controlScreenDummy0, 2);
-    lv_obj_set_x(cui_controlScreenDummy0, 386);
-    lv_obj_set_y(cui_controlScreenDummy0, 178);
-    lv_obj_set_flex_flow(cui_controlScreenDummy0, LV_FLEX_FLOW_ROW);
-    lv_obj_set_flex_align(cui_controlScreenDummy0, LV_FLEX_ALIGN_SPACE_BETWEEN, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
-    lv_obj_clear_flag(cui_controlScreenDummy0, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN); /// Flags
-    lv_obj_set_scrollbar_mode(cui_controlScreenDummy0, LV_SCROLLBAR_MODE_OFF);
-    lv_obj_set_style_bg_color(cui_controlScreenDummy0, lv_color_hex(0x444444), LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_bg_opa(cui_controlScreenDummy0, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_border_width(cui_controlScreenDummy0, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_left(cui_controlScreenDummy0, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_right(cui_controlScreenDummy0, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_top(cui_controlScreenDummy0, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_bottom(cui_controlScreenDummy0, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_row(cui_controlScreenDummy0, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_column(cui_controlScreenDummy0, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_color(cui_controlScreenDummy0, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_opa(cui_controlScreenDummy0, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_bg_color(cui_controlScreenDummy0, lv_color_hex(0x777777), LV_PART_MAIN | LV_STATE_PRESSED);
-    lv_obj_set_style_bg_opa(cui_controlScreenDummy0, 255, LV_PART_MAIN | LV_STATE_PRESSED);
+    /* 左下: モーター解除（左矢印ボタンと同デザイン。アイコンは xlcd の "w" = 鍵/ロック系） */
+    lv_obj_t *cui_controlScreenMotorUnlock;
+    cui_controlScreenMotorUnlock = lv_obj_create(cui_controlScreenColA);
+    lv_obj_set_width(cui_controlScreenMotorUnlock, lv_pct(100));
+    lv_obj_set_flex_grow(cui_controlScreenMotorUnlock, 2);
+    lv_obj_set_x(cui_controlScreenMotorUnlock, 386);
+    lv_obj_set_y(cui_controlScreenMotorUnlock, 178);
+    lv_obj_set_flex_flow(cui_controlScreenMotorUnlock, LV_FLEX_FLOW_ROW);
+    lv_obj_set_flex_align(cui_controlScreenMotorUnlock, LV_FLEX_ALIGN_SPACE_BETWEEN, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_clear_flag(cui_controlScreenMotorUnlock, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN); /// Flags
+    lv_obj_set_scrollbar_mode(cui_controlScreenMotorUnlock, LV_SCROLLBAR_MODE_OFF);
+    lv_obj_set_style_bg_color(cui_controlScreenMotorUnlock, lv_color_hex(0x555555), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(cui_controlScreenMotorUnlock, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(cui_controlScreenMotorUnlock, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_left(cui_controlScreenMotorUnlock, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(cui_controlScreenMotorUnlock, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_top(cui_controlScreenMotorUnlock, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_bottom(cui_controlScreenMotorUnlock, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_row(cui_controlScreenMotorUnlock, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_column(cui_controlScreenMotorUnlock, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_color(cui_controlScreenMotorUnlock, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_opa(cui_controlScreenMotorUnlock, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(cui_controlScreenMotorUnlock, lv_color_hex(0x777777), LV_PART_MAIN | LV_STATE_PRESSED);
+    lv_obj_set_style_bg_opa(cui_controlScreenMotorUnlock, 255, LV_PART_MAIN | LV_STATE_PRESSED);
+
+    lv_obj_t *cui_controlScreenMotorUnlockIcon;
+    cui_controlScreenMotorUnlockIcon = lv_label_create(cui_controlScreenMotorUnlock);
+    lv_obj_set_height(cui_controlScreenMotorUnlockIcon, LV_SIZE_CONTENT); /// 1
+    lv_obj_set_flex_grow(cui_controlScreenMotorUnlockIcon, 1);
+    lv_obj_set_align(cui_controlScreenMotorUnlockIcon, LV_ALIGN_CENTER);
+    lv_label_set_text(cui_controlScreenMotorUnlockIcon, "A");
+    lv_obj_clear_flag(cui_controlScreenMotorUnlockIcon, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN); /// Flags
+    lv_obj_set_scrollbar_mode(cui_controlScreenMotorUnlockIcon, LV_SCROLLBAR_MODE_OFF);
+    lv_obj_set_style_text_align(cui_controlScreenMotorUnlockIcon, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(cui_controlScreenMotorUnlockIcon, lv_icon_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_color(cui_controlScreenMotorUnlockIcon, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
 
     lv_obj_t *cui_controlScreenColB;
     cui_controlScreenColB = lv_obj_create(cui_controlComponent);
@@ -620,7 +645,8 @@ lv_obj_t *ui_controlComponent_create(lv_obj_t *comp_parent)
     children[UI_COMP_CONTROLCOMPONENT_CONTROLSCREENCOLA_CONTROLSCREENRANGE_CONTROLSCREENRANGEVALUE] = cui_controlScreenRangeValue;
     children[UI_COMP_CONTROLCOMPONENT_CONTROLSCREENCOLA_CONTROLSCREENLEFT] = cui_controlScreenLeft;
     children[UI_COMP_CONTROLCOMPONENT_CONTROLSCREENCOLA_CONTROLSCREENLEFT_CONTROLSCREENLEFTICON] = cui_controlScreenLeftIcon;
-    children[UI_COMP_CONTROLCOMPONENT_CONTROLSCREENCOLA_CONTROLSCREENDUMMY0] = cui_controlScreenDummy0;
+    children[UI_COMP_CONTROLCOMPONENT_CONTROLSCREENCOLA_CONTROLSCREENMOTORUNLOCK] = cui_controlScreenMotorUnlock;
+    children[UI_COMP_CONTROLCOMPONENT_CONTROLSCREENCOLA_CONTROLSCREENMOTORUNLOCK_CONTROLSCREENMOTORUNLOCKICON] = cui_controlScreenMotorUnlockIcon;
     children[UI_COMP_CONTROLCOMPONENT_CONTROLSCREENCOLB] = cui_controlScreenColB;
     children[UI_COMP_CONTROLCOMPONENT_CONTROLSCREENCOLB_CONTROLSCREENUP] = cui_controlScreenUp;
     children[UI_COMP_CONTROLCOMPONENT_CONTROLSCREENCOLB_CONTROLSCREENUP_CONTROLSCREENUPICON] = cui_controlScreenUpIcon;
@@ -650,6 +676,7 @@ lv_obj_t *ui_controlComponent_create(lv_obj_t *comp_parent)
     lv_obj_add_event_cb(cui_controlScreenBedUp, ui_event_comp_controlComponent_controlScreenBedUp, LV_EVENT_ALL, children);
     lv_obj_add_event_cb(cui_controlScreenBedDown, ui_event_comp_controlComponent_controlScreenBedDown, LV_EVENT_ALL, children);
     lv_obj_add_event_cb(cui_controlScreenRight, ui_event_comp_controlComponent_controlScreenRight, LV_EVENT_ALL, children);
+    lv_obj_add_event_cb(cui_controlScreenMotorUnlock, ui_event_comp_controlComponent_controlScreenMotorUnlock, LV_EVENT_ALL, children);
 
     lv_obj_add_event_cb(cui_controlScreenRangeValue, onXtouchRangeChange, LV_EVENT_MSG_RECEIVED, NULL);
     lv_msg_subsribe_obj(XTOUCH_CONTROL_INC_SWITCH, cui_controlScreenRangeValue, NULL);

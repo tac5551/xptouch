@@ -99,8 +99,14 @@ void setup()
   lv_font_middle_set(&lv_font_montserrat_32);
   lv_font_big_set(&lv_font_montserrat_48);
   lv_icon_font_small_set(&ui_font_xlcd48);
+#elif defined(__XTOUCH_SCREEN_S3_3248__)
+  /* 3.5": TEMP / Control 等のアイコンは xlcd（2.8" の min より大きいグリッド） */
+  lv_font_small_set(&lv_font_montserrat_14);
+  lv_font_middle_set(&lv_font_montserrat_24);
+  lv_font_big_set(&lv_font_montserrat_28);
+  lv_icon_font_small_set(&ui_font_xlcd);
 #elif defined(__XTOUCH_PLATFORM_S3__)
-  /* S3 で 5" 以外（現状 2.8。将来の小型 S3 も同じプロファイル） */
+  /* S3 2.8" 等（5" / 3.5" 以外） */
   lv_font_small_set(&lv_font_montserrat_14);
   lv_font_middle_set(&lv_font_montserrat_24);
   lv_font_big_set(&lv_font_montserrat_28);
@@ -115,6 +121,7 @@ void setup()
     lv_font_small_set(&lv_font_montserrat_24);
     lv_font_middle_set(&lv_font_montserrat_28);
     lv_font_big_set(&lv_font_montserrat_32);
+    lv_icon_font_small_set(&ui_font_xlcd);
   }
 #endif
   xtouch_intro_show();

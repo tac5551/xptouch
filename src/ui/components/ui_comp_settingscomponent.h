@@ -38,6 +38,9 @@ extern "C"
         UI_COMP_SETTINGSCOMPONENT_LEDOFF_LABEL,
         UI_COMP_SETTINGSCOMPONENT_LEDOFF_SLIDER,
         UI_COMP_SETTINGSCOMPONENT_LEDOFF_VALUE,
+        UI_COMP_SETTINGSCOMPONENT_CHAMBERLEDWAKE,
+        UI_COMP_SETTINGSCOMPONENT_CHAMBERLEDWAKE_LABEL,
+        UI_COMP_SETTINGSCOMPONENT_CHAMBERLEDWAKE_SWITCH,
         UI_COMP_SETTINGSCOMPONENT_AUXFAN,
         UI_COMP_SETTINGSCOMPONENT_AUXFAN_LABEL,
         UI_COMP_SETTINGSCOMPONENT_AUXFAN_SWITCH,
@@ -62,6 +65,7 @@ extern "C"
     void ui_event_comp_settingsComponent_clearCacheButton(lv_event_t *e);
     void ui_event_comp_settingsComponent_onAuxFan(lv_event_t *e);
     void ui_event_comp_settingsComponent_onChamberFan(lv_event_t *e);
+    void ui_event_comp_settingsComponent_onChamberLedWake(lv_event_t *e);
     void ui_event_comp_settingsComponent_onOTA(lv_event_t *e);
 
 #ifdef __cplusplus

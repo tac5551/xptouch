@@ -329,6 +329,14 @@ void xtouch_device_onDownCommand(lv_msg_t *m)
     xtouch_device_move_axis(axis, controlMode.inc * multiplier, XTOUCH_DEVICE_CONTROL_MOVE_SPEED_XY);
 }
 
+void xtouch_device_onMotorUnlockCommand(lv_msg_t *m)
+{
+    (void)m;
+    xtouch_device_gcode_line("M18\n");
+    delay(10);
+    xtouch_device_pushall();
+}
+
 void xtouch_device_onBedUpCommand(lv_msg_t *m)
 {
     // Bed Up/Down は常に Z 軸専用（Z+ がノズル上方向の機種では Up=-1, Down=+1）
