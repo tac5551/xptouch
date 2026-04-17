@@ -228,6 +228,9 @@ void setup()
 #elif defined(__XTOUCH_SCREEN_S3_050__)
   ConsoleDebug.println("LED 17");
   xTouchConfig.xTouchNeoPixelPinValue = 17;
+#elif defined(__XTOUCH_SCREEN_S3_3248__)
+  ConsoleDebug.println("LED 17");
+  xTouchConfig.xTouchNeoPixelPinValue = 17;
 #elif defined(__XTOUCH_PLATFORM_S3__)
   /* 2432S028（LGFX）: FT5x06 の INT=GPIO17。5" と同じ 17 を Neo に使うとタッチと競合する。
    * ピンは printer.json の neoPixelPin のみ（未設定 0 のときは Neo タイマーは起動しない）。 */
