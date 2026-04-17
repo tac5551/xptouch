@@ -71,16 +71,9 @@ def run_icon_font_generation():
 
 # MarkFlag機能: Prebuildが一度だけ実行されるようにする
 def is_prebuild_already_executed():
-    """ファイルベースでPrebuildが既に実行されたかチェック"""
+    """ファイルベースでPrebuildが既に実行されたかチェック（cleanまで有効）"""
     if os.path.exists(flag_file):
-        # ファイルの作成時刻をチェック（5分以内なら有効）
-        file_time = os.path.getmtime(flag_file)
-        current_time = time.time()
-        if current_time - file_time < 300:  # 5分 = 300秒
-            return True
-        else:
-            # 古いフラグファイルを削除
-            os.remove(flag_file)
+        return True
     return False
 
 def mark_prebuild_executed():

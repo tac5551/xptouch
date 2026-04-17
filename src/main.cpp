@@ -83,12 +83,14 @@ void setup()
 
   xtouch_eeprom_setup();
 #if defined(__XTOUCH_SCREEN_S3_050__)
+  Serial.println("[xPTouch] enter xtouch_eeprom_rgb_pclk_heal_invalid_storage");
   xtouch_eeprom_rgb_pclk_heal_invalid_storage();
 #endif
   xtouch_globals_init();
 #if defined(__XTOUCH_SCREEN_S3_3248__)
   Serial.println("[xPTouch] enter xtouch_screen_setup (LCD+LVGL)");
 #endif
+
   xtouch_screen_setup();
 #if defined(__XTOUCH_SCREEN_S3_3248__)
   Serial.println("[xPTouch] leave xtouch_screen_setup OK");
