@@ -1,7 +1,7 @@
 #include "../ui.h"
 
-/* tab index -> loadScreen(screen_index): TEMP=1, AXIS=2, HOTEND=3, UTIL=11 */
-static const int tab_to_screen[] = { 1, 2, 3, 11 };
+/* tab index -> loadScreen(screen_index): AXIS=2, TEMP=1, UTIL=11 */
+static const int tab_to_screen[] = { 2, 1, 11 };
 
 static void on_tab_click(lv_event_t *e)
 {
@@ -9,7 +9,7 @@ static void on_tab_click(lv_event_t *e)
     if (code != LV_EVENT_CLICKED)
         return;
     int index = (int)(intptr_t)lv_event_get_user_data(e);
-    if (index < 0 || index >= 4)
+    if (index < 0 || index >= 3)
         return;
     loadScreen(tab_to_screen[index]);
 }
@@ -44,9 +44,9 @@ static lv_obj_t *create_tab_button(lv_obj_t *parent, const char *label, int inde
 
 void ui_utilTabbarComponent_set_active(lv_obj_t *comp, int index)
 {
-    if (index < 0 || index >= 4)
+    if (index < 0 || index >= 3)
         return;
-    for (int i = 0; i < 4; i++)
+    for (int i = 0; i < 3; i++)
     {
         lv_obj_t *btn = ui_comp_get_child(comp, (uint32_t)(i + 1));
         if (btn)
@@ -77,14 +77,13 @@ lv_obj_t *ui_utilTabbarComponent_create(lv_obj_t *comp_parent, int active_tab_in
 
     lv_obj_t **children = lv_mem_alloc(sizeof(lv_obj_t *) * _UI_COMP_UTILTABBARCOMPONENT_NUM);
     children[UI_COMP_UTILTABBARCOMPONENT_UTILTABBARCOMPONENT] = cui;
-    children[UI_COMP_UTILTABBARCOMPONENT_BTN_TEMP]    = create_tab_button(cui, "TEMP",    0);
-    children[UI_COMP_UTILTABBARCOMPONENT_BTN_AXIS]   = create_tab_button(cui, "AXIS",    1);
-    children[UI_COMP_UTILTABBARCOMPONENT_BTN_HOTEND] = create_tab_button(cui, "HOTEND",  2);
-    children[UI_COMP_UTILTABBARCOMPONENT_BTN_UTIL]    = create_tab_button(cui, "UTIL",    3);
+    children[UI_COMP_UTILTABBARCOMPONENT_BTN_AXIS] = create_tab_button(cui, "AXIS", 0);
+    children[UI_COMP_UTILTABBARCOMPONENT_BTN_TEMP] = create_tab_button(cui, "TEMP", 1);
+    children[UI_COMP_UTILTABBARCOMPONENT_BTN_UTIL] = create_tab_button(cui, "UTIL", 2);
 
     lv_obj_add_event_cb(cui, get_component_child_event_cb, LV_EVENT_GET_COMP_CHILD, children);
     lv_obj_add_event_cb(cui, del_component_child_event_cb, LV_EVENT_DELETE, children);
 
-    ui_utilTabbarComponent_set_active(cui, (active_tab_index >= 0 && active_tab_index < 4) ? active_tab_index : 0);
+    ui_utilTabbarComponent_set_active(cui, (active_tab_index >= 0 && active_tab_index < 3) ? active_tab_index : 0);
     return cui;
 }

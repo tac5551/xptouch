@@ -34,7 +34,7 @@ void ui_filamentScreen_screen_init(void)
     lv_obj_set_style_bg_opa(content_col, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_width(content_col, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-    ui_utilTabbarComponent_create(content_col, UI_UTILTABBAR_TAB_HOTEND);
+    ui_utilTabbarComponent_create(content_col, UI_UTILTABBAR_TAB_UTIL);
 
     ui_filamentComponent = ui_filamentComponent_create(content_col);
     lv_obj_set_width(ui_filamentComponent, lv_pct(100));

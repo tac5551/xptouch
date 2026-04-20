@@ -12,9 +12,9 @@ void onSidebarHome(lv_event_t *e) { loadScreen(0); }
 void onSidebarPrinters(lv_event_t *e) { if (!xTouchConfig.xTouchLanOnlyMode && xTouchConfig.xTouchMultiPrinterMonitorEnabled) loadScreen(6); }
 void onSidebarHistory(lv_event_t *e) { (void)e; if (!xTouchConfig.xTouchLanOnlyMode && xTouchConfig.xTouchHistoryEnabled) loadScreen(15); }
 #endif
-void onSidebarTemp(lv_event_t *e) { loadScreen(1); }
+void onSidebarTemp(lv_event_t *e) { loadScreen(2); }
 void onSidebarControl(lv_event_t *e) { loadScreen(2); }
-void onSidebarNozzle(lv_event_t *e) { loadScreen(3); }
+void onSidebarNozzle(lv_event_t *e) { loadScreen(2); }
 void onSidebarAmsView(lv_event_t *e) { loadScreen(7); }
 void onSidebarSettings(lv_event_t *e) { loadScreen(4); }
 

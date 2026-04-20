@@ -43,10 +43,8 @@ void fillScreenData(int screen)
         break;
     case 2:
         ui_msg_send(XTOUCH_CONTROL_INC_SWITCH, controlMode.inc, 0);
-        break;
-    case 3:
         ui_msg_send(XTOUCH_ON_NOZZLE_TEMP, bambuStatus.nozzle_temper, 0);
-                break;
+        break;
     case 7:
     case 13:
         ui_msg_send(XTOUCH_ON_AMS, bambuStatus.ams, 0);
@@ -114,10 +112,6 @@ void loadScreen(int screen)
     case 2:
         ui_controlScreen_screen_init();
         lv_disp_load_scr(ui_controlScreen);
-        break;
-    case 3:
-        ui_filamentScreen_screen_init();
-        lv_disp_load_scr(ui_filamentScreen);
         break;
     case 4:
         ui_settingsScreen_screen_init();
@@ -202,7 +196,7 @@ void loadScreen(int screen)
     case 6:
         sidebar_index = 1; // Printers
         break;
-    case 1: case 2: case 3: case 10: case 11: case 12:
+    case 1: case 2: case 10: case 11: case 12:
         sidebar_index = 2; // Temps / Control 系
         break;
     case 7: case 13: case 14:
@@ -231,7 +225,7 @@ void loadScreen(int screen)
     case 0:
         sidebar_index = 0; // Home
         break;
-    case 1: case 2: case 3: case 10: case 11: case 12:
+    case 1: case 2: case 10: case 11: case 12:
         sidebar_index = 1; // Temps / Control 系
         break;
     case 7: case 13: case 14:

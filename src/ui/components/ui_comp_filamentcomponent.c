@@ -508,6 +508,8 @@ lv_obj_t *ui_filamentComponent_create(lv_obj_t *comp_parent)
     lv_obj_clear_flag(cui_filamentScreenUnloadIcon, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN); /// Flags
     lv_obj_set_scrollbar_mode(cui_filamentScreenUnloadIcon, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_style_text_font(cui_filamentScreenUnloadIcon, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
+    /* AXIS 画面へ統合したため非表示 */
+    lv_obj_add_flag(cui_filamentScreenUnload, LV_OBJ_FLAG_HIDDEN);
 
     lv_obj_t *cui_filamentScreenFilamentIcon;
     cui_filamentScreenFilamentIcon = lv_label_create(cui_filamentScreenFilament);
@@ -558,6 +560,8 @@ lv_obj_t *ui_filamentComponent_create(lv_obj_t *comp_parent)
     lv_obj_clear_flag(cui_filamentScreenLoadIcon, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN); /// Flags
     lv_obj_set_scrollbar_mode(cui_filamentScreenLoadIcon, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_style_text_font(cui_filamentScreenLoadIcon, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
+    /* AXIS 画面へ統合したため非表示 */
+    lv_obj_add_flag(cui_filamentScreenLoad, LV_OBJ_FLAG_HIDDEN);
 
     lv_obj_t **children = lv_mem_alloc(sizeof(lv_obj_t *) * _UI_COMP_FILAMENTCOMPONENT_NUM);
     children[UI_COMP_FILAMENTCOMPONENT_FILAMENTCOMPONENT] = cui_filamentControlComponent;
@@ -577,16 +581,9 @@ lv_obj_t *ui_filamentComponent_create(lv_obj_t *comp_parent)
     // button click e
     lv_obj_add_event_cb(cui_filamentScreenNozzleUp, ui_event_comp_filamentComponent_filamentScreenNozzleUpClick, LV_EVENT_ALL, children);
     lv_obj_add_event_cb(cui_filamentScreenNozzleDown, ui_event_comp_filamentComponent_filamentScreenNozzleDownCick, LV_EVENT_ALL, children);
-    lv_obj_add_event_cb(cui_filamentScreenUnload, ui_event_comp_filamentComponent_filamentScreenUnloadClick, LV_EVENT_ALL, children);
-    lv_obj_add_event_cb(cui_filamentScreenLoad, ui_event_comp_filamentComponent_filamentScreenLoadClick, LV_EVENT_ALL, children);
     lv_obj_add_event_cb(cui_filamentScreenNozzleIcon, ui_event_comp_filamentComponent_onNozzleTempClick, LV_EVENT_ALL, children);
 
     // Contraler
-    lv_obj_add_event_cb(cui_filamentScreenUnload, ui_event_comp_filamentComponent_onAmsState, LV_EVENT_MSG_RECEIVED, (void *)NULL);
-    lv_msg_subsribe_obj(XTOUCH_ON_AMS_STATE_UPDATE, cui_filamentScreenUnload, (void *)NULL);
-
-    lv_obj_add_event_cb(cui_filamentScreenLoad, ui_event_comp_filamentComponent_onAmsState, LV_EVENT_MSG_RECEIVED, (void *)NULL);
-    lv_msg_subsribe_obj(XTOUCH_ON_AMS_STATE_UPDATE, cui_filamentScreenLoad, (void *)NULL);
 
     lv_obj_add_event_cb(cui_filamentScreenNozzleTemp, ui_event_comp_filamentComponent_onNozzleTemp, LV_EVENT_MSG_RECEIVED, (void *)NULL);
     lv_msg_subsribe_obj(XTOUCH_ON_NOZZLE_TEMP, cui_filamentScreenNozzleTemp, (void *)NULL);
