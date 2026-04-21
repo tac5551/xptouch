@@ -267,9 +267,25 @@ static void control_colb_axis_size_cb(lv_event_t *e)
 
 lv_obj_t *ui_controlComponent_create(lv_obj_t *comp_parent)
 {
-    lv_coord_t side_button_col_w = 72;
-    if (lv_disp_get_hor_res(NULL) >= 800)
-        side_button_col_w = 108; /* 5インチ時は左右列を1.5倍 */
+    lv_coord_t side_button_col_w = 48; /* base: 2.8" (240x320) */
+    lv_coord_t axis_outer_pad = 2;     /* 2.8" は円周り余白を詰める */
+    lv_coord_t axis_side_gap = 4;      /* 左列と円の間隔 */
+    lv_coord_t rw = lv_disp_get_hor_res(NULL);
+    lv_coord_t rh = lv_disp_get_ver_res(NULL);
+    lv_coord_t long_side = (rw > rh) ? rw : rh;
+    lv_coord_t short_side = (rw > rh) ? rh : rw;
+    if (long_side >= 800)
+    {
+        side_button_col_w = 108; /* 5" : 480x800 */
+        axis_outer_pad = 4;
+        axis_side_gap = 8;
+    }
+    else if (long_side >= 480)
+    {
+        side_button_col_w = 72;  /* 3.5" : 320x480 */
+        axis_outer_pad = 4;
+        axis_side_gap = 8;
+    }
 
     lv_obj_t *cui_controlComponent;
     cui_controlComponent = lv_obj_create(comp_parent);
@@ -285,13 +301,13 @@ lv_obj_t *ui_controlComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_bg_color(cui_controlComponent, lv_color_hex(0x444444), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(cui_controlComponent, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_width(cui_controlComponent, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_left(cui_controlComponent, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_right(cui_controlComponent, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_left(cui_controlComponent, axis_outer_pad, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(cui_controlComponent, axis_outer_pad, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_top(cui_controlComponent, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_bottom(cui_controlComponent, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_row(cui_controlComponent, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
     /* 基本列間は上下の間隔感に合わせる。広げたい箇所はスペーサー列で追加調整 */
-    lv_obj_set_style_pad_column(cui_controlComponent, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_column(cui_controlComponent, axis_outer_pad, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_color(cui_controlComponent, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(cui_controlComponent, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
@@ -315,7 +331,7 @@ lv_obj_t *ui_controlComponent_create(lv_obj_t *comp_parent)
 
     /* 1-2間を広げるスペーサー */
     lv_obj_t *cui_spacer_12 = lv_obj_create(cui_controlComponent);
-    lv_obj_set_width(cui_spacer_12, 8);
+    lv_obj_set_width(cui_spacer_12, axis_side_gap);
     lv_obj_set_height(cui_spacer_12, lv_pct(100));
     lv_obj_set_flex_grow(cui_spacer_12, 0);
     lv_obj_clear_flag(cui_spacer_12, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM);
@@ -376,7 +392,12 @@ lv_obj_t *ui_controlComponent_create(lv_obj_t *comp_parent)
     lv_obj_t *cui_nozzleTempVal = lv_label_create(cui_nozzleTempBtn);
     lv_label_set_text(cui_nozzleTempVal, "");
     lv_obj_set_align(cui_nozzleTempVal, LV_ALIGN_RIGHT_MID);
+#if defined(__XTOUCH_SCREEN_S3_050__) || defined(__XTOUCH_SCREEN_S3_3248__)
     lv_obj_set_style_text_font(cui_nozzleTempVal, lv_font_middle, LV_PART_MAIN | LV_STATE_DEFAULT);
+#else
+    /* default は 2.8 側 */
+    lv_obj_set_style_text_font(cui_nozzleTempVal, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
+#endif
 
     lv_obj_t *cui_nozzleDown = lv_obj_create(cui_nozzleCol);
     lv_obj_set_width(cui_nozzleDown, lv_pct(100));
