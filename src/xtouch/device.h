@@ -472,14 +472,17 @@ void xtouch_device_onResumeSlotCommand(void *s, lv_msg_t *m)
 
 void xtouch_device_onNozzleUp(lv_msg_t *m)
 {
-    xtouch_device_gcode_line("M83 \nG0 E-10.0 F900\n");
+    (void)m;
+    /* AXIS の 1/10/100 と同じ controlMode.inc で送り量を変える */
+    xtouch_device_gcode_line(String("M83 \nG0 E-") + String((int)controlMode.inc) + ".0 F900\n");
     delay(10);
     xtouch_device_pushall();
 }
 
 void xtouch_device_onNozzleDown(lv_msg_t *m)
 {
-    xtouch_device_gcode_line("M83 \nG0 E10.0 F900\n");
+    (void)m;
+    xtouch_device_gcode_line(String("M83 \nG0 E") + String((int)controlMode.inc) + ".0 F900\n");
     delay(10);
     xtouch_device_pushall();
 }

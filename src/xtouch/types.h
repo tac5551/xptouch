@@ -184,6 +184,9 @@ extern "C"
 
     XtouchControlMode controlMode;
 
+    /* P1S ローカル動画プレビュー（:6000 JPEG）で最後に保存したフレームパス */
+    char xtouch_p1s_video_last_path[32];
+
     typedef struct XTouchTouchConfigStruct
     {
         bool xTouchAuxFanEnabled;

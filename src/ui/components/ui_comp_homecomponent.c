@@ -161,6 +161,7 @@ void ui_event_comp_homeComponent_mainScreenNozzleTemp(lv_event_t *e)
     }
 }
 
+
 void ui_event_comp_homeComponent_mainScreenSpeedChange(lv_event_t *e)
 {
     lv_event_code_t event_code = lv_event_get_code(e);
@@ -1170,10 +1171,11 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_bg_color(cui_mainScreenController, lv_color_hex(0x444444), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(cui_mainScreenController, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_width(cui_mainScreenController, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_left(cui_mainScreenController, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_right(cui_mainScreenController, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_top(cui_mainScreenController, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_bottom(cui_mainScreenController, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    /* サムネ周りの余白は img ではなく本行に付ける（img の pad は暗い bg で帯状に見えるため） */
+    lv_obj_set_style_pad_left(cui_mainScreenController, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(cui_mainScreenController, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_top(cui_mainScreenController, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_bottom(cui_mainScreenController, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
 #if defined(__XTOUCH_SCREEN_S3_050__)
     lv_obj_set_style_pad_column(cui_mainScreenController, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
 #else
@@ -1201,10 +1203,7 @@ lv_obj_t *ui_homeComponent_create(lv_obj_t *comp_parent)
         lv_obj_set_style_bg_color(cui_mainScreenNozzleIcon, lv_color_hex(0x333333), LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_bg_opa(cui_mainScreenNozzleIcon, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_radius(cui_mainScreenNozzleIcon, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
-        lv_obj_set_style_pad_left(cui_mainScreenNozzleIcon, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
-        lv_obj_set_style_pad_right(cui_mainScreenNozzleIcon, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-        lv_obj_set_style_pad_top(cui_mainScreenNozzleIcon, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-        lv_obj_set_style_pad_bottom(cui_mainScreenNozzleIcon, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_pad_all(cui_mainScreenNozzleIcon, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
         ui_thumb_set_img_src_from_slot(cui_mainScreenNozzleIcon, 0);
         ui_homeThumbImg = cui_mainScreenNozzleIcon;
     }

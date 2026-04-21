@@ -139,10 +139,137 @@ void onXtouchRangeChange(lv_event_t *e)
     
 }
 
+/* AXIS リング: デザイン基準 CONTROL_AXIS_BASE に対し、ColB の短辺に比例してスケール */
+#define CONTROL_AXIS_BASE 236
+/* ColB 短辺に対するリング直径の割合（100=いっぱい、小さくすると円が小さくなる） */
+#define CONTROL_AXIS_RING_FILL_PCT 88
+
+static struct {
+    lv_obj_t *axisPad;
+    lv_obj_t *rangeBtn;
+    lv_obj_t *motorUnlock;
+    lv_obj_t *home;
+    lv_obj_t *xyIcon;
+} s_control_axis;
+
+static lv_coord_t control_axis_sc(lv_coord_t side, int x)
+{
+    return (lv_coord_t)(((int32_t)side * x) / CONTROL_AXIS_BASE);
+}
+
+/* axisPad の子の並び（作成順固定）: 外弧4 → 方向4 → 内弧4 → 内ヒット4 */
+static void control_axis_apply_scale(lv_coord_t side_in)
+{
+    lv_obj_t *ap = s_control_axis.axisPad;
+    if (!ap || side_in < 55)
+        return;
+    lv_coord_t side = (lv_coord_t)(((int32_t)side_in * CONTROL_AXIS_RING_FILL_PCT) / 100);
+    if (side < 48)
+        return;
+
+    lv_obj_set_size(ap, side, side);
+
+    lv_coord_t sc230 = control_axis_sc(side, 230);
+    lv_coord_t sc58 = control_axis_sc(side, 58);
+    for (int i = 0; i < 4; i++) {
+        lv_obj_t *o = lv_obj_get_child(ap, i);
+        if (!o)
+            continue;
+        lv_obj_set_size(o, sc230, sc230);
+        lv_obj_center(o);
+        lv_obj_set_style_arc_width(o, sc58, LV_PART_MAIN | LV_STATE_DEFAULT);
+    }
+
+    lv_coord_t sc56 = control_axis_sc(side, 56);
+    /* 外周から中心へ 5px 相当（基準236では ±1） */
+    lv_coord_t scIn = control_axis_sc(side, 1);
+    lv_obj_t *b0 = lv_obj_get_child(ap, 4);
+    lv_obj_t *b1 = lv_obj_get_child(ap, 5);
+    lv_obj_t *b2 = lv_obj_get_child(ap, 6);
+    lv_obj_t *b3 = lv_obj_get_child(ap, 7);
+    if (b0) {
+        lv_obj_set_size(b0, sc56, sc56);
+        lv_obj_align(b0, LV_ALIGN_TOP_MID, 0, scIn);
+    }
+    if (b1) {
+        lv_obj_set_size(b1, sc56, sc56);
+        lv_obj_align(b1, LV_ALIGN_LEFT_MID, scIn, 0);
+    }
+    if (b2) {
+        lv_obj_set_size(b2, sc56, sc56);
+        lv_obj_align(b2, LV_ALIGN_RIGHT_MID, -scIn, 0);
+    }
+    if (b3) {
+        lv_obj_set_size(b3, sc56, sc56);
+        lv_obj_align(b3, LV_ALIGN_BOTTOM_MID, 0, -scIn);
+    }
+
+    lv_coord_t sc126 = control_axis_sc(side, 126);
+    lv_coord_t sc36 = control_axis_sc(side, 36);
+    for (int i = 8; i < 12; i++) {
+        lv_obj_t *o = lv_obj_get_child(ap, i);
+        if (!o)
+            continue;
+        lv_obj_set_size(o, sc126, sc126);
+        lv_obj_center(o);
+        lv_obj_set_style_arc_width(o, sc36, LV_PART_MAIN | LV_STATE_DEFAULT);
+    }
+
+    lv_coord_t sc62 = control_axis_sc(side, 62);
+    lv_coord_t sc44 = control_axis_sc(side, 44);
+    lv_coord_t sc30 = control_axis_sc(side, 30);
+    lv_obj_t *h0 = lv_obj_get_child(ap, 12);
+    lv_obj_t *h1 = lv_obj_get_child(ap, 13);
+    lv_obj_t *h2 = lv_obj_get_child(ap, 14);
+    lv_obj_t *h3 = lv_obj_get_child(ap, 15);
+    if (h0) {
+        lv_obj_set_size(h0, sc62, sc44);
+        lv_obj_align(h0, LV_ALIGN_TOP_MID, 0, sc30);
+    }
+    if (h1) {
+        lv_obj_set_size(h1, sc44, sc62);
+        lv_obj_align(h1, LV_ALIGN_LEFT_MID, sc30, 0);
+    }
+    if (h2) {
+        lv_obj_set_size(h2, sc44, sc62);
+        lv_obj_align(h2, LV_ALIGN_RIGHT_MID, -sc30, 0);
+    }
+    if (h3) {
+        lv_obj_set_size(h3, sc62, sc44);
+        lv_obj_align(h3, LV_ALIGN_BOTTOM_MID, 0, -sc30);
+    }
+
+    lv_coord_t sc55 = control_axis_sc(side, 55);
+    if (s_control_axis.rangeBtn)
+        lv_obj_set_size(s_control_axis.rangeBtn, sc55, sc55);
+    if (s_control_axis.motorUnlock)
+        lv_obj_set_size(s_control_axis.motorUnlock, sc55, sc55);
+    if (s_control_axis.home)
+        lv_obj_set_size(s_control_axis.home, sc55, sc55);
+    if (s_control_axis.xyIcon)
+        lv_obj_set_size(s_control_axis.xyIcon, sc55, sc55);
+}
+
+static void control_colb_axis_size_cb(lv_event_t *e)
+{
+    if (lv_event_get_code(e) != LV_EVENT_SIZE_CHANGED)
+        return;
+    lv_obj_t *colb = lv_event_get_target(e);
+    lv_coord_t w = lv_obj_get_content_width(colb);
+    lv_coord_t h = lv_obj_get_content_height(colb);
+    if (w <= 0 || h <= 0)
+        return;
+    lv_coord_t side = w < h ? w : h;
+    control_axis_apply_scale(side);
+}
+
 // COMPONENT controlComponent
 
 lv_obj_t *ui_controlComponent_create(lv_obj_t *comp_parent)
 {
+    lv_coord_t side_button_col_w = 72;
+    if (lv_disp_get_hor_res(NULL) >= 800)
+        side_button_col_w = 108; /* 5インチ時は左右列を1.5倍 */
 
     lv_obj_t *cui_controlComponent;
     cui_controlComponent = lv_obj_create(comp_parent);
@@ -172,7 +299,8 @@ lv_obj_t *ui_controlComponent_create(lv_obj_t *comp_parent)
     lv_obj_t *cui_nozzleCol;
     cui_nozzleCol = lv_obj_create(cui_controlComponent);
     lv_obj_set_height(cui_nozzleCol, lv_pct(100));
-    lv_obj_set_flex_grow(cui_nozzleCol, 1);
+    lv_obj_set_flex_grow(cui_nozzleCol, 0);
+    lv_obj_set_width(cui_nozzleCol, side_button_col_w);
     lv_obj_set_flex_flow(cui_nozzleCol, LV_FLEX_FLOW_COLUMN);
     lv_obj_set_flex_align(cui_nozzleCol, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_START);
     lv_obj_clear_flag(cui_nozzleCol, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE);
@@ -199,21 +327,37 @@ lv_obj_t *ui_controlComponent_create(lv_obj_t *comp_parent)
     lv_obj_t *cui_nozzleUp = lv_obj_create(cui_nozzleCol);
     lv_obj_set_width(cui_nozzleUp, lv_pct(100));
     lv_obj_set_flex_grow(cui_nozzleUp, 2);
-    lv_obj_clear_flag(cui_nozzleUp, LV_OBJ_FLAG_SCROLLABLE);
-    lv_obj_set_style_radius(cui_nozzleUp, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_flex_flow(cui_nozzleUp, LV_FLEX_FLOW_ROW);
+    lv_obj_set_flex_align(cui_nozzleUp, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_clear_flag(cui_nozzleUp, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN);
+    lv_obj_set_scrollbar_mode(cui_nozzleUp, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_style_bg_color(cui_nozzleUp, lv_color_hex(0x555555), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(cui_nozzleUp, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(cui_nozzleUp, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_left(cui_nozzleUp, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(cui_nozzleUp, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_top(cui_nozzleUp, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_bottom(cui_nozzleUp, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_row(cui_nozzleUp, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_column(cui_nozzleUp, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_color(cui_nozzleUp, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_opa(cui_nozzleUp, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(cui_nozzleUp, lv_color_hex(0x777777), LV_PART_MAIN | LV_STATE_PRESSED);
     lv_obj_set_style_bg_opa(cui_nozzleUp, 255, LV_PART_MAIN | LV_STATE_PRESSED);
-    lv_obj_set_style_border_width(cui_nozzleUp, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_t *cui_nozzleUpIcon = lv_label_create(cui_nozzleUp);
+    lv_obj_set_height(cui_nozzleUpIcon, LV_SIZE_CONTENT);
+    lv_obj_set_flex_grow(cui_nozzleUpIcon, 1);
     lv_obj_set_align(cui_nozzleUpIcon, LV_ALIGN_CENTER);
     lv_label_set_text(cui_nozzleUpIcon, "s");
+    lv_obj_clear_flag(cui_nozzleUpIcon, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN);
+    lv_obj_set_scrollbar_mode(cui_nozzleUpIcon, LV_SCROLLBAR_MODE_OFF);
+    lv_obj_set_style_text_align(cui_nozzleUpIcon, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_font(cui_nozzleUpIcon, lv_icon_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     lv_obj_t *cui_nozzleTempBtn = lv_obj_create(cui_nozzleCol);
     lv_obj_set_width(cui_nozzleTempBtn, lv_pct(100));
-    lv_obj_set_flex_grow(cui_nozzleTempBtn, 1);
+    /* Bed列（Up/Dummy/Down=2:2:2）と高さを揃えるため中央も2にする */
+    lv_obj_set_flex_grow(cui_nozzleTempBtn, 2);
     lv_obj_clear_flag(cui_nozzleTempBtn, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_style_radius(cui_nozzleTempBtn, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(cui_nozzleTempBtn, lv_color_hex(0x555555), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -237,16 +381,31 @@ lv_obj_t *ui_controlComponent_create(lv_obj_t *comp_parent)
     lv_obj_t *cui_nozzleDown = lv_obj_create(cui_nozzleCol);
     lv_obj_set_width(cui_nozzleDown, lv_pct(100));
     lv_obj_set_flex_grow(cui_nozzleDown, 2);
-    lv_obj_clear_flag(cui_nozzleDown, LV_OBJ_FLAG_SCROLLABLE);
-    lv_obj_set_style_radius(cui_nozzleDown, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_flex_flow(cui_nozzleDown, LV_FLEX_FLOW_ROW);
+    lv_obj_set_flex_align(cui_nozzleDown, LV_FLEX_ALIGN_SPACE_BETWEEN, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_clear_flag(cui_nozzleDown, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN);
+    lv_obj_set_scrollbar_mode(cui_nozzleDown, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_style_bg_color(cui_nozzleDown, lv_color_hex(0x555555), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(cui_nozzleDown, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(cui_nozzleDown, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_left(cui_nozzleDown, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(cui_nozzleDown, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_top(cui_nozzleDown, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_bottom(cui_nozzleDown, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_row(cui_nozzleDown, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_column(cui_nozzleDown, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_color(cui_nozzleDown, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_opa(cui_nozzleDown, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(cui_nozzleDown, lv_color_hex(0x777777), LV_PART_MAIN | LV_STATE_PRESSED);
     lv_obj_set_style_bg_opa(cui_nozzleDown, 255, LV_PART_MAIN | LV_STATE_PRESSED);
-    lv_obj_set_style_border_width(cui_nozzleDown, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_t *cui_nozzleDownIcon = lv_label_create(cui_nozzleDown);
+    lv_obj_set_height(cui_nozzleDownIcon, LV_SIZE_CONTENT);
+    lv_obj_set_flex_grow(cui_nozzleDownIcon, 1);
     lv_obj_set_align(cui_nozzleDownIcon, LV_ALIGN_CENTER);
     lv_label_set_text(cui_nozzleDownIcon, "t");
+    lv_obj_clear_flag(cui_nozzleDownIcon, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN);
+    lv_obj_set_scrollbar_mode(cui_nozzleDownIcon, LV_SCROLLBAR_MODE_OFF);
+    lv_obj_set_style_text_align(cui_nozzleDownIcon, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_font(cui_nozzleDownIcon, lv_icon_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     lv_obj_t *cui_controlScreenColA;
@@ -281,7 +440,7 @@ lv_obj_t *ui_controlComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_flex_align(cui_controlScreenRange, LV_FLEX_ALIGN_SPACE_BETWEEN, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
     lv_obj_clear_flag(cui_controlScreenRange, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN); /// Flags
     lv_obj_set_scrollbar_mode(cui_controlScreenRange, LV_SCROLLBAR_MODE_OFF);
-    lv_obj_set_style_bg_color(cui_controlScreenRange, lv_color_hex(0x444444), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(cui_controlScreenRange, lv_color_hex(0x555555), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(cui_controlScreenRange, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_width(cui_controlScreenRange, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_left(cui_controlScreenRange, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -315,7 +474,7 @@ lv_obj_t *ui_controlComponent_create(lv_obj_t *comp_parent)
     lv_obj_clear_flag(cui_controlScreenRangeValue, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN); /// Flags
     lv_obj_set_scrollbar_mode(cui_controlScreenRangeValue, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_style_text_align(cui_controlScreenRangeValue, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(cui_controlScreenRangeValue, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(cui_controlScreenRangeValue, lv_font_middle, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     lv_obj_t *cui_controlScreenLeft;
     cui_controlScreenLeft = lv_obj_create(cui_controlScreenColA);
@@ -520,6 +679,32 @@ lv_obj_t *ui_controlComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_text_align(cui_controlScreenDownIcon, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_font(cui_controlScreenDownIcon, lv_icon_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
 
+    /* AXIS円形パッド（試験実装）: 既存十字は残しつつ非表示にして、新規5ボタンを重ねる */
+    lv_obj_add_flag(cui_controlScreenLeft, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(cui_controlScreenUp, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(cui_controlScreenHome, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(cui_controlScreenDown, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(cui_controlScreenMotorUnlock, LV_OBJ_FLAG_HIDDEN);
+    /* 旧AXIS列は退避して、円形パッド側に面積を寄せる */
+    lv_obj_add_flag(cui_controlScreenColA, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_set_flex_grow(cui_controlScreenColA, 0);
+    lv_obj_set_width(cui_controlScreenColA, 0);
+    lv_obj_set_flex_grow(cui_controlScreenColB, 3);
+    /* 非表示にした旧十字が Flex 高さ配分を奪わないようにする */
+    lv_obj_set_flex_grow(cui_controlScreenUp, 0);
+    lv_obj_set_flex_grow(cui_controlScreenHome, 0);
+    lv_obj_set_flex_grow(cui_controlScreenDown, 0);
+    lv_obj_set_height(cui_controlScreenUp, 0);
+    lv_obj_set_height(cui_controlScreenHome, 0);
+    lv_obj_set_height(cui_controlScreenDown, 0);
+    lv_obj_set_style_pad_top(cui_controlScreenColB, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_bottom(cui_controlScreenColB, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_row(cui_controlScreenColB, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    /* 左列で range が伸びすぎないよう、サイズを固定して上端に維持 */
+    lv_obj_set_flex_grow(cui_controlScreenRange, 0);
+    lv_obj_set_height(cui_controlScreenRange, 56);
+    lv_obj_add_flag(cui_controlScreenRange, LV_OBJ_FLAG_HIDDEN);
+
     lv_obj_t *cui_controlScreenColC;
     cui_controlScreenColC = lv_obj_create(cui_controlComponent);
     lv_obj_set_height(cui_controlScreenColC, lv_pct(100));
@@ -616,6 +801,10 @@ lv_obj_t *ui_controlComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_text_font(cui_controlScreenRightIcon, lv_icon_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_color(cui_controlScreenRightIcon, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_color(cui_controlScreenRightIcon, lv_color_hex(0x444444), LV_PART_MAIN | LV_STATE_DISABLED);
+    lv_obj_add_flag(cui_controlScreenRight, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(cui_controlScreenColC, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_set_flex_grow(cui_controlScreenColC, 0);
+    lv_obj_set_width(cui_controlScreenColC, 0);
 
     lv_obj_t *cui_controlScreenDummy1;
     cui_controlScreenDummy1 = lv_obj_create(cui_controlScreenColC);
@@ -651,11 +840,14 @@ lv_obj_t *ui_controlComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_bg_opa(cui_spacer_45, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_width(cui_spacer_45, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_all(cui_spacer_45, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_add_flag(cui_spacer_45, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_set_width(cui_spacer_45, 0);
 
     lv_obj_t *cui_controlScreenColD;
     cui_controlScreenColD = lv_obj_create(cui_controlComponent);
     lv_obj_set_height(cui_controlScreenColD, lv_pct(100));
-    lv_obj_set_flex_grow(cui_controlScreenColD, 1);
+    lv_obj_set_flex_grow(cui_controlScreenColD, 0);
+    lv_obj_set_width(cui_controlScreenColD, side_button_col_w);
     lv_obj_set_x(cui_controlScreenColD, 386);
     lv_obj_set_y(cui_controlScreenColD, 178);
     lv_obj_set_flex_flow(cui_controlScreenColD, LV_FLEX_FLOW_COLUMN);
@@ -740,7 +932,7 @@ lv_obj_t *ui_controlComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_width(cui_controlScreenDummy2Icon, LV_SIZE_CONTENT);
     lv_obj_set_height(cui_controlScreenDummy2Icon, LV_SIZE_CONTENT);
     lv_obj_set_align(cui_controlScreenDummy2Icon, LV_ALIGN_CENTER);
-    lv_label_set_text(cui_controlScreenDummy2Icon, "m"); /* icon_m_006D */
+    lv_label_set_text(cui_controlScreenDummy2Icon, "l"); /* icon_m_006D */
     lv_obj_clear_flag(cui_controlScreenDummy2Icon, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_scrollbar_mode(cui_controlScreenDummy2Icon, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_style_text_align(cui_controlScreenDummy2Icon, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -780,6 +972,388 @@ lv_obj_t *ui_controlComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_scrollbar_mode(cui_controlScreenBedDownIcon, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_style_text_align(cui_controlScreenBedDownIcon, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_font(cui_controlScreenBedDownIcon, lv_icon_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    /* AXISエリアを一度全削除して、円形メニューとして作り直す */
+    lv_obj_del(cui_controlScreenColA);
+    lv_obj_del(cui_controlScreenColB);
+    lv_obj_del(cui_controlScreenColC);
+    lv_obj_del(cui_spacer_45);
+
+    cui_controlScreenColA = lv_obj_create(cui_controlComponent);
+    lv_obj_set_height(cui_controlScreenColA, lv_pct(100));
+    lv_obj_set_flex_grow(cui_controlScreenColA, 0);
+    lv_obj_set_width(cui_controlScreenColA, 0);
+    lv_obj_set_flex_flow(cui_controlScreenColA, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_flex_align(cui_controlScreenColA, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_START);
+    lv_obj_clear_flag(cui_controlScreenColA, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_scrollbar_mode(cui_controlScreenColA, LV_SCROLLBAR_MODE_OFF);
+    lv_obj_set_style_bg_opa(cui_controlScreenColA, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(cui_controlScreenColA, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_all(cui_controlScreenColA, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_row(cui_controlScreenColA, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_add_flag(cui_controlScreenColA, LV_OBJ_FLAG_HIDDEN);
+
+    /* ColA系は互換維持のため最小プレースホルダだけ残す（実体は ColB オーバーレイへ） */
+    cui_controlScreenRange = lv_obj_create(cui_controlScreenColA);
+    lv_obj_set_size(cui_controlScreenRange, 1, 1);
+    lv_obj_set_style_bg_opa(cui_controlScreenRange, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(cui_controlScreenRange, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    cui_controlScreenRangeIcon = lv_label_create(cui_controlScreenRange);
+    lv_label_set_text(cui_controlScreenRangeIcon, "");
+    cui_controlScreenRangeValue = lv_label_create(cui_controlScreenRange);
+    lv_label_set_text(cui_controlScreenRangeValue, "");
+
+    cui_controlScreenMotorUnlock = lv_obj_create(cui_controlScreenColA);
+    lv_obj_set_size(cui_controlScreenMotorUnlock, 1, 1);
+    lv_obj_set_style_bg_opa(cui_controlScreenMotorUnlock, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(cui_controlScreenMotorUnlock, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_clear_flag(cui_controlScreenMotorUnlock, LV_OBJ_FLAG_CLICKABLE);
+    cui_controlScreenMotorUnlockIcon = lv_label_create(cui_controlScreenMotorUnlock);
+    lv_label_set_text(cui_controlScreenMotorUnlockIcon, "");
+
+    cui_controlScreenColB = lv_obj_create(cui_controlComponent);
+    lv_obj_set_height(cui_controlScreenColB, lv_pct(100));
+    /* 中央リングを主役にする */
+    lv_obj_set_flex_grow(cui_controlScreenColB, 3);
+    lv_obj_set_flex_flow(cui_controlScreenColB, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_flex_align(cui_controlScreenColB, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_clear_flag(cui_controlScreenColB, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_scrollbar_mode(cui_controlScreenColB, LV_SCROLLBAR_MODE_OFF);
+    lv_obj_set_style_bg_opa(cui_controlScreenColB, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(cui_controlScreenColB, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_all(cui_controlScreenColB, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    lv_obj_t *axisPad = lv_obj_create(cui_controlScreenColB);
+    lv_obj_set_size(axisPad, 236, 236);
+    lv_obj_set_align(axisPad, LV_ALIGN_CENTER);
+    lv_obj_clear_flag(axisPad, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_style_bg_opa(axisPad, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(axisPad, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_all(axisPad, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    lv_obj_t *axisSegUp2 = lv_arc_create(axisPad);
+    lv_obj_set_size(axisSegUp2, 230, 230);
+    lv_obj_center(axisSegUp2);
+    lv_obj_remove_style(axisSegUp2, NULL, LV_PART_KNOB);
+    lv_obj_set_style_arc_width(axisSegUp2, 58, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_arc_rounded(axisSegUp2, false, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_arc_color(axisSegUp2, lv_color_hex(0x686868), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_arc_width(axisSegUp2, 0, LV_PART_INDICATOR | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(axisSegUp2, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(axisSegUp2, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_arc_set_bg_angles(axisSegUp2, 315, 45);
+    lv_obj_clear_flag(axisSegUp2, LV_OBJ_FLAG_CLICKABLE);
+
+    lv_obj_t *axisSegRight2 = lv_arc_create(axisPad);
+    lv_obj_set_size(axisSegRight2, 230, 230);
+    lv_obj_center(axisSegRight2);
+    lv_obj_remove_style(axisSegRight2, NULL, LV_PART_KNOB);
+    lv_obj_set_style_arc_width(axisSegRight2, 58, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_arc_rounded(axisSegRight2, false, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_arc_color(axisSegRight2, lv_color_hex(0x5E5E5E), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_arc_width(axisSegRight2, 0, LV_PART_INDICATOR | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(axisSegRight2, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(axisSegRight2, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_arc_set_bg_angles(axisSegRight2, 45, 135);
+    lv_obj_clear_flag(axisSegRight2, LV_OBJ_FLAG_CLICKABLE);
+
+    lv_obj_t *axisSegDown2 = lv_arc_create(axisPad);
+    lv_obj_set_size(axisSegDown2, 230, 230);
+    lv_obj_center(axisSegDown2);
+    lv_obj_remove_style(axisSegDown2, NULL, LV_PART_KNOB);
+    lv_obj_set_style_arc_width(axisSegDown2, 58, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_arc_rounded(axisSegDown2, false, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_arc_color(axisSegDown2, lv_color_hex(0x686868), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_arc_width(axisSegDown2, 0, LV_PART_INDICATOR | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(axisSegDown2, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(axisSegDown2, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_arc_set_bg_angles(axisSegDown2, 135, 225);
+    lv_obj_clear_flag(axisSegDown2, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_t *axisSegLeft2 = lv_arc_create(axisPad);
+    lv_obj_set_size(axisSegLeft2, 230, 230);
+    lv_obj_center(axisSegLeft2);
+    lv_obj_remove_style(axisSegLeft2, NULL, LV_PART_KNOB);
+    lv_obj_set_style_arc_width(axisSegLeft2, 58, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_arc_rounded(axisSegLeft2, false, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_arc_color(axisSegLeft2, lv_color_hex(0x5E5E5E), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_arc_width(axisSegLeft2, 0, LV_PART_INDICATOR | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(axisSegLeft2, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(axisSegLeft2, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_arc_set_bg_angles(axisSegLeft2, 225, 315);
+    lv_obj_clear_flag(axisSegLeft2, LV_OBJ_FLAG_CLICKABLE);
+
+ 
+
+    cui_controlScreenUp = lv_btn_create(axisPad);
+    lv_obj_set_size(cui_controlScreenUp, 56, 56);
+    lv_obj_align(cui_controlScreenUp, LV_ALIGN_TOP_MID, 0, 1);
+    lv_obj_set_style_bg_opa(cui_controlScreenUp, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(cui_controlScreenUp, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    cui_controlScreenUpIcon = lv_label_create(cui_controlScreenUp);
+    lv_obj_center(cui_controlScreenUpIcon);
+    lv_label_set_text(cui_controlScreenUpIcon, "s");
+    lv_obj_set_style_text_font(cui_controlScreenUpIcon, lv_icon_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    cui_controlScreenLeft = lv_btn_create(axisPad);
+    lv_obj_set_size(cui_controlScreenLeft, 56, 56);
+    lv_obj_align(cui_controlScreenLeft, LV_ALIGN_LEFT_MID, 1, 0);
+    lv_obj_set_style_bg_opa(cui_controlScreenLeft, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(cui_controlScreenLeft, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    cui_controlScreenLeftIcon = lv_label_create(cui_controlScreenLeft);
+    lv_obj_center(cui_controlScreenLeftIcon);
+    lv_label_set_text(cui_controlScreenLeftIcon, "u");
+    lv_obj_set_style_text_font(cui_controlScreenLeftIcon, lv_icon_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    cui_controlScreenRight = lv_btn_create(axisPad);
+    lv_obj_set_size(cui_controlScreenRight, 56, 56);
+    lv_obj_align(cui_controlScreenRight, LV_ALIGN_RIGHT_MID, -1, 0);
+    lv_obj_set_style_bg_opa(cui_controlScreenRight, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(cui_controlScreenRight, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    cui_controlScreenRightIcon = lv_label_create(cui_controlScreenRight);
+    lv_obj_center(cui_controlScreenRightIcon);
+    lv_label_set_text(cui_controlScreenRightIcon, "v");
+    lv_obj_set_style_text_font(cui_controlScreenRightIcon, lv_icon_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    cui_controlScreenDown = lv_btn_create(axisPad);
+    lv_obj_set_size(cui_controlScreenDown, 56, 56);
+    lv_obj_align(cui_controlScreenDown, LV_ALIGN_BOTTOM_MID, 0, -1);
+    lv_obj_set_style_bg_opa(cui_controlScreenDown, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(cui_controlScreenDown, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    cui_controlScreenDownIcon = lv_label_create(cui_controlScreenDown);
+    lv_obj_center(cui_controlScreenDownIcon);
+    lv_label_set_text(cui_controlScreenDownIcon, "t");
+    lv_obj_set_style_text_font(cui_controlScreenDownIcon, lv_icon_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    /* 内側リング: 暗めカラーの4扇ボタン（クリック可能） */
+    lv_obj_t *axisInnerUp = lv_arc_create(axisPad);
+    lv_obj_set_size(axisInnerUp, 126, 126);
+    lv_obj_center(axisInnerUp);
+    lv_obj_remove_style(axisInnerUp, NULL, LV_PART_KNOB);
+    lv_obj_set_style_arc_width(axisInnerUp, 36, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_arc_color(axisInnerUp, lv_color_hex(0x4C4C4C), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_arc_color(axisInnerUp, lv_color_hex(0x6A6A6A), LV_PART_MAIN | LV_STATE_PRESSED);
+    lv_obj_set_style_arc_rounded(axisInnerUp, false, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_arc_width(axisInnerUp, 0, LV_PART_INDICATOR | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(axisInnerUp, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(axisInnerUp, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_arc_set_bg_angles(axisInnerUp, 315, 45);
+    lv_obj_clear_flag(axisInnerUp, LV_OBJ_FLAG_CLICKABLE);
+
+    lv_obj_t *axisInnerRight = lv_arc_create(axisPad);
+    lv_obj_set_size(axisInnerRight, 126, 126);
+    lv_obj_center(axisInnerRight);
+    lv_obj_remove_style(axisInnerRight, NULL, LV_PART_KNOB);
+    lv_obj_set_style_arc_width(axisInnerRight, 36, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_arc_color(axisInnerRight, lv_color_hex(0x444444), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_arc_color(axisInnerRight, lv_color_hex(0x6A6A6A), LV_PART_MAIN | LV_STATE_PRESSED);
+    lv_obj_set_style_arc_rounded(axisInnerRight, false, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_arc_width(axisInnerRight, 0, LV_PART_INDICATOR | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(axisInnerRight, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(axisInnerRight, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_arc_set_bg_angles(axisInnerRight, 45, 135);
+    lv_obj_clear_flag(axisInnerRight, LV_OBJ_FLAG_CLICKABLE);
+
+    lv_obj_t *axisInnerDown = lv_arc_create(axisPad);
+    lv_obj_set_size(axisInnerDown, 126, 126);
+    lv_obj_center(axisInnerDown);
+    lv_obj_remove_style(axisInnerDown, NULL, LV_PART_KNOB);
+    lv_obj_set_style_arc_width(axisInnerDown, 36, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_arc_color(axisInnerDown, lv_color_hex(0x4C4C4C), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_arc_color(axisInnerDown, lv_color_hex(0x6A6A6A), LV_PART_MAIN | LV_STATE_PRESSED);
+    lv_obj_set_style_arc_rounded(axisInnerDown, false, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_arc_width(axisInnerDown, 0, LV_PART_INDICATOR | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(axisInnerDown, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(axisInnerDown, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_arc_set_bg_angles(axisInnerDown, 135, 225);
+    lv_obj_clear_flag(axisInnerDown, LV_OBJ_FLAG_CLICKABLE);
+
+    lv_obj_t *axisInnerLeft = lv_arc_create(axisPad);
+    lv_obj_set_size(axisInnerLeft, 126, 126);
+    lv_obj_center(axisInnerLeft);
+    lv_obj_remove_style(axisInnerLeft, NULL, LV_PART_KNOB);
+    lv_obj_set_style_arc_width(axisInnerLeft, 36, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_arc_color(axisInnerLeft, lv_color_hex(0x444444), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_arc_color(axisInnerLeft, lv_color_hex(0x6A6A6A), LV_PART_MAIN | LV_STATE_PRESSED);
+    lv_obj_set_style_arc_rounded(axisInnerLeft, false, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_arc_width(axisInnerLeft, 0, LV_PART_INDICATOR | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(axisInnerLeft, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(axisInnerLeft, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_arc_set_bg_angles(axisInnerLeft, 225, 315);
+    lv_obj_clear_flag(axisInnerLeft, LV_OBJ_FLAG_CLICKABLE);
+
+    /* 内側方向タッチは専用の透明ボタンで判定する */
+    lv_obj_t *axisInnerHitUp = lv_btn_create(axisPad);
+    lv_obj_set_size(axisInnerHitUp, 62, 44);
+    lv_obj_align(axisInnerHitUp, LV_ALIGN_TOP_MID, 0, 30);
+    lv_obj_set_style_radius(axisInnerHitUp, LV_RADIUS_CIRCLE, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(axisInnerHitUp, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(axisInnerHitUp, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_all(axisInnerHitUp, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_add_flag(axisInnerHitUp, LV_OBJ_FLAG_ADV_HITTEST);
+
+    lv_obj_t *axisInnerHitLeft = lv_btn_create(axisPad);
+    lv_obj_set_size(axisInnerHitLeft, 44, 62);
+    lv_obj_align(axisInnerHitLeft, LV_ALIGN_LEFT_MID, 30, 0);
+    lv_obj_set_style_radius(axisInnerHitLeft, LV_RADIUS_CIRCLE, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(axisInnerHitLeft, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(axisInnerHitLeft, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_all(axisInnerHitLeft, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_add_flag(axisInnerHitLeft, LV_OBJ_FLAG_ADV_HITTEST);
+
+    lv_obj_t *axisInnerHitRight = lv_btn_create(axisPad);
+    lv_obj_set_size(axisInnerHitRight, 44, 62);
+    lv_obj_align(axisInnerHitRight, LV_ALIGN_RIGHT_MID, -30, 0);
+    lv_obj_set_style_radius(axisInnerHitRight, LV_RADIUS_CIRCLE, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(axisInnerHitRight, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(axisInnerHitRight, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_all(axisInnerHitRight, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_add_flag(axisInnerHitRight, LV_OBJ_FLAG_ADV_HITTEST);
+
+    lv_obj_t *axisInnerHitDown = lv_btn_create(axisPad);
+    lv_obj_set_size(axisInnerHitDown, 62, 44);
+    lv_obj_align(axisInnerHitDown, LV_ALIGN_BOTTOM_MID, 0, -30);
+    lv_obj_set_style_radius(axisInnerHitDown, LV_RADIUS_CIRCLE, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(axisInnerHitDown, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(axisInnerHitDown, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_all(axisInnerHitDown, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_add_flag(axisInnerHitDown, LV_OBJ_FLAG_ADV_HITTEST);
+
+    /* 内側リング4＋ヒット4 は一旦非表示（外側リングのみ） */
+    lv_obj_add_flag(axisInnerUp, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(axisInnerRight, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(axisInnerDown, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(axisInnerLeft, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(axisInnerHitUp, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(axisInnerHitLeft, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(axisInnerHitRight, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(axisInnerHitDown, LV_OBJ_FLAG_HIDDEN);
+
+    /* 1-10-100 / MotorUnlock は ColB 上でオーバーレイ配置 */
+    cui_controlScreenRange = lv_obj_create(cui_controlScreenColB);
+    lv_obj_add_flag(cui_controlScreenRange, LV_OBJ_FLAG_IGNORE_LAYOUT);
+    lv_obj_set_size(cui_controlScreenRange, 55, 55);
+    lv_obj_align(cui_controlScreenRange, LV_ALIGN_TOP_LEFT, 0, 0);
+    lv_obj_set_scrollbar_mode(cui_controlScreenRange, LV_SCROLLBAR_MODE_OFF);
+    lv_obj_set_style_bg_color(cui_controlScreenRange, lv_color_hex(0x555555), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(cui_controlScreenRange, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(cui_controlScreenRange, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_radius(cui_controlScreenRange, LV_RADIUS_CIRCLE, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_all(cui_controlScreenRange, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(cui_controlScreenRange, lv_color_hex(0x777777), LV_PART_MAIN | LV_STATE_PRESSED);
+    lv_obj_set_style_bg_opa(cui_controlScreenRange, 255, LV_PART_MAIN | LV_STATE_PRESSED);
+    lv_obj_move_foreground(cui_controlScreenRange);
+    cui_controlScreenRangeIcon = lv_label_create(cui_controlScreenRange);
+    lv_label_set_text(cui_controlScreenRangeIcon, "k");
+    lv_obj_center(cui_controlScreenRangeIcon);
+    lv_obj_set_style_text_font(cui_controlScreenRangeIcon, lv_icon_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_color(cui_controlScreenRangeIcon, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+    cui_controlScreenRangeValue = lv_label_create(cui_controlScreenColB);
+    lv_obj_add_flag(cui_controlScreenRangeValue, LV_OBJ_FLAG_IGNORE_LAYOUT);
+    lv_label_set_text(cui_controlScreenRangeValue, "-");
+    /* 旧ホーム位置（リング中央）— タップは下の方向ボタンへ通す */
+    lv_obj_align(cui_controlScreenRangeValue, LV_ALIGN_CENTER, 0, 0);
+    lv_obj_clear_flag(cui_controlScreenRangeValue, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_set_style_text_align(cui_controlScreenRangeValue, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(cui_controlScreenRangeValue, lv_font_middle, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    cui_controlScreenMotorUnlock = lv_obj_create(cui_controlScreenColB);
+    lv_obj_add_flag(cui_controlScreenMotorUnlock, LV_OBJ_FLAG_IGNORE_LAYOUT);
+    lv_obj_set_size(cui_controlScreenMotorUnlock, 55, 55);
+    lv_obj_align(cui_controlScreenMotorUnlock, LV_ALIGN_BOTTOM_LEFT, 0, 0);
+    lv_obj_set_flex_flow(cui_controlScreenMotorUnlock, LV_FLEX_FLOW_ROW);
+    lv_obj_set_flex_align(cui_controlScreenMotorUnlock, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_set_scrollbar_mode(cui_controlScreenMotorUnlock, LV_SCROLLBAR_MODE_OFF);
+    lv_obj_set_style_bg_color(cui_controlScreenMotorUnlock, lv_color_hex(0x555555), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(cui_controlScreenMotorUnlock, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(cui_controlScreenMotorUnlock, lv_color_hex(0x777777), LV_PART_MAIN | LV_STATE_PRESSED);
+    lv_obj_set_style_bg_opa(cui_controlScreenMotorUnlock, 255, LV_PART_MAIN | LV_STATE_PRESSED);
+    lv_obj_set_style_border_width(cui_controlScreenMotorUnlock, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_radius(cui_controlScreenMotorUnlock, LV_RADIUS_CIRCLE, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_all(cui_controlScreenMotorUnlock, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_move_foreground(cui_controlScreenMotorUnlock);
+    cui_controlScreenMotorUnlockIcon = lv_label_create(cui_controlScreenMotorUnlock);
+    lv_label_set_text(cui_controlScreenMotorUnlockIcon, "A");
+    lv_obj_set_style_text_font(cui_controlScreenMotorUnlockIcon, lv_icon_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+
+   /* 右上 XY（表示のみ・背景は透明のまま円形で角見切れを防ぐ） */
+    lv_obj_t *axisXyIcon = lv_obj_create(cui_controlScreenColB);
+    lv_obj_add_flag(axisXyIcon, LV_OBJ_FLAG_IGNORE_LAYOUT);
+    lv_obj_set_size(axisXyIcon, 55, 55);
+    lv_obj_align(axisXyIcon, LV_ALIGN_TOP_RIGHT, 0, 0);
+    lv_obj_set_flex_flow(axisXyIcon, LV_FLEX_FLOW_ROW);
+    lv_obj_set_flex_align(axisXyIcon, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_clear_flag(axisXyIcon, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_scrollbar_mode(axisXyIcon, LV_SCROLLBAR_MODE_OFF);
+    lv_obj_set_style_bg_opa(axisXyIcon, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(axisXyIcon, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_radius(axisXyIcon, LV_RADIUS_CIRCLE, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_clip_corner(axisXyIcon, true, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_all(axisXyIcon, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_t *axisXyIconLabel = lv_label_create(axisXyIcon);
+    lv_label_set_text(axisXyIconLabel, "m");
+    lv_obj_set_style_text_font(axisXyIconLabel, lv_icon_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_color(axisXyIconLabel, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_move_foreground(axisXyIcon);
+
+    /* Home は ColB オーバーレイ（右下・押せるボタン） */
+    cui_controlScreenHome = lv_btn_create(cui_controlScreenColB);
+    lv_obj_add_flag(cui_controlScreenHome, LV_OBJ_FLAG_IGNORE_LAYOUT);
+    lv_obj_set_size(cui_controlScreenHome, 55, 55);
+    lv_obj_align(cui_controlScreenHome, LV_ALIGN_BOTTOM_RIGHT, 0, 0);
+    lv_obj_set_scrollbar_mode(cui_controlScreenHome, LV_SCROLLBAR_MODE_OFF);
+    lv_obj_set_style_radius(cui_controlScreenHome, LV_RADIUS_CIRCLE, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(cui_controlScreenHome, lv_color_hex(0x555555), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(cui_controlScreenHome, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(cui_controlScreenHome, lv_color_hex(0x777777), LV_PART_MAIN | LV_STATE_PRESSED);
+    lv_obj_set_style_bg_opa(cui_controlScreenHome, 255, LV_PART_MAIN | LV_STATE_PRESSED);
+    lv_obj_set_style_border_width(cui_controlScreenHome, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_all(cui_controlScreenHome, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_move_foreground(cui_controlScreenHome);
+    cui_controlScreenHomeIcon = lv_label_create(cui_controlScreenHome);
+    lv_obj_center(cui_controlScreenHomeIcon);
+    lv_label_set_text(cui_controlScreenHomeIcon, "a");
+    lv_obj_set_style_text_font(cui_controlScreenHomeIcon, lv_icon_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    lv_obj_move_foreground(cui_controlScreenRangeValue);
+
+    s_control_axis.axisPad = axisPad;
+    s_control_axis.rangeBtn = cui_controlScreenRange;
+    s_control_axis.motorUnlock = cui_controlScreenMotorUnlock;
+    s_control_axis.home = cui_controlScreenHome;
+    s_control_axis.xyIcon = axisXyIcon;
+
+    cui_controlScreenColC = lv_obj_create(cui_controlComponent);
+    lv_obj_set_width(cui_controlScreenColC, 0);
+    lv_obj_set_height(cui_controlScreenColC, lv_pct(100));
+    lv_obj_set_flex_grow(cui_controlScreenColC, 0);
+    lv_obj_set_style_bg_opa(cui_controlScreenColC, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(cui_controlScreenColC, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_all(cui_controlScreenColC, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_add_flag(cui_controlScreenColC, LV_OBJ_FLAG_HIDDEN);
+    cui_controlScreenDummy3 = lv_obj_create(cui_controlScreenColC);
+    lv_obj_set_size(cui_controlScreenDummy3, 1, 1);
+    lv_obj_set_style_bg_opa(cui_controlScreenDummy3, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(cui_controlScreenDummy3, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    cui_controlScreenDummy1 = lv_obj_create(cui_controlScreenColC);
+    lv_obj_set_size(cui_controlScreenDummy1, 1, 1);
+    lv_obj_set_style_bg_opa(cui_controlScreenDummy1, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(cui_controlScreenDummy1, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    /* 並びを固定: Left(nozzle) - Center(ring) - Right(Z) */
+    int32_t colD_index = lv_obj_get_index(cui_controlScreenColD);
+    lv_obj_move_to_index(cui_controlScreenColA, colD_index);
+    lv_obj_move_to_index(cui_controlScreenColB, colD_index + 1);
+    lv_obj_move_to_index(cui_controlScreenColC, colD_index + 2);
+
+    lv_obj_update_layout(cui_controlComponent);
+    {
+        lv_coord_t cw = lv_obj_get_content_width(cui_controlScreenColB);
+        lv_coord_t ch = lv_obj_get_content_height(cui_controlScreenColB);
+        if (cw > 0 && ch > 0)
+            control_axis_apply_scale(cw < ch ? cw : ch);
+    }
+    lv_obj_add_event_cb(cui_controlScreenColB, control_colb_axis_size_cb, LV_EVENT_SIZE_CHANGED, NULL);
 
     lv_obj_t **children = lv_mem_alloc(sizeof(lv_obj_t *) * _UI_COMP_CONTROLCOMPONENT_NUM);
     children[UI_COMP_CONTROLCOMPONENT_CONTROLCOMPONENT] = cui_controlComponent;
@@ -821,6 +1395,10 @@ lv_obj_t *ui_controlComponent_create(lv_obj_t *comp_parent)
     lv_obj_add_event_cb(cui_controlScreenBedDown, ui_event_comp_controlComponent_controlScreenBedDown, LV_EVENT_ALL, children);
     lv_obj_add_event_cb(cui_controlScreenRight, ui_event_comp_controlComponent_controlScreenRight, LV_EVENT_ALL, children);
     lv_obj_add_event_cb(cui_controlScreenMotorUnlock, ui_event_comp_controlComponent_controlScreenMotorUnlock, LV_EVENT_ALL, children);
+    lv_obj_add_event_cb(axisInnerHitLeft, ui_event_comp_controlComponent_controlScreenLeft, LV_EVENT_ALL, children);
+    lv_obj_add_event_cb(axisInnerHitUp, ui_event_comp_controlComponent_controlScreenUp, LV_EVENT_ALL, children);
+    lv_obj_add_event_cb(axisInnerHitDown, ui_event_comp_controlComponent_controlScreenDown, LV_EVENT_ALL, children);
+    lv_obj_add_event_cb(axisInnerHitRight, ui_event_comp_controlComponent_controlScreenRight, LV_EVENT_ALL, children);
     lv_obj_add_event_cb(cui_nozzleUp, ui_event_comp_controlComponent_nozzleUpClick, LV_EVENT_ALL, children);
     lv_obj_add_event_cb(cui_nozzleDown, ui_event_comp_controlComponent_nozzleDownClick, LV_EVENT_ALL, children);
     lv_obj_add_event_cb(cui_nozzleTempBtn, ui_event_comp_controlComponent_nozzleTempClick, LV_EVENT_ALL, children);

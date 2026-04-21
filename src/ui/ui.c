@@ -25,6 +25,7 @@ void ui_utilScreen_screen_init(void);
 void ui_printersScreen_screen_init(void);
 void ui_historyScreen_screen_init(void);
 void ui_historyReprintScreen_screen_init(void);
+void ui_videoScreen_screen_init(void);
 #endif
 
 lv_obj_t *introScreen;
@@ -70,6 +71,8 @@ lv_obj_t *ui_historyScreen;
 lv_obj_t *ui_historyContentPanel;
 lv_obj_t *ui_historyListContainer = NULL;
 lv_obj_t *ui_historyReprintScreen;
+lv_obj_t *ui_videoScreen;
+lv_obj_t *ui_videoComponent;
 lv_obj_t *ui_homeThumbImg = NULL;
 #endif
 void ui_event____initial_actions0(lv_event_t *e);

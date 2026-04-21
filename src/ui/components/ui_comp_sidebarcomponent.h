@@ -21,6 +21,10 @@ enum SidebarComponent {
 #endif
     UI_COMP_SIDEBARCOMPONENT_SIDEBARTEMPBUTTON,
     UI_COMP_SIDEBARCOMPONENT_SIDEBARTEMPBUTTON_SIDEBARTEMPBUTTONICON,
+#ifdef __XTOUCH_PLATFORM_S3__
+    UI_COMP_SIDEBARCOMPONENT_SIDEBARVIDEOBUTTON,
+    UI_COMP_SIDEBARCOMPONENT_SIDEBARVIDEOBUTTON_SIDEBARVIDEOBUTTONICON,
+#endif
     UI_COMP_SIDEBARCOMPONENT_SIDEBARAMSVIEWBUTTON,
     UI_COMP_SIDEBARCOMPONENT_SIDEBARAMSVIEWBUTTON_SIDEBARAMSVIEWBUTTONICON,
     UI_COMP_SIDEBARCOMPONENT_SIDEBARSETTINGSBUTTON,
@@ -32,6 +36,7 @@ enum SidebarComponent {
     void ui_event_comp_sidebarComponent_sidebarHomeButton(lv_event_t *e);
 #ifdef __XTOUCH_PLATFORM_S3__
     void ui_event_comp_sidebarComponent_sidebarPrintersButton(lv_event_t *e);
+    void ui_event_comp_sidebarComponent_sidebarVideoButton(lv_event_t *e);
     void ui_event_comp_sidebarComponent_sidebarHistoryButton(lv_event_t *e);
 #endif
     void ui_event_comp_sidebarComponent_sidebarTempButton(lv_event_t *e);

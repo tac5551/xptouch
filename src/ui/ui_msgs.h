@@ -117,6 +117,7 @@ extern "C"
         XTOUCH_PREHEAT_BUTTON3,
 
         XTOUCH_ON_OTHER_PRINTER_UPDATE,
+        XTOUCH_ON_P1S_VIDEO_FRAME,
         /** Printers 画面でサムネイル全スロット取得をスケジュールせよ（コンポーネント表示時。購読は xtouch） */
         XTOUCH_PRINTERS_SCHEDULE_THUMB_FETCH,
         /** Printers 入室直前: 行と slot の対応を取り直す（dsc/cache フラグを捨て、現在の task_id で path・必要なら即デコード）。購読は xtouch */
@@ -151,6 +152,8 @@ extern "C"
         XTOUCH_HISTORY_COVER_DL_CANCEL,
         /** サムネイル全画面非表示オプション変更（settings 保存後に送る。xtouch が購読） */
         XTOUCH_THUMBNAILS_HIDE_MODE_CHANGED,
+        XTOUCH_COMMAND_P1S_VIDEO_START,
+        XTOUCH_COMMAND_P1S_VIDEO_STOP,
     };
 
     struct XTOUCH_MESSAGE_DATA

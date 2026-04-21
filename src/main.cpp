@@ -39,6 +39,7 @@
 #if defined(__XTOUCH_PLATFORM_S3__)
 #include "xtouch/thumbnail.h"
 #include "xtouch/history.h"
+#include "xtouch/p1s_video.h"
 #include "xtouch/lv_fs_arduino_sd.h"
 #include "xtouch/lcd_json.h"
 #endif
@@ -158,6 +159,7 @@ void setup()
   lv_fs_arduino_sd_init(); 
   xtouch_thumbnail_subscribe_events();
   xtouch_history_subscribe_events();
+  xtouch_p1s_video_subscribe_events();
 #endif
 
   xtouch_coldboot_check();
@@ -255,7 +257,8 @@ void loop()
 {
   lv_timer_handler();
   lv_task_handler();
-  if (xTouchConfig.xTouchLanOnlyMode ||cloud.loggedIn)
+  /* Video画面(17)では負荷軽減のため MQTT ループを止める */
+  if ((xTouchConfig.xTouchLanOnlyMode || cloud.loggedIn) && xTouchConfig.currentScreenIndex != 17)
     xtouch_cloud_mqtt_loop();
 
   if (xtouch_ota_update_flag)

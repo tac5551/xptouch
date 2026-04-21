@@ -12,6 +12,7 @@ extern "C"
     void onSidebarHome(lv_event_t *e);
 #ifdef __XTOUCH_PLATFORM_S3__
     void onSidebarPrinters(lv_event_t *e);
+    void onSidebarVideo(lv_event_t *e);
 #endif
     void onSidebarTemp(lv_event_t *e);
     void onSidebarControl(lv_event_t *e);
@@ -78,6 +79,7 @@ extern "C"
     void onMoveUtilCalibrationScreen(lv_event_t *e);
 
     void onMoveHomeScreen(lv_event_t *e);
+    void onMoveVideoScreen(lv_event_t *e);
     void onMoveAmsViewScreen(lv_event_t *e);
 #ifdef __XTOUCH_PLATFORM_S3__
     void onPrintersPause(lv_event_t *e);
