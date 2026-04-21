@@ -35,7 +35,6 @@ extern "C"
 #include "ui_comp_printerscomponent.h"
 #include "ui_comp_historycomponent.h"
 #include "ui_comp_historyreprintcomponent.h"
-#include "ui_comp_videocomponent.h"
 
 #ifdef __cplusplus
 } /*extern "C"*/
