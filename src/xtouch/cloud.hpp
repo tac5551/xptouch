@@ -1960,10 +1960,12 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
       setCurrentDevice(single["dev_id"].as<String>());
       setCurrentModel(single["dev_model_name"].as<String>());
       setPrinterName(single["name"].as<String>());
+      setCurrentAccessCode(single["dev_access_code"].as<String>());
 
       applyStoredPrinterJsonSettingsToConfig();
 
-      savePrinterPair(single["dev_id"].as<String>(), single["dev_model_name"].as<String>(), single["name"].as<String>());
+      savePrinterPair(single["dev_id"].as<String>(), single["dev_model_name"].as<String>(), single["name"].as<String>(),
+                      single["dev_access_code"].as<String>());
 
       return;
     }
@@ -1995,17 +1997,19 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
       setCurrentDevice(selected["dev_id"].as<String>());
       setCurrentModel(selected["dev_model_name"].as<String>());
       setPrinterName(selected["name"].as<String>());
+      setCurrentAccessCode(selected["dev_access_code"].as<String>());
 
       applyStoredPrinterJsonSettingsToConfig();
 
-      savePrinterPair(selected["dev_id"].as<String>(), selected["dev_model_name"].as<String>(), selected["name"].as<String>());
+      savePrinterPair(selected["dev_id"].as<String>(), selected["dev_model_name"].as<String>(), selected["name"].as<String>(),
+                      selected["dev_access_code"].as<String>());
     }
     delete deviceListDocument; // 使い終わったら必ず解放する
     deviceListDocument = nullptr;
     loadScreen(-1);
   }
 
-  void savePrinterPair(String usn, String modelName, String printerName)
+  void savePrinterPair(String usn, String modelName, String printerName, String accessCode = "")
   {
 
     DynamicJsonDocument doc = xtouch_filesystem_readJson(xtouch_sdcard_fs(), xtouch_paths_pair, false);
@@ -2013,6 +2017,7 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
     doc["paired"] = usn.c_str();
     doc["model"] = modelName.c_str();
     doc["printerName"] = printerName.c_str();
+    doc["accessCode"] = accessCode.c_str();
 
     xtouch_filesystem_writeJson(xtouch_sdcard_fs(), xtouch_paths_pair, doc);
     strncpy(xTouchConfig.xTouchPairedSerialNumber, usn.c_str(), sizeof(xTouchConfig.xTouchPairedSerialNumber) - 1);
@@ -2035,6 +2040,18 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
     setCurrentDevice(doc["paired"].as<String>());
     setCurrentModel(doc["model"].as<String>());
     setPrinterName(doc["printerName"].as<String>());
+    setCurrentAccessCode(doc["accessCode"].as<String>());
+    if (!xTouchConfig.xTouchAccessCode[0])
+    {
+      DynamicJsonDocument lp = loadPrinters();
+      JsonObject root = lp.as<JsonObject>();
+      if (root.containsKey(xTouchConfig.xTouchSerialNumber))
+      {
+        JsonObject dev = root[xTouchConfig.xTouchSerialNumber].as<JsonObject>();
+        if (!dev.isNull() && dev.containsKey("dev_access_code"))
+          setCurrentAccessCode(dev["dev_access_code"].as<String>());
+      }
+    }
     strncpy(xTouchConfig.xTouchPairedSerialNumber, xTouchConfig.xTouchSerialNumber,
             sizeof(xTouchConfig.xTouchPairedSerialNumber) - 1);
     xTouchConfig.xTouchPairedSerialNumber[sizeof(xTouchConfig.xTouchPairedSerialNumber) - 1] = '\0';
@@ -2073,6 +2090,12 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
   void setCurrentModel(String model)
   {
     strcpy(xTouchConfig.xTouchPrinterModel, model.c_str());
+  }
+
+  void setCurrentAccessCode(String code)
+  {
+    strncpy(xTouchConfig.xTouchAccessCode, code.c_str(), sizeof(xTouchConfig.xTouchAccessCode) - 1);
+    xTouchConfig.xTouchAccessCode[sizeof(xTouchConfig.xTouchAccessCode) - 1] = '\0';
   }
 
   DynamicJsonDocument loadPrinters()

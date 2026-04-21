@@ -959,6 +959,31 @@ void xtouch_mqtt_processPushStatus(JsonDocument &incomingJson)
 
         // link_th
         // link_ams
+        if (!xTouchConfig.xTouchHost[0] &&
+            incomingJson["print"].containsKey("net") &&
+            incomingJson["print"]["net"].containsKey("info") &&
+            incomingJson["print"]["net"]["info"].is<JsonArray>())
+        {
+            JsonArray info = incomingJson["print"]["net"]["info"].as<JsonArray>();
+            for (JsonVariant v : info)
+            {
+                if (!v.is<JsonObject>() || !v.as<JsonObject>().containsKey("ip"))
+                    continue;
+                uint32_t ip_le = v["ip"].as<uint32_t>();
+                if (ip_le == 0)
+                    continue;
+                char ipbuf[16];
+                snprintf(ipbuf, sizeof(ipbuf), "%u.%u.%u.%u",
+                         (unsigned)(ip_le & 0xFFu),
+                         (unsigned)((ip_le >> 8) & 0xFFu),
+                         (unsigned)((ip_le >> 16) & 0xFFu),
+                         (unsigned)((ip_le >> 24) & 0xFFu));
+                strncpy(xTouchConfig.xTouchHost, ipbuf, sizeof(xTouchConfig.xTouchHost) - 1);
+                xTouchConfig.xTouchHost[sizeof(xTouchConfig.xTouchHost) - 1] = '\0';
+                break;
+            }
+        }
+
         if (incomingJson["print"].containsKey("wifi_signal"))
         {
             String wifi_signal = incomingJson["print"]["wifi_signal"].as<String>();
