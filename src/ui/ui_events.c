@@ -299,59 +299,61 @@ void onSettingsUnPair(lv_event_t *e)
 void onSettingsWOP(lv_event_t *e)
 {
     xTouchConfig.xTouchWakeOnPrint = !xTouchConfig.xTouchWakeOnPrint;
-    lv_msg_send(XTOUCH_SETTINGS_SAVE, NULL);
+    ui_settings_mark_dirty();
 }
 
 void onSettingsWDP(lv_event_t *e)
 {
     xTouchConfig.xTouchWakeDuringPrint = !xTouchConfig.xTouchWakeDuringPrint;
-    lv_msg_send(XTOUCH_SETTINGS_SAVE, NULL);
+    ui_settings_mark_dirty();
 }
 
 void onSettingsAuxFan(lv_event_t *e)
 {
     xTouchConfig.xTouchAuxFanEnabled = !xTouchConfig.xTouchAuxFanEnabled;
-    lv_msg_send(XTOUCH_SETTINGS_SAVE, NULL);
+    ui_settings_mark_dirty();
 }
 
 void onSettingsChamberFan(lv_event_t *e)
 {
     xTouchConfig.xTouchChamberFanEnabled = !xTouchConfig.xTouchChamberFanEnabled;
-    lv_msg_send(XTOUCH_SETTINGS_SAVE, NULL);
+    ui_settings_mark_dirty();
 }
 
 void onSettingsChamberLedWake(lv_event_t *e)
 {
     xTouchConfig.xTouchChamberLedOnWake = !xTouchConfig.xTouchChamberLedOnWake;
-    lv_msg_send(XTOUCH_SETTINGS_SAVE, NULL);
+    ui_settings_mark_dirty();
 }
 
 
 void onOptionalChamberSensor(lv_event_t *e)
 {
     xTouchConfig.xTouchChamberSensorEnabled = !xTouchConfig.xTouchChamberSensorEnabled;
-    lv_msg_send(XTOUCH_OPTIONAL_CHAMBER_TEMP, NULL);
-    lv_msg_send(XTOUCH_SETTINGS_SAVE, NULL);
+    ui_settings_mark_dirty();
 }
 
 
 void onOptionalStackChan(lv_event_t *e)
 {
-    xTouchConfig.xTouchStackChanEnabled = !xTouchConfig.xTouchStackChanEnabled;
-    lv_msg_send(XTOUCH_SETTINGS_SAVE, NULL);
+    lv_obj_t *sw = lv_event_get_target(e);
+    xTouchConfig.xTouchStackChanEnabled = lv_obj_has_state(sw, LV_STATE_CHECKED);
+    ui_settings_mark_dirty();
 }
 
 void onOptionalPreheat(lv_event_t *e)
 {
-    xTouchConfig.xTouchPreheatEnabled = !xTouchConfig.xTouchPreheatEnabled;
-    lv_msg_send(XTOUCH_SETTINGS_SAVE, NULL);
+    lv_obj_t *sw = lv_event_get_target(e);
+    xTouchConfig.xTouchPreheatEnabled = lv_obj_has_state(sw, LV_STATE_CHECKED);
+    ui_settings_mark_dirty();
 }
 
 #ifdef __XTOUCH_PLATFORM_S3__
 void onOptionalMultiPrinterMonitor(lv_event_t *e)
 {
-    xTouchConfig.xTouchMultiPrinterMonitorEnabled = !xTouchConfig.xTouchMultiPrinterMonitorEnabled;
-    lv_msg_send(XTOUCH_SETTINGS_SAVE, NULL);
+    lv_obj_t *sw = lv_event_get_target(e);
+    xTouchConfig.xTouchMultiPrinterMonitorEnabled = lv_obj_has_state(sw, LV_STATE_CHECKED);
+    ui_settings_mark_dirty();
 }
 #endif
 
@@ -360,26 +362,22 @@ void onOptionalHistory(lv_event_t *e)
 {
     lv_obj_t *sw = lv_event_get_target(e);
     xTouchConfig.xTouchHistoryEnabled = lv_obj_has_state(sw, LV_STATE_CHECKED);
-    lv_msg_send(XTOUCH_SETTINGS_SAVE, NULL);
+    ui_settings_mark_dirty();
 }
 
 void onOptionalHideAllThumbnails(lv_event_t *e)
 {
     lv_obj_t *sw = lv_event_get_target(e);
     xTouchConfig.xTouchHideAllThumbnails = lv_obj_has_state(sw, LV_STATE_CHECKED);
-    lv_msg_send(XTOUCH_SETTINGS_SAVE, NULL);
-    struct XTOUCH_MESSAGE_DATA ed;
-    ed.data = 0;
-    ed.data2 = 0;
-    lv_msg_send(XTOUCH_THUMBNAILS_HIDE_MODE_CHANGED, &ed);
+    ui_settings_mark_dirty();
 }
 #endif
 
 void onOptionalIdleLED(lv_event_t *e)
 {
-    xTouchConfig.xTouchIdleLEDEnabled = !xTouchConfig.xTouchIdleLEDEnabled;
-    lv_msg_send(XTOUCH_OPTIONAL_IDLE_LED_SET, NULL);
-    lv_msg_send(XTOUCH_SETTINGS_SAVE, NULL);
+    lv_obj_t *sw = lv_event_get_target(e);
+    xTouchConfig.xTouchIdleLEDEnabled = lv_obj_has_state(sw, LV_STATE_CHECKED);
+    ui_settings_mark_dirty();
 }
 
 void onTouchStackChan(lv_event_t *e)
@@ -396,7 +394,7 @@ void onSettingsTFTFlipConfirm()
 void onSettingsOTA(lv_event_t *e)
 {
     xTouchConfig.xTouchOTAEnabled = !xTouchConfig.xTouchOTAEnabled;
-    lv_msg_send(XTOUCH_SETTINGS_SAVE, NULL);
+    ui_settings_mark_dirty();
 }
 
 void onSettingsTFTFlip(lv_event_t *e)

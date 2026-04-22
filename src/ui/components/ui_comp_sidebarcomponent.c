@@ -129,12 +129,15 @@ lv_obj_t *ui_sidebarComponent_create(lv_obj_t *comp_parent)
 
     lv_obj_t *cui_sidebarComponent;
     cui_sidebarComponent = lv_obj_create(comp_parent);
-    /* 5" のみ幅を割合で細く。2.8 等は従来どおり 48px（320×10% だと細すぎるため） */
-#if defined(__XTOUCH_SCREEN_S3_050__)
-    lv_obj_set_width(cui_sidebarComponent, lv_pct(10));
-#else
-    lv_obj_set_width(cui_sidebarComponent, 48);
-#endif
+    /* 解像度ベースでサイドバー幅を決定（5":広め, 3.5":中間, 2.8":従来） */
+    lv_coord_t rw = lv_disp_get_hor_res(NULL);
+    lv_coord_t rh = lv_disp_get_ver_res(NULL);
+    lv_coord_t long_side = (rw > rh) ? rw : rh;
+    if (long_side >= 800)
+        lv_obj_set_width(cui_sidebarComponent, lv_pct(10)); /* 5" 480x800 */
+    else
+        lv_obj_set_width(cui_sidebarComponent, lv_pct(13));         /* 2.8" 240x320 */
+
     lv_obj_set_height(cui_sidebarComponent, lv_pct(100));
     lv_obj_set_x(cui_sidebarComponent, 387);
     lv_obj_set_y(cui_sidebarComponent, 178);

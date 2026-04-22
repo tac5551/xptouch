@@ -10,7 +10,7 @@
 
 #ifdef __XTOUCH_PLATFORM_S3__
 
-/* 5" 以外は固定ピクセルを詰めて狭い解像度でも収まるようにする */
+/* 画面別に固定ピクセルを調整（2.8" はさらに小さくして潰れを回避） */
 #if defined(__XTOUCH_SCREEN_S3_050__)
 #define HRPRINT_SET_BTN_W 108
 #define HRPRINT_SET_BTN_H 68
@@ -21,6 +21,16 @@
 #define HRPRINT_SLOT_SQ_H 40
 #define HRPRINT_LEFT_TARGET_H 32
 #define HRPRINT_CARD_HDR_H 32
+#elif defined(__XTOUCH_SCREEN_S3_028__)
+#define HRPRINT_SET_BTN_W 56
+#define HRPRINT_SET_BTN_H 34
+#define HRPRINT_SRC_SWATCH_W 20
+#define HRPRINT_SRC_SWATCH_H 14
+#define HRPRINT_SLOT_CELL_W 22
+#define HRPRINT_SLOT_SQ_W 20
+#define HRPRINT_SLOT_SQ_H 24
+#define HRPRINT_LEFT_TARGET_H 22
+#define HRPRINT_CARD_HDR_H 20
 #else
 #define HRPRINT_SET_BTN_W 72
 #define HRPRINT_SET_BTN_H 44
@@ -38,11 +48,23 @@
 #if defined(__XTOUCH_SCREEN_S3_050__)
 #define HRPRINT_THUMB_W 150
 #define HRPRINT_THUMB_H 150
+#elif defined(__XTOUCH_SCREEN_S3_028__)
+#define HRPRINT_THUMB_W 52
+#define HRPRINT_THUMB_H 52
 #else
 #define HRPRINT_THUMB_W 75
 #define HRPRINT_THUMB_H 75
 #endif
 #define HRPRINT_TOP_ROW_H HRPRINT_THUMB_H
+
+/* maps_split の左右比率。2.8" は右（選択ペイン）を広めにして潰れを回避 */
+#if defined(__XTOUCH_SCREEN_S3_028__)
+#define HRPRINT_LEFT_PANE_W_PCT 30
+#define HRPRINT_RIGHT_PANE_W_PCT 70
+#else
+#define HRPRINT_LEFT_PANE_W_PCT 33
+#define HRPRINT_RIGHT_PANE_W_PCT 67
+#endif
 
 /* 5" フッター: lv_btn の MAIN にラベル周りの内側パッドを十分取り、押しボタンらしく */
 #if defined(__XTOUCH_SCREEN_S3_050__)
@@ -51,6 +73,10 @@
 #define HRPRINT_UI_FOOT_BTN_V 4
 #define HRPRINT_FOOT_BTN_PAD_H 16
 #define HRPRINT_FOOT_BTN_PAD_V 10
+#elif defined(__XTOUCH_SCREEN_S3_028__)
+#define HRPRINT_UI_PAD 1
+#define HRPRINT_UI_GAP 1
+#define HRPRINT_UI_FOOT_BTN_V 1
 #else
 #define HRPRINT_UI_PAD 2
 #define HRPRINT_UI_GAP 2
@@ -71,6 +97,12 @@
 #define HRPRINT_RIGHT_PANE_PAD 2
 #define HRPRINT_RIGHT_PANE_PAD_ROW 2
 #define HRPRINT_RIGHT_FOOTER_PAD_TOP 2
+#elif defined(__XTOUCH_SCREEN_S3_028__)
+#define HRPRINT_MAPS_FORM_PAD 0
+#define HRPRINT_MAPS_SPLIT_COL_PAD 0
+#define HRPRINT_RIGHT_PANE_PAD 0
+#define HRPRINT_RIGHT_PANE_PAD_ROW 0
+#define HRPRINT_RIGHT_FOOTER_PAD_TOP 0
 #else
 #define HRPRINT_MAPS_FORM_PAD 0
 #define HRPRINT_MAPS_SPLIT_COL_PAD 0
@@ -1014,7 +1046,7 @@ lv_obj_t *ui_historyReprintComponent_create(lv_obj_t *comp_parent)
 
     lv_obj_t *left_pane = lv_obj_create(maps_split);
     /* 左:右 = 1:2（右のスロット選択が潰れないように） */
-    lv_obj_set_width(left_pane, lv_pct(33));
+    lv_obj_set_width(left_pane, lv_pct(HRPRINT_LEFT_PANE_W_PCT));
     lv_obj_set_height(left_pane, lv_pct(100));
     lv_obj_set_flex_flow(left_pane, LV_FLEX_FLOW_ROW_WRAP);
     lv_obj_set_flex_align(left_pane, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
@@ -1027,7 +1059,7 @@ lv_obj_t *ui_historyReprintComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_scrollbar_mode(left_pane, LV_SCROLLBAR_MODE_OFF);
 
     lv_obj_t *right_pane = lv_obj_create(maps_split);
-    lv_obj_set_width(right_pane, lv_pct(67));
+    lv_obj_set_width(right_pane, lv_pct(HRPRINT_RIGHT_PANE_W_PCT));
     lv_obj_set_height(right_pane, lv_pct(100));
     lv_obj_set_flex_flow(right_pane, LV_FLEX_FLOW_COLUMN);
     lv_obj_set_flex_align(right_pane, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);

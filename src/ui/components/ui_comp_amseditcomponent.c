@@ -344,6 +344,8 @@ lv_obj_t *ui_amsEditComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_bg_opa(row1, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_width(row1, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_column(row1, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_top(row1, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_bottom(row1, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_t *dd_brand = lv_dropdown_create(row1);
     s_dd_brand = dd_brand;
     lv_obj_set_width(dd_brand, lv_pct(100));
@@ -374,6 +376,8 @@ lv_obj_t *ui_amsEditComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_bg_opa(row2, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_width(row2, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_column(row2, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_top(row2, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_bottom(row2, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_t *dd_type = lv_dropdown_create(row2);
     s_dd_type = dd_type;
     lv_obj_set_width(dd_type, lv_pct(100));

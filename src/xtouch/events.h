@@ -125,9 +125,16 @@ void xtouch_events_onTFTInvert(lv_msg_t *m)
     xtouch_screen_invertColors();
 }
 
+/* 下で定義するが、SettingsSave から先に呼ぶため前方宣言 */
+void xtouch_events_onChamberTempSwitch(lv_msg_t *m);
+
 void xtouch_events_onSettingsSave(lv_msg_t *m)
 {
     xtouch_settings_save();
+    /* 手動SAVE時にのみ反映。スイッチ操作直後の重い処理は避ける */
+    xtouch_events_onChamberTempSwitch(m);
+    xtouch_neo_pixel_set_idle_led_enabled(xTouchConfig.xTouchIdleLEDEnabled);
+    lv_msg_send(XTOUCH_THUMBNAILS_HIDE_MODE_CHANGED, NULL);
 }
 
 void xtouch_events_onTFTFlip(lv_msg_t *m)

@@ -21,7 +21,4 @@ void ui_optionalScreen_screen_init(void)
     ui_optionalComponent = ui_optionalComponent_create(ui_optionalScreen);
     lv_obj_set_x(ui_optionalComponent, 385);
     lv_obj_set_y(ui_optionalComponent, 178);
-#if !defined(__XTOUCH_SCREEN_S3_050__)
-    lv_obj_set_width(ui_sidebarComponent, 48);
-#endif
 }

@@ -132,7 +132,7 @@ lv_obj_t *ui_optionalComponent_create(lv_obj_t *comp_parent)
 
     lv_obj_t *cui_optionalComponent;
     cui_optionalComponent = lv_obj_create(comp_parent);
-    lv_obj_set_height(cui_optionalComponent, lv_pct(100));
+    /* flex 子で lv_pct(100) 高さと flex_grow を併用すると、親が column+grow のときレイアウト負荷・不具合の原因になり得る */
     lv_obj_set_flex_grow(cui_optionalComponent, 1);
     lv_obj_set_x(cui_optionalComponent, 385);
     lv_obj_set_y(cui_optionalComponent, 178);
@@ -567,7 +567,7 @@ lv_obj_t *ui_optionalComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_height(ui_optionalAlarmTimeoutValue, LV_SIZE_CONTENT); /// 1
 
     int32_t value5 = lv_slider_get_value(ui_optionalAlarmTimeoutSlider);
-    lv_label_set_text_fmt(ui_optionalAlarmTimeoutValue, value3 < 1 ? LV_SYMBOL_POWER : "%d", value5 * 30);
+    lv_label_set_text_fmt(ui_optionalAlarmTimeoutValue, value5 < 1 ? LV_SYMBOL_POWER : "%d", value5 * 30);
     lv_obj_set_style_text_font(ui_optionalAlarmTimeoutValue, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_left(ui_optionalAlarmTimeoutValue, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_right(ui_optionalAlarmTimeoutValue, 0, LV_PART_MAIN | LV_STATE_DEFAULT);

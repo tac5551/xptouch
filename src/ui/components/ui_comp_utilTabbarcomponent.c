@@ -3,6 +3,13 @@
 /* tab index -> loadScreen(screen_index): AXIS=2, TEMP=1, UTIL=11 */
 static const int tab_to_screen[] = { 2, 1, 11 };
 
+/* Setup タブと同じ高さルール */
+#if defined(__XTOUCH_SCREEN_S3_050__)
+#define UTIL_TABBAR_H_PCT 15
+#else
+#define UTIL_TABBAR_H_PCT 20
+#endif
+
 static void on_tab_click(lv_event_t *e)
 {
     lv_event_code_t code = lv_event_get_code(e);
@@ -30,8 +37,13 @@ static lv_obj_t *create_tab_button(lv_obj_t *parent, const char *label, int inde
     lv_obj_set_style_text_color(btn, lv_color_hex(0x111111), LV_PART_MAIN | LV_STATE_CHECKED);
     lv_obj_set_style_pad_left(btn, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_right(btn, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
+#if defined(__XTOUCH_SCREEN_S3_050__)
     lv_obj_set_style_pad_top(btn, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_bottom(btn, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
+#else
+    lv_obj_set_style_pad_top(btn, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_bottom(btn, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
+#endif
 
     lv_obj_t *lbl = lv_label_create(btn);
     lv_label_set_text(lbl, label);
@@ -63,7 +75,7 @@ lv_obj_t *ui_utilTabbarComponent_create(lv_obj_t *comp_parent, int active_tab_in
 {
     lv_obj_t *cui = lv_obj_create(comp_parent);
     lv_obj_set_width(cui, lv_pct(100));
-    lv_obj_set_height(cui, lv_pct(15));
+    lv_obj_set_height(cui, lv_pct(UTIL_TABBAR_H_PCT));
     lv_obj_set_flex_flow(cui, LV_FLEX_FLOW_ROW);
     lv_obj_set_flex_align(cui, LV_FLEX_ALIGN_SPACE_EVENLY, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
     lv_obj_clear_flag(cui, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE);

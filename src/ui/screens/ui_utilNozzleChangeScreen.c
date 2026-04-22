@@ -41,7 +41,4 @@ void ui_utilNozzleChangeScreen_screen_init(void)
     lv_obj_set_flex_grow(ui_utilNozzleChagneComponent, 1);
     lv_obj_set_x(ui_utilNozzleChagneComponent, 0);
     lv_obj_set_y(ui_utilNozzleChagneComponent, 0);
-#if !defined(__XTOUCH_SCREEN_S3_050__)
-    lv_obj_set_width(ui_sidebarComponent, 48);
-#endif
 }

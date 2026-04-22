@@ -17,7 +17,7 @@ OneWire temperatureSensorsOneWire(XTOUCH_CHAMBER_TEMP_PIN);
 // Pass our temperatureSensorsOneWire reference to Dallas Temperature sensor
 DallasTemperature xtouch_chamber_sensors(&temperatureSensorsOneWire);
 
-lv_timer_t *xtouch_chambertemp_requestTemperaturesTimer;
+lv_timer_t *xtouch_chambertemp_requestTemperaturesTimer = NULL;
 
 void xtouch_chamber_requestTemperatures(lv_timer_t *timer);
 
@@ -50,6 +50,10 @@ void xtouch_chamber_timer_start()
 
 void xtouch_chamber_timer_stop()
 {
+    if (xtouch_chambertemp_requestTemperaturesTimer == NULL)
+    {
+        return;
+    }
     lv_timer_pause(xtouch_chambertemp_requestTemperaturesTimer);
 }
 

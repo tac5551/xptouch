@@ -41,7 +41,4 @@ void ui_utilCalibrationScreen_screen_init(void)
     lv_obj_set_flex_grow(ui_utilCalibrationComponent, 1);
     lv_obj_set_x(ui_utilCalibrationComponent, 0);
     lv_obj_set_y(ui_utilCalibrationComponent, 0);
-#if !defined(__XTOUCH_SCREEN_S3_050__)
-    lv_obj_set_width(ui_sidebarComponent, 48);
-#endif
 }

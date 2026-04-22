@@ -17,6 +17,43 @@ static void on_home_thumb_global(lv_msg_t *m, void *user_data)
 }
 #endif
 
+static bool s_settings_dirty = false;
+static bool s_settings_confirm_bypass = false;
+static int s_settings_pending_screen = 0;
+
+void ui_settings_mark_dirty(void)
+{
+    s_settings_dirty = true;
+}
+
+void ui_settings_clear_dirty(void)
+{
+    s_settings_dirty = false;
+}
+
+bool ui_settings_has_unsaved_changes(void)
+{
+    return s_settings_dirty;
+}
+
+static void on_settings_leave_save_yes(void)
+{
+    lv_msg_send(XTOUCH_SETTINGS_SAVE, NULL);
+    ui_settings_clear_dirty();
+    s_settings_confirm_bypass = true;
+    loadScreen(s_settings_pending_screen);
+    s_settings_confirm_bypass = false;
+}
+
+static void on_settings_leave_save_no(void)
+{
+    /* 変更は破棄して遷移 */
+    ui_settings_clear_dirty();
+    s_settings_confirm_bypass = true;
+    loadScreen(s_settings_pending_screen);
+    s_settings_confirm_bypass = false;
+}
+
 
 void fillScreenData(int screen)
 {
@@ -57,8 +94,14 @@ void fillScreenData(int screen)
 
 void loadScreen(int screen)
 {
-#ifdef __XTOUCH_PLATFORM_S3__
     const int prev_screen = xTouchConfig.currentScreenIndex;
+    if (!s_settings_confirm_bypass && prev_screen == 4 && screen != 4 && ui_settings_has_unsaved_changes())
+    {
+        s_settings_pending_screen = screen;
+        ui_confirmPanel_show_with_no("Unsaved changes.\nSave before leaving?", on_settings_leave_save_yes, on_settings_leave_save_no);
+        return;
+    }
+#ifdef __XTOUCH_PLATFORM_S3__
 
     ui_printersListContainer = NULL;
     if (screen != 15)

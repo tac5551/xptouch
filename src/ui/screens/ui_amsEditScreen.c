@@ -38,7 +38,4 @@ void ui_amsEditScreen_screen_init(void)
     lv_obj_set_x(ui_amsEditComponent, 0);
     lv_obj_set_y(ui_amsEditComponent, 0);
 
-#if !defined(__XTOUCH_SCREEN_S3_050__)
-    lv_obj_set_width(ui_sidebarComponent, 48);
-#endif
 }

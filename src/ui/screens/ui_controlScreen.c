@@ -41,7 +41,4 @@ void ui_controlScreen_screen_init(void)
     lv_obj_set_flex_grow(ui_controlComponent, 1);
     lv_obj_set_x(ui_controlComponent, 0);
     lv_obj_set_y(ui_controlComponent, 0);
-#if !defined(__XTOUCH_SCREEN_S3_050__)
-    lv_obj_set_width(ui_sidebarComponent, 48);
-#endif
 }

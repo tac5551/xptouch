@@ -11,6 +11,9 @@ extern "C"
     void fillScreenData(int screen);
     void loadScreen(int screen);
     void initTopLayer();
+    void ui_settings_mark_dirty(void);
+    void ui_settings_clear_dirty(void);
+    bool ui_settings_has_unsaved_changes(void);
 
 #ifdef __cplusplus
 } /*extern "C"*/

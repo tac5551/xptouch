@@ -79,11 +79,8 @@ void ui_settingsScreen_screen_init(void)
     lv_obj_set_x(ui_settingsComponent, 0);
     lv_obj_set_y(ui_settingsComponent, 0);
 
-    ui_optionalComponent = ui_optionalComponent_create(option_panel);
-    lv_obj_set_width(ui_optionalComponent, lv_pct(100));
-    lv_obj_set_flex_grow(ui_optionalComponent, 1);
-    lv_obj_set_x(ui_optionalComponent, 0);
-    lv_obj_set_y(ui_optionalComponent, 0);
+    /* Option は重いので遅延生成（タブ選択時に作成） */
+    ui_optionalComponent = NULL;
 
     lv_obj_t *ui_systemComponent = ui_systemComponent_create(system_panel);
     lv_obj_set_width(ui_systemComponent, lv_pct(100));
@@ -91,7 +88,4 @@ void ui_settingsScreen_screen_init(void)
     lv_obj_set_x(ui_systemComponent, 0);
     lv_obj_set_y(ui_systemComponent, 0);
 
-#if !defined(__XTOUCH_SCREEN_S3_050__)
-    lv_obj_set_width(ui_sidebarComponent, 48);
-#endif
 }
