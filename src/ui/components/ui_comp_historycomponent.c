@@ -32,7 +32,7 @@ lv_obj_t *ui_historyComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_pad_hor(cui_historyComponent, HISTORY_REPRINT_BTN_PAD_H, LV_PART_MAIN | LV_STATE_DEFAULT);
 #else
     lv_obj_set_style_pad_left(cui_historyComponent, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_right(cui_historyComponent, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(cui_historyComponent, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
 #endif
     lv_obj_set_style_pad_top(cui_historyComponent, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_bottom(cui_historyComponent, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
