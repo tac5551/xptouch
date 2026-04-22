@@ -60,9 +60,6 @@ void loadScreen(int screen)
 #ifdef __XTOUCH_PLATFORM_S3__
     const int prev_screen = xTouchConfig.currentScreenIndex;
 
-    if (prev_screen == 17 && screen != 17)
-        lv_msg_send(XTOUCH_COMMAND_P1S_VIDEO_STOP, NULL);
-
     ui_printersListContainer = NULL;
     if (screen != 15)
         ui_historyListContainer = NULL;
@@ -182,17 +179,12 @@ void loadScreen(int screen)
         ui_historyReprintScreen_screen_init();
         lv_disp_load_scr(ui_historyReprintScreen);
         break;
-    case 17:
-        ui_videoScreen_screen_init();
-        lv_disp_load_scr(ui_videoScreen);
-        lv_msg_send(XTOUCH_COMMAND_P1S_VIDEO_START, NULL);
-        break;
 #endif
     }
     fillScreenData(screen);
 
     // サイドバーのハイライト
-    // 5inch: 0=Home,1=Printers,2=Temp,3=Video,4=AMS,5=Settings (History はオプション機能)
+    // 5inch: 0=Home,1=Printers,2=Temp,3=AMS,4=Settings (History はオプション機能)
     // 2.8inch: 0=Home,1=Temp,2=AMS,3=Settings
     int sidebar_index = -1;
 #ifdef __XTOUCH_PLATFORM_S3__
@@ -207,14 +199,11 @@ void loadScreen(int screen)
     case 1: case 2: case 10: case 11: case 12:
         sidebar_index = 2; // Temps / Control 系
         break;
-    case 17:
-        sidebar_index = 3; // Video
-        break;
     case 7: case 13: case 14:
-        sidebar_index = 4; // AMS 系
+        sidebar_index = 3; // AMS 系
         break;
     case 4:
-        sidebar_index = 5; // Settings
+        sidebar_index = 4; // Settings
         break;
     case 15:
         // History は Printers/Temps の間に位置づける（アイコン自体の表示/非表示は別途制御）

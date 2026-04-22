@@ -10,7 +10,6 @@ void initialActions(lv_event_t *e) {}
 void onSidebarHome(lv_event_t *e) { loadScreen(0); }
 #ifdef __XTOUCH_PLATFORM_S3__
 void onSidebarPrinters(lv_event_t *e) { if (!xTouchConfig.xTouchLanOnlyMode && xTouchConfig.xTouchMultiPrinterMonitorEnabled) loadScreen(6); }
-void onSidebarVideo(lv_event_t *e) { if (xtouch_bblp_is_p1Series()) loadScreen(17); }
 void onSidebarHistory(lv_event_t *e) { (void)e; if (!xTouchConfig.xTouchLanOnlyMode && xTouchConfig.xTouchHistoryEnabled) loadScreen(15); }
 #endif
 void onSidebarTemp(lv_event_t *e) { loadScreen(2); }
@@ -278,14 +277,6 @@ void onMoveUtilCalibrationScreen(lv_event_t *e) {
 
 void onMoveHomeScreen(lv_event_t *e) { 
     loadScreen(0); 
-}
-
-void onMoveVideoScreen(lv_event_t *e) {
-#ifdef __XTOUCH_PLATFORM_S3__
-    loadScreen(17);
-#else
-    (void)e;
-#endif
 }
 
 void onSettingsResetDevice(lv_event_t *e)

@@ -764,6 +764,7 @@ Please keep the project credits and upstream references.
 [OpenBambuAPI](https://github.com/tac5551/OpenBambuAPI)
 [ha-bambulab](https://github.com/tac5551/ha-bambulab)
 [Bambu-Lab-Cloud-API](https://github.com/tac5551/Bambu-Lab-Cloud-API)
+[BambuP1Streamer](https://github.com/slynn1324/BambuP1Streamer)
 
 ---
 
