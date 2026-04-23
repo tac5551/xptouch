@@ -231,6 +231,10 @@ void setup()
 #elif defined(__XTOUCH_SCREEN_S3_3248__)
   ConsoleDebug.println("LED 17");
   xTouchConfig.xTouchNeoPixelPinValue = 17;
+#elif defined(__XTOUCH_SCREEN_S3_028__)
+  /* S3 2.8: UART0(TX0/RX0)=GPIO43/44 を外部I/Oに回す運用に合わせ、NeoPixel は GPIO43 固定 */
+  ConsoleDebug.println("[NeoPixel] S3 2.8 LED 43");
+  xTouchConfig.xTouchNeoPixelPinValue = 43;
 #elif defined(__XTOUCH_PLATFORM_S3__)
   /* 2432S028（LGFX）: FT5x06 の INT=GPIO17。5" と同じ 17 を Neo に使うとタッチと競合する。
    * ピンは printer.json の neoPixelPin のみ（未設定 0 のときは Neo タイマーは起動しない）。 */

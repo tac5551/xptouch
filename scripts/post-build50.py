@@ -39,11 +39,11 @@ def calculate_md5_and_size(file_path):
 def delete_bin_files(directory):
     try:
         for filename in os.listdir(directory):
-            if filename.endswith(".bin"):
+            if filename.endswith(".bin") or filename.endswith(".elf") or filename.endswith(".json"):
                 file_path = os.path.join(directory, filename)
                 os.remove(file_path)
                 print(f"Deleted: {file_path}")
-        print("All .bin files deleted successfully.")
+        print("All .bin/.elf/.json files deleted successfully.")
     except Exception as e:
         print(f"An error occurred: {str(e)}")
 
@@ -63,6 +63,8 @@ def post_build_create_ota_json(version_value):
     # If you want to save it to a file, you can do:
     with open("../xptouch-bin/5.0/ota/ota.json", "w") as ota_file:
         ota_file.write(ota_serialized)
+    with open(f"../xptouch-bin/5.0/ota/xptouch.{version_value}.json", "w") as ota_versioned_file:
+        ota_versioned_file.write(ota_serialized)
 
 
 def post_build_manifest(version_value):
@@ -95,6 +97,11 @@ def post_build_copy_ota_fw(version):
     print(f"copy to ota : cp {ota_bin_source} {ota_bin_target}")
     shutil.copy(ota_bin_source,ota_bin_target)
     #subprocess.run(['cp', ota_bin_source, ota_bin_target])
+
+    ota_elf_source = "./.pio/build/esp32-s3dev-50/firmware.elf"
+    ota_elf_target = f"../xptouch-bin/5.0/ota/xptouch.{version}.elf"
+    print(f"copy to ota : cp {ota_elf_source} {ota_elf_target}")
+    shutil.copy(ota_elf_source, ota_elf_target)
 
     fw_bin_source = "./.pio/build/esp32-s3dev-50/firmware.bin"
     fw_bin_target = f"../xptouch-bin/5.0/fw/firmware.bin"

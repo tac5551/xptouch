@@ -1639,6 +1639,12 @@ static void xtouch_mqtt_wifi_reconnect_and_wait(int timeout_ms)
 
 /* 起動後はじめて MQTT 接続できたときだけホームへ。再接続では画面を変えない（不定期にロード画面に戻るのを防ぐ） */
 static bool xtouch_mqtt_has_ever_connected = false;
+static inline void xtouch_set_intro_caption_safe(const char *text)
+{
+    if (introScreenCaption && lv_obj_is_valid(introScreenCaption))
+        lv_label_set_text(introScreenCaption, text ? text : "");
+}
+
 void xtouch_mqtt_onMqttReady()
 {
     if (!xtouch_mqtt_has_ever_connected)
@@ -1656,7 +1662,7 @@ static void xtouch_mqtt_connect(const char *username, const char *password, cons
     /* 初回接続前のみロード画面に文言表示。一度でも接続成功後は一時的な付け替え等で全面を挟まない */
     if (!xtouch_mqtt_has_ever_connected)
     {
-        lv_label_set_text(introScreenCaption, introCaption);
+        xtouch_set_intro_caption_safe(introCaption);
         lv_timer_handler();
         lv_task_handler();
         delay(32);
@@ -1710,11 +1716,11 @@ static void xtouch_mqtt_connect(const char *username, const char *password, cons
                     xtouch_mqtt_connection_fail_count--;
                     if (xtouch_mqtt_connection_fail_count == 0)
                     {
-                        lv_label_set_text(introScreenCaption, LV_SYMBOL_WARNING " MQTT ERROR");
+                        xtouch_set_intro_caption_safe(LV_SYMBOL_WARNING " MQTT ERROR");
                         lv_timer_handler();
                         lv_task_handler();
                         delay(3000);
-                        lv_label_set_text(introScreenCaption, LV_SYMBOL_REFRESH " REBOOTING");
+                        xtouch_set_intro_caption_safe(LV_SYMBOL_REFRESH " REBOOTING");
                         lv_timer_handler();
                         lv_task_handler();
                         ESP.restart();
@@ -1728,11 +1734,11 @@ static void xtouch_mqtt_connect(const char *username, const char *password, cons
             case 5: // MQTT UNAUTHORIZED
                 if (!xtouch_mqtt_firstConnectionDone)
                 {
-                    lv_label_set_text(introScreenCaption, LV_SYMBOL_WARNING " MQTT ERROR");
+                    xtouch_set_intro_caption_safe(LV_SYMBOL_WARNING " MQTT ERROR");
                     lv_timer_handler();
                     lv_task_handler();
                     delay(3000);
-                    lv_label_set_text(introScreenCaption, LV_SYMBOL_REFRESH " REBOOTING");
+                    xtouch_set_intro_caption_safe(LV_SYMBOL_REFRESH " REBOOTING");
                     lv_timer_handler();
                     lv_task_handler();
                 }
@@ -1832,7 +1838,7 @@ static void xtouch_mqtt_subscribe_commands(void)
 
 void xtouch_cloud_mqtt_setup()
 {
-    lv_label_set_text(introScreenCaption, LV_SYMBOL_CHARGE " Connecting BBL Cloud");
+    xtouch_set_intro_caption_safe(LV_SYMBOL_CHARGE " Connecting BBL Cloud");
     lv_timer_handler();
     lv_task_handler();
     delay(32);
@@ -1849,7 +1855,7 @@ void xtouch_cloud_mqtt_setup()
 
 void xtouch_local_mqtt_setup()
 {
-    lv_label_set_text(introScreenCaption, LV_SYMBOL_CHARGE " Connecting Printer");
+    xtouch_set_intro_caption_safe(LV_SYMBOL_CHARGE " Connecting Printer");
     lv_timer_handler();
     lv_task_handler();
     delay(32);

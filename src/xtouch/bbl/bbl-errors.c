@@ -53,6 +53,8 @@ const char *hms_error_keys[] PROGMEM = {
   "03000D0000010002",
   "03001B0000010001",
   "0500020000020001",
+  "0500010000030005",
+  "0500050000010001",
   "0C00010000010001",
   "0300940000020003",
   "03001B0000010002",
@@ -98,8 +100,6 @@ const char *hms_error_keys[] PROGMEM = {
   "07FF700000020003",
   "0300050000010001",
   "0500030000010006",
-  "0500010000030005",
-  "0500050000010001",
   "0500030000010008",
   "0300200000010002",
   "0300410000010001",
@@ -180,6 +180,8 @@ const char *hms_error_values[] PROGMEM = {
   "Heatbed homing failed. The environmental vibration is too great.",
   "The signal of the heatbed acceleration sensor is weak. The sensor may have fallen off or been damaged.",
   "Failed to connect to the internet. Please check the network connection.",
+  "The Micro SD card is in Read-Only mode. Video recording and Timelapse recording cannot be performed. Please refer to the Wiki for assistance.",
+  "The factory data of the AP board is abnormal; please replace the AP board with a new one.",
   "Micro Lidar is offline. Please check the hardware connection.",
   "Chamber failed to reach the desired temperature. The machine will stop waiting for the chamber temperature.",
   "External disturbance was detected on the heatbed acceleeration sensor. The sensor signal wire may not be affixed.",
@@ -225,8 +227,6 @@ const char *hms_error_values[] PROGMEM = {
   "Please check if the filament is coming out of the nozzle. If not, gently push the material and try to extrude again.",
   "The motor driver is overheating. Its radiator may be loose, or its cooling fan may be damaged.",
   "A system panic occurred. Please restart the device.",
-  "The Micro SD card is in Read-Only mode. Video recording and Timelapse recording cannot be performed. Please refer to the Wiki for assistance.",
-  "The factory data of the AP board is abnormal; please replace the AP board with a new one.",
   "A system hang occurred. Please restart the device.",
   "Y-axis homing abnormal: please check if the toolhead is stuck or the Y carriage has too much resistance.",
   "The system voltage is unstable. Triggering the power failure protection function.",
@@ -258,7 +258,7 @@ const char *hms_error_values[] PROGMEM = {
 };
 
 // Non-optimized Device errors (legacy format)
-int device_error_length = 137;
+int device_error_length = 138;
 
 const char *device_error_keys[] PROGMEM = {
   "07004001",
@@ -394,6 +394,7 @@ const char *device_error_keys[] PROGMEM = {
   "050040A6",
   "0500809B",
   "050040A8",
+  "05024030",
   "0300806E",
   "0502C032",
   "0502C031",
@@ -534,6 +535,7 @@ const char *device_error_values[] PROGMEM = {
   "File download failed due to missing certificates. Please check the Fleet Hub certificate configuration and restart the printer before trying again",
   "Build plate not properly positioned, may collide with the waste chute. Please reposition build plate and align with heatbed.",
   "The device firmware requires a repair upgrade, and the current operation cannot be performed. Please upgrade it on the \"Firmware\" page.",
+  "Failed to parse the G-code file. The task has been stopped. Please restart the G-code task.",
   "Abnormal nozzle temperature control detected; the heating module may be damaged. Please disconnect the power immediately and stop using the device.",
   "Please check and remove any printed parts or debris from the heatbed surface and underside before continuing the drying process.",
   "Please check and remove any printed parts or debris from the heatbed surface before continuing the cold pull.",

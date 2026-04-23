@@ -635,7 +635,9 @@ lv_obj_t *ui_optionalComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_radius(cui_optional_ds18b20Title, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_color(cui_optional_ds18b20Title, lv_color_hex(0xffffff), LV_PART_MAIN | LV_STATE_DEFAULT);
 
-#if defined(__XTOUCH_PLATFORM_S3__)
+#if defined(__XTOUCH_SCREEN_S3_028__)
+#define _UI_CHAMBER_TEMP_PIN 44
+#elif defined(__XTOUCH_PLATFORM_S3__)
 #define _UI_CHAMBER_TEMP_PIN 18
 #else
 #define _UI_CHAMBER_TEMP_PIN 22

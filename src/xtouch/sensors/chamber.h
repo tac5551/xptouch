@@ -5,7 +5,9 @@
 #include <DallasTemperature.h>
 #include "ui/ui_msgs.h"
 
-#if defined(__XTOUCH_PLATFORM_S3__)
+#if defined(__XTOUCH_SCREEN_S3_028__)
+#define XTOUCH_CHAMBER_TEMP_PIN 44
+#elif defined(__XTOUCH_PLATFORM_S3__)
 #define XTOUCH_CHAMBER_TEMP_PIN 18
 #else
 #define XTOUCH_CHAMBER_TEMP_PIN 22

@@ -10,19 +10,27 @@
 
 #ifdef __XTOUCH_PLATFORM_S3__
 
+/* History 一覧（ui_comp_historycomponent.c の ROW_LEFT_*）とサムネ枠を同一にする */
+#if defined(__XTOUCH_SCREEN_S3_050__)
+#define HRPRINT_HISTORY_THUMB_W 150
+#define HRPRINT_HISTORY_THUMB_H 150
+#else
+#define HRPRINT_HISTORY_THUMB_W 75
+#define HRPRINT_HISTORY_THUMB_H 75
+#endif
+
 /* Reprint レイアウト定数（解像度ベースで初期化） */
 static int HRPRINT_SET_BTN_W = 56;
 static int HRPRINT_SET_BTN_H = 34;
 static int HRPRINT_SRC_SWATCH_W = 20;
 static int HRPRINT_SRC_SWATCH_H = 14;
 static int HRPRINT_SLOT_CELL_W = 22;
-static int HRPRINT_SLOT_SQ_W = 20;
 static int HRPRINT_SLOT_SQ_H = 24;
 static int HRPRINT_LEFT_TARGET_H = 22;
 static int HRPRINT_CARD_HDR_H = 20;
-static int HRPRINT_THUMB_W = 52;
-static int HRPRINT_THUMB_H = 52;
-static int HRPRINT_TOP_ROW_H = 52;
+static int HRPRINT_THUMB_W = HRPRINT_HISTORY_THUMB_W;
+static int HRPRINT_THUMB_H = HRPRINT_HISTORY_THUMB_H;
+static int HRPRINT_TOP_ROW_H = HRPRINT_HISTORY_THUMB_H;
 /* 上段はサムネイル基準。行内/行外の余白を足して実効高さが膨らまないようにする */
 static int HRPRINT_TOP_ROW_BOTTOM_PAD = 0;
 static int HRPRINT_LEFT_PANE_W_PCT = 30;
@@ -31,16 +39,9 @@ static int HRPRINT_UI_PAD = 0;
 static int HRPRINT_UI_GAP = 0;
 static int HRPRINT_UI_FOOT_BTN_V = 4;
 static int HRPRINT_FOOT_BTN_MIN_H = 34;
-static int HRPRINT_FOOT_BTN_PAD_H = 16;
 static int HRPRINT_FOOT_BTN_PAD_V = 10;
-static int HRPRINT_AMS_SLOTS_GAP = 1;
-static int HRPRINT_MAPS_FORM_PAD = 0;
-static int HRPRINT_MAPS_SPLIT_COL_PAD = 0;
-static int HRPRINT_RIGHT_PANE_PAD = 0;
-static int HRPRINT_RIGHT_PANE_PAD_ROW = 0;
-static int HRPRINT_RIGHT_FOOTER_PAD_TOP = 0;
-static int HRPRINT_FOOTER_BTN_GAP = 6;
-static int HRPRINT_SET_BTN_PAD_RIGHT = 4;
+static int HRPRINT_RIGHT_UI_PAD = 0;
+static int HRPRINT_SET_BTN_PAD = 12;
 
 static void hrprint_apply_metrics_by_resolution(void)
 {
@@ -48,7 +49,7 @@ static void hrprint_apply_metrics_by_resolution(void)
     int ver = (int)lv_disp_get_ver_res(NULL);
     int long_edge = (hor > ver) ? hor : ver;
 
-    /* 5" 相当（800x480 系）だけ特別扱い。それ以外は 2.8 側(else)値で統一。 */
+    /* 密度は long_edge、サムネ枠は History 行と同じ（画面プロファイルマクロ） */
     if (long_edge >= 800)
     {
         HRPRINT_SET_BTN_W = 108;
@@ -56,29 +57,21 @@ static void hrprint_apply_metrics_by_resolution(void)
         HRPRINT_SRC_SWATCH_W = 36;
         HRPRINT_SRC_SWATCH_H = 24;
         HRPRINT_SLOT_CELL_W = 40;
-        HRPRINT_SLOT_SQ_W = 36;
         HRPRINT_SLOT_SQ_H = 40;
         HRPRINT_LEFT_TARGET_H = 32;
         HRPRINT_CARD_HDR_H = 32;
-        HRPRINT_THUMB_W = 150;
-        HRPRINT_THUMB_H = 150;
+        HRPRINT_THUMB_W = HRPRINT_HISTORY_THUMB_W;
+        HRPRINT_THUMB_H = HRPRINT_HISTORY_THUMB_H;
         HRPRINT_TOP_ROW_H = HRPRINT_THUMB_H;
         HRPRINT_LEFT_PANE_W_PCT = 33;
         HRPRINT_RIGHT_PANE_W_PCT = 67;
         HRPRINT_UI_PAD = 4;
-        HRPRINT_UI_GAP = 3;
+        HRPRINT_UI_GAP = 8;
         HRPRINT_UI_FOOT_BTN_V = 4;
         HRPRINT_FOOT_BTN_MIN_H = 0;
-        HRPRINT_FOOT_BTN_PAD_H = 16;
         HRPRINT_FOOT_BTN_PAD_V = 10;
-        HRPRINT_AMS_SLOTS_GAP = HRPRINT_UI_GAP;
-        HRPRINT_MAPS_FORM_PAD = 2;
-        HRPRINT_MAPS_SPLIT_COL_PAD = 2;
-        HRPRINT_RIGHT_PANE_PAD = 2;
-        HRPRINT_RIGHT_PANE_PAD_ROW = 2;
-        HRPRINT_RIGHT_FOOTER_PAD_TOP = 2;
-        HRPRINT_FOOTER_BTN_GAP = 8;
-        HRPRINT_SET_BTN_PAD_RIGHT = 4;
+        HRPRINT_RIGHT_UI_PAD = 2;
+        HRPRINT_SET_BTN_PAD = 4;
     }
     else
     {
@@ -87,27 +80,20 @@ static void hrprint_apply_metrics_by_resolution(void)
         HRPRINT_SRC_SWATCH_W = 20;
         HRPRINT_SRC_SWATCH_H = 14;
         HRPRINT_SLOT_CELL_W = 22;
-        HRPRINT_SLOT_SQ_W = 20;
         HRPRINT_SLOT_SQ_H = 24;
         HRPRINT_LEFT_TARGET_H = 22;
         HRPRINT_CARD_HDR_H = 20;
-        HRPRINT_THUMB_W = 52;
-        HRPRINT_THUMB_H = 52;
+        HRPRINT_THUMB_W = HRPRINT_HISTORY_THUMB_W;
+        HRPRINT_THUMB_H = HRPRINT_HISTORY_THUMB_H;
         HRPRINT_TOP_ROW_H = HRPRINT_THUMB_H;
         HRPRINT_LEFT_PANE_W_PCT = 30;
         HRPRINT_RIGHT_PANE_W_PCT = 70;
         HRPRINT_UI_PAD = 0;
-        HRPRINT_UI_GAP = 0;
+        HRPRINT_UI_GAP = 6;
         HRPRINT_UI_FOOT_BTN_V = 4;
         HRPRINT_FOOT_BTN_MIN_H = 34;
-        HRPRINT_AMS_SLOTS_GAP = 1;
-        HRPRINT_MAPS_FORM_PAD = 0;
-        HRPRINT_MAPS_SPLIT_COL_PAD = 0;
-        HRPRINT_RIGHT_PANE_PAD = 0;
-        HRPRINT_RIGHT_PANE_PAD_ROW = 0;
-        HRPRINT_RIGHT_FOOTER_PAD_TOP = 0;
-        HRPRINT_FOOTER_BTN_GAP = 6;
-        HRPRINT_SET_BTN_PAD_RIGHT = 4;
+        HRPRINT_RIGHT_UI_PAD = 0;
+        HRPRINT_SET_BTN_PAD = 4;
     }
 }
 
@@ -703,15 +689,18 @@ static void rebuild_right_selector(void)
 #endif
     lv_obj_set_style_text_color(sl, lv_color_hex(0xBBBBBB), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_font(sl, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
-    reprint_make_color_rect(
+    lv_obj_t *selected_swatch = reprint_make_color_rect(
         row2,
         reprint_color_from_rrggbbaa((mapm && mapm->sourceColor[0]) ? mapm->sourceColor : "808080FF"),
-        HRPRINT_SRC_SWATCH_W, HRPRINT_SRC_SWATCH_H, 1, lv_color_hex(0x999999));
+        HRPRINT_SRC_SWATCH_W, HRPRINT_SLOT_SQ_H, 1, lv_color_hex(0x999999));
+    /* 候補セルと同様、横幅は1/4基準に合わせる */
+    lv_obj_set_width(selected_swatch, lv_pct(25));
 
     lv_obj_t *set_btn = lv_btn_create(top_wrap);
     lv_obj_set_width(set_btn, HRPRINT_SET_BTN_W);
     lv_obj_set_height(set_btn, HRPRINT_SET_BTN_H);
-    lv_obj_set_style_pad_right(set_btn, HRPRINT_SET_BTN_PAD_RIGHT, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_left(set_btn, HRPRINT_SET_BTN_PAD, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(set_btn, HRPRINT_SET_BTN_PAD, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(set_btn, lv_color_hex(0xAA3333), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(set_btn, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_width(set_btn, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -769,13 +758,13 @@ static void rebuild_right_selector(void)
         lv_obj_t *slots = lv_obj_create(panel);
         lv_obj_set_width(slots, lv_pct(100));
         lv_obj_set_height(slots, LV_SIZE_CONTENT);
-        lv_obj_set_flex_flow(slots, LV_FLEX_FLOW_ROW_WRAP);
+        lv_obj_set_flex_flow(slots, LV_FLEX_FLOW_ROW);
         lv_obj_set_flex_align(slots, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
         lv_obj_set_style_bg_opa(slots, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_border_width(slots, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_pad_all(slots, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-        lv_obj_set_style_pad_column(slots, HRPRINT_AMS_SLOTS_GAP, LV_PART_MAIN | LV_STATE_DEFAULT);
-        lv_obj_set_style_pad_row(slots, HRPRINT_AMS_SLOTS_GAP, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_pad_column(slots, HRPRINT_UI_GAP, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_pad_row(slots, HRPRINT_UI_GAP, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_clear_flag(slots, LV_OBJ_FLAG_SCROLLABLE);
 
         ams_panel[ams] = panel;
@@ -819,13 +808,13 @@ static void rebuild_right_selector(void)
             lv_obj_t *slots = lv_obj_create(panel);
             lv_obj_set_width(slots, lv_pct(100));
             lv_obj_set_height(slots, LV_SIZE_CONTENT);
-            lv_obj_set_flex_flow(slots, LV_FLEX_FLOW_ROW_WRAP);
+            lv_obj_set_flex_flow(slots, LV_FLEX_FLOW_ROW);
             lv_obj_set_flex_align(slots, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
             lv_obj_set_style_bg_opa(slots, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_border_width(slots, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_all(slots, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_obj_set_style_pad_column(slots, HRPRINT_AMS_SLOTS_GAP, LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_obj_set_style_pad_row(slots, HRPRINT_AMS_SLOTS_GAP, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_pad_column(slots, HRPRINT_UI_GAP, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_pad_row(slots, HRPRINT_UI_GAP, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_clear_flag(slots, LV_OBJ_FLAG_SCROLLABLE);
 
             ams_panel[ams] = panel;
@@ -834,7 +823,8 @@ static void rebuild_right_selector(void)
 
         lv_obj_t *parent_slots = (ams < XTOUCH_BAMBU_AMS_UNITS && ams_slots[ams]) ? ams_slots[ams] : grid;
         lv_obj_t *cell = lv_obj_create(parent_slots);
-        lv_obj_set_width(cell, HRPRINT_SLOT_CELL_W);
+        /* 常に4分割幅を基準にし、候補数が4未満でも1/4より広げない */
+        lv_obj_set_width(cell, lv_pct(25));
         lv_obj_set_height(cell, LV_SIZE_CONTENT);
         lv_obj_set_flex_flow(cell, LV_FLEX_FLOW_COLUMN);
         lv_obj_set_flex_align(cell, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
@@ -844,7 +834,7 @@ static void rebuild_right_selector(void)
         lv_obj_set_style_pad_row(cell, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_clear_flag(cell, LV_OBJ_FLAG_SCROLLABLE);
 
-        lv_obj_t *sq = reprint_make_color_rect(cell, sc, HRPRINT_SLOT_SQ_W, HRPRINT_SLOT_SQ_H, bw, bcol);
+        lv_obj_t *sq = reprint_make_color_rect(cell, sc, HRPRINT_SRC_SWATCH_W, HRPRINT_SLOT_SQ_H, bw, bcol);
         s_map_slot_obj[mi][si] = sq;
         /* 色■をセル幅いっぱいにし、タッチはセル全体で受ける */
         lv_obj_set_width(sq, lv_pct(100));
@@ -939,7 +929,7 @@ lv_obj_t *ui_historyReprintComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_flex_grow(root, 1);
     lv_obj_set_flex_flow(root, LV_FLEX_FLOW_COLUMN);
     lv_obj_set_flex_align(root, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
-    lv_obj_set_style_pad_all(root, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_all(root, 12, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_outline_width(root, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_shadow_width(root, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(root, lv_color_hex(0x333333), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1020,8 +1010,8 @@ lv_obj_t *ui_historyReprintComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_flex_align(form, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
     lv_obj_set_style_bg_opa(form, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_width(form, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_bottom(form, HRPRINT_MAPS_FORM_PAD, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_row(form, HRPRINT_MAPS_FORM_PAD, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_bottom(form, HRPRINT_RIGHT_UI_PAD, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_row(form, HRPRINT_RIGHT_UI_PAD, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_scrollbar_mode(form, LV_SCROLLBAR_MODE_OFF);
     lv_obj_clear_flag(form, LV_OBJ_FLAG_SCROLLABLE);
     s_form_obj = form;
@@ -1046,7 +1036,7 @@ lv_obj_t *ui_historyReprintComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_bg_opa(maps_split, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_width(maps_split, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_all(maps_split, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_column(maps_split, HRPRINT_MAPS_SPLIT_COL_PAD, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_column(maps_split, HRPRINT_RIGHT_UI_PAD, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_clear_flag(maps_split, LV_OBJ_FLAG_SCROLLABLE);
 
     lv_obj_t *left_pane = lv_obj_create(maps_split);
@@ -1073,9 +1063,9 @@ lv_obj_t *ui_historyReprintComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_border_color(right_pane, lv_color_hex(0x555555), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_width(right_pane, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_radius(right_pane, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_all(right_pane, HRPRINT_RIGHT_PANE_PAD, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_all(right_pane, HRPRINT_RIGHT_UI_PAD, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_right(right_pane, HRPRINT_UI_GAP, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_row(right_pane, HRPRINT_RIGHT_PANE_PAD_ROW, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_row(right_pane, HRPRINT_RIGHT_UI_PAD, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_clear_flag(right_pane, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_t *right_body = lv_obj_create(right_pane);
     lv_obj_set_width(right_body, lv_pct(100));
@@ -1098,8 +1088,8 @@ lv_obj_t *ui_historyReprintComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_border_width(right_footer, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_all(right_footer, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_right(right_footer, HRPRINT_UI_GAP, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_column(right_footer, HRPRINT_FOOTER_BTN_GAP, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_top(right_footer, HRPRINT_RIGHT_FOOTER_PAD_TOP, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_column(right_footer, HRPRINT_UI_GAP, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_top(right_footer, HRPRINT_RIGHT_UI_PAD, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_clear_flag(right_footer, LV_OBJ_FLAG_SCROLLABLE);
 
     lv_obj_t *cancelBtn = lv_btn_create(right_footer);
@@ -1107,7 +1097,7 @@ lv_obj_t *ui_historyReprintComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_width(cancelBtn, LV_SIZE_CONTENT);
     lv_obj_set_height(cancelBtn, LV_SIZE_CONTENT);
     lv_obj_set_style_min_width(cancelBtn, 136, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_hor(cancelBtn, HRPRINT_FOOT_BTN_PAD_H, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_hor(cancelBtn, 16, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_ver(cancelBtn, HRPRINT_FOOT_BTN_PAD_V, LV_PART_MAIN | LV_STATE_DEFAULT);
 #else
     lv_obj_set_width(cancelBtn, lv_pct(42));
@@ -1130,7 +1120,7 @@ lv_obj_t *ui_historyReprintComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_width(okBtn, LV_SIZE_CONTENT);
     lv_obj_set_height(okBtn, LV_SIZE_CONTENT);
     lv_obj_set_style_min_width(okBtn, 152, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_hor(okBtn, HRPRINT_FOOT_BTN_PAD_H, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_hor(okBtn, 16, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_ver(okBtn, HRPRINT_FOOT_BTN_PAD_V, LV_PART_MAIN | LV_STATE_DEFAULT);
 #else
     lv_obj_set_width(okBtn, lv_pct(42));
@@ -1258,8 +1248,8 @@ lv_obj_t *ui_historyReprintComponent_create(lv_obj_t *comp_parent)
         lv_obj_set_flex_align(row, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
         lv_obj_set_style_bg_opa(row, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_border_width(row, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-        lv_obj_set_style_pad_top(row, HRPRINT_MAPS_FORM_PAD, LV_PART_MAIN | LV_STATE_DEFAULT);
-        lv_obj_set_style_pad_bottom(row, HRPRINT_MAPS_FORM_PAD, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_pad_top(row, HRPRINT_RIGHT_UI_PAD, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_pad_bottom(row, HRPRINT_RIGHT_UI_PAD, LV_PART_MAIN | LV_STATE_DEFAULT);
 
         lv_obj_t *lbl = lv_label_create(row);
         lv_label_set_text(lbl, "Printer");
