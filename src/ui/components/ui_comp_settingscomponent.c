@@ -651,6 +651,43 @@ lv_obj_t *ui_settingsComponent_create(lv_obj_t *comp_parent)
         lv_obj_add_state(ui_settings_chamberLedWakeSwitch, LV_STATE_CHECKED);
     }
 
+    lv_obj_t *cui_settings_chamberWdp;
+    cui_settings_chamberWdp = lv_obj_create(cui_settingsComponent);
+    lv_obj_set_width(cui_settings_chamberWdp, lv_pct(100));
+    lv_obj_set_height(cui_settings_chamberWdp, LV_SIZE_CONTENT);
+    lv_obj_set_flex_flow(cui_settings_chamberWdp, LV_FLEX_FLOW_ROW);
+    lv_obj_set_flex_align(cui_settings_chamberWdp, LV_FLEX_ALIGN_SPACE_BETWEEN, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_set_scrollbar_mode(cui_settings_chamberWdp, LV_SCROLLBAR_MODE_OFF);
+    lv_obj_set_style_bg_color(cui_settings_chamberWdp, lv_color_hex(0x222222), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(cui_settings_chamberWdp, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(cui_settings_chamberWdp, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_left(cui_settings_chamberWdp, 16, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(cui_settings_chamberWdp, 16, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_top(cui_settings_chamberWdp, 16, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_bottom(cui_settings_chamberWdp, 16, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    lv_obj_t *cui_settings_chamberWdpLabel;
+    cui_settings_chamberWdpLabel = lv_label_create(cui_settings_chamberWdp);
+    lv_obj_set_width(cui_settings_chamberWdpLabel, LV_SIZE_CONTENT);
+    lv_obj_set_height(cui_settings_chamberWdpLabel, LV_SIZE_CONTENT);
+    lv_label_set_text(cui_settings_chamberWdpLabel, LV_SYMBOL_EYE_OPEN " Wake during Print");
+    lv_obj_set_style_text_font(cui_settings_chamberWdpLabel, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_scrollbar_mode(cui_settings_chamberWdpLabel, LV_SCROLLBAR_MODE_OFF);
+
+    ui_settings_chamberWakeDuringPrintSwitch = lv_switch_create(cui_settings_chamberWdp);
+    lv_obj_set_width(ui_settings_chamberWakeDuringPrintSwitch, 50);
+    lv_obj_set_height(ui_settings_chamberWakeDuringPrintSwitch, 25);
+    lv_obj_set_style_bg_color(ui_settings_chamberWakeDuringPrintSwitch, lv_color_hex(0x2AFF00), LV_PART_INDICATOR | LV_STATE_CHECKED);
+    lv_obj_set_style_bg_opa(ui_settings_chamberWakeDuringPrintSwitch, 255, LV_PART_INDICATOR | LV_STATE_CHECKED);
+    lv_obj_set_style_bg_color(ui_settings_chamberWakeDuringPrintSwitch, lv_color_hex(0x2AFF00), LV_PART_KNOB | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(ui_settings_chamberWakeDuringPrintSwitch, 255, LV_PART_KNOB | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(ui_settings_chamberWakeDuringPrintSwitch, lv_color_hex(0x000000), LV_PART_KNOB | LV_STATE_CHECKED);
+    lv_obj_set_style_bg_opa(ui_settings_chamberWakeDuringPrintSwitch, 255, LV_PART_KNOB | LV_STATE_CHECKED);
+    if (xTouchConfig.xTouchWakeDuringPrint)
+    {
+        lv_obj_add_state(ui_settings_chamberWakeDuringPrintSwitch, LV_STATE_CHECKED);
+    }
+
     lv_obj_t *cui_settings_auxFan;
     cui_settings_auxFan = lv_obj_create(cui_settingsComponent);
     lv_obj_set_width(cui_settings_auxFan, lv_pct(100));
@@ -771,6 +808,9 @@ lv_obj_t *ui_settingsComponent_create(lv_obj_t *comp_parent)
     children[UI_COMP_SETTINGSCOMPONENT_CHAMBERLEDWAKE] = cui_settings_chamberLedWake;
     children[UI_COMP_SETTINGSCOMPONENT_CHAMBERLEDWAKE_LABEL] = cui_settings_chamberLedWakeLabel;
     children[UI_COMP_SETTINGSCOMPONENT_CHAMBERLEDWAKE_SWITCH] = ui_settings_chamberLedWakeSwitch;
+    children[UI_COMP_SETTINGSCOMPONENT_CHAMBER_WDP] = cui_settings_chamberWdp;
+    children[UI_COMP_SETTINGSCOMPONENT_CHAMBER_WDP_LABEL] = cui_settings_chamberWdpLabel;
+    children[UI_COMP_SETTINGSCOMPONENT_CHAMBER_WDP_SWITCH] = ui_settings_chamberWakeDuringPrintSwitch;
     children[UI_COMP_SETTINGSCOMPONENT_AUXFAN] = cui_settings_auxFan;
     children[UI_COMP_SETTINGSCOMPONENT_AUXFAN_LABEL] = cui_settings_auxFanLabel;
     children[UI_COMP_SETTINGSCOMPONENT_AUXFAN_SWITCH] = ui_settings_auxFanSwitch;
@@ -797,6 +837,7 @@ lv_obj_t *ui_settingsComponent_create(lv_obj_t *comp_parent)
     lv_obj_add_event_cb(ui_settings_auxFanSwitch, ui_event_comp_settingsComponent_onAuxFan, LV_EVENT_VALUE_CHANGED, NULL);
     lv_obj_add_event_cb(ui_settings_chamberFanSwitch, ui_event_comp_settingsComponent_onChamberFan, LV_EVENT_VALUE_CHANGED, NULL);
     lv_obj_add_event_cb(ui_settings_chamberLedWakeSwitch, ui_event_comp_settingsComponent_onChamberLedWake, LV_EVENT_VALUE_CHANGED, NULL);
+    lv_obj_add_event_cb(ui_settings_chamberWakeDuringPrintSwitch, ui_event_comp_settingsComponent_onWDP, LV_EVENT_VALUE_CHANGED, NULL);
     lv_obj_add_event_cb(ui_settingsTFTFlipSwitch, ui_event_comp_settingsComponent_onTFTFlip, LV_EVENT_VALUE_CHANGED, NULL);
 
     ui_comp_settingsComponent_create_hook(cui_settingsComponent);

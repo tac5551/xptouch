@@ -18,6 +18,8 @@ enum SidebarComponent {
     UI_COMP_SIDEBARCOMPONENT_SIDEBARPRINTERSBUTTON_SIDEBARPRINTERSBUTTONICON,
     UI_COMP_SIDEBARCOMPONENT_SIDEBARHISTORYBUTTON,
     UI_COMP_SIDEBARCOMPONENT_SIDEBARHISTORYBUTTON_SIDEBARHISTORYBUTTONICON,
+    UI_COMP_SIDEBARCOMPONENT_SIDEBARCAMERABUTTON,
+    UI_COMP_SIDEBARCOMPONENT_SIDEBARCAMERABUTTON_SIDEBARCAMERABUTTONICON,
 #endif
     UI_COMP_SIDEBARCOMPONENT_SIDEBARTEMPBUTTON,
     UI_COMP_SIDEBARCOMPONENT_SIDEBARTEMPBUTTON_SIDEBARTEMPBUTTONICON,
@@ -33,6 +35,7 @@ enum SidebarComponent {
 #ifdef __XTOUCH_PLATFORM_S3__
     void ui_event_comp_sidebarComponent_sidebarPrintersButton(lv_event_t *e);
     void ui_event_comp_sidebarComponent_sidebarHistoryButton(lv_event_t *e);
+    void ui_event_comp_sidebarComponent_sidebarCameraButton(lv_event_t *e);
 #endif
     void ui_event_comp_sidebarComponent_sidebarTempButton(lv_event_t *e);
     void ui_event_comp_sidebarComponent_sidebarAmsViewButton(lv_event_t *e);
@@ -43,6 +46,8 @@ enum SidebarComponent {
     void ui_sidebarComponent_updatePrintersVisibility(void);
     /** History 無効時はサイドバーから History を隠す（LAN-only 時も非表示） */
     void ui_sidebarComponent_updateHistoryVisibility(void);
+    /** P1S かつ Camera Stream 有効時のみ Camera ボタンを表示する */
+    void ui_sidebarComponent_updateCameraVisibility(void);
 #endif
 #ifdef __cplusplus
 } /*extern "C"*/

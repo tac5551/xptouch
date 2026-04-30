@@ -193,6 +193,10 @@ extern "C"
         bool xTouchTFTInvert;
         char xTouchHost[16];
         char xTouchAccessCode[9];
+        /** PushAll(print.net) から得た Main プリンタのカメラ接続先IP。 */
+        char xTouchCameraHost[16];
+        /** PushAll(print.net) から得た Main プリンタの access code（無ければ設定値を使用）。 */
+        char xTouchCameraAccessCode[9];
         char xTouchSerialNumber[16];
         /** pair.json の paired と一致。一時的な操作プリンタ切替えでは変えない（再起動で loadPair が xTouchSerialNumber を戻す）。 */
         char xTouchPairedSerialNumber[16];
@@ -215,6 +219,8 @@ extern "C"
         bool xTouchHistoryEnabled;
         /** true のとき Home / Printers / History のサムネイルを表示しない（DL も行わない）。5inch のみ。 */
         bool xTouchHideAllThumbnails;
+        /** true のとき P1S Camera Stream を有効化。false ならカメラ画面でもストリーム接続しない。 */
+        bool xTouchP1sCameraStreamEnabled;
 
         int xTouchNeoPixelNumValue;
         int xTouchNeoPixelBrightnessValue;

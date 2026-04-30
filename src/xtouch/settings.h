@@ -22,6 +22,7 @@ void xtouch_settings_save(bool onlyRoot = false)
     doc["multiPrinterMonitor"] = xTouchConfig.xTouchMultiPrinterMonitorEnabled;
     doc["historyEnabled"] = xTouchConfig.xTouchHistoryEnabled;
     doc["hideAllThumbnails"] = xTouchConfig.xTouchHideAllThumbnails;
+    doc["p1sCameraStreamEnabled"] = xTouchConfig.xTouchP1sCameraStreamEnabled;
     doc["neoPixelBrightness"] = xTouchConfig.xTouchNeoPixelBrightnessValue;
     doc["neoPixelNum"]= xTouchConfig.xTouchNeoPixelNumValue;
     doc["neoPixelPin"] = xTouchConfig.xTouchNeoPixelPinValue;
@@ -63,6 +64,7 @@ void xtouch_settings_loadSettings()
         xTouchConfig.xTouchPreheatEnabled = false;
         xTouchConfig.xTouchMultiPrinterMonitorEnabled = true;
         xTouchConfig.xTouchHistoryEnabled = false;
+        xTouchConfig.xTouchP1sCameraStreamEnabled = false;
         xTouchConfig.xTouchNeoPixelBrightnessValue = 25;
         xTouchConfig.xTouchNeoPixelNumValue = 0;
         xTouchConfig.xTouchNeoPixelPinValue = 0;
@@ -92,6 +94,7 @@ void xtouch_settings_loadSettings()
     xTouchConfig.xTouchMultiPrinterMonitorEnabled = settings.containsKey("multiPrinterMonitor") ? settings["multiPrinterMonitor"].as<bool>() : true;
     xTouchConfig.xTouchHistoryEnabled = settings.containsKey("historyEnabled") ? settings["historyEnabled"].as<bool>() : false;
     xTouchConfig.xTouchHideAllThumbnails = settings.containsKey("hideAllThumbnails") ? settings["hideAllThumbnails"].as<bool>() : false;
+    xTouchConfig.xTouchP1sCameraStreamEnabled = settings.containsKey("p1sCameraStreamEnabled") ? settings["p1sCameraStreamEnabled"].as<bool>() : false;
     xTouchConfig.xTouchNeoPixelBrightnessValue = settings.containsKey("neoPixelBrightness") ? settings["neoPixelBrightness"].as<int>() : 25;
     xTouchConfig.xTouchNeoPixelNumValue = settings.containsKey("neoPixelNum") ? settings["neoPixelNum"].as<int>() : 10;
     xTouchConfig.xTouchNeoPixelPinValue = settings.containsKey("neoPixelPin") ? settings["neoPixelPin"].as<int>() : 0;

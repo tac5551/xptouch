@@ -13,6 +13,7 @@
 #include "bbl-certs.h"
 // #include "xtouch/ams-status.hpp"
 #include "xtouch/cloud.hpp"
+#include "xtouch/camera_stream.h"
 
 WiFiClientSecure xtouch_wiFiClientSecure;
 PubSubClient xtouch_pubSubClient(xtouch_wiFiClientSecure);
@@ -983,6 +984,10 @@ void xtouch_mqtt_processPushStatus(JsonDocument &incomingJson)
                 break;
             }
         }
+
+#ifdef __XTOUCH_PLATFORM_S3__
+        xtouch_camera_stream::update_from_push_status_net(incomingJson["print"].as<JsonObject>());
+#endif
 
         if (incomingJson["print"].containsKey("wifi_signal"))
         {

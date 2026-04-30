@@ -69,6 +69,7 @@ extern "C"
     void onOptionalMultiPrinterMonitor(lv_event_t *e);
     void onOptionalHistory(lv_event_t *e);
     void onOptionalHideAllThumbnails(lv_event_t *e);
+    void onOptionalP1sCameraStream(lv_event_t *e);
 #endif
     void onOptionalIdleLED(lv_event_t *e);
 
@@ -84,6 +85,7 @@ extern "C"
     void onPrintersStop(lv_event_t *e);
     void onPrintersReprint(lv_event_t *e);
     void onSidebarHistory(lv_event_t *e);
+    void onSidebarCamera(lv_event_t *e);
     void onHistoryReprint(lv_event_t *e);
 #endif
 

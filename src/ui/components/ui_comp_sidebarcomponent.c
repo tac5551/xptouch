@@ -1,4 +1,28 @@
 #include "../ui.h"
+#include <string.h>
+
+#ifdef __XTOUCH_PLATFORM_S3__
+static bool ui_sidebar_is_p1s_model(void)
+{
+    const char *m = xTouchConfig.xTouchPrinterModel;
+    if (!m || !m[0])
+        return false;
+    if (strcmp(m, "C12") == 0)         /* LAN config */
+        return true;
+    if (strcmp(m, "BL-P003") == 0)     /* MQTT normalized */
+        return true;
+    if (strstr(m, "P1S") != NULL)      /* textual model */
+        return true;
+    return false;
+}
+
+static bool ui_sidebar_show_camera_button(void)
+{
+    if (!xTouchConfig.xTouchP1sCameraStreamEnabled)
+        return false;
+    return ui_sidebar_is_p1s_model();
+}
+#endif
 
 void ui_event_comp_sidebarComponent_sidebarHomeButton(lv_event_t *e)
 {
@@ -29,6 +53,16 @@ void ui_event_comp_sidebarComponent_sidebarHistoryButton(lv_event_t *e)
     if (event_code == LV_EVENT_CLICKED)
     {
         onSidebarHistory(e);
+    }
+}
+void ui_event_comp_sidebarComponent_sidebarCameraButton(lv_event_t *e)
+{
+    lv_event_code_t event_code = lv_event_get_code(e);
+    lv_obj_t *target = lv_event_get_target(e);
+    lv_obj_t **comp_sidebarComponent = lv_event_get_user_data(e);
+    if (event_code == LV_EVENT_CLICKED)
+    {
+        onSidebarCamera(e);
     }
 }
 #endif
@@ -90,20 +124,36 @@ void ui_sidebarComponent_updateHistoryVisibility(void)
     else
         lv_obj_clear_flag(btn, LV_OBJ_FLAG_HIDDEN);
 }
+
+void ui_sidebarComponent_updateCameraVisibility(void)
+{
+    if (ui_sidebarComponent == NULL)
+        return;
+    lv_obj_t *btn = ui_comp_get_child(ui_sidebarComponent, UI_COMP_SIDEBARCOMPONENT_SIDEBARCAMERABUTTON);
+    if (btn == NULL)
+        return;
+    if (!ui_sidebar_show_camera_button())
+        lv_obj_add_flag(btn, LV_OBJ_FLAG_HIDDEN);
+    else
+        lv_obj_clear_flag(btn, LV_OBJ_FLAG_HIDDEN);
+}
 #endif
 
 void ui_sidebarComponent_set_active(int index)
 {
+    if (ui_sidebarComponent == NULL || !lv_obj_is_valid(ui_sidebarComponent))
+        return;
     lv_obj_t *target;
 #ifdef __XTOUCH_PLATFORM_S3__
-    uint32_t indexes[6] = {
+    uint32_t indexes[7] = {
         UI_COMP_SIDEBARCOMPONENT_SIDEBARHOMEBUTTON,
         UI_COMP_SIDEBARCOMPONENT_SIDEBARPRINTERSBUTTON,
         UI_COMP_SIDEBARCOMPONENT_SIDEBARHISTORYBUTTON,
+        UI_COMP_SIDEBARCOMPONENT_SIDEBARCAMERABUTTON,
         UI_COMP_SIDEBARCOMPONENT_SIDEBARTEMPBUTTON,
         UI_COMP_SIDEBARCOMPONENT_SIDEBARAMSVIEWBUTTON,
         UI_COMP_SIDEBARCOMPONENT_SIDEBARSETTINGSBUTTON};
-    const int n_buttons = 6;
+    const int n_buttons = 7;
 #else
     uint32_t indexes[4] = {
         UI_COMP_SIDEBARCOMPONENT_SIDEBARHOMEBUTTON,
@@ -286,6 +336,50 @@ lv_obj_t *ui_sidebarComponent_create(lv_obj_t *comp_parent)
         lv_obj_add_flag(cui_sidebarHistoryButton, LV_OBJ_FLAG_HIDDEN);
 #endif
 
+#ifdef __XTOUCH_PLATFORM_S3__
+    lv_obj_t *cui_sidebarCameraButton;
+    cui_sidebarCameraButton = lv_obj_create(cui_sidebarComponent);
+    lv_obj_set_width(cui_sidebarCameraButton, lv_pct(100));
+    lv_obj_set_flex_grow(cui_sidebarCameraButton, 1);
+    lv_obj_set_x(cui_sidebarCameraButton, 386);
+    lv_obj_set_y(cui_sidebarCameraButton, 178);
+    lv_obj_set_flex_flow(cui_sidebarCameraButton, LV_FLEX_FLOW_ROW);
+    lv_obj_set_flex_align(cui_sidebarCameraButton, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_clear_flag(cui_sidebarCameraButton, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN);
+    lv_obj_set_scrollbar_mode(cui_sidebarCameraButton, LV_SCROLLBAR_MODE_OFF);
+    lv_obj_set_style_radius(cui_sidebarCameraButton, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(cui_sidebarCameraButton, lv_color_hex(0x2aff00), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(cui_sidebarCameraButton, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(cui_sidebarCameraButton, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_left(cui_sidebarCameraButton, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(cui_sidebarCameraButton, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_top(cui_sidebarCameraButton, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_bottom(cui_sidebarCameraButton, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_row(cui_sidebarCameraButton, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_column(cui_sidebarCameraButton, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_color(cui_sidebarCameraButton, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_opa(cui_sidebarCameraButton, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_color(cui_sidebarCameraButton, lv_color_hex(0x2aff00), LV_PART_MAIN | LV_STATE_CHECKED);
+    lv_obj_set_style_text_opa(cui_sidebarCameraButton, 255, LV_PART_MAIN | LV_STATE_CHECKED);
+    lv_obj_set_style_bg_color(cui_sidebarCameraButton, lv_color_hex(0x008800), LV_PART_MAIN | LV_STATE_PRESSED);
+    lv_obj_set_style_bg_opa(cui_sidebarCameraButton, 255, LV_PART_MAIN | LV_STATE_PRESSED);
+
+    lv_obj_t *cui_sidebarCameraButtonIcon;
+    cui_sidebarCameraButtonIcon = lv_label_create(cui_sidebarCameraButton);
+    lv_obj_set_width(cui_sidebarCameraButtonIcon, LV_SIZE_CONTENT);
+    lv_obj_set_height(cui_sidebarCameraButtonIcon, LV_SIZE_CONTENT);
+    lv_label_set_text(cui_sidebarCameraButtonIcon, "y");
+    lv_obj_clear_flag(cui_sidebarCameraButtonIcon, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN);
+    lv_obj_set_scrollbar_mode(cui_sidebarCameraButtonIcon, LV_SCROLLBAR_MODE_OFF);
+#if defined(__XTOUCH_SCREEN_S3_050__)
+    lv_obj_set_style_text_font(cui_sidebarCameraButtonIcon, &ui_font_xlcd48, LV_PART_MAIN | LV_STATE_DEFAULT);
+#else
+    lv_obj_set_style_text_font(cui_sidebarCameraButtonIcon, &ui_font_xlcd, LV_PART_MAIN | LV_STATE_DEFAULT);
+#endif
+    if (!ui_sidebar_show_camera_button())
+        lv_obj_add_flag(cui_sidebarCameraButton, LV_OBJ_FLAG_HIDDEN);
+#endif
+
     lv_obj_t *cui_sidebarTempButton;
     cui_sidebarTempButton = lv_obj_create(cui_sidebarComponent);
     lv_obj_set_width(cui_sidebarTempButton, lv_pct(100));
@@ -416,6 +510,8 @@ lv_obj_t *ui_sidebarComponent_create(lv_obj_t *comp_parent)
     children[UI_COMP_SIDEBARCOMPONENT_SIDEBARPRINTERSBUTTON_SIDEBARPRINTERSBUTTONICON] = cui_sidebarPrintersButtonIcon;
     children[UI_COMP_SIDEBARCOMPONENT_SIDEBARHISTORYBUTTON] = cui_sidebarHistoryButton;
     children[UI_COMP_SIDEBARCOMPONENT_SIDEBARHISTORYBUTTON_SIDEBARHISTORYBUTTONICON] = cui_sidebarHistoryButtonIcon;
+    children[UI_COMP_SIDEBARCOMPONENT_SIDEBARCAMERABUTTON] = cui_sidebarCameraButton;
+    children[UI_COMP_SIDEBARCOMPONENT_SIDEBARCAMERABUTTON_SIDEBARCAMERABUTTONICON] = cui_sidebarCameraButtonIcon;
 #endif
     children[UI_COMP_SIDEBARCOMPONENT_SIDEBARTEMPBUTTON] = cui_sidebarTempButton;
     children[UI_COMP_SIDEBARCOMPONENT_SIDEBARTEMPBUTTON_SIDEBARTEMPBUTTONICON] = cui_sidebarTempButtonIcon;
@@ -429,6 +525,7 @@ lv_obj_t *ui_sidebarComponent_create(lv_obj_t *comp_parent)
 #ifdef __XTOUCH_PLATFORM_S3__
     lv_obj_add_event_cb(cui_sidebarPrintersButton, ui_event_comp_sidebarComponent_sidebarPrintersButton, LV_EVENT_ALL, children);
     lv_obj_add_event_cb(cui_sidebarHistoryButton, ui_event_comp_sidebarComponent_sidebarHistoryButton, LV_EVENT_ALL, children);
+    lv_obj_add_event_cb(cui_sidebarCameraButton, ui_event_comp_sidebarComponent_sidebarCameraButton, LV_EVENT_ALL, children);
 #endif
     lv_obj_add_event_cb(cui_sidebarTempButton, ui_event_comp_sidebarComponent_sidebarTempButton, LV_EVENT_ALL, children);
     lv_obj_add_event_cb(cui_sidebarAmsViewButton, ui_event_comp_sidebarComponent_sidebarAmsViewButton, LV_EVENT_ALL, children);

@@ -56,6 +56,7 @@ extern "C"
   void ui_printersScreen_screen_init(void);
   void ui_historyScreen_screen_init(void);
   void ui_historyReprintScreen_screen_init(void);
+  void ui_cameraScreen_screen_init(void);
 #endif
 
   lv_obj_t *introScreen;
@@ -91,6 +92,7 @@ extern "C"
   lv_obj_t *ui_settings_auxFanSwitch;
   lv_obj_t *ui_settings_chamberFanSwitch;
   lv_obj_t *ui_settings_chamberLedWakeSwitch;
+  lv_obj_t *ui_settings_chamberWakeDuringPrintSwitch;
   // lv_obj_t *ui_settings_chamberSensorSwitch;
   lv_obj_t *ui_settings_otaSwitch;
   
@@ -108,6 +110,7 @@ extern "C"
   lv_obj_t *ui_optional_multiPrinterMonitorSwitch;
   lv_obj_t *ui_optional_historySwitch;
   lv_obj_t *ui_optional_hideThumbnailsSwitch;
+  lv_obj_t *ui_optional_p1sCameraStreamSwitch;
   lv_obj_t *ui_optional_Idle_ledSwitch;
 
   lv_obj_t *ui_characterScreen;
@@ -144,6 +147,9 @@ extern "C"
   /* ui_historyListContainer は ui_comp_historycomponent.c で定義 */
   extern lv_obj_t *ui_historyListContainer;
   lv_obj_t *ui_historyReprintScreen;
+  lv_obj_t *ui_cameraScreen;
+  lv_obj_t *ui_cameraComponent;
+  lv_obj_t *ui_cameraPreviewImage;
   /** Home 画面のサムネイル img（slot 0）。グローバル購読で IMAGE 受信時に再描画するため。 */
   extern lv_obj_t *ui_homeThumbImg;
 #endif

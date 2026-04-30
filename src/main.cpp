@@ -41,6 +41,8 @@
 #include "xtouch/history.h"
 #include "xtouch/lv_fs_arduino_sd.h"
 #include "xtouch/lcd_json.h"
+#include "xtouch/camera_stream.h"
+#include <algorithm>
 #endif
 #include "xtouch/sensors/chamber.h"
 #include "xtouch/events.h"
@@ -255,10 +257,49 @@ static uint32_t s_last_heap_log_ms = 0;
 #define HEAP_LOG_INTERVAL_MS 5000
 #endif
 
+#if defined(__XTOUCH_PLATFORM_S3__) && !defined(__XTOUCH_SCREEN_S3_3248__)
+static void xtouch_camera_render_latest_frame_if_any()
+{
+  if (xTouchConfig.currentScreenIndex != 17)
+    return;
+  const uint8_t *jpg = nullptr;
+  size_t jpg_len = 0;
+  if (!xtouch_camera_stream::consume_latest_frame(&jpg, &jpg_len))
+    return;
+
+  const int sidebar_w = (screenWidth >= 800) ? (screenWidth * 10 / 100) : (screenWidth * 13 / 100);
+  const int preview_x = sidebar_w;
+  int preview_w = screenWidth - sidebar_w;
+  int preview_h = (screenHeight * 8) / 10;
+  int preview_y = (screenHeight - preview_h) / 2;
+  if (preview_h <= 0 || preview_w <= 0)
+    return;
+
+  const float src_w = 1280.0f;
+  const float src_h = 720.0f;
+  float scale_w = (float)preview_w / src_w;
+  float scale = scale_w;
+  if (scale <= 0.01f)
+    scale = 0.25f;
+
+  tft.drawJpg(jpg, jpg_len, preview_x, preview_y, preview_w, preview_h, 0, 0, scale);
+}
+#endif
+
 void loop()
 {
   lv_timer_handler();
   lv_task_handler();
+#if defined(__XTOUCH_PLATFORM_S3__)
+  if (xTouchConfig.currentScreenIndex == 17 && xTouchConfig.xTouchP1sCameraStreamEnabled)
+    xtouch_camera_stream::start_if_needed();
+  else
+    xtouch_camera_stream::stop_if_needed();
+  xtouch_camera_stream::loop_once();
+#if !defined(__XTOUCH_SCREEN_S3_3248__)
+  xtouch_camera_render_latest_frame_if_any();
+#endif
+#endif
   /* Video画面(17)では負荷軽減のため MQTT ループを止める */
   if ((xTouchConfig.xTouchLanOnlyMode || cloud.loggedIn) && xTouchConfig.currentScreenIndex != 17)
     xtouch_cloud_mqtt_loop();

@@ -11,6 +11,13 @@ void onSidebarHome(lv_event_t *e) { loadScreen(0); }
 #ifdef __XTOUCH_PLATFORM_S3__
 void onSidebarPrinters(lv_event_t *e) { if (!xTouchConfig.xTouchLanOnlyMode && xTouchConfig.xTouchMultiPrinterMonitorEnabled) loadScreen(6); }
 void onSidebarHistory(lv_event_t *e) { (void)e; if (!xTouchConfig.xTouchLanOnlyMode && xTouchConfig.xTouchHistoryEnabled) loadScreen(15); }
+void onSidebarCamera(lv_event_t *e)
+{
+    (void)e;
+    if (!xTouchConfig.xTouchP1sCameraStreamEnabled)
+        return;
+    loadScreen(17);
+}
 #endif
 void onSidebarTemp(lv_event_t *e) { loadScreen(2); }
 void onSidebarControl(lv_event_t *e) { loadScreen(2); }
@@ -369,6 +376,13 @@ void onOptionalHideAllThumbnails(lv_event_t *e)
 {
     lv_obj_t *sw = lv_event_get_target(e);
     xTouchConfig.xTouchHideAllThumbnails = lv_obj_has_state(sw, LV_STATE_CHECKED);
+    ui_settings_mark_dirty();
+}
+
+void onOptionalP1sCameraStream(lv_event_t *e)
+{
+    lv_obj_t *sw = lv_event_get_target(e);
+    xTouchConfig.xTouchP1sCameraStreamEnabled = lv_obj_has_state(sw, LV_STATE_CHECKED);
     ui_settings_mark_dirty();
 }
 #endif

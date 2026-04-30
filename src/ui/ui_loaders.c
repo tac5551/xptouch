@@ -106,6 +106,8 @@ void loadScreen(int screen)
     ui_printersListContainer = NULL;
     if (screen != 15)
         ui_historyListContainer = NULL;
+    /* 画面作り直し前に、古いサイドバー参照を無効化（削除済みオブジェクト参照を防ぐ） */
+    ui_sidebarComponent = NULL;
 
     if (screen != 6 && screen != 0)
         ui_msg_send(XTOUCH_PRINTERS_THUMB_TIMER_STOP, 0, 0);
@@ -222,12 +224,16 @@ void loadScreen(int screen)
         ui_historyReprintScreen_screen_init();
         lv_disp_load_scr(ui_historyReprintScreen);
         break;
+    case 17:
+        ui_cameraScreen_screen_init();
+        lv_disp_load_scr(ui_cameraScreen);
+        break;
 #endif
     }
     fillScreenData(screen);
 
     // サイドバーのハイライト
-    // 5inch: 0=Home,1=Printers,2=Temp,3=AMS,4=Settings (History はオプション機能)
+    // 5inch: 0=Home,1=Printers,2=History,3=Camera,4=Temp,5=AMS,6=Settings
     // 2.8inch: 0=Home,1=Temp,2=AMS,3=Settings
     int sidebar_index = -1;
 #ifdef __XTOUCH_PLATFORM_S3__
@@ -239,29 +245,27 @@ void loadScreen(int screen)
     case 6:
         sidebar_index = 1; // Printers
         break;
-    case 1: case 2: case 10: case 11: case 12:
-        sidebar_index = 2; // Temps / Control 系
-        break;
-    case 7: case 13: case 14:
-        sidebar_index = 3; // AMS 系
-        break;
-    case 4:
-        sidebar_index = 4; // Settings
-        break;
     case 15:
-        // History は Printers/Temps の間に位置づける（アイコン自体の表示/非表示は別途制御）
         sidebar_index = 2;
         break;
     case 16:
-        // History リプリント設定画面も History と同じグループ扱い
         sidebar_index = 2;
+        break;
+    case 17:
+        sidebar_index = 3; // Camera
+        break;
+    case 1: case 2: case 10: case 11: case 12:
+        sidebar_index = 4; // Temps / Control 系
+        break;
+    case 7: case 13: case 14:
+        sidebar_index = 5; // AMS 系
+        break;
+    case 4:
+        sidebar_index = 6; // Settings
         break;
     default:
         break;
     }
-    /* 15=History / 16=Reprint は History ボタン(index 2)のまま。++ すると Temp(index 3)が光る */
-    if (sidebar_index >= 1 && screen != 6 && screen != 15 && screen != 16)
-        sidebar_index++;
 #else
     switch (screen)
     {
@@ -294,6 +298,7 @@ static void on_settings_save_sidebar(const void *payload, void *user_data)
     (void)user_data;
     ui_sidebarComponent_updatePrintersVisibility();
     ui_sidebarComponent_updateHistoryVisibility();
+    ui_sidebarComponent_updateCameraVisibility();
 }
 
 static void on_reprint_done_goto_home(lv_msg_t *m, void *user_data)

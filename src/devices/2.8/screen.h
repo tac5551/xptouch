@@ -55,6 +55,11 @@ void xtouch_screen_wakeUp()
 
 void xtouch_screen_onScreenTimeout(lv_timer_t *timer)
 {
+    if (xTouchConfig.currentScreenIndex == 17)
+    {
+        return;
+    }
+
     if (bambuStatus.print_status == XTOUCH_PRINT_STATUS_RUNNING && xTouchConfig.xTouchWakeDuringPrint == true)
     {
         return;
@@ -74,6 +79,10 @@ void xtouch_screen_onLEDOff(lv_timer_t *timer)
 {
 
     if (bambuStatus.print_status == XTOUCH_PRINT_STATUS_RUNNING && bambuStatus.camera_timelapse == true)
+    {
+        return;
+    }
+    if (bambuStatus.print_status == XTOUCH_PRINT_STATUS_RUNNING && xTouchConfig.xTouchWakeDuringPrint == true)
     {
         return;
     }
