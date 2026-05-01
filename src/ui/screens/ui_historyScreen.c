@@ -5,6 +5,7 @@
 #include "../ui_helpers.h"
 
 #ifdef __XTOUCH_PLATFORM_S3__
+static int s_history_visible_count = XTOUCH_HISTORY_UI_ROW_SLOTS;
 
 static const char *history_status_str(int s)
 {
@@ -118,16 +119,32 @@ static void update_one_row(int idx, lv_obj_t *row)
 
 void ui_history_on_list_refresh(lv_msg_t *m, void *user_data)
 {
-    (void)m;
     (void)user_data;
     if (ui_historyListContainer == NULL || xTouchConfig.currentScreenIndex != 15)
         return;
+    if (m)
+    {
+        const void *payload = lv_msg_get_payload(m);
+        if (payload && (uintptr_t)payload >= 256u)
+        {
+            const struct XTOUCH_MESSAGE_DATA *d = (const struct XTOUCH_MESSAGE_DATA *)payload;
+            int requested = (int)d->data;
+            if (requested < 0)
+                requested = 0;
+            if (requested > XTOUCH_HISTORY_UI_ROW_SLOTS)
+                requested = XTOUCH_HISTORY_UI_ROW_SLOTS;
+            s_history_visible_count = requested;
+        }
+    }
+    int visible_count = xtouch_history_count;
+    if (s_history_visible_count >= 0 && s_history_visible_count < visible_count)
+        visible_count = s_history_visible_count;
     for (int i = 0; i < XTOUCH_HISTORY_UI_ROW_SLOTS; i++)
     {
         lv_obj_t *row = lv_obj_get_child(ui_historyListContainer, i);
         if (row == NULL)
             continue;
-        if (i < xtouch_history_count)
+        if (i < visible_count)
         {
             lv_obj_clear_flag(row, LV_OBJ_FLAG_HIDDEN);
             update_one_row(i, row);
@@ -146,6 +163,7 @@ static void ui_event_history_on_list_refresh(lv_event_t *e)
 
 void ui_historyScreen_screen_init(void)
 {
+    s_history_visible_count = XTOUCH_HISTORY_UI_ROW_SLOTS;
     ui_historyScreen = lv_obj_create(NULL);
     lv_obj_clear_flag(ui_historyScreen, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM);
     lv_obj_set_scrollbar_mode(ui_historyScreen, LV_SCROLLBAR_MODE_OFF);
@@ -166,7 +184,8 @@ void ui_historyScreen_screen_init(void)
     lv_msg_subsribe_obj(XTOUCH_HISTORY_LIST_REFRESH, ui_historyListContainer, NULL);
     lv_obj_add_event_cb(ui_historyListContainer, ui_event_history_on_list_refresh, LV_EVENT_MSG_RECEIVED, NULL);
     {
-        ui_msg_send(XTOUCH_HISTORY_LIST_REFRESH, 0, 0);
+        /* 再入時はキャッシュ件数を即描画。初回（count=0）は空表示のまま fetch を待つ。 */
+        ui_msg_send(XTOUCH_HISTORY_LIST_REFRESH, (unsigned long long)xtouch_history_count, 0);
     }
 }
 

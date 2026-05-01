@@ -26,6 +26,10 @@ static uint32_t s_connect_backoff_ms = 1000;
 static uint32_t s_ok_frames = 0;
 static std::vector<uint8_t> s_frame_buf;
 static bool s_frame_ready = false;
+static uint8_t s_header_buf[16];
+static size_t s_header_off = 0;
+static uint32_t s_payload_len = 0;
+static size_t s_payload_off = 0;
 static const char *CAMERA_WIFI_JSON_PATH = "/wifi.json";
 
 inline void set_endpoint(const char *host, const char *access_code)
@@ -111,28 +115,12 @@ inline const char *get_access_code()
     return xTouchConfig.xTouchCameraAccessCode[0] ? xTouchConfig.xTouchCameraAccessCode : xTouchConfig.xTouchAccessCode;
 }
 
-inline bool read_exact(uint8_t *dst, size_t len, uint32_t timeout_ms)
+inline void reset_frame_parser()
 {
-    size_t off = 0;
-    uint32_t start = millis();
-    while (off < len)
-    {
-        if (!s_client.connected())
-            return false;
-        int n = s_client.read(dst + off, len - off);
-        if (n > 0)
-        {
-            off += (size_t)n;
-            start = millis();
-        }
-        else
-        {
-            if (millis() - start > timeout_ms)
-                return false;
-            delay(1);
-        }
-    }
-    return true;
+    s_header_off = 0;
+    s_payload_len = 0;
+    s_payload_off = 0;
+    s_frame_buf.clear();
 }
 
 inline bool open_stream()
@@ -163,6 +151,7 @@ inline bool open_stream()
     }
     s_connected = true;
     s_connect_backoff_ms = 1000;
+    reset_frame_parser();
     ConsoleInfo.printf("[xPTouch][I][CAM] stream connected host=%s:%u\n", host, CAMERA_PORT);
     return true;
 }
@@ -172,32 +161,67 @@ inline void close_stream()
     if (s_client.connected())
         s_client.stop();
     s_connected = false;
+    reset_frame_parser();
 }
 
-inline bool drain_one_frame()
+inline bool pump_stream_nonblocking()
 {
-    uint8_t header[16];
-    if (!read_exact(header, sizeof(header), 3000))
+    if (!s_client.connected())
         return false;
 
-    uint32_t payload = (uint32_t)header[0] | ((uint32_t)header[1] << 8) | ((uint32_t)header[2] << 16) | ((uint32_t)header[3] << 24);
-    if (payload == 0 || payload > (512u * 1024u))
-        return false;
-
-    s_frame_buf.resize((size_t)payload);
-    if (!read_exact(s_frame_buf.data(), (size_t)payload, 5000))
-        return false;
-
-    if (payload >= 4 &&
-        s_frame_buf[0] == 0xFF && s_frame_buf[1] == 0xD8 &&
-        s_frame_buf[payload - 2] == 0xFF && s_frame_buf[payload - 1] == 0xD9)
+    /* loop() 1回あたりの受信処理を制限して UI 応答性を優先 */
+    int steps = 0;
+    while (s_client.available() > 0 && steps < 8)
     {
-        s_frame_ready = true;
+        if (s_header_off < sizeof(s_header_buf))
+        {
+            int n = s_client.read(s_header_buf + s_header_off, sizeof(s_header_buf) - s_header_off);
+            if (n <= 0)
+                break;
+            s_header_off += (size_t)n;
+            steps++;
+            if (s_header_off < sizeof(s_header_buf))
+                continue;
+
+            s_payload_len = (uint32_t)s_header_buf[0] | ((uint32_t)s_header_buf[1] << 8) |
+                            ((uint32_t)s_header_buf[2] << 16) | ((uint32_t)s_header_buf[3] << 24);
+            if (s_payload_len == 0 || s_payload_len > (512u * 1024u))
+                return false;
+
+            s_frame_buf.resize((size_t)s_payload_len);
+            s_payload_off = 0;
+        }
+
+        if (s_payload_len > 0 && s_payload_off < (size_t)s_payload_len)
+        {
+            size_t remaining = (size_t)s_payload_len - s_payload_off;
+            size_t chunk = remaining > 4096 ? 4096 : remaining;
+            int n = s_client.read(s_frame_buf.data() + s_payload_off, chunk);
+            if (n <= 0)
+                break;
+            s_payload_off += (size_t)n;
+            steps++;
+        }
+
+        if (s_payload_len > 0 && s_payload_off >= (size_t)s_payload_len)
+        {
+            if (s_payload_len >= 4 &&
+                s_frame_buf[0] == 0xFF && s_frame_buf[1] == 0xD8 &&
+                s_frame_buf[s_payload_len - 2] == 0xFF && s_frame_buf[s_payload_len - 1] == 0xD9)
+            {
+                s_frame_ready = true;
+            }
+
+            s_ok_frames++;
+            if ((s_ok_frames % 60u) == 1u)
+                ConsoleVerbose.printf("[xPTouch][V][CAM] frame=%lu bytes=%lu\n", (unsigned long)s_ok_frames, (unsigned long)s_payload_len);
+
+            s_header_off = 0;
+            s_payload_len = 0;
+            s_payload_off = 0;
+        }
     }
 
-    s_ok_frames++;
-    if ((s_ok_frames % 60u) == 1u)
-        ConsoleVerbose.printf("[xPTouch][V][CAM] frame=%lu bytes=%lu\n", (unsigned long)s_ok_frames, (unsigned long)payload);
     return true;
 }
 
@@ -227,7 +251,6 @@ inline void stop_if_needed()
     s_enabled = false;
     close_stream();
     s_frame_ready = false;
-    s_frame_buf.clear();
     ConsoleInfo.println("[xPTouch][I][CAM] stream stopped");
 }
 
@@ -252,7 +275,7 @@ inline void loop_once()
         }
         return;
     }
-    if (!drain_one_frame())
+    if (!pump_stream_nonblocking())
     {
         close_stream();
     }

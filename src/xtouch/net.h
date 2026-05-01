@@ -246,10 +246,14 @@ inline bool getThumbnailUrlAndPathForSlot(int slot, char *url_out, size_t url_si
 #else
     static char resolved_url[1024];
 #endif
+    /* Home(0) では同期 Cloud HTTP 解決を行わない（UI 操作優先）。
+     * 詳細解決は Printers(6) でのみ許可する。 */
+    const bool allow_cloud_resolve = (xTouchConfig.currentScreenIndex == 6);
+
     if (slot == 0)
     {
         url = bambuStatus.image_url;
-        if ((!url || !url[0]) && cloud.loggedIn && bambuStatus.task_id[0] && strcmp(bambuStatus.task_id, "0") != 0)
+        if ((!url || !url[0]) && allow_cloud_resolve && cloud.loggedIn && bambuStatus.task_id[0] && strcmp(bambuStatus.task_id, "0") != 0)
         {
             /* 起動直後などで task_id が古い場合は /my/tasks?limit=1 と突き合わせ、違っていれば諦めてロゴにフォールバックする。 */
             if (!cloud.isCurrentTaskForDevice(bambuStatus.task_id))
@@ -278,7 +282,7 @@ inline bool getThumbnailUrlAndPathForSlot(int slot, char *url_out, size_t url_si
         if (idx < 0 || idx >= xtouch_other_printer_count || !otherPrinters[idx].valid)
             return false;
         url = otherPrinters[idx].image_url;
-        if ((!url || !url[0]) && cloud.loggedIn && otherPrinters[idx].task_id[0] && strcmp(otherPrinters[idx].task_id, "0") != 0)
+        if ((!url || !url[0]) && allow_cloud_resolve && cloud.loggedIn && otherPrinters[idx].task_id[0] && strcmp(otherPrinters[idx].task_id, "0") != 0)
         {
             if (!cloud.isCurrentTaskForDevice(otherPrinters[idx].task_id))
             {

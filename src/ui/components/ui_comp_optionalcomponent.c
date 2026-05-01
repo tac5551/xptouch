@@ -397,7 +397,7 @@ lv_obj_t *ui_optionalComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_width(cui_optional_p1sCameraStreamLabel, LV_SIZE_CONTENT);
     lv_obj_set_height(cui_optional_p1sCameraStreamLabel, LV_SIZE_CONTENT);
     lv_obj_set_style_text_font(cui_optional_p1sCameraStreamLabel, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_label_set_text(cui_optional_p1sCameraStreamLabel, "P1S Camera Stream");
+    lv_label_set_text(cui_optional_p1sCameraStreamLabel, "A1/P1 Camera Stream");
     lv_obj_set_scrollbar_mode(cui_optional_p1sCameraStreamLabel, LV_SCROLLBAR_MODE_OFF);
 
     ui_optional_p1sCameraStreamSwitch = lv_switch_create(cui_optional_p1sCameraStream);
@@ -411,7 +411,7 @@ lv_obj_t *ui_optionalComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_bg_opa(ui_optional_p1sCameraStreamSwitch, 255, LV_PART_KNOB | LV_STATE_CHECKED);
     if (xTouchConfig.xTouchP1sCameraStreamEnabled)
         lv_obj_add_state(ui_optional_p1sCameraStreamSwitch, LV_STATE_CHECKED);
-    if (!xtouch_bblp_is_p1s())
+    if (!xtouch_bblp_is_a1p1Series())
         lv_obj_add_flag(cui_optional_p1sCameraStream, LV_OBJ_FLAG_HIDDEN);
     //---P1S Camera Stream End------------------------------
 #endif

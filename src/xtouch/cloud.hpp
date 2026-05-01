@@ -126,6 +126,98 @@ static int cloud_parse_json_int_key_top_level(const char *json, size_t len, cons
   return 0;
 }
 
+/** オブジェクト直下(depth=1)の "key":<scalar> を文字列として取得（"..." or 数値）。 */
+static void cloud_parse_json_scalar_key_top_level_as_string(const char *json, size_t len, const char *key, char *out, size_t out_size)
+{
+  if (!json || !key || !key[0] || !out || out_size == 0 || len == 0)
+    return;
+  out[0] = '\0';
+  char needle[80];
+  snprintf(needle, sizeof(needle), "\"%s\"", key);
+  const size_t needle_len = strlen(needle);
+  int obj_depth = 0;
+  bool in_string = false;
+  bool esc = false;
+  for (size_t i = 0; i < len; i++)
+  {
+    char c = json[i];
+    if (in_string)
+    {
+      if (esc)
+      {
+        esc = false;
+        continue;
+      }
+      if (c == '\\')
+      {
+        esc = true;
+        continue;
+      }
+      if (c == '"')
+        in_string = false;
+      continue;
+    }
+    if (obj_depth == 1 && c == '"')
+    {
+      if (i + needle_len <= len && memcmp(json + i, needle, needle_len) == 0)
+      {
+        size_t p = i + needle_len;
+        while (p < len && (json[p] == ' ' || json[p] == '\t' || json[p] == '\n' || json[p] == '\r'))
+          p++;
+        if (p >= len || json[p] != ':')
+          continue;
+        p++;
+        while (p < len && (json[p] == ' ' || json[p] == '\t' || json[p] == '\n' || json[p] == '\r'))
+          p++;
+        if (p >= len)
+          return;
+        if (json[p] == '"')
+        {
+          p++;
+          size_t s = p;
+          while (p < len && json[p] != '"')
+            p++;
+          size_t n = p - s;
+          if (n >= out_size)
+            n = out_size - 1;
+          memcpy(out, json + s, n);
+          out[n] = '\0';
+          return;
+        }
+        if (json[p] == '-')
+          p++;
+        size_t s = p;
+        while (p < len && json[p] >= '0' && json[p] <= '9')
+          p++;
+        size_t n = p - s;
+        if (n == 0)
+          return;
+        if (n >= out_size)
+          n = out_size - 1;
+        memcpy(out, json + s, n);
+        out[n] = '\0';
+        return;
+      }
+    }
+    if (c == '"')
+    {
+      in_string = true;
+      continue;
+    }
+    if (c == '{')
+    {
+      obj_depth++;
+      continue;
+    }
+    if (c == '}')
+    {
+      if (obj_depth > 0)
+        obj_depth--;
+      continue;
+    }
+  }
+}
+
 /** JSON 文字列から key の直後の文字列値 "key":"value" を out にコピー。ヒープを使わない。 */
 static void cloud_parse_json_str_key(const char *json, size_t len, const char *key, char *out, size_t out_size)
 {
@@ -150,6 +242,52 @@ static void cloud_parse_json_str_key(const char *json, size_t len, const char *k
   while ((size_t)(p - json) < len && *p != '"')
     p++;
   size_t n = (size_t)(p - start);
+  if (n >= out_size)
+    n = out_size - 1;
+  memcpy(out, start, n);
+  out[n] = '\0';
+}
+
+/** key の値を文字列として取得（"key":"..." と "key":123... の両方対応）。 */
+static void cloud_parse_json_scalar_key_as_string(const char *json, size_t len, const char *key, char *out, size_t out_size)
+{
+  if (!out || out_size == 0)
+    return;
+  out[0] = '\0';
+  char needle[80];
+  snprintf(needle, sizeof(needle), "\"%s\"", key);
+  const char *p = strstr(json, needle);
+  if (!p || (size_t)(p - json) >= len)
+    return;
+  p = (const char *)memchr(p, ':', len - (size_t)(p - json));
+  if (!p || (size_t)(p - json) >= len)
+    return;
+  p++;
+  while ((size_t)(p - json) < len && (*p == ' ' || *p == '\t' || *p == '\n' || *p == '\r'))
+    p++;
+  if ((size_t)(p - json) >= len)
+    return;
+  if (*p == '"')
+  {
+    p++;
+    const char *start = p;
+    while ((size_t)(p - json) < len && *p != '"')
+      p++;
+    size_t n = (size_t)(p - start);
+    if (n >= out_size)
+      n = out_size - 1;
+    memcpy(out, start, n);
+    out[n] = '\0';
+    return;
+  }
+  if (*p == '-')
+    p++;
+  const char *start = p;
+  while ((size_t)(p - json) < len && *p >= '0' && *p <= '9')
+    p++;
+  size_t n = (size_t)(p - start);
+  if (n == 0)
+    return;
   if (n >= out_size)
     n = out_size - 1;
   memcpy(out, start, n);
@@ -1183,9 +1321,13 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
   }
 
 #ifdef __XTOUCH_PLATFORM_S3__
-  /** GET /v1/user-service/my/tasks（deviceId なし）。フィルタ後 want 件に達するまで after で追取得。生 hits は累計 50 件までで打ち切り（after 引数ありは 1 回のみ・上限なし）。 */
-  bool getMyTasks(int limit, const char *after = nullptr)
+  /** GET /v1/user-service/my/tasks（deviceId なし）。
+   * History は 1 回取得（最大20件）に限定し、後続の after ページングは行わない。 */
+  bool getMyTasks(int limit, const char *after = nullptr, char *out_next_after = nullptr, size_t out_next_after_size = 0)
   {
+    if (out_next_after && out_next_after_size > 0)
+      out_next_after[0] = '\0';
+
     HttpLockGuard _g(this);
     if (!loggedIn)
       return false;
@@ -1210,206 +1352,256 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
       }
     }
 
+    (void)after; /* after は使わない（1回取得固定） */
     String host = _region == "China" ? "api.bambulab.cn" : "api.bambulab.com";
-    const bool append_one_shot = (after && after[0] != '\0');
-    int req_limit;
-    int want_visible;
-    if (append_one_shot)
+    int req_limit = (limit <= 0 || limit > XTOUCH_HISTORY_TASKS_MAX) ? XTOUCH_HISTORY_TASKS_MAX : limit;
+    uint32_t free_heap = ESP.getFreeHeap();
+    const int want_visible = req_limit;
+    ConsoleVerbose.printf("[xPTouch][V][HIST] req_limit=%d free_heap=%u\n", req_limit, (unsigned)free_heap);
+
+    int n = 0;
+    String path = String("/v1/user-service/my/tasks?limit=") + String(req_limit);
+    String url = String("https://") + host + path;
+
+    WiFiClientSecure &c = sslClient();
+    c.stop();
+    c.setTimeout(12000);
+    c.setInsecure();
+    yield();
+    HTTPClient http;
+    http.begin(c, url);
+    http.setReuse(false);
+    http.useHTTP10(true);
+    char auth_buf[320];
+    snprintf(auth_buf, sizeof(auth_buf), "Bearer %s", _auth_token.c_str());
+    http.addHeader("Authorization", auth_buf);
+    http.setTimeout(12000);
+    http.addHeader("Connection", "close");
+    int code = http.GET();
+    if (code != 200)
     {
-      req_limit = (limit <= 0 || limit > XTOUCH_HISTORY_TASKS_MAX) ? XTOUCH_HISTORY_TASKS_MAX : limit;
-      want_visible = XTOUCH_HISTORY_TASKS_MAX;
-    }
-    else
-    {
-      want_visible = (limit <= 0 || limit > XTOUCH_HISTORY_TASKS_MAX) ? XTOUCH_HISTORY_TASKS_MAX : limit;
-      req_limit = 10;
-    }
-
-    char cursor_after[XTOUCH_HISTORY_TASK_ID_LEN];
-    cursor_after[0] = '\0';
-    if (append_one_shot)
-    {
-      strncpy(cursor_after, after, sizeof(cursor_after) - 1);
-      cursor_after[sizeof(cursor_after) - 1] = '\0';
-    }
-
-    int n = append_one_shot ? xtouch_history_count : 0;
-    if (append_one_shot && n >= XTOUCH_HISTORY_TASKS_MAX)
-      return true;
-
-    const int k_history_raw_total_max = 50;
-    int raw_total = 0;
-    const int max_pages = 10;
-    for (int page_ix = 0; page_ix < max_pages; page_ix++)
-    {
-      if (!append_one_shot && raw_total >= k_history_raw_total_max)
-        break;
-      if (!append_one_shot && n >= want_visible)
-        break;
-      if (append_one_shot && n >= XTOUCH_HISTORY_TASKS_MAX)
-        break;
-
-      String path = String("/v1/user-service/my/tasks?limit=") + String(req_limit);
-      if (cursor_after[0] != '\0')
-        path += String("&after=") + String(cursor_after);
-      String url = String("https://") + host + path;
-
-      WiFiClientSecure &c = sslClient();
-      c.stop();
-      c.setTimeout(12000);
-      c.setInsecure();
-      yield();
-      HTTPClient http;
-      http.begin(c, url);
-      http.setReuse(false);
-      http.useHTTP10(true);
-      char auth_buf[320];
-      snprintf(auth_buf, sizeof(auth_buf), "Bearer %s", _auth_token.c_str());
-      http.addHeader("Authorization", auth_buf);
-      http.setTimeout(12000);
-      http.addHeader("Connection", "close");
-      int code = http.GET();
-      String response = (code == 200) ? http.getString() : "";
       http.end();
       c.stop();
-      if (code != 200 || response.length() == 0)
-      {
-        if (!append_one_shot && page_ix == 0)
-        {
-          xtouch_history_count = 0;
-          return false;
-        }
-        break;
-      }
+      xtouch_history_count = 0;
+      return false;
+    }
 
-      const char *raw = response.c_str();
-      const size_t raw_len = response.length();
-      const char *hits_key = "\"hits\"";
-      const char *p = strstr(raw, hits_key);
-      if (!p || (size_t)(p - raw) >= raw_len)
-      {
-        if (!append_one_shot && page_ix == 0)
-        {
-          xtouch_history_count = 0;
-          return false;
-        }
-        break;
-      }
-      p = (const char *)memchr(p, '[', raw_len - (size_t)(p - raw));
-      if (!p)
-        p = raw + raw_len;
-      else
-        p++;
+    WiFiClient *stream = http.getStreamPtr();
+    const char *hits_key = "\"hits\"";
+    const int hits_key_len = 6;
+    int hits_key_match = 0;
+    bool hits_found = false;
+    bool hits_array_started = false;
+    bool hits_array_done = false;
+    bool arr_in_string = false;
+    bool arr_esc = false;
+    bool obj_capturing = false;
+    bool obj_overflow = false;
+    int obj_depth = 0;
+    int raw_hits = 0;
+    char first_raw_id[XTOUCH_HISTORY_TASK_ID_LEN];
+    first_raw_id[0] = '\0';
+    char last_raw_id[XTOUCH_HISTORY_TASK_ID_LEN];
+    last_raw_id[0] = '\0';
 
-      int raw_hits = 0;
-      char last_raw_id[XTOUCH_HISTORY_TASK_ID_LEN];
-      last_raw_id[0] = '\0';
+    size_t obj_cap = 16 * 1024;
+#if defined(CONFIG_SPIRAM)
+    char *obj_buf = (char *)ps_malloc(obj_cap);
+#else
+    char *obj_buf = (char *)malloc(obj_cap);
+#endif
+    if (!obj_buf)
+      obj_buf = (char *)malloc(obj_cap);
+    if (!obj_buf)
+    {
+      http.end();
+      c.stop();
+      xtouch_history_count = 0;
+      return false;
+    }
+    size_t obj_len = 0;
 
-      /* hits 配列は末尾まで走査し、最終要素 id を after 用に残す（フィルタで先に want 件満たしても同ページ内の残りを読む） */
-      while ((size_t)(p - raw) < raw_len)
+    uint32_t last_rx_ms = millis();
+    while (!hits_array_done)
+    {
+      int avail = stream ? stream->available() : 0;
+      if (avail <= 0)
       {
-        while ((size_t)(p - raw) < raw_len && (*p == ' ' || *p == '\t' || *p == '\n' || *p == '\r' || *p == ','))
-          p++;
-        if ((size_t)(p - raw) >= raw_len || *p == ']')
+        if (!http.connected())
           break;
-        if (*p != '{')
+        if (millis() - last_rx_ms > 12000u)
+          break;
+        delay(1);
+        continue;
+      }
+
+      int rv = stream->read();
+      if (rv < 0)
+        continue;
+      char ch = (char)rv;
+      last_rx_ms = millis();
+
+      if (!hits_found)
+      {
+        if (ch == hits_key[hits_key_match])
         {
-          p++;
-          continue;
-        }
-        const char *obj_start = p;
-        int depth = 0;
-        const char *obj_end = nullptr;
-        for (const char *q = p; (size_t)(q - raw) < raw_len; q++)
-        {
-          if (*q == '{')
-            depth++;
-          else if (*q == '}')
+          hits_key_match++;
+          if (hits_key_match >= hits_key_len)
           {
-            depth--;
-            if (depth == 0)
-            {
-              obj_end = q;
-              break;
-            }
+            hits_found = true;
+            hits_key_match = 0;
           }
         }
-        if (!obj_end)
-          break;
-        size_t obj_len = (size_t)(obj_end - obj_start + 1);
-
-        raw_hits++;
-        long id_val = cloud_parse_json_long_key(obj_start, obj_len, "id");
-        snprintf(last_raw_id, sizeof(last_raw_id), "%ld", id_val);
-
-        const bool want_copy =
-            append_one_shot ? (n < XTOUCH_HISTORY_TASKS_MAX) : (n < want_visible && n < XTOUCH_HISTORY_TASKS_MAX);
-
-        char device_model[64];
-        device_model[0] = '\0';
-        cloud_parse_json_str_key(obj_start, obj_len, "deviceModel", device_model, sizeof(device_model));
-
-        bool filtered_ok;
-        if (dev_product_filter[0] != '\0')
-          filtered_ok = cloud_history_device_models_compatible(dev_product_filter, device_model);
         else
         {
-          /* printer.json に dev_product_name が無い場合、全件表示すると他機種履歴が混ざるため hits の deviceId で自機のみに限定 */
-          char task_dev_id[32];
-          task_dev_id[0] = '\0';
-          cloud_parse_json_str_key(obj_start, obj_len, "deviceId", task_dev_id, sizeof(task_dev_id));
-          filtered_ok = (task_dev_id[0] && xTouchConfig.xTouchSerialNumber[0] &&
-                         strcmp(task_dev_id, xTouchConfig.xTouchSerialNumber) == 0);
+          hits_key_match = (ch == hits_key[0]) ? 1 : 0;
         }
-
-        if (filtered_ok && want_copy)
-        {
-          xtouch_history_task_t *t = &xtouch_history_tasks[n];
-          memset(t, 0, sizeof(*t));
-          snprintf(t->task_id, sizeof(t->task_id), "%ld", id_val);
-          cloud_parse_json_str_key(obj_start, obj_len, "modelId", t->model_id, sizeof(t->model_id));
-          cloud_parse_json_str_key(obj_start, obj_len, "title", t->title, sizeof(t->title));
-          cloud_parse_json_str_key(obj_start, obj_len, "cover", t->cover_url, sizeof(t->cover_url));
-          cloud_parse_json_str_key(obj_start, obj_len, "deviceName", t->device_name, sizeof(t->device_name));
-          cloud_parse_json_str_key(obj_start, obj_len, "deviceModel", t->device_model, sizeof(t->device_model));
-          cloud_parse_json_str_key(obj_start, obj_len, "startTime", t->start_time, sizeof(t->start_time));
-          cloud_parse_json_str_key(obj_start, obj_len, "endTime", t->end_time, sizeof(t->end_time));
-          t->profile_id = cloud_parse_json_int_key(obj_start, obj_len, "profileId");
-          t->plate_index = cloud_parse_json_int_key(obj_start, obj_len, "plateIndex");
-          int parsed_status = cloud_parse_json_int_key_top_level(obj_start, obj_len, "status");
-          if (parsed_status == 0)
-            parsed_status = cloud_parse_json_int_key(obj_start, obj_len, "status");
-          t->status = parsed_status;
-          t->is_printable = cloud_parse_json_bool_key(obj_start, obj_len, "isPrintable") ? 1 : 0;
-          t->has_ams_mapping =
-              (strstr(obj_start, "\"amsDetailMapping\"") != nullptr || strstr(obj_start, "\"filaments\"") != nullptr) ? 1 : 0;
-          t->valid = 1;
-          n++;
-        }
-
-        p = obj_end + 1;
-
-        if (append_one_shot && n >= XTOUCH_HISTORY_TASKS_MAX)
-          break;
+        continue;
       }
 
-      xtouch_history_count = n;
+      if (!hits_array_started)
+      {
+        if (ch == '[')
+          hits_array_started = true;
+        continue;
+      }
 
-      if (append_one_shot)
-        return true;
+      if (!obj_capturing)
+      {
+        if (!arr_in_string && ch == ']')
+        {
+          hits_array_done = true;
+          break;
+        }
+        if (ch == '"' && !arr_esc)
+          arr_in_string = !arr_in_string;
+        arr_esc = (ch == '\\' && !arr_esc);
+        if (!arr_in_string && ch == '{')
+        {
+          obj_capturing = true;
+          obj_overflow = false;
+          obj_depth = 1;
+          obj_len = 0;
+          arr_in_string = false;
+          arr_esc = false;
+          if (obj_len + 1 < obj_cap)
+            obj_buf[obj_len++] = ch;
+          else
+            obj_overflow = true;
+        }
+        continue;
+      }
 
-      raw_total += raw_hits;
-      if (raw_hits < req_limit)
-        break;
-      if (n >= want_visible)
-        break;
-      if (!last_raw_id[0])
-        break;
-      if (raw_total >= k_history_raw_total_max)
-        break;
-      strncpy(cursor_after, last_raw_id, sizeof(cursor_after) - 1);
-      cursor_after[sizeof(cursor_after) - 1] = '\0';
+      if (!obj_overflow)
+      {
+        if (obj_len + 1 < obj_cap)
+          obj_buf[obj_len++] = ch;
+        else
+          obj_overflow = true;
+      }
+
+      if (ch == '"' && !arr_esc)
+        arr_in_string = !arr_in_string;
+
+      if (arr_in_string)
+      {
+        arr_esc = (ch == '\\' && !arr_esc);
+      }
+      else
+      {
+        arr_esc = false;
+        if (ch == '{')
+          obj_depth++;
+        else if (ch == '}')
+        {
+          obj_depth--;
+          if (obj_depth == 0)
+          {
+            obj_capturing = false;
+            if (!obj_overflow && obj_len > 0)
+            {
+              obj_buf[obj_len] = '\0';
+              const char *obj_start = obj_buf;
+              size_t obj_len_now = obj_len;
+              raw_hits++;
+
+              char id_buf[XTOUCH_HISTORY_TASK_ID_LEN];
+              id_buf[0] = '\0';
+              cloud_parse_json_scalar_key_top_level_as_string(obj_start, obj_len_now, "taskId", id_buf, sizeof(id_buf));
+              if (!id_buf[0])
+                cloud_parse_json_scalar_key_top_level_as_string(obj_start, obj_len_now, "id", id_buf, sizeof(id_buf));
+              if (id_buf[0])
+              {
+                if (!first_raw_id[0])
+                {
+                  strncpy(first_raw_id, id_buf, sizeof(first_raw_id) - 1);
+                  first_raw_id[sizeof(first_raw_id) - 1] = '\0';
+                }
+                strncpy(last_raw_id, id_buf, sizeof(last_raw_id) - 1);
+                last_raw_id[sizeof(last_raw_id) - 1] = '\0';
+              }
+
+              const bool want_copy = (n < want_visible && n < XTOUCH_HISTORY_TASKS_MAX);
+              char device_model[64];
+              device_model[0] = '\0';
+              cloud_parse_json_str_key(obj_start, obj_len_now, "deviceModel", device_model, sizeof(device_model));
+
+              bool filtered_ok;
+              if (dev_product_filter[0] != '\0')
+                filtered_ok = cloud_history_device_models_compatible(dev_product_filter, device_model);
+              else
+              {
+                char task_dev_id[32];
+                task_dev_id[0] = '\0';
+                cloud_parse_json_str_key(obj_start, obj_len_now, "deviceId", task_dev_id, sizeof(task_dev_id));
+                filtered_ok = (task_dev_id[0] && xTouchConfig.xTouchSerialNumber[0] &&
+                              strcmp(task_dev_id, xTouchConfig.xTouchSerialNumber) == 0);
+              }
+
+              if (filtered_ok && want_copy && id_buf[0])
+              {
+                xtouch_history_task_t *t = &xtouch_history_tasks[n];
+                memset(t, 0, sizeof(*t));
+                strncpy(t->task_id, id_buf, sizeof(t->task_id) - 1);
+                t->task_id[sizeof(t->task_id) - 1] = '\0';
+                cloud_parse_json_str_key(obj_start, obj_len_now, "modelId", t->model_id, sizeof(t->model_id));
+                cloud_parse_json_str_key(obj_start, obj_len_now, "title", t->title, sizeof(t->title));
+                cloud_parse_json_str_key(obj_start, obj_len_now, "cover", t->cover_url, sizeof(t->cover_url));
+                cloud_parse_json_str_key(obj_start, obj_len_now, "deviceName", t->device_name, sizeof(t->device_name));
+                cloud_parse_json_str_key(obj_start, obj_len_now, "deviceModel", t->device_model, sizeof(t->device_model));
+                cloud_parse_json_str_key(obj_start, obj_len_now, "startTime", t->start_time, sizeof(t->start_time));
+                cloud_parse_json_str_key(obj_start, obj_len_now, "endTime", t->end_time, sizeof(t->end_time));
+                t->profile_id = cloud_parse_json_int_key(obj_start, obj_len_now, "profileId");
+                t->plate_index = cloud_parse_json_int_key(obj_start, obj_len_now, "plateIndex");
+                int parsed_status = cloud_parse_json_int_key_top_level(obj_start, obj_len_now, "status");
+                if (parsed_status == 0)
+                  parsed_status = cloud_parse_json_int_key(obj_start, obj_len_now, "status");
+                t->status = parsed_status;
+                t->is_printable = cloud_parse_json_bool_key(obj_start, obj_len_now, "isPrintable") ? 1 : 0;
+                t->has_ams_mapping =
+                    (strstr(obj_start, "\"amsDetailMapping\"") != nullptr || strstr(obj_start, "\"filaments\"") != nullptr) ? 1 : 0;
+                t->valid = 1;
+                n++;
+              }
+            }
+            arr_in_string = false;
+            arr_esc = false;
+          }
+        }
+      }
     }
+
+    free(obj_buf);
+    http.end();
+    c.stop();
+
+    xtouch_history_count = n;
+    if (out_next_after && out_next_after_size > 0)
+      out_next_after[0] = '\0';
+    ConsoleVerbose.printf("[xPTouch][V][HIST] single page first=%s last=%s raw_hits=%d n=%d\n",
+                          first_raw_id[0] ? first_raw_id : "-",
+                          last_raw_id[0] ? last_raw_id : "-",
+                          raw_hits, n);
 
     return true;
   }

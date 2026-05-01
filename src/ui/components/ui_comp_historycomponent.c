@@ -164,6 +164,8 @@ lv_obj_t *ui_historyComponent_create(lv_obj_t *comp_parent)
         lv_obj_add_event_cb(reprintBtn, onHistoryReprint, LV_EVENT_CLICKED, NULL);
     }
 
+    /* 再入時は既存キャッシュを優先。空のときだけ fetch を開始する。 */
+    if (xtouch_history_count <= 0)
     {
         ui_msg_send(XTOUCH_HISTORY_FETCH, 0, 0);
     }

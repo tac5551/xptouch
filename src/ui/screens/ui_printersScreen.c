@@ -30,6 +30,71 @@ static const char *print_status_str(int s)
 }
 
 #define PRINTERS_ROW_MAX 5
+static int s_printers_visible_count = PRINTERS_ROW_MAX;
+static bool s_printers_thumbs_started = false;
+static bool s_printers_rebind_done = false;
+static lv_timer_t *s_printers_progress_timer = NULL;
+static lv_timer_t *s_printers_pushall_timer = NULL;
+
+static int printers_target_show_count(void)
+{
+    int show_count = 1 + xtouch_other_printer_count;
+    if (show_count > XTOUCH_MULTI_PRINTER_MAX)
+        show_count = XTOUCH_MULTI_PRINTER_MAX;
+    if (show_count < 0)
+        show_count = 0;
+    return show_count;
+}
+
+static void printers_start_thumbnails_after_list_ready(void)
+{
+    if (s_printers_thumbs_started)
+        return;
+    s_printers_thumbs_started = true;
+    ui_msg_send(XTOUCH_PRINTERS_THUMB_TIMER_START, 0, 0);
+    ui_msg_send(XTOUCH_PRINTERS_SCHEDULE_THUMB_FETCH, 0, 0);
+}
+
+static void printers_pushall_then_thumb_timer_cb(lv_timer_t *t)
+{
+    (void)t;
+    s_printers_pushall_timer = NULL;
+    if (xTouchConfig.currentScreenIndex == 6)
+    {
+        extern void xtouch_mqtt_pushall_all_printers_for_screen_c(void);
+        xtouch_mqtt_pushall_all_printers_for_screen_c();
+        printers_start_thumbnails_after_list_ready();
+    }
+    lv_timer_del(t);
+}
+
+static void printers_progress_timer_cb(lv_timer_t *t)
+{
+    (void)t;
+    int target = printers_target_show_count();
+    if (s_printers_visible_count < target)
+    {
+        s_printers_visible_count++;
+        ui_msg_send(XTOUCH_PRINTERS_LIST_REFRESH, (unsigned long long)s_printers_visible_count, 0);
+        return;
+    }
+    if (!s_printers_rebind_done)
+    {
+        /* 1) リスト表示完了後に rebind */
+        ui_msg_send(XTOUCH_PRINTERS_THUMB_REBIND, 0, 0);
+        s_printers_rebind_done = true;
+        /* 2) rebind の後段で pushall -> thumbnail 開始 */
+        if (s_printers_pushall_timer)
+            lv_timer_del(s_printers_pushall_timer);
+        s_printers_pushall_timer = lv_timer_create(printers_pushall_then_thumb_timer_cb, 90, NULL);
+        lv_timer_set_repeat_count(s_printers_pushall_timer, 1);
+    }
+    if (s_printers_progress_timer)
+    {
+        lv_timer_del(s_printers_progress_timer);
+        s_printers_progress_timer = NULL;
+    }
+}
 
 /* 1行: row の子は [0]=左サムネイル, [1]=右カラム(name/subtask/progress/layer), [2]=ボタンエリア(上段pause/stop/reprint, 下段select)。
  * ボタンは印刷中(RUNNING/PAUSED/PREPARE)のみ表示、終了時は非表示（スペースは維持）。 */
@@ -189,8 +254,8 @@ static void thumb_refresh_slot(int slot)
     if (slot >= 0 && slot < XTOUCH_THUMB_SLOT_MAX)
     {
         ui_thumb_set_img_src_from_slot(img, slot);
-        /* コールバック内で即反映させるため再描画を実行（次の DL ブロック前に画面更新） */
-        lv_timer_handler();
+        /* 即時再入を避け、通常のメインループ描画に任せる */
+        lv_obj_invalidate(img);
     }
 }
 
@@ -212,7 +277,22 @@ void ui_printers_on_other_update(lv_msg_t *m, void *user_data)
     /* サムネイルDL完了通知（XTOUCH_ON_OTHER_PRINTER_UPDATE）のとき payload のスロットを即描画。
      * 遅延しない: 送信側で DL→LGFX デコード済みなので、ここで即 set_src して次のスロット DL ブロック前に描画する。
      * payload: MQTT は &XTOUCH_MESSAGE_DATA (data = 行インデックス 0=メイン,1=他1台目…)、サムネは (void*)(slot+1)。 */
-    if (m && lv_msg_get_id(m) == XTOUCH_ON_OTHER_PRINTER_UPDATE)
+    if (m && lv_msg_get_id(m) == XTOUCH_PRINTERS_LIST_REFRESH)
+    {
+        const void *payload = lv_msg_get_payload(m);
+        if (payload && (uintptr_t)payload >= 256u)
+        {
+            const struct XTOUCH_MESSAGE_DATA *d = (const struct XTOUCH_MESSAGE_DATA *)payload;
+            int requested = (int)d->data;
+            if (requested < 0)
+                requested = 0;
+            if (requested > PRINTERS_ROW_MAX)
+                requested = PRINTERS_ROW_MAX;
+            s_printers_visible_count = requested;
+        }
+    }
+
+    if (m && lv_msg_get_id(m) == XTOUCH_ON_OTHER_PRINTER_UPDATE && s_printers_thumbs_started)
     {
         const void *p = lv_msg_get_payload(m);
         if (p)
@@ -228,15 +308,16 @@ void ui_printers_on_other_update(lv_msg_t *m, void *user_data)
     }
 
     /* 表示行数: 現在機1 + 他機数、最大5。名前・進捗・レイヤは常に update_one_row で更新 */
-    int show_count = 1 + xtouch_other_printer_count;
-    if (show_count > XTOUCH_MULTI_PRINTER_MAX)
-        show_count = XTOUCH_MULTI_PRINTER_MAX;
+    int show_count = printers_target_show_count();
+    int visible_count = show_count;
+    if (s_printers_visible_count >= 0 && s_printers_visible_count < visible_count)
+        visible_count = s_printers_visible_count;
     for (int i = 0; i < XTOUCH_MULTI_PRINTER_MAX; i++)
     {
         lv_obj_t *row = lv_obj_get_child(ui_printersListContainer, i);
         if (row == NULL)
             continue;
-        if (i < show_count)
+        if (i < visible_count)
         {
             lv_obj_clear_flag(row, LV_OBJ_FLAG_HIDDEN);
             update_one_row(i, row);
@@ -245,7 +326,7 @@ void ui_printers_on_other_update(lv_msg_t *m, void *user_data)
             lv_obj_add_flag(row, LV_OBJ_FLAG_HIDDEN);
     }
 
-    if (refresh_all_thumb_slots)
+    if (refresh_all_thumb_slots && s_printers_thumbs_started)
     {
         for (int i = 0; i < show_count && i < PRINTERS_ROW_MAX; i++)
             thumb_refresh_slot(i);
@@ -263,6 +344,19 @@ static void ui_event_printers_on_other_update(lv_event_t *e)
 
 void ui_printersScreen_screen_init(void)
 {
+    s_printers_visible_count = 0;
+    s_printers_thumbs_started = false;
+    s_printers_rebind_done = false;
+    if (s_printers_progress_timer)
+    {
+        lv_timer_del(s_printers_progress_timer);
+        s_printers_progress_timer = NULL;
+    }
+    if (s_printers_pushall_timer)
+    {
+        lv_timer_del(s_printers_pushall_timer);
+        s_printers_pushall_timer = NULL;
+    }
     ui_printersScreen = lv_obj_create(NULL);
     lv_obj_clear_flag(ui_printersScreen, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM);
     lv_obj_set_scrollbar_mode(ui_printersScreen, LV_SCROLLBAR_MODE_OFF);
@@ -288,6 +382,8 @@ void ui_printersScreen_screen_init(void)
     {
         ui_msg_send(XTOUCH_PRINTERS_LIST_REFRESH, 0, 0);
     }
+    s_printers_progress_timer = lv_timer_create(printers_progress_timer_cb, 45, NULL);
+    lv_timer_set_repeat_count(s_printers_progress_timer, -1);
 }
 
 #else

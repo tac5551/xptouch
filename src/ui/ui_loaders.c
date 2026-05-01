@@ -3,6 +3,7 @@
 
 #ifdef __XTOUCH_PLATFORM_S3__
 static bool s_home_thumb_global_subscribed = false;
+static lv_timer_t *s_home_pushall_timer = NULL;
 /** IMAGE 受信（サムネ DL 完了）時に Home 表示中なら slot 0 を必ず再描画する。オブジェクト購読が届かない場合の保険。 */
 static void on_home_thumb_global(lv_msg_t *m, void *user_data)
 {
@@ -15,6 +16,21 @@ static void on_home_thumb_global(lv_msg_t *m, void *user_data)
         return;
     ui_thumb_set_img_src_from_slot(ui_homeThumbImg, 0);
 }
+
+static void ui_home_pushall_timer_cb(lv_timer_t *t)
+{
+    (void)t;
+    s_home_pushall_timer = NULL;
+    if (xTouchConfig.currentScreenIndex != 0)
+    {
+        lv_timer_del(t);
+        return;
+    }
+    extern void xtouch_mqtt_pushall_all_printers_for_screen_c(void);
+    xtouch_mqtt_pushall_all_printers_for_screen_c();
+    lv_timer_del(t);
+}
+
 #endif
 
 static bool s_settings_dirty = false;
@@ -145,9 +161,11 @@ void loadScreen(int screen)
         }
         ui_msg_send(XTOUCH_PRINTERS_THUMB_TIMER_START, 0, 0);
         ui_msg_send(XTOUCH_PRINTERS_SCHEDULE_THUMB_FETCH, 0, 0);
-        /* cleanup は送らない（Printers 入室時のみ）。pushall でメインプリンタの image_url/task_id を取得 */
-        extern void xtouch_mqtt_pushall_all_printers_for_screen_c(void);
-        xtouch_mqtt_pushall_all_printers_for_screen_c();
+        /* cleanup は送らない（Printers 入室時のみ）。Home は描画後に pushall 実行。 */
+        if (s_home_pushall_timer)
+            lv_timer_del(s_home_pushall_timer);
+        s_home_pushall_timer = lv_timer_create(ui_home_pushall_timer_cb, 80, NULL);
+        lv_timer_set_repeat_count(s_home_pushall_timer, 1);
 #endif
         break;
     case 1:
@@ -174,15 +192,9 @@ void loadScreen(int screen)
             ui_homeScreen_screen_init();
             lv_disp_load_scr(ui_homeScreen);
         } else {
-            /* LIST_REFRESH より先に slot を現在の task_id に再バインド（cache_refresh_done で旧 dsc が残るのを防ぐ） */
-            ui_msg_send(XTOUCH_PRINTERS_THUMB_REBIND, 0, 0);
             ui_printersScreen_screen_init();
             lv_disp_load_scr(ui_printersScreen);
-            ui_msg_send(XTOUCH_PRINTERS_THUMB_TIMER_START, 0, 0);
-            /* 全スロット取得スケジュールは Printers コンポーネント側でイベント送信 → xtouch が購読 */
-            /* 画面遷移時に一度だけ全プリンタへ pushall を投げる（ループ側のポーリングはしない） */
-            extern void xtouch_mqtt_pushall_all_printers_for_screen_c(void);
-            xtouch_mqtt_pushall_all_printers_for_screen_c();
+            /* Printers 側で「リスト完了 -> rebind -> pushall -> サムネ開始」を直列制御する */
         }
         break;
 #endif

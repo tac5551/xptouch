@@ -194,6 +194,10 @@ extern "C"
 
   bool xtouch_bblp_is_p1p();
   bool xtouch_bblp_is_p1Series();
+  bool xtouch_bblp_is_a1();
+  bool xtouch_bblp_is_a1mini();
+  bool xtouch_bblp_is_a1Series();
+  bool xtouch_bblp_is_a1p1Series();
   bool xtouch_bblp_is_x1();
   bool xtouch_bblp_is_x1s();
 

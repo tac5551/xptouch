@@ -139,6 +139,25 @@ void xtouch_cloud_mqtt_connect(void);
 void xtouch_local_mqtt_connect(void);
 
 #ifdef __XTOUCH_PLATFORM_S3__
+static lv_timer_t *s_home_thumb_fetch_timer = NULL;
+
+static void xtouch_mqtt_home_thumb_fetch_timer_cb(lv_timer_t *t)
+{
+    (void)t;
+    s_home_thumb_fetch_timer = NULL;
+    if (xTouchConfig.currentScreenIndex == 0)
+        xtouch_thumbnail_schedule_fetch_all();
+    lv_timer_del(t);
+}
+
+static void xtouch_mqtt_schedule_home_thumb_fetch_deferred(uint32_t delay_ms)
+{
+    if (s_home_thumb_fetch_timer)
+        lv_timer_del(s_home_thumb_fetch_timer);
+    s_home_thumb_fetch_timer = lv_timer_create(xtouch_mqtt_home_thumb_fetch_timer_cb, delay_ms, NULL);
+    lv_timer_set_repeat_count(s_home_thumb_fetch_timer, 1);
+}
+
 /** printer.json から選択中以外の dev_id を最大 XTOUCH_OTHER_PRINTERS_MAX 件取得し、other_printer_* を埋める。クラウド MQTT セットアップ時のみ呼ぶ。 */
 void xtouch_mqtt_load_other_printers()
 {
@@ -811,7 +830,7 @@ void xtouch_mqtt_processPushStatus(JsonDocument &incomingJson)
                     /* TaskID が変わったら既存 URL・LGFX dsc を捨て、新タスクのサムネ取得をキック（LAN 非ログイン時も）。 */
                     bambuStatus.image_url[0] = '\0';
                     xtouch_thumbnail_invalidate_slot(0);
-                    if (cloud.loggedIn)
+                    if (cloud.loggedIn && xTouchConfig.currentScreenIndex != 0)
                     {
                         char thumb_url[1024];
                         if (cloud.getTaskThumbnailUrl(new_tid, thumb_url, sizeof(thumb_url)))
@@ -1524,12 +1543,13 @@ void xtouch_mqtt_parseMessage(char *topic, byte *payload, unsigned int length, b
                         strncpy(s_last_home_thumb_sched_tid, bambuStatus.task_id, sizeof(s_last_home_thumb_sched_tid) - 1);
                         s_last_home_thumb_sched_tid[sizeof(s_last_home_thumb_sched_tid) - 1] = '\0';
                         s_last_home_thumb_sched_ms = ms;
-                        xtouch_thumbnail_schedule_fetch_all();
+                        /* push_status受信直後は先にHomeを描画し、サムネ取得は少し遅らせる */
+                        xtouch_mqtt_schedule_home_thumb_fetch_deferred(220);
                     }
                     else if (ms - s_last_home_thumb_sched_ms >= 8000u)
                     {
                         s_last_home_thumb_sched_ms = ms;
-                        xtouch_thumbnail_schedule_fetch_all();
+                        xtouch_mqtt_schedule_home_thumb_fetch_deferred(220);
                     }
                 }
                 ui_msg_send(XTOUCH_ON_OTHER_PRINTER_UPDATE, 0, 0);

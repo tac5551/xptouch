@@ -2,25 +2,11 @@
 #include <string.h>
 
 #ifdef __XTOUCH_PLATFORM_S3__
-static bool ui_sidebar_is_p1s_model(void)
-{
-    const char *m = xTouchConfig.xTouchPrinterModel;
-    if (!m || !m[0])
-        return false;
-    if (strcmp(m, "C12") == 0)         /* LAN config */
-        return true;
-    if (strcmp(m, "BL-P003") == 0)     /* MQTT normalized */
-        return true;
-    if (strstr(m, "P1S") != NULL)      /* textual model */
-        return true;
-    return false;
-}
-
 static bool ui_sidebar_show_camera_button(void)
 {
     if (!xTouchConfig.xTouchP1sCameraStreamEnabled)
         return false;
-    return ui_sidebar_is_p1s_model();
+    return xtouch_bblp_is_a1p1Series();
 }
 #endif
 

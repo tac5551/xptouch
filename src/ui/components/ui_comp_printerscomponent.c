@@ -409,10 +409,7 @@ lv_obj_t *ui_printersComponent_create(lv_obj_t *comp_parent)
         lv_obj_add_event_cb(reprintBtn, onPrintersReprint, LV_EVENT_CLICKED, NULL);
     }
 
-    /* 購読・初期表示は画面側でイベント登録・送信。ここではサムネイル取得のみイベント送信 */
-    {
-        ui_msg_send(XTOUCH_PRINTERS_SCHEDULE_THUMB_FETCH, 0, 0);
-    }
+    /* サムネイル取得開始は画面側で遅延実行（初回描画を優先） */
     return cui_printersComponent;
 }
 
