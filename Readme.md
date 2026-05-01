@@ -510,6 +510,38 @@ Route the cable through the side opening as shown in the diagrams.
 
 The following sections describe each UI page and its key functions.
 
+### 左メニューアイコン / Left Sidebar Icons
+
+- 参考: 左メニューのアイコン文字マッピングは `tool/README_icomoon.md` を参照してください（例: `a=Home`, `e=Printers`）。
+- 参考画像: `tool/icon_export/ui_font_xlcd/`
+  - `<img src="tool/icon_export/ui_font_xlcd/icon_u_0075.bmp" width="96">`
+  - `<img src="tool/icon_export/ui_font_xlcd/icon_v_0076.bmp" width="96">`
+
+- **Home (`a`)**  
+  メインスクリーンを表示します。
+- **Printers (`e`)**  
+  複数プリンター監視画面を表示します。`LAN Only Mode` のとき、または Optional の `Multi Printer Monitor` が無効なときは非表示です。
+- **History**  
+  印刷履歴画面を表示します。`LAN Only Mode` のとき、または Optional の `History screen` が無効なときは非表示です。
+- **Camera**  
+  カメラ画面を表示します。Optional の `A1/P1 Camera Stream` が有効で、対応モデル（A1/P1系）の場合のみ表示・遷移できます。
+- **Temp/Fan <img src="tool/icon_export/ui_font_xlcd/icon_u_0075.bmp" width="18">**  
+  温度/ファン画面を表示します。
+- **Filament (`n`)**  
+  フィラメント/AMS 画面を表示します。
+- **Settings (`d`)**  
+  設定画面を表示します。
+
+**English**
+
+- **Home**: Opens the main screen.
+- **Printers**: Opens multi-printer monitor. Hidden in LAN-only mode or when `Multi Printer Monitor` is disabled.
+- **History**: Opens print history. Hidden in LAN-only mode or when `History screen` is disabled.
+- **Camera**: Opens camera screen. Visible/usable only when `A1/P1 Camera Stream` is enabled and the model is supported (A1/P1 series).
+- **Temp/Fan**: Opens temperature/fan controls.
+- **Filament**: Opens filament/AMS page.
+- **Settings**: Opens settings page.
+
 ### メインスクリーン / Main Screen
 
 - **トップバー**: WiFi、カメラ、タイムラプス、AMSステータスを表示。
