@@ -124,6 +124,9 @@ void loadScreen(int screen)
     if ((prev_screen == 15 || prev_screen == 16) && screen != 15 && screen != 16)
         xtouch_history_clear_tasks_on_leave_c();
 
+    if (prev_screen == 17 && screen != 17)
+        xtouch_screen_led_off_timer_resume_c();
+
     ui_printersListContainer = NULL;
     if (screen != 15)
         ui_historyListContainer = NULL;
@@ -246,6 +249,10 @@ void loadScreen(int screen)
     case 17:
         ui_cameraScreen_screen_init();
         lv_disp_load_scr(ui_cameraScreen);
+        xtouch_screen_led_off_timer_pause_for_camera_c();
+        /* Chamber LED がオフなら点灯（トグルは led_mode=off のとき on を送る） */
+        if (!bambuStatus.chamberLed)
+            ui_msg_send(XTOUCH_COMMAND_LIGHT_TOGGLE, 0, 0);
         break;
 #endif
     }

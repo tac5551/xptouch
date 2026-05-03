@@ -28,6 +28,9 @@ void xtouch_mqtt_pushall_for_dev_c(const char *dev_id);
 void xtouch_mqtt_pushall_main_printer_for_screen_c(void);
 /** History/Reprint からそれ以外の画面へ出るとき一覧バッファを捨てる（15↔16 は保持） */
 void xtouch_history_clear_tasks_on_leave_c(void);
+// Camera 画面表示中は Chamber LED 自動オフタイマーを止める／離脱時に再開
+void xtouch_screen_led_off_timer_pause_for_camera_c(void);
+void xtouch_screen_led_off_timer_resume_c(void);
 #endif
 #ifdef __cplusplus
 }

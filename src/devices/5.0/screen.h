@@ -86,6 +86,10 @@ void xtouch_screen_onLEDOff(lv_timer_t *timer)
     {
         return;
     }
+#ifdef __XTOUCH_PLATFORM_S3__
+    if (xTouchConfig.currentScreenIndex == 17)
+        return;
+#endif
 
     if (xTouchConfig.xTouchLEDOffValue < XTOUCH_LIGHT_MIN_SLEEP_TIME || xTouchConfig.xTouchLEDOffValue == 0)
     {

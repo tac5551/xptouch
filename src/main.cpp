@@ -29,6 +29,18 @@
 #include "devices/2.8/screen.h"
 #endif
 
+#if defined(__XTOUCH_PLATFORM_S3__)
+extern "C" void xtouch_screen_led_off_timer_pause_for_camera_c(void)
+{
+  xtouch_screen_stopLEDOffTimer();
+}
+
+extern "C" void xtouch_screen_led_off_timer_resume_c(void)
+{
+  xtouch_screen_startLEDOffTimer();
+}
+#endif
+
 #include "xtouch/cloud.hpp"
 #include "xtouch/neopixel.h"
 #include "xtouch/led.h"

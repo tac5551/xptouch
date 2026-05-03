@@ -211,6 +211,7 @@ void xtouch_mqtt_load_other_printers()
         otherPrinters[idx].mc_print_percent = 0;
         otherPrinters[idx].mc_left_time = 0;
         otherPrinters[idx].subtask_name[0] = '\0';
+        otherPrinters[idx].task_id[0] = '\0';
         otherPrinters[idx].image_url[0] = '\0';
         otherPrinters[idx].current_layer = 0;
         otherPrinters[idx].total_layers = 0;
@@ -517,6 +518,13 @@ static void xtouch_mqtt_apply_temp_main_from_row(int slot)
     strncpy(xTouchConfig.xTouchSerialNumber, new_id, sizeof(xTouchConfig.xTouchSerialNumber) - 1);
     xTouchConfig.xTouchSerialNumber[sizeof(xTouchConfig.xTouchSerialNumber) - 1] = '\0';
 
+#ifdef __XTOUCH_PLATFORM_S3__
+    /* カメラ TCP は前機の IP/コードのまま残ると Camera Stream が付いてこない。push_status の net 更新まで閉じておく */
+    xTouchConfig.xTouchCameraHost[0] = '\0';
+    xTouchConfig.xTouchCameraAccessCode[0] = '\0';
+    xtouch_camera_stream::close_stream();
+#endif
+
     if (preview_src)
     {
         const char *oname = preview_src->name;
@@ -579,6 +587,12 @@ static void xtouch_mqtt_apply_temp_main_from_row(int slot)
                         strncpy(xTouchConfig.xTouchPrinterName, dn, sizeof(xTouchConfig.xTouchPrinterName) - 1);
                         xTouchConfig.xTouchPrinterName[sizeof(xTouchConfig.xTouchPrinterName) - 1] = '\0';
                     }
+                }
+                if (dev.containsKey("dev_access_code"))
+                {
+                    const char *dac = dev["dev_access_code"].as<const char *>();
+                    if (dac && dac[0])
+                        cloud.setCurrentAccessCode(String(dac));
                 }
             }
         }

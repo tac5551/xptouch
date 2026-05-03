@@ -283,70 +283,72 @@ inline void loop_once()
 
 inline void update_from_push_status_net(JsonObject print_obj)
 {
-    /* wifi.json / xtouch.json がある場合はそちらを優先して接続先を固定 */
-    if (update_from_wifi_json_if_exists())
-        return;
-
-    if (!print_obj.containsKey("net"))
-        return;
-    JsonObject net = print_obj["net"].as<JsonObject>();
-    if (net.isNull())
-        return;
-
     char host_buf[16] = {0};
     char access_buf[9] = {0};
 
-    if (net.containsKey("ip"))
+    /* マルチプリンタ切替時は live の print.net を常に先に反映（旧挙動は wifi.json が先で return しており、カメラが前機のまま固定されていた） */
+    if (print_obj.containsKey("net"))
     {
-        String ip = net["ip"].as<String>();
-        ip.toCharArray(host_buf, sizeof(host_buf));
-    }
-    if (net.containsKey("access_code"))
-    {
-        String ac = net["access_code"].as<String>();
-        ac.toCharArray(access_buf, sizeof(access_buf));
-    }
-    else if (net.containsKey("accessCode"))
-    {
-        String ac = net["accessCode"].as<String>();
-        ac.toCharArray(access_buf, sizeof(access_buf));
-    }
-
-    if (net.containsKey("info") && net["info"].is<JsonArray>())
-    {
-        JsonArray info = net["info"].as<JsonArray>();
-        for (JsonVariant v : info)
+        JsonObject net = print_obj["net"].as<JsonObject>();
+        if (!net.isNull())
         {
-            if (!v.is<JsonObject>())
-                continue;
-            JsonObject o = v.as<JsonObject>();
-            if (!host_buf[0] && o.containsKey("ip"))
+            if (net.containsKey("ip"))
             {
-                uint32_t ip_le = o["ip"].as<uint32_t>();
-                if (ip_le != 0)
+                String ip = net["ip"].as<String>();
+                ip.toCharArray(host_buf, sizeof(host_buf));
+            }
+            if (net.containsKey("access_code"))
+            {
+                String ac = net["access_code"].as<String>();
+                ac.toCharArray(access_buf, sizeof(access_buf));
+            }
+            else if (net.containsKey("accessCode"))
+            {
+                String ac = net["accessCode"].as<String>();
+                ac.toCharArray(access_buf, sizeof(access_buf));
+            }
+
+            if (net.containsKey("info") && net["info"].is<JsonArray>())
+            {
+                JsonArray info = net["info"].as<JsonArray>();
+                for (JsonVariant v : info)
                 {
-                    snprintf(host_buf, sizeof(host_buf), "%u.%u.%u.%u",
-                             (unsigned)(ip_le & 0xFFu),
-                             (unsigned)((ip_le >> 8) & 0xFFu),
-                             (unsigned)((ip_le >> 16) & 0xFFu),
-                             (unsigned)((ip_le >> 24) & 0xFFu));
+                    if (!v.is<JsonObject>())
+                        continue;
+                    JsonObject o = v.as<JsonObject>();
+                    if (!host_buf[0] && o.containsKey("ip"))
+                    {
+                        uint32_t ip_le = o["ip"].as<uint32_t>();
+                        if (ip_le != 0)
+                        {
+                            snprintf(host_buf, sizeof(host_buf), "%u.%u.%u.%u",
+                                   (unsigned)(ip_le & 0xFFu),
+                                   (unsigned)((ip_le >> 8) & 0xFFu),
+                                   (unsigned)((ip_le >> 16) & 0xFFu),
+                                   (unsigned)((ip_le >> 24) & 0xFFu));
+                        }
+                    }
+                    if (!access_buf[0] && o.containsKey("access_code"))
+                    {
+                        String ac = o["access_code"].as<String>();
+                        ac.toCharArray(access_buf, sizeof(access_buf));
+                    }
+                    if (!access_buf[0] && o.containsKey("accessCode"))
+                    {
+                        String ac = o["accessCode"].as<String>();
+                        ac.toCharArray(access_buf, sizeof(access_buf));
+                    }
                 }
-            }
-            if (!access_buf[0] && o.containsKey("access_code"))
-            {
-                String ac = o["access_code"].as<String>();
-                ac.toCharArray(access_buf, sizeof(access_buf));
-            }
-            if (!access_buf[0] && o.containsKey("accessCode"))
-            {
-                String ac = o["accessCode"].as<String>();
-                ac.toCharArray(access_buf, sizeof(access_buf));
             }
         }
     }
 
     if (host_buf[0] || access_buf[0])
         set_endpoint(host_buf, access_buf);
+
+    /* MQTT にカメラ用 IP がまだ無いときだけ SD の wifi.json / xtouch.json で補完 */
+    if (!xTouchConfig.xTouchCameraHost[0])
+        (void)update_from_wifi_json_if_exists();
 }
 } // namespace xtouch_camera_stream
 
