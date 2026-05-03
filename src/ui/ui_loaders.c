@@ -231,6 +231,11 @@ void loadScreen(int screen)
     case 15:
         ui_historyScreen_screen_init();
         lv_disp_load_scr(ui_historyScreen);
+        /* History 画面をアクティブにしてから Cloud 取得 or カバー再試行（screen_init 内 COVER_RETRY は load 前に lv_refr_now が走り得る） */
+        if (xtouch_history_count <= 0)
+            ui_msg_send(XTOUCH_HISTORY_FETCH, 0, 0);
+        else
+            ui_msg_send(XTOUCH_HISTORY_COVER_RETRY, 0, 0);
         break;
     case 16:
         ui_historyReprintScreen_screen_init();

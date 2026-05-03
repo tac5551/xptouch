@@ -5,6 +5,7 @@
 #include <string.h>
 #include "ui/ui_msgs.h"
 #include "xtouch/types.h"
+#include "lvgl.h"
 #ifdef __XTOUCH_PLATFORM_S3__ 
 #include "xtouch/net.h"
 #include "xtouch/sdcard_status.h"
@@ -332,6 +333,9 @@ static void thumbnail_send_update_one_shot_cb(lv_timer_t *t)
     {
         ConsoleVerbose.printf("[xPTouch][V][THUMB] send_msg slot+1=%d\n", slot_plus_one);
         lv_msg_send(XTOUCH_ON_OTHER_PRINTER_UPDATE, (void *)(intptr_t)slot_plus_one);
+        lv_disp_t *disp = lv_disp_get_default();
+        if (disp)
+            lv_refr_now(disp);
     }
 }
 #endif

@@ -164,11 +164,7 @@ lv_obj_t *ui_historyComponent_create(lv_obj_t *comp_parent)
         lv_obj_add_event_cb(reprintBtn, onHistoryReprint, LV_EVENT_CLICKED, NULL);
     }
 
-    /* 差分は Cloud 取得の有無のみ: 件数 0 なら FETCH、既に一覧があれば再描画＋カバーのみ COVER_RETRY */
-    if (xtouch_history_count <= 0)
-        ui_msg_send(XTOUCH_HISTORY_FETCH, 0, 0);
-    else
-        ui_msg_send(XTOUCH_HISTORY_COVER_RETRY, 0, 0);
+    /* FETCH / COVER_RETRY は lv_disp_load_scr 後に ui_loaders で送る（load 前の lv_refr_now で Panic しないため） */
     return cui_historyComponent;
 }
 
