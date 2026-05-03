@@ -246,9 +246,11 @@ inline bool getThumbnailUrlAndPathForSlot(int slot, char *url_out, size_t url_si
 #else
     static char resolved_url[1024];
 #endif
-    /* Home(0) では同期 Cloud HTTP 解決を行わない（UI 操作優先）。
-     * 詳細解決は Printers(6) でのみ許可する。 */
-    const bool allow_cloud_resolve = (xTouchConfig.currentScreenIndex == 6);
+    /* Cloud の task→サムネ URL 解決はメイン（LVGL）コンテキストで同期 HTTP になる。
+     * 以前は Home(0) では行わず Printers(6) のみだったが、印刷開始時に Home にいると
+     * image_url が空のまま DL が始まらないため、Home / Printers の両方で許可する。 */
+    const bool allow_cloud_resolve =
+        (xTouchConfig.currentScreenIndex == 6 || xTouchConfig.currentScreenIndex == 0);
 
     if (slot == 0)
     {

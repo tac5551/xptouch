@@ -113,8 +113,8 @@ lv_obj_t *ui_historyComponent_create(lv_obj_t *comp_parent)
            lv_obj_set_style_text_font(titleLabel, &lv_font_notosans_14, LV_PART_MAIN | LV_STATE_DEFAULT);
 #endif
         lv_obj_set_style_text_line_space(titleLabel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-        /* ジョブ名（title）が長いときは横スクロール（Home / Printers のファイル名と同様） */
-        lv_label_set_long_mode(titleLabel, LV_LABEL_LONG_SCROLL_CIRCULAR);
+        /* SCROLL_CIRCULAR は常時アニメで History 放置時に LVGL 負荷が積み上がるため CLIP（Home の一部ラベルと同様） */
+        lv_label_set_long_mode(titleLabel, LV_LABEL_LONG_CLIP);
 
         lv_obj_t *printerLabel = lv_label_create(rightCol);
         lv_label_set_text(printerLabel, "");
@@ -164,7 +164,7 @@ lv_obj_t *ui_historyComponent_create(lv_obj_t *comp_parent)
         lv_obj_add_event_cb(reprintBtn, onHistoryReprint, LV_EVENT_CLICKED, NULL);
     }
 
-    /* 空なら Cloud 取得。既に件数がある再入室は fetch せず、未取得カバーのみ SD/DL へ（初回 DL 失敗の取りこぼし対策） */
+    /* 差分は Cloud 取得の有無のみ: 件数 0 なら FETCH、既に一覧があれば再描画＋カバーのみ COVER_RETRY */
     if (xtouch_history_count <= 0)
         ui_msg_send(XTOUCH_HISTORY_FETCH, 0, 0);
     else
