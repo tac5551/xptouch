@@ -262,11 +262,22 @@ inline void xtouch_mqtt_pushall_all_printers_for_screen()
     }
 }
 
+/** Home 用: 表示はメインのみのため、pushall も自機 1 台分だけ。 */
+inline void xtouch_mqtt_pushall_main_printer_for_screen()
+{
+    if (xTouchConfig.xTouchSerialNumber[0])
+        xtouch_mqtt_pushall_for_dev(xTouchConfig.xTouchSerialNumber);
+}
+
 /* C 側（ui_loaders.c など）から呼べるようにするラッパー。 */
 #ifdef __cplusplus
 extern "C" void xtouch_mqtt_pushall_all_printers_for_screen_c(void)
 {
     xtouch_mqtt_pushall_all_printers_for_screen();
+}
+extern "C" void xtouch_mqtt_pushall_main_printer_for_screen_c(void)
+{
+    xtouch_mqtt_pushall_main_printer_for_screen();
 }
 extern "C" void xtouch_mqtt_pushall_for_dev_c(const char *dev_id)
 {

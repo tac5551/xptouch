@@ -147,6 +147,60 @@ static void ui_event_history_on_list_refresh(lv_event_t *e)
     ui_history_on_list_refresh(lv_event_get_msg(e), NULL);
 }
 
+/** 一覧の一番上からさらに下へ引っ張った（弾性オーバースクロール）あと離すと Cloud 履歴を取り直す。
+ * SCROLL_END だけでは弾性が戻った後で scroll_y==scroll_top になり検知できないため、SCROLL 中に
+ * 「scroll_y > scroll_top」の最大オーバーシュートだけを記録する（一覧を通常スクロールしたときは sy<=st のままなので誤爆しない）。 */
+#define HISTORY_PULL_ELASTIC_MIN 24
+#define HISTORY_PULL_REFRESH_COOLDOWN_MS 7000
+static uint32_t s_history_pull_last_fetch_ms;
+static lv_coord_t s_history_pull_overshoot_px;
+
+static void ui_history_try_pull_refresh(void)
+{
+    uint32_t now = millis();
+    if (s_history_pull_last_fetch_ms != 0 &&
+        (now - s_history_pull_last_fetch_ms) < HISTORY_PULL_REFRESH_COOLDOWN_MS)
+        return;
+    s_history_pull_last_fetch_ms = now;
+    ui_msg_send(XTOUCH_HISTORY_FETCH, 0, 0);
+}
+
+static void ui_event_history_list_pull_refresh(lv_event_t *e)
+{
+    lv_event_code_t c = lv_event_get_code(e);
+    lv_obj_t *list = lv_event_get_target(e);
+    if (ui_historyListContainer == NULL || list != ui_historyListContainer)
+        return;
+    if (xTouchConfig.currentScreenIndex != 15)
+        return;
+
+    if (c == LV_EVENT_SCROLL_BEGIN)
+    {
+        s_history_pull_overshoot_px = 0;
+        return;
+    }
+    if (c == LV_EVENT_SCROLL)
+    {
+        lv_coord_t sy = lv_obj_get_scroll_y(list);
+        lv_coord_t st = lv_obj_get_scroll_top(list);
+        /* LVGL: 上端表示は scroll_y == scroll_top。さらに下へ引くと一時的に sy > scroll_top */
+        if (sy > st)
+        {
+            lv_coord_t over = (lv_coord_t)(sy - st);
+            if (over > s_history_pull_overshoot_px)
+                s_history_pull_overshoot_px = over;
+        }
+        return;
+    }
+    if (c == LV_EVENT_SCROLL_END)
+    {
+        if (s_history_pull_overshoot_px >= (lv_coord_t)HISTORY_PULL_ELASTIC_MIN)
+            ui_history_try_pull_refresh();
+        s_history_pull_overshoot_px = 0;
+        return;
+    }
+}
+
 void ui_historyScreen_screen_init(void)
 {
     ui_historyScreen = lv_obj_create(NULL);
@@ -168,6 +222,9 @@ void ui_historyScreen_screen_init(void)
     ui_historyComponent_create(ui_historyScreen);
     lv_msg_subsribe_obj(XTOUCH_HISTORY_LIST_REFRESH, ui_historyListContainer, NULL);
     lv_obj_add_event_cb(ui_historyListContainer, ui_event_history_on_list_refresh, LV_EVENT_MSG_RECEIVED, NULL);
+    lv_obj_add_event_cb(ui_historyListContainer, ui_event_history_list_pull_refresh, LV_EVENT_SCROLL_BEGIN, NULL);
+    lv_obj_add_event_cb(ui_historyListContainer, ui_event_history_list_pull_refresh, LV_EVENT_SCROLL, NULL);
+    lv_obj_add_event_cb(ui_historyListContainer, ui_event_history_list_pull_refresh, LV_EVENT_SCROLL_END, NULL);
     {
         /* 一覧は常に xtouch_history_count に基づき全行描画。初回 count=0 なら空行のみ。 */
         ui_msg_send(XTOUCH_HISTORY_LIST_REFRESH, 0, 0);

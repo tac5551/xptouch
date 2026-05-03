@@ -2,6 +2,7 @@
 #include "ui.h"
 
 #ifdef __XTOUCH_PLATFORM_S3__
+#include "xtouch/globals.h"
 static bool s_home_thumb_global_subscribed = false;
 static lv_timer_t *s_home_pushall_timer = NULL;
 /** IMAGE 受信（サムネ DL 完了）時に Home 表示中なら slot 0 を必ず再描画する。オブジェクト購読が届かない場合の保険。 */
@@ -26,8 +27,8 @@ static void ui_home_pushall_timer_cb(lv_timer_t *t)
         lv_timer_del(t);
         return;
     }
-    extern void xtouch_mqtt_pushall_all_printers_for_screen_c(void);
-    xtouch_mqtt_pushall_all_printers_for_screen_c();
+    extern void xtouch_mqtt_pushall_main_printer_for_screen_c(void);
+    xtouch_mqtt_pushall_main_printer_for_screen_c();
     lv_timer_del(t);
 }
 
@@ -118,6 +119,10 @@ void loadScreen(int screen)
         return;
     }
 #ifdef __XTOUCH_PLATFORM_S3__
+
+    /* History(15)・Reprint(16) から離れるときだけ一覧を捨てる。15↔16 は保持 */
+    if ((prev_screen == 15 || prev_screen == 16) && screen != 15 && screen != 16)
+        xtouch_history_clear_tasks_on_leave_c();
 
     ui_printersListContainer = NULL;
     if (screen != 15)
@@ -231,11 +236,8 @@ void loadScreen(int screen)
     case 15:
         ui_historyScreen_screen_init();
         lv_disp_load_scr(ui_historyScreen);
-        /* History 画面をアクティブにしてから Cloud 取得 or カバー再試行（screen_init 内 COVER_RETRY は load 前に lv_refr_now が走り得る） */
-        if (xtouch_history_count <= 0)
-            ui_msg_send(XTOUCH_HISTORY_FETCH, 0, 0);
-        else
-            ui_msg_send(XTOUCH_HISTORY_COVER_RETRY, 0, 0);
+        /* 初回・再入場とも Cloud で一覧を取り直す（count>0 のとき COVER_RETRY だけだとリストが更新されない） */
+        ui_msg_send(XTOUCH_HISTORY_FETCH, 0, 0);
         break;
     case 16:
         ui_historyReprintScreen_screen_init();

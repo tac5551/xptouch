@@ -3,7 +3,7 @@
  * UI は XTOUCH_HISTORY_FETCH / XTOUCH_HISTORY_REPRINT_WITH_OPTIONS を送信し、
  * ここで購読して cloud.getMyTasks / cloud.submitReprintTask を呼ぶ。
  * 一覧テキストは常に一度に描画し、その後サムネのみ SD キャッシュ読み or DL 完了のたびに 1 行ずつ LIST_REFRESH + lv_refr_now で反映する。
- * 初回（Cloud 取得）と再入室（メモリに一覧あり）は「一覧の作り方」の差のみで、描画パターンは同じ。
+ * loadScreen(15) のたびに XTOUCH_HISTORY_FETCH で getMyTasks し一覧を更新する（描画パターンは同じ）。
  */
 #if defined(__XTOUCH_PLATFORM_S3__)
 
@@ -21,19 +21,6 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
 #include "freertos/task.h"
-
-#define XTOUCH_HISTORY_COVER_QUEUE_LEN 10
-#define XTOUCH_HISTORY_COVER_TASK_STACK_WORDS 6144
-#define XTOUCH_HISTORY_COVER_POLL_MS 150
-/** Printers→History 直後の SSL メモリ競合を避けるため、遷移してからこの ms 後に API 取得開始 */
-#define XTOUCH_HISTORY_FETCH_DELAY_MS 900
-/** 取得失敗時のリトライ間隔（初回より長めに） */
-#define XTOUCH_HISTORY_FETCH_RETRY_DELAY_MS 2500
-/** 最大リトライ回数（初回含めてこの回数まで試す） */
-#define XTOUCH_HISTORY_FETCH_RETRY_MAX 3
-#define XTOUCH_HISTORY_FETCH_PAGE_LIMIT 15
-/** 一覧 LIST_REFRESH + lv_refr_now の後、サムネ SD 読み／DL 投入を始めるまでの待ち（再入室で LVGL が先に描画できるようにする） */
-#define XTOUCH_HISTORY_COVER_DEFER_AFTER_LIST_MS 30
 
 static QueueHandle_t s_history_done_queue = NULL;
 static lv_timer_t *s_history_done_timer = NULL;
@@ -830,6 +817,14 @@ static void xtouch_history_subscribe_events_impl(void)
   lv_msg_subscribe(XTOUCH_HISTORY_REPRINT_PRINTER_CHANGED, (lv_msg_subscribe_cb_t)xtouch_history_on_reprint_printer_changed, NULL);
   lv_msg_subscribe(XTOUCH_HISTORY_COVER_DL_CANCEL, (lv_msg_subscribe_cb_t)xtouch_history_on_cover_dl_cancel, NULL);
   lv_msg_subscribe(XTOUCH_THUMBNAILS_HIDE_MODE_CHANGED, (lv_msg_subscribe_cb_t)xtouch_history_on_thumbnails_hide_changed, NULL);
+}
+
+extern "C" void xtouch_history_clear_tasks_on_leave_c(void)
+{
+  xtouch_history_count = 0;
+  memset(xtouch_history_tasks, 0, sizeof(xtouch_history_tasks));
+  s_history_last_append_after[0] = '\0';
+  xtouch_history_cover_clear();
 }
 
 void xtouch_history_subscribe_events(void)

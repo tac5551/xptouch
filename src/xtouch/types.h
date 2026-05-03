@@ -323,14 +323,10 @@ extern "C"
     /** LGFX デコード済みサムネイルの descriptor ポインタ（スロット毎）。UI は lv_img_set_src(img, (lv_img_dsc_t*)xtouch_thumbnail_slot_dsc[slot]) で表示。 */
     extern void *xtouch_thumbnail_slot_dsc[XTOUCH_THUMB_SLOT_MAX];
 
-    /** Cloud 印刷履歴（user-service/my/tasks）1件。UI は参照のみ。再印刷用に model_id/profile_id/plate_index を保持。 */
-#define XTOUCH_HISTORY_TASKS_MAX 20
-#if defined(__XTOUCH_SCREEN_S3_050__)
+    /** Cloud 印刷履歴（user-service/my/tasks）。件数・文字列長・API/ワーカー・サムネ decode はすべてここで揃える。 */
+#define XTOUCH_HISTORY_TASKS_MAX 10
 #define XTOUCH_HISTORY_UI_ROW_SLOTS XTOUCH_HISTORY_TASKS_MAX
-#else
-    /* History 一覧は行ごとにオブジェクトが多く、小画面プロファイルで 20 行一括生成すると LVGL lv_mem の alloc が NULL になり得る */
-#define XTOUCH_HISTORY_UI_ROW_SLOTS 10
-#endif
+#define XTOUCH_HISTORY_COVER_SLOTS XTOUCH_HISTORY_TASKS_MAX
 #define XTOUCH_HISTORY_TITLE_LEN 64
 #define XTOUCH_HISTORY_COVER_URL_LEN 1024
 #define XTOUCH_HISTORY_DEVICE_NAME_LEN 32
@@ -339,6 +335,26 @@ extern "C"
 #define XTOUCH_HISTORY_TASK_ID_LEN 32
 #define XTOUCH_HISTORY_MODEL_ID_LEN 32
 #define XTOUCH_HISTORY_TIME_LEN 32
+/** GET /my/tasks の 1 回の limit（API 取得件数。画面・xtouch_history_tasks[] は XTOUCH_HISTORY_TASKS_MAX まで） */
+#define XTOUCH_HISTORY_FETCH_PAGE_LIMIT 15
+/** カバー DL 完了キュー深度 */
+#define XTOUCH_HISTORY_COVER_QUEUE_LEN XTOUCH_HISTORY_TASKS_MAX
+#define XTOUCH_HISTORY_COVER_TASK_STACK_WORDS 6144
+#define XTOUCH_HISTORY_COVER_POLL_MS 150
+/** Printers→History 直後の SSL と競合しにくくする取得開始遅延 */
+#define XTOUCH_HISTORY_FETCH_DELAY_MS 900
+#define XTOUCH_HISTORY_FETCH_RETRY_DELAY_MS 2500
+#define XTOUCH_HISTORY_FETCH_RETRY_MAX 3
+/** LIST_REFRESH 後にサムネ処理を始めるまでの待ち ms */
+#define XTOUCH_HISTORY_COVER_DEFER_AFTER_LIST_MS 30
+/** History 一覧カバー画像のデコード解像度（thumbnail の LGFX パスと一致。5" のみ 150px） */
+#if defined(__XTOUCH_SCREEN_S3_050__)
+#define XTOUCH_HISTORY_COVER_W 150
+#define XTOUCH_HISTORY_COVER_H 150
+#else
+#define XTOUCH_HISTORY_COVER_W 75
+#define XTOUCH_HISTORY_COVER_H 75
+#endif
     /** Bambu 想定: AMS 最大 4 ユニット × 各 4 トレイ = 16 スロット。amsDetailMapping も最大 16 要素 */
 #define XTOUCH_BAMBU_AMS_UNITS 4
 #define XTOUCH_BAMBU_AMS_SLOTS_PER_UNIT 4
@@ -388,7 +404,6 @@ extern "C"
     } xtouch_history_task_t;
     extern xtouch_history_task_t xtouch_history_tasks[XTOUCH_HISTORY_TASKS_MAX];
     extern int xtouch_history_count;
-#define XTOUCH_HISTORY_COVER_SLOTS 10
     /** History 画面 行別: LGFX デコード済み cover 画像の descriptor。UI は lv_img_set_src(img, (lv_img_dsc_t*)xtouch_history_cover_dsc[idx]) で表示。 */
     extern void *xtouch_history_cover_dsc[XTOUCH_HISTORY_COVER_SLOTS];
     /** History リプリント対象の task_id を保持する（tasks 一覧が空でも再印刷可能にする）。空なら無効。 */

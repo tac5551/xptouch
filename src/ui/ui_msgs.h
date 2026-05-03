@@ -131,7 +131,7 @@ extern "C"
         XTOUCH_PRINTERS_TEMP_FOCUS_ROW,
         /** History 画面: Cloud から履歴取得を依頼（購読は xtouch） */
         XTOUCH_HISTORY_FETCH,
-        /** History 再入室: 一覧はメモリにあるがカバー未取得の行を SD 読込または DL キューへ再投入（購読は xtouch） */
+        /** History: 一覧は触らずカバー画像だけ再キュー（再入室のリスト更新は XTOUCH_HISTORY_FETCH。任意経路用） */
         XTOUCH_HISTORY_COVER_RETRY,
         /** History 一覧の表示を更新せよ（購読は画面側） */
         XTOUCH_HISTORY_LIST_REFRESH,

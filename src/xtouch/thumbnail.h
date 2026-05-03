@@ -31,10 +31,6 @@
 static bool xtouch_load_thumb_slot_with_lgfx(int slot, int out_w, int out_h);       /* 実装は本ヘッダ内（kikuchan/pngle） */
 static bool xtouch_load_logo_for_slot_with_lgfx(int slot, int out_w, int out_h);    /* /resource/logo.png 用（同じく pngle 経路） */
 
-#ifndef XTOUCH_HISTORY_COVER_SLOTS
-#define XTOUCH_HISTORY_COVER_SLOTS 10
-#endif
-
 #ifdef __XTOUCH_PLATFORM_S3__ 
 /* 起動直後などで /resource/logo.png が無いと無限に open 失敗を繰り返すため、
  * "無ければ作ってDL" を 1 回だけ試し、結果をキャッシュする */
@@ -340,10 +336,15 @@ static void thumbnail_send_update_one_shot_cb(lv_timer_t *t)
 }
 #endif
 
-/** Home/Printers 共通: task 無しスロットは SD の /tmp/{task_id}.png があれば表示、なければロゴ */
-static void thumbnail_tick_logo_or_sd_cache_slots(void)
+/** Home/Printers 共通: task 無しスロットは SD の /tmp/{task_id}.png があれば表示、なければロゴ。
+ * max_slot_exclusive: Home は 1（メインのみ）。Printers は XTOUCH_THUMB_SLOT_MAX。 */
+static void thumbnail_tick_logo_or_sd_cache_slots(int max_slot_exclusive)
 {
-    for (int s = 0; s < XTOUCH_THUMB_SLOT_MAX; s++)
+    if (max_slot_exclusive < 1)
+        max_slot_exclusive = 1;
+    if (max_slot_exclusive > XTOUCH_THUMB_SLOT_MAX)
+        max_slot_exclusive = XTOUCH_THUMB_SLOT_MAX;
+    for (int s = 0; s < max_slot_exclusive; s++)
     {
         if (!s_thumb_exists[s] && !thumbnail_slot_has_url_or_task(s, cloud.loggedIn ? 1 : 0))
         {
@@ -370,9 +371,13 @@ static void thumbnail_tick_logo_or_sd_cache_slots(void)
 }
 
 /** Home/Printers 共通: URL あり・SD に既存 PNG があるスロットを 1 回だけデコード */
-static void thumbnail_tick_refresh_existing_files_once(void)
+static void thumbnail_tick_refresh_existing_files_once(int max_slot_exclusive)
 {
-    for (int s = 0; s < XTOUCH_THUMB_SLOT_MAX; s++)
+    if (max_slot_exclusive < 1)
+        max_slot_exclusive = 1;
+    if (max_slot_exclusive > XTOUCH_THUMB_SLOT_MAX)
+        max_slot_exclusive = XTOUCH_THUMB_SLOT_MAX;
+    for (int s = 0; s < max_slot_exclusive; s++)
     {
         if (s_thumb_cache_refresh_done[s])
             continue;
@@ -392,23 +397,30 @@ static void thumbnail_tick_refresh_existing_files_once(void)
     }
 }
 
-/** ラウンドロビンで「要 DL」のスロットを 1 つだけキューへ。Home/Printers とも 500ms に 1 回まで（25ms タイマー連打を防ぐ） */
+/** ラウンドロビンで「要 DL」のスロットを 1 つだけキューへ。Home/Printers とも 500ms に 1 回まで（25ms タイマー連打を防ぐ）
+ * max_slot_exclusive: Home は 1（他機サムネは Printers 入室後に取得）。 */
 static uint32_t s_thumb_dl_rr_last_tick = 0;
-static void thumbnail_try_schedule_one_download_round_robin(void)
+static void thumbnail_try_schedule_one_download_round_robin(int max_slot_exclusive)
 {
+    if (max_slot_exclusive < 1)
+        max_slot_exclusive = 1;
+    if (max_slot_exclusive > XTOUCH_THUMB_SLOT_MAX)
+        max_slot_exclusive = XTOUCH_THUMB_SLOT_MAX;
     uint32_t now = lv_tick_get();
     if (now - s_thumb_dl_rr_last_tick < 500u)
         return;
     s_thumb_dl_rr_last_tick = now;
-    for (int i = 0; i < XTOUCH_THUMB_SLOT_MAX; i++)
+    for (int i = 0; i < max_slot_exclusive; i++)
     {
-        int s = (s_thumb_next_slot + i) % XTOUCH_THUMB_SLOT_MAX;
+        int s = (s_thumb_next_slot + i) % max_slot_exclusive;
+        if (millis() < s_thumb_dl_retry_not_before_ms[s])
+            continue;
         if (thumbnail_needs_download(s))
         {
             ConsoleVerbose.printf("[xPTouch][V][THUMB] rr schedule slot=%d\n", s);
             lv_timer_t *once = lv_timer_create(thumbnail_do_slot_cb, XTOUCH_THUMB_FETCH_DELAY_MS, (void *)(intptr_t)s);
             lv_timer_set_repeat_count(once, 1);
-            s_thumb_next_slot = (s + 1) % XTOUCH_THUMB_SLOT_MAX;
+            s_thumb_next_slot = (s + 1) % max_slot_exclusive;
             break;
         }
     }
@@ -452,16 +464,18 @@ static void thumbnail_timer_cb(lv_timer_t *t)
         return;
 
     int idx = xTouchConfig.currentScreenIndex;
-    /* Home(0) と Printers(6) で同じ順序・同じレート制限（以前は Printers だけ DL 予約が毎ティック走っていた） */
+    /* Home はメインのサムネ（slot 0）だけ更新。他機は Printers で一覧表示するまで DL しない（SSL/ヒープを節約） */
+    const int thumb_slots = (idx == 0) ? 1 : XTOUCH_THUMB_SLOT_MAX;
+    /* Home(0) と Printers(6) で同じレート制限（Home は slot 範囲のみ縮小） */
     if (idx == 0 || idx == 6)
     {
-        thumbnail_tick_logo_or_sd_cache_slots();
-        thumbnail_tick_refresh_existing_files_once();
+        thumbnail_tick_logo_or_sd_cache_slots(thumb_slots);
+        thumbnail_tick_refresh_existing_files_once(thumb_slots);
     }
 
     if (idx == 0)
     {
-        thumbnail_try_schedule_one_download_round_robin();
+        thumbnail_try_schedule_one_download_round_robin(thumb_slots);
         return;
     }
     if (idx != 6)
@@ -480,7 +494,7 @@ static void thumbnail_timer_cb(lv_timer_t *t)
         return;
     }
 
-    thumbnail_try_schedule_one_download_round_robin();
+    thumbnail_try_schedule_one_download_round_robin(XTOUCH_THUMB_SLOT_MAX);
 }
 
 void xtouch_thumbnail_timer_start(void)
@@ -751,14 +765,6 @@ static void thumb_on_decode_failed_after_open(int slot, const char *path)
 #include <esp32-hal-psram.h>
 #include <string.h>
 #include "pngle.h"
-
-#if defined(__XTOUCH_SCREEN_S3_050__)
-#define XTOUCH_HISTORY_COVER_W 150
-#define XTOUCH_HISTORY_COVER_H 150
-#else
-#define XTOUCH_HISTORY_COVER_W 75
-#define XTOUCH_HISTORY_COVER_H 75
-#endif
 
 static lv_color_t *g_lgfx_thumb_buf = nullptr;
 static int g_lgfx_thumb_buf_w = 0;

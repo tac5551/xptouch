@@ -25,6 +25,9 @@ extern other_printer_status_t otherPrinters[XTOUCH_OTHER_PRINTERS_MAX];
 extern char xtouch_other_printer_dev_ids[XTOUCH_OTHER_PRINTERS_MAX][16];
 extern int xtouch_other_printer_count;
 void xtouch_mqtt_pushall_for_dev_c(const char *dev_id);
+void xtouch_mqtt_pushall_main_printer_for_screen_c(void);
+/** History/Reprint からそれ以外の画面へ出るとき一覧バッファを捨てる（15↔16 は保持） */
+void xtouch_history_clear_tasks_on_leave_c(void);
 #endif
 #ifdef __cplusplus
 }

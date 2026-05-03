@@ -1324,7 +1324,7 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
 
 #ifdef __XTOUCH_PLATFORM_S3__
   /** GET /v1/user-service/my/tasks（deviceId なし）。
-   * History は 1 回取得（最大20件）に限定し、後続の after ページングは行わない。 */
+   * limit は XTOUCH_HISTORY_FETCH_PAGE_LIMIT まで。格納は xtouch_history_tasks[] なので XTOUCH_HISTORY_TASKS_MAX 件で打ち切る。after ページングは行わない。 */
   bool getMyTasks(int limit, const char *after = nullptr, char *out_next_after = nullptr, size_t out_next_after_size = 0)
   {
     if (out_next_after && out_next_after_size > 0)
@@ -1356,9 +1356,8 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
 
     (void)after; /* after は使わない（1回取得固定） */
     String host = _region == "China" ? "api.bambulab.cn" : "api.bambulab.com";
-    int req_limit = (limit <= 0 || limit > XTOUCH_HISTORY_TASKS_MAX) ? XTOUCH_HISTORY_TASKS_MAX : limit;
+    int req_limit = (limit <= 0 || limit > XTOUCH_HISTORY_FETCH_PAGE_LIMIT) ? XTOUCH_HISTORY_FETCH_PAGE_LIMIT : limit;
     uint32_t free_heap = ESP.getFreeHeap();
-    const int want_visible = req_limit;
     ConsoleVerbose.printf("[xPTouch][V][HIST] req_limit=%d free_heap=%u\n", req_limit, (unsigned)free_heap);
 
     int n = 0;
@@ -1543,7 +1542,9 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
                 last_raw_id[sizeof(last_raw_id) - 1] = '\0';
               }
 
-              const bool want_copy = (n < want_visible && n < XTOUCH_HISTORY_TASKS_MAX);
+              /* API は FETCH_PAGE_LIMIT 件まで読むが、RAM のタスク配列は TASKS_MAX まで */
+              const bool want_copy =
+                  (n < XTOUCH_HISTORY_TASKS_MAX && n < XTOUCH_HISTORY_FETCH_PAGE_LIMIT);
               char device_model[64];
               device_model[0] = '\0';
               cloud_parse_json_str_key(obj_start, obj_len_now, "deviceModel", device_model, sizeof(device_model));

@@ -44,9 +44,12 @@ lv_obj_t *ui_historyComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_flex_grow(list, 1);
     lv_obj_set_flex_flow(list, LV_FLEX_FLOW_COLUMN);
     lv_obj_set_scrollbar_mode(list, LV_SCROLLBAR_MODE_AUTO);
+    /* 上端よりさらに引っ張るオーバースクロール（History の pull で Cloud 再取得） */
+    lv_obj_add_flag(list, LV_OBJ_FLAG_SCROLL_ELASTIC);
     lv_obj_set_style_pad_row(list, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_top(list, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_bottom(list, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    /* 件数が少ないときでも縦スクロール・上端オーバースクロールが発生しやすくする（pull で履歴更新） */
+    lv_obj_set_style_pad_bottom(list, 72, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_left(list, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_right(list, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(list, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
