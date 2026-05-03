@@ -203,6 +203,10 @@ void xtouch_mqtt_load_other_printers()
         otherPrinters[idx].valid = 1;
         strncpy(otherPrinters[idx].dev_id, dev_id, 15);
         otherPrinters[idx].dev_id[15] = '\0';
+        if (p.value().containsKey("online"))
+            otherPrinters[idx].online = p.value()["online"].as<bool>() ? 1 : 0;
+        else
+            otherPrinters[idx].online = 1;
         otherPrinters[idx].print_status = XTOUCH_PRINT_STATUS_IDLE;
         otherPrinters[idx].mc_print_percent = 0;
         otherPrinters[idx].mc_left_time = 0;
@@ -365,6 +369,7 @@ void xtouch_mqtt_processPushStatusOther(int slot, JsonDocument &incomingJson)
 {
     if (slot < 0 || slot >= xtouch_other_printer_count || !otherPrinters[slot].valid)
         return;
+    otherPrinters[slot].online = 1;
     if (!incomingJson.containsKey("print"))
         return;
     JsonObject print = incomingJson["print"].as<JsonObject>();

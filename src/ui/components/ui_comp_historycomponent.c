@@ -164,11 +164,11 @@ lv_obj_t *ui_historyComponent_create(lv_obj_t *comp_parent)
         lv_obj_add_event_cb(reprintBtn, onHistoryReprint, LV_EVENT_CLICKED, NULL);
     }
 
-    /* 再入時は既存キャッシュを優先。空のときだけ fetch を開始する。 */
+    /* 空なら Cloud 取得。既に件数がある再入室は fetch せず、未取得カバーのみ SD/DL へ（初回 DL 失敗の取りこぼし対策） */
     if (xtouch_history_count <= 0)
-    {
         ui_msg_send(XTOUCH_HISTORY_FETCH, 0, 0);
-    }
+    else
+        ui_msg_send(XTOUCH_HISTORY_COVER_RETRY, 0, 0);
     return cui_historyComponent;
 }
 

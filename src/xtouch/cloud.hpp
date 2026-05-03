@@ -1148,17 +1148,19 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
 
   /** 現在のデバイスの最新タスクが task_id と一致するか簡易チェックする。
    *  GET /v1/user-service/my/tasks?limit=1&deviceId=xxx を叩き、先頭要素の id と比較するだけで、
-   *  xtouch_history_* などのグローバル状態は一切更新しない。 */
-  bool isCurrentTaskForDevice(const char *task_id)
+   *  xtouch_history_* などのグローバル状態は一切更新しない。
+   *  @param device_serial 省略または空なら xTouchSerialNumber（メイン）。Printers 他行は otherPrinters[].dev_id を渡す。 */
+  bool isCurrentTaskForDevice(const char *task_id, const char *device_serial = nullptr)
   {
     HttpLockGuard _g(this);
     if (!loggedIn || !task_id || !*task_id)
       return false;
-    if (!xTouchConfig.xTouchSerialNumber[0])
+    const char *dev = (device_serial && device_serial[0]) ? device_serial : xTouchConfig.xTouchSerialNumber;
+    if (!dev || !dev[0])
       return false;
 
     String host = _region == "China" ? "api.bambulab.cn" : "api.bambulab.com";
-    String path = String("/v1/user-service/my/tasks?limit=1&deviceId=") + String(xTouchConfig.xTouchSerialNumber);
+    String path = String("/v1/user-service/my/tasks?limit=1&deviceId=") + String(dev);
     String url = String("https://") + host + path;
 
     WiFiClientSecure &c = sslClient();

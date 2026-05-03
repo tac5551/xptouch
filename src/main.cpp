@@ -31,7 +31,7 @@
 
 #include "xtouch/cloud.hpp"
 #include "xtouch/neopixel.h"
-#include "xtouch/led.h"
+#include "xtouch/onboard_led.hpp"
 #include "xtouch/settings.h"
 #include "xtouch/net.h"
 #include "xtouch/firmware.h"

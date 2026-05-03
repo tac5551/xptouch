@@ -306,6 +306,8 @@ extern "C"
         int current_layer;
         int total_layers;
         unsigned char valid;
+        /** printer.json の online。false のとき MQTT が来なくても IDLE と誤表示しない。push_status 受信で 1 に戻す */
+        unsigned char online;
     } other_printer_status_t;
 
     extern other_printer_status_t otherPrinters[XTOUCH_OTHER_PRINTERS_MAX];

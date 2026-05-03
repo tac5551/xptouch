@@ -31,8 +31,7 @@ void xtouch_events_onOtaUpdateNow(lv_msg_t *m)
         xtouch_pubSubClient.disconnect();
     }
 
-    xTouchConfig.xTouchOTAEnabled = true;
-    xtouch_firmware_checkOnlineFirmwareUpdate();
+    xtouch_firmware_checkOnlineFirmwareUpdate(true);
 }
 
 void xtouch_events_onUnPair(lv_msg_t *m)

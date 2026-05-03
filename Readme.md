@@ -72,8 +72,6 @@ In cloud mode, BambuCloud restrictions may allow partial data retrieval, but MQT
 xptouchスクリーンは、BambuLabプリンターに革命的な機能を追加し、ユーザーエクスペリエンスを向上させ、高度な制御とモニタリング機能を提供します。
 この詳細なREADME.mdガイドでは、製品の機能、インストールプロセス、および各スクリーンの機能について説明します。
 
-**English**
-
 The xptouch screen adds advanced control and monitoring features to BambuLab printers.
 This README explains hardware options, installation, provisioning, and screen functions.
 
@@ -85,8 +83,6 @@ image image
 用途や入手性に合わせて、選択できます。
 各種サポートを進めていますがすべてに対応することは難しいため、2432S028もしくは、JC2432W328Rがいろいろなところから入手可能なため、お勧めです。
 2.4および3.2インチのモデルについてはコントローラーが同一のため恐らく使用可能ですが、テストは実施していません。
-
-**English**
 
 The project currently focuses on affordable CYD-class boards.
 2.8-inch models are the most recommended and easiest to source.
@@ -180,37 +176,34 @@ xtouchとかP1touch用に作られてているものがPrintableやMakerWorldに
 
 ### オプションハードウェア / Optional Hardware
 
-- **[DS18B20温度センサー](docs/temperature-sensor.md)**: チャンバー温度センサーが内蔵されていないプリンターの場合、外部DS18B20温度センサーを追加するオプションがあります。このセンサーは正確なチャンバー温度測定を提供し、xptouchスクリーンの機能を向上させます。スクリーンのコネクターは1.25 MZ JST 4Pです。
-- **[NeoPixel LED](https://s.click.aliexpress.com/e/_c4WmQpq5)**: NEOPIXEL LEDリボンを利用して、LEDステータスバーを追加するオプションがあります。ステータスバーは印刷中のステータスに応じて表現されます。
+- **[DS18B20温度センサー](docs/temperature-sensor.md)**: チャンバー温度センサーが内蔵されていないプリンターの場合、外部DS18B20温度センサーを追加するオプションがあります。このセンサーは正確なチャンバー温度測定を提供し、xptouchスクリーンの機能を向上させます。スクリーンのコネクターは1.25 MZ JST 4Pです。  
+  
+You can add an external for chamber temperature monitoring.
 
-**English**
+- **[NeoPixel LED](https://s.click.aliexpress.com/e/_c4WmQpq5)**: NEOPIXEL LEDリボンを利用して、LEDステータスバーを追加するオプションがあります。ステータスバーは印刷中のステータスに応じて表現されます。  
+  
+You can also add afor print status indication.
 
--  **[DS18B20 temperature sensor](docs/temperature-sensor.md)** :You can add an external for chamber temperature monitoring.
--  **[NeoPixel LED strip](https://s.click.aliexpress.com/e/_c4WmQpq5)** :You can also add afor print status indication.
-
-#### GPIO 配線（2.8インチ / 5インチ） 
+#### GPIO 配線（2.8インチ / 5インチ）
 
 - **2.8インチ環境（`env:esp32dev`）**
-  - **DS18B20**: 信号線 → GPIO22（`XTOUCH_CHAMBER_TEMP_PIN`）。3.3V / GND は基板の 3.3V / GND に接続し、4.7kΩ で信号線と 3.3V をプルアップしてください。
-  - **NeoPixel**: 信号線 → 基板により **GPIO21 または GPIO27**（CYD 2432S028R / JC2432W328R/C は 21、2432S028_7789 / 2432S028_9341 は 27）。5V 給電時も信号は 3.3V ロジックを前提にしてください。
+  - **DS18B20**: 信号線 → GPIO22（`XTOUCH_CHAMBER_TEMP_PIN`）。3.3V / GND は基板の 3.3V / GND に接続し、4.7kΩ で信号線と 3.3V をプルアップしてください。  
+    
+  GPIO22 (with 4.7k pull-up to 3.3V)  
+
+  - **NeoPixel**: 信号線 → 基板により **GPIO21 または GPIO27**（CYD 2432S028R / JC2432W328R/C は 21、2432S028_7789 / 2432S028_9341 は 27）。5V 給電時も信号は 3.3V ロジックを前提にしてください。  
+    
+  NeoPixel signal: GPIO21 or GPIO27 depending on board
+
 - **5インチ環境（`env:esp32-s3dev`, JC8048W550）**
   - **DS18B20**: 信号線 → GPIO18（5インチ時に `XTOUCH_CHAMBER_TEMP_PIN` を 18 に切替）。3.3V / GND と 4.7kΩ プルアップは 2.8インチと同様です。
   - **NeoPixel**: 信号線 → GPIO17（5インチ環境では `xTouchConfig.xTouchNeoPixelPinValue` が 17 に設定されます）。
-  - **RGB パネル / 表示の個体差調整**: 5インチのみ。手順は後述の **[5インチ LCD / Bus 設定](#lcd-json-5inch)** を参照。
+  - **RGB パネル / 表示の個体差調整**: 5インチのみ。手順は後述の **[5インチ LCD / Bus 設定](#lcd-json-5inch)** を参照。  
+    
+  DS18B20 signal: GPIO18  
+  NeoPixel signal: GPIO17
 
-####  GPIO Wiring (2.8-inch / 5-inch)
-
-- **2.8-inch (**`env:esp32dev`**)**
-  - DS18B20 signal: GPIO22 (with 4.7k pull-up to 3.3V)
-  - NeoPixel signal: GPIO21 or GPIO27 depending on board
-- **5-inch (**`env:esp32-s3dev`**, JC8048W550)**
-  - DS18B20 signal: GPIO18
-  - NeoPixel signal: GPIO17
-
-
-
-
-
+  
 温度センサーは以下のリンクで購入できます：
 
 - [DS18B20 温度センサーB](https://s.click.aliexpress.com/e/_oBYP2pE)
@@ -218,10 +211,10 @@ xtouchとかP1touch用に作られてているものがPrintableやMakerWorldに
 3Dモデルは以下のリンクで見つけることができます：  
 　- [モデルA](https://makerworld.com/en/models/19658)
 
-　`<img src="https://github.com/xperiments-in/xtouch/assets/417709/a8d14564-09e9-4d36-9ad9-10fd8f295c86" width="200"><br>`
+　<img src="https://github.com/xperiments-in/xtouch/assets/417709/a8d14564-09e9-4d36-9ad9-10fd8f295c86" width="200"><br>
 　- [モデルB](https://makerworld.com/en/models/42533)   
 
-　`<img src="https://github.com/xperiments-in/xtouch/assets/417709/22871bdf-ba37-44f0-a4b3-33c6352f7f86" width="300">`
+　<img src="https://github.com/xperiments-in/xtouch/assets/417709/22871bdf-ba37-44f0-a4b3-33c6352f7f86" width="300">
 
 ---
 
@@ -364,7 +357,7 @@ A1 Mini --> 01.04.00.00
 ### 初回プロビジョニング / Initial Provisioning
 
 Chrome拡張機能を初めて開く際は、以下の手順に従ってください：
-`<img src="readme-assets/ChromeExtention.png" width="300">`
+<img src="readme-assets/ChromeExtention.png" width="300">
 
 1. **必要な情報の入力**
   - 拡張機能は以下の詳細の入力を求めます：
@@ -495,7 +488,7 @@ xptouchスクリーンは、USBポートで電源供給します。
   **おすすめは、P1Sのコントローラーの背面に用意されているUSB電源ポートへの接続です。**
    　ケーブルを本体内に通す際には、右側にある穴を経由して導入してください。
    　[AMS Rizer](https://makerworld.com/ja/models/647484-ams-airflow-slim-riser-slider-p1p-p1s-x1c#profileId-573815)等を導入済みの方は加工して最短距離の配線も可能です。
-   　`<img src="readme-assets/USB_Route.png" width="300"><img src="readme-assets/simple_route.png" width="300">`
+   　<img src="readme-assets/USB_Route.png" width="300"><img src="readme-assets/simple_route.png" width="300">
 
 **English**
 
@@ -514,23 +507,22 @@ The following sections describe each UI page and its key functions.
 
 - 参考: 左メニューのアイコン文字マッピングは `tool/README_icomoon.md` を参照してください（例: `a=Home`, `e=Printers`）。
 - 参考画像: `tool/icon_export/ui_font_xlcd/`
-  - `<img src="tool/icon_export/ui_font_xlcd/icon_u_0075.bmp" width="96">`
-  - `<img src="tool/icon_export/ui_font_xlcd/icon_v_0076.bmp" width="96">`
-
+  - 
+  - 
 - **Home (`a`)**  
-  メインスクリーンを表示します。
+メインスクリーンを表示します。
 - **Printers (`e`)**  
-  複数プリンター監視画面を表示します。`LAN Only Mode` のとき、または Optional の `Multi Printer Monitor` が無効なときは非表示です。
+複数プリンター監視画面を表示します。`LAN Only Mode` のとき、または Optional の `Multi Printer Monitor` が無効なときは非表示です。
 - **History**  
-  印刷履歴画面を表示します。`LAN Only Mode` のとき、または Optional の `History screen` が無効なときは非表示です。
+印刷履歴画面を表示します。`LAN Only Mode` のとき、または Optional の `History screen` が無効なときは非表示です。
 - **Camera**  
-  カメラ画面を表示します。Optional の `A1/P1 Camera Stream` が有効で、対応モデル（A1/P1系）の場合のみ表示・遷移できます。
-- **Temp/Fan <img src="tool/icon_export/ui_font_xlcd/icon_u_0075.bmp" width="18">**  
-  温度/ファン画面を表示します。
+カメラ画面を表示します。Optional の `A1/P1 Camera Stream` が有効で、対応モデル（A1/P1系）の場合のみ表示・遷移できます。
+- **Temp/Fan ******  
+温度/ファン画面を表示します。
 - **Filament (`n`)**  
-  フィラメント/AMS 画面を表示します。
+フィラメント/AMS 画面を表示します。
 - **Settings (`d`)**  
-  設定画面を表示します。
+設定画面を表示します。
 
 **English**
 

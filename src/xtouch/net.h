@@ -267,11 +267,7 @@ inline bool getThumbnailUrlAndPathForSlot(int slot, char *url_out, size_t url_si
                 bambuStatus.image_url[sizeof(bambuStatus.image_url) - 1] = '\0';
                 url = bambuStatus.image_url;
             }
-            else
-            {
-                bambuStatus.task_id[0] = '\0';
-                bambuStatus.image_url[0] = '\0';
-            }
+            /* サムネ URL がまだ空（API遅延・レシピ準備中など）でも task_id は残し、次ティックで再解決 */
         }
         if (!url || !url[0])
             return false;
@@ -284,7 +280,8 @@ inline bool getThumbnailUrlAndPathForSlot(int slot, char *url_out, size_t url_si
         url = otherPrinters[idx].image_url;
         if ((!url || !url[0]) && allow_cloud_resolve && cloud.loggedIn && otherPrinters[idx].task_id[0] && strcmp(otherPrinters[idx].task_id, "0") != 0)
         {
-            if (!cloud.isCurrentTaskForDevice(otherPrinters[idx].task_id))
+            /* my/tasks はその行のプリンタの deviceId で見る（メイン固定だと他機の task_id が常に不一致になって消える） */
+            if (!cloud.isCurrentTaskForDevice(otherPrinters[idx].task_id, otherPrinters[idx].dev_id))
             {
                 otherPrinters[idx].task_id[0] = '\0';
                 otherPrinters[idx].image_url[0] = '\0';
@@ -295,11 +292,7 @@ inline bool getThumbnailUrlAndPathForSlot(int slot, char *url_out, size_t url_si
                 otherPrinters[idx].image_url[sizeof(otherPrinters[idx].image_url) - 1] = '\0';
                 url = otherPrinters[idx].image_url;
             }
-            else
-            {
-                otherPrinters[idx].task_id[0] = '\0';
-                otherPrinters[idx].image_url[0] = '\0';
-            }
+            /* getTaskThumbnailUrl 失敗時も task_id は残して再試行可能にする */
         }
         if (!url || !url[0])
             return false;

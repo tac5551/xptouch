@@ -79,9 +79,10 @@ void xtouch_firmware_onProgress(size_t currSize, size_t totalSize)
     lv_task_handler();
 }
 
-void xtouch_firmware_checkOnlineFirmwareUpdate(void)
+/* force: 手動「Update Now」用。true のとき OTA 設定に関わらずチェックする。起動時は false。 */
+void xtouch_firmware_checkOnlineFirmwareUpdate(bool force = false)
 {
-    if (!xTouchConfig.xTouchOTAEnabled)
+    if (!force && !xTouchConfig.xTouchOTAEnabled)
     {
         return;
     }
@@ -167,7 +168,7 @@ void xtouch_firmware_checkOnlineFirmwareUpdate(void)
                 }
                 else
                 {
-                    xtouch_firmware_checkOnlineFirmwareUpdate();
+                    xtouch_firmware_checkOnlineFirmwareUpdate(force);
                 }
             }
         }

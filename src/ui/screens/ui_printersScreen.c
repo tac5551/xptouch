@@ -144,6 +144,10 @@ static void update_one_row(int slot, lv_obj_t *row)
         status = otherPrinters[slot - 1].print_status;
     }
 
+    bool row_offline = false;
+    if (slot > 0 && slot - 1 < xtouch_other_printer_count && otherPrinters[slot - 1].valid)
+        row_offline = !otherPrinters[slot - 1].online;
+
     lv_label_set_text(nameLabel, name);
 
     /* プリンタ名の下に subtask_name（ファイル名）。長いときはラベルが横スクロール */
@@ -152,13 +156,15 @@ static void update_one_row(int slot, lv_obj_t *row)
         subtask_src = bambuStatus.subtask_name[0] ? bambuStatus.subtask_name : "";
     else if (slot - 1 < xtouch_other_printer_count && otherPrinters[slot - 1].valid)
         subtask_src = otherPrinters[slot - 1].subtask_name[0] ? otherPrinters[slot - 1].subtask_name : "";
+    if (row_offline)
+        subtask_src = "";
     lv_label_set_text(subtaskLabel, subtask_src);
 
     lv_slider_set_value(progressBar, percent, LV_ANIM_OFF);
     /* 印刷中(RUNNING/PAUSED/PREPARE)のみゲージ表示。それ以外(IDLE/FINISHED/FAILED 等)は非表示。 */
-    if (status == XTOUCH_PRINT_STATUS_RUNNING ||
-        status == XTOUCH_PRINT_STATUS_PAUSED ||
-        status == XTOUCH_PRINT_STATUS_PREPARE)
+    if (!row_offline && (status == XTOUCH_PRINT_STATUS_RUNNING ||
+                         status == XTOUCH_PRINT_STATUS_PAUSED ||
+                         status == XTOUCH_PRINT_STATUS_PREPARE))
         lv_obj_clear_flag(progressBar, LV_OBJ_FLAG_HIDDEN);
     else
         lv_obj_add_flag(progressBar, LV_OBJ_FLAG_HIDDEN);
@@ -168,7 +174,11 @@ static void update_one_row(int slot, lv_obj_t *row)
     _ui_seconds_to_timeleft((uint32_t)(left_time > 0 ? left_time : 0), timeBuf);
 
     /* Home と同様のイメージで、印刷中だけ Layer + 残り時間、それ以外はステータス文字を表示 */
-    if (status == XTOUCH_PRINT_STATUS_RUNNING ||
+    if (row_offline)
+    {
+        snprintf(layerBuf, sizeof(layerBuf), "Offline");
+    }
+    else if (status == XTOUCH_PRINT_STATUS_RUNNING ||
         status == XTOUCH_PRINT_STATUS_PAUSED ||
         status == XTOUCH_PRINT_STATUS_PREPARE)
     {
@@ -185,9 +195,9 @@ static void update_one_row(int slot, lv_obj_t *row)
     lv_obj_clear_flag(layerLabel, LV_OBJ_FLAG_HIDDEN);
 
     /* 印刷中のみボタン表示、終了時は非表示（スペースはそのまま）。ボタンはコンテナで子がラベル */
-    if (status == XTOUCH_PRINT_STATUS_RUNNING ||
+    if (!row_offline && (status == XTOUCH_PRINT_STATUS_RUNNING ||
         status == XTOUCH_PRINT_STATUS_PAUSED ||
-        status == XTOUCH_PRINT_STATUS_PREPARE)
+        status == XTOUCH_PRINT_STATUS_PREPARE))
     {
         lv_obj_clear_flag(pauseBtn, LV_OBJ_FLAG_HIDDEN);
         lv_obj_clear_flag(stopBtn, LV_OBJ_FLAG_HIDDEN);
@@ -210,7 +220,8 @@ static void update_one_row(int slot, lv_obj_t *row)
             tid = bambuStatus.task_id;
         else if (slot - 1 < xtouch_other_printer_count && otherPrinters[slot - 1].valid)
             tid = otherPrinters[slot - 1].task_id;
-        if ((status == XTOUCH_PRINT_STATUS_FINISHED || status == XTOUCH_PRINT_STATUS_FAILED) &&
+        if (!row_offline &&
+            (status == XTOUCH_PRINT_STATUS_FINISHED || status == XTOUCH_PRINT_STATUS_FAILED) &&
             tid && tid[0] && strcmp(tid, "0") != 0)
             lv_obj_clear_flag(reprintBtn, LV_OBJ_FLAG_HIDDEN);
         else
@@ -292,17 +303,22 @@ void ui_printers_on_other_update(lv_msg_t *m, void *user_data)
         }
     }
 
-    if (m && lv_msg_get_id(m) == XTOUCH_ON_OTHER_PRINTER_UPDATE && s_printers_thumbs_started)
+    /* サムネ完了は thumbnail 側が lv_msg_send(..., (void*)(slot+1)) で送る（ポインタ値は小さい）。
+     * Printers オープン直後は pushall 完了まで s_printers_thumbs_started が false の間があり、
+     * その前に DL が終わると通知だけ落ちてロゴのままになる。サムネ経路だけ常に img を更新する。
+     * MQTT の ui_msg_send 経路は構造体ポインタのため >=256 → 従来どおり一覧準備後だけ thumb を触る。 */
+    if (m && lv_msg_get_id(m) == XTOUCH_ON_OTHER_PRINTER_UPDATE)
     {
         const void *p = lv_msg_get_payload(m);
         if (p)
         {
             int slot;
-            if ((uintptr_t)p < 256)
-                slot = (int)(intptr_t)p - 1;  /* サムネ側: slot+1 で送っている */
+            bool thumb_slot_payload = ((uintptr_t)p < 256u);
+            if (thumb_slot_payload)
+                slot = (int)(intptr_t)p - 1; /* サムネ側: slot+1 */
             else
-                slot = (int)((const struct XTOUCH_MESSAGE_DATA *)p)->data;  /* MQTT: data = 行インデックス */
-            if (slot >= 0 && slot < PRINTERS_ROW_MAX)
+                slot = (int)((const struct XTOUCH_MESSAGE_DATA *)p)->data; /* MQTT: data = 行インデックス */
+            if (slot >= 0 && slot < PRINTERS_ROW_MAX && (thumb_slot_payload || s_printers_thumbs_started))
                 thumb_refresh_slot(slot);
         }
     }

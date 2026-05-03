@@ -161,6 +161,8 @@ void onPrintersPause(lv_event_t *e)
 {
     lv_obj_t *target = lv_event_get_target(e);
     int slot = (int)(intptr_t)lv_obj_get_user_data(target);
+    if (slot > 0 && slot - 1 < xtouch_other_printer_count && otherPrinters[slot - 1].valid && !otherPrinters[slot - 1].online)
+        return;
     int status = XTOUCH_PRINT_STATUS_IDLE;
     if (slot == 0)
         status = bambuStatus.print_status;
@@ -183,6 +185,9 @@ void onPrintersStop(lv_event_t *e)
 {
     lv_obj_t *target = lv_event_get_target(e);
     _printers_slot = (int)(intptr_t)lv_obj_get_user_data(target);
+    if (_printers_slot > 0 && _printers_slot - 1 < xtouch_other_printer_count && otherPrinters[_printers_slot - 1].valid &&
+        !otherPrinters[_printers_slot - 1].online)
+        return;
     ui_confirmPanel_show(LV_SYMBOL_WARNING " Cancel Print?", onPrintersStopConfirm);
 }
 
@@ -190,6 +195,8 @@ void onPrintersReprint(lv_event_t *e)
 {
     lv_obj_t *target = lv_event_get_target(e);
     int slot = (int)(intptr_t)lv_obj_get_user_data(target);
+    if (slot > 0 && slot - 1 < xtouch_other_printer_count && otherPrinters[slot - 1].valid && !otherPrinters[slot - 1].online)
+        return;
     const char *tid = NULL;
     if (slot == 0)
         tid = bambuStatus.task_id;

@@ -620,7 +620,8 @@ static void xtouch_history_on_reprint_printer_changed(void *user_data, lv_msg_t 
 {
   (void)user_data;
   (void)m;
-  if (xtouch_history_selected_ams_map_count <= 0)
+  /* -1=詳細未取得のときだけスキップ。0件マッピングでもプリンタ切替後の AMS 表示更新が必要 */
+  if (xtouch_history_selected_ams_map_count < 0)
     return;
   xtouch_history_reprint_recompute_default_picks();
   /* プリンタ変更時は選択先 AMS を画面へ反映する */
@@ -673,6 +674,30 @@ static void xtouch_history_on_thumbnails_hide_changed(lv_msg_t *m, void *user_da
   lv_msg_send(XTOUCH_HISTORY_REPRINT_DETAIL_READY, NULL);
 }
 
+/** History 再入室時: 一覧は残っているが初回カバー DL に失敗した行を再度試す（thumbnail の hide 変更と同じ処理本体） */
+static void xtouch_history_on_cover_retry(lv_msg_t *m, void *user_data)
+{
+  (void)m;
+  (void)user_data;
+  if (xTouchConfig.xTouchHideAllThumbnails)
+    return;
+  int n = (xtouch_history_count < XTOUCH_HISTORY_COVER_SLOTS) ? xtouch_history_count : XTOUCH_HISTORY_COVER_SLOTS;
+  for (int row = 0; row < n; row++)
+  {
+    if (!xtouch_history_tasks[row].valid)
+      continue;
+    char path[64];
+    if (xtouch_history_cover_path_for_task_id(xtouch_history_tasks[row].task_id, path, sizeof(path)) != 0)
+      continue;
+    if (xtouch_sdcard_exists(path))
+      (void)xtouch_history_cover_load_path(row, path);
+    else if (xtouch_history_tasks[row].cover_url[0])
+      xtouch_history_enqueue_cover_row(row);
+  }
+  struct XTOUCH_MESSAGE_DATA eventData = { 0, 0 };
+  lv_msg_send(XTOUCH_HISTORY_LIST_REFRESH, &eventData);
+}
+
 static void xtouch_history_subscribe_events_impl(void)
 {
   if (s_history_done_queue == NULL)
@@ -697,6 +722,7 @@ static void xtouch_history_subscribe_events_impl(void)
     }
   }
   lv_msg_subscribe(XTOUCH_HISTORY_FETCH, (lv_msg_subscribe_cb_t)xtouch_history_on_fetch, NULL);
+  lv_msg_subscribe(XTOUCH_HISTORY_COVER_RETRY, (lv_msg_subscribe_cb_t)xtouch_history_on_cover_retry, NULL);
   lv_msg_subscribe(XTOUCH_HISTORY_REPRINT_WITH_OPTIONS, (lv_msg_subscribe_cb_t)xtouch_history_on_reprint_with_options, NULL);
   lv_msg_subscribe(XTOUCH_HISTORY_REPRINT_DETAIL_FETCH, (lv_msg_subscribe_cb_t)xtouch_history_on_reprint_detail_fetch, NULL);
   lv_msg_subscribe(XTOUCH_HISTORY_REPRINT_SLOT_PICKED, (lv_msg_subscribe_cb_t)xtouch_history_on_reprint_slot_picked, NULL);

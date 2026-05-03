@@ -104,6 +104,8 @@ static void hrprint_apply_metrics_by_resolution(void)
 static lv_obj_t *s_printer_dd = NULL;
 static lv_timer_t *s_printer_list_style_timer = NULL;
 static lv_timer_t *s_printer_changed_timer = NULL;
+/** pushall→MQTT の AMS が遅れて届く場合の再計算・再描画（1回） */
+static lv_timer_t *s_printer_changed_retry_timer = NULL;
 static lv_obj_t *s_cover_img = NULL;
 static lv_obj_t *s_title_lbl = NULL;
 static lv_obj_t *s_info_lbl = NULL;
@@ -339,6 +341,13 @@ static void on_printer_dd_clicked(lv_event_t *e)
     lv_timer_set_repeat_count(s_printer_list_style_timer, 1);
 }
 
+static void printer_changed_retry_cb(lv_timer_t *t)
+{
+    (void)t;
+    s_printer_changed_retry_timer = NULL;
+    ui_msg_send(XTOUCH_HISTORY_REPRINT_PRINTER_CHANGED, 0, 0);
+}
+
 static void printer_changed_deferred_cb(lv_timer_t *t)
 {
     (void)t;
@@ -368,8 +377,17 @@ static void on_printer_dd_value_changed(lv_event_t *e)
         lv_timer_del(s_printer_changed_timer);
         s_printer_changed_timer = NULL;
     }
-    s_printer_changed_timer = lv_timer_create(printer_changed_deferred_cb, 750, NULL);
+    if (s_printer_changed_retry_timer)
+    {
+        lv_timer_del(s_printer_changed_retry_timer);
+        s_printer_changed_retry_timer = NULL;
+    }
+    /* 先に pushall；短すぎると他機の xtouch_other_printer_trays が未更新のまま再描画される */
+    s_printer_changed_timer = lv_timer_create(printer_changed_deferred_cb, 1000, NULL);
     lv_timer_set_repeat_count(s_printer_changed_timer, 1);
+    /* 遅れて届く push_status の AMS を拾うためもう一度だけ */
+    s_printer_changed_retry_timer = lv_timer_create(printer_changed_retry_cb, 2400, NULL);
+    lv_timer_set_repeat_count(s_printer_changed_retry_timer, 1);
 }
 
 static void populate_summary_panel(void)
