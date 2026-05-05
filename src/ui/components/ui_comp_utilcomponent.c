@@ -38,7 +38,7 @@ void onXTouchUtilPrintStatus(lv_event_t *e)
 
     switch (bambuStatus.print_status)
     {
-    case XTOUCH_PRINT_STATUS_PAUSED:
+    case XPTOUCH_PRINT_STATUS_PAUSED:
 
         lv_obj_add_state(button1, LV_STATE_DISABLED);
         lv_obj_add_state(button2, LV_STATE_DISABLED);
@@ -46,23 +46,23 @@ void onXTouchUtilPrintStatus(lv_event_t *e)
         lv_obj_add_state(button4, LV_STATE_DISABLED);
 
         break;
-    case XTOUCH_PRINT_STATUS_RUNNING:
+    case XPTOUCH_PRINT_STATUS_RUNNING:
 
         lv_obj_add_state(button1, LV_STATE_DISABLED);
         lv_obj_add_state(button2, LV_STATE_DISABLED);
         lv_obj_add_state(button3, LV_STATE_DISABLED);
         lv_obj_add_state(button4, LV_STATE_DISABLED);
         break;
-    case XTOUCH_PRINT_STATUS_PREPARE:
+    case XPTOUCH_PRINT_STATUS_PREPARE:
         lv_obj_add_state(button1, LV_STATE_DISABLED);
         lv_obj_add_state(button2, LV_STATE_DISABLED);
         lv_obj_add_state(button3, LV_STATE_DISABLED);
         lv_obj_add_state(button4, LV_STATE_DISABLED);
         break;
 
-    case XTOUCH_PRINT_STATUS_IDLE:
-    case XTOUCH_PRINT_STATUS_FINISHED:
-    case XTOUCH_PRINT_STATUS_FAILED:
+    case XPTOUCH_PRINT_STATUS_IDLE:
+    case XPTOUCH_PRINT_STATUS_FINISHED:
+    case XPTOUCH_PRINT_STATUS_FAILED:
         lv_obj_clear_state(button1, LV_STATE_DISABLED);
         lv_obj_clear_state(button2, LV_STATE_DISABLED);
         /* button3 (Dummy3) は常時無効のまま */

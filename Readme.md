@@ -187,7 +187,7 @@ You can also add afor print status indication.
 #### GPIO 配線（2.8インチ / 5インチ）
 
 - **2.8インチ環境（`env:esp32dev`）**
-  - **DS18B20**: 信号線 → GPIO22（`XTOUCH_CHAMBER_TEMP_PIN`）。3.3V / GND は基板の 3.3V / GND に接続し、4.7kΩ で信号線と 3.3V をプルアップしてください。  
+  - **DS18B20**: 信号線 → GPIO22（`XPTOUCH_CHAMBER_TEMP_PIN`）。3.3V / GND は基板の 3.3V / GND に接続し、4.7kΩ で信号線と 3.3V をプルアップしてください。  
     
   GPIO22 (with 4.7k pull-up to 3.3V)  
 
@@ -196,8 +196,8 @@ You can also add afor print status indication.
   NeoPixel signal: GPIO21 or GPIO27 depending on board
 
 - **5インチ環境（`env:esp32-s3dev`, JC8048W550）**
-  - **DS18B20**: 信号線 → GPIO18（5インチ時に `XTOUCH_CHAMBER_TEMP_PIN` を 18 に切替）。3.3V / GND と 4.7kΩ プルアップは 2.8インチと同様です。
-  - **NeoPixel**: 信号線 → GPIO17（5インチ環境では `xTouchConfig.xTouchNeoPixelPinValue` が 17 に設定されます）。
+  - **DS18B20**: 信号線 → GPIO18（5インチ時に `XPTOUCH_CHAMBER_TEMP_PIN` を 18 に切替）。3.3V / GND と 4.7kΩ プルアップは 2.8インチと同様です。
+  - **NeoPixel**: 信号線 → GPIO17（5インチ環境では `xPTouchConfig.xTouchNeoPixelPinValue` が 17 に設定されます）。
   - **RGB パネル / 表示の個体差調整**: 5インチのみ。手順は後述の **[5インチ LCD / Bus 設定](#lcd-json-5inch)** を参照。  
     
   DS18B20 signal: GPIO18  
@@ -769,7 +769,7 @@ Please keep the project credits and upstream references.
 
 - 本プロジェクトは教育・研究目的で開発されています
 - Bambulab Cloudを利用したサービスのため、提供元の仕様変更などにより使用できなくなる可能性があります。
-- このプロジェクトはXTOUCHの拡張を行い、ボード対応を追加していますが、すべての機能の動作を保証するものではありません。
+- このプロジェクトはXPTOUCHの拡張を行い、ボード対応を追加していますが、すべての機能の動作を保証するものではありません。
 - 参照元プロジェクトの制限によりXPtouchの商用利用は全面的に禁止します。
 - オリジナルプロジェクトの開発者には問い合わせしないでください
 

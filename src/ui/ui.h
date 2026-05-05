@@ -31,9 +31,9 @@ extern "C"
 #include "components/ui_comp_hook.h"
 #include "ui_events.h"
 
-  lv_timer_t *xtouch_screen_onScreenOffTimer;
-  lv_timer_t *xtouch_screen_onLEDOffTimer;
-  lv_timer_t *xtouch_ssdp_onButtonTimerTimer;
+  lv_timer_t *xptouch_screen_onScreenOffTimer;
+  lv_timer_t *xptouch_screen_onLEDOffTimer;
+  lv_timer_t *xptouch_ssdp_onButtonTimerTimer;
   // SCREEN: ui_controlScreen
   void ui_introScreen_screen_init(void);
   void ui_homeScreen_screen_init(void);
@@ -52,7 +52,7 @@ extern "C"
   void ui_utilNozzleChangeScreen_screen_init(void);
   void ui_amsEditScreen_screen_init(void);
   void ui_amsEditColorScreen_screen_init(void);
-#ifdef __XTOUCH_PLATFORM_S3__
+#ifdef __XPTOUCH_PLATFORM_S3__
   void ui_printersScreen_screen_init(void);
   void ui_historyScreen_screen_init(void);
   void ui_historyReprintScreen_screen_init(void);
@@ -138,7 +138,7 @@ extern "C"
   lv_obj_t *ui_amsEditComponent;
   lv_obj_t *ui_amsEditColorScreen;
   lv_obj_t *ui_amsEditColorComponent;
-#ifdef __XTOUCH_PLATFORM_S3__
+#ifdef __XPTOUCH_PLATFORM_S3__
   lv_obj_t *ui_printersScreen;
   lv_obj_t *ui_printersContentPanel;
   extern lv_obj_t *ui_printersListContainer;
@@ -154,20 +154,20 @@ extern "C"
   extern lv_obj_t *ui_homeThumbImg;
 #endif
 
-  void ui_event____initial_actions0(lv_event_t *e);
-  lv_obj_t *ui____initial_actions0;
+  void ui_event_initial_actions0(lv_event_t *e);
+  lv_obj_t *ui_initial_actions0;
 
   LV_FONT_DECLARE(ui_font_xlcd);
-#ifdef __XTOUCH_SCREEN_S3_050__ 
+#ifdef __XPTOUCH_SCREEN_S3_050__ 
   LV_FONT_DECLARE(ui_font_xlcd48);
 #endif
 
   LV_FONT_DECLARE(ui_font_xlcdmin);
-#if defined(__XTOUCH_SCREEN_S3_050__)
+#if defined(__XPTOUCH_SCREEN_S3_050__)
   /* 5インチのみ: 日本語ファイル名用 Noto 28 */
-  /* TODO: __XTOUCH_SCREEN_S3_028__ 向けに日本語フォント（例: Noto 14/16）を追加し、機種別に切り替える */
+  /* TODO: __XPTOUCH_SCREEN_S3_028__ 向けに日本語フォント（例: Noto 14/16）を追加し、機種別に切り替える */
   LV_FONT_DECLARE(lv_font_notosans_28);
-#elif defined(__XTOUCH_SCREEN_S3_028__) || defined(__XTOUCH_SCREEN_S3_3248__)
+#elif defined(__XPTOUCH_SCREEN_S3_028__) || defined(__XPTOUCH_SCREEN_S3_3248__)
   LV_FONT_DECLARE(lv_font_notosans_14);
 #endif
 
@@ -192,14 +192,14 @@ extern "C"
   extern lv_img_dsc_t img_logo2;
   void ui_init(void);
 
-  bool xtouch_bblp_is_p1p();
-  bool xtouch_bblp_is_p1Series();
-  bool xtouch_bblp_is_a1();
-  bool xtouch_bblp_is_a1mini();
-  bool xtouch_bblp_is_a1Series();
-  bool xtouch_bblp_is_a1p1Series();
-  bool xtouch_bblp_is_x1();
-  bool xtouch_bblp_is_x1s();
+  bool xptouch_bblp_is_p1p();
+  bool xptouch_bblp_is_p1Series();
+  bool xptouch_bblp_is_a1();
+  bool xptouch_bblp_is_a1mini();
+  bool xptouch_bblp_is_a1Series();
+  bool xptouch_bblp_is_a1p1Series();
+  bool xptouch_bblp_is_x1();
+  bool xptouch_bblp_is_x1s();
 
 #ifdef __cplusplus
 } /*extern "C"*/

@@ -15,83 +15,83 @@ LGFX tft;
 #include "xtouch/globals.h"
 #include "xtouch/debug.h"
 
-bool xtouch_screen_touchFromPowerOff = false;
-bool xtouch_screen_neoPixelFromPowerOff = false;
+bool xptouch_screen_touchFromPowerOff = false;
+bool xptouch_screen_neoPixelFromPowerOff = false;
 
-void xtouch_screen_setBrightness(byte brightness)
+void xptouch_screen_setBrightness(byte brightness)
 {
     tft.setBrightness(brightness);
 }
 
 
 
-void xtouch_screen_sleep()
+void xptouch_screen_sleep()
 {
-    xtouch_screen_touchFromPowerOff = true;
-    if (xTouchConfig.xTouchStackChanEnabled == true)
+    xptouch_screen_touchFromPowerOff = true;
+    if (xPTouchConfig.xTouchStackChanEnabled == true)
     {
          loadScreen(9);
     }
     else
     {
-        xtouch_screen_setBrightness(0);
+        xptouch_screen_setBrightness(0);
     }
 }
 
-void xtouch_screen_wakeUp()
+void xptouch_screen_wakeUp()
 {
     ConsoleInfo.println("[xPTouch][I][SCREEN] Wake Up");
-    if (xtouch_screen_onScreenOffTimer != NULL) { // NULLチェックを追加
-        lv_timer_reset(xtouch_screen_onScreenOffTimer);
+    if (xptouch_screen_onScreenOffTimer != NULL) { // NULLチェックを追加
+        lv_timer_reset(xptouch_screen_onScreenOffTimer);
     }
-    xtouch_screen_touchFromPowerOff = false;
+    xptouch_screen_touchFromPowerOff = false;
     loadScreen(0);
-    xtouch_screen_setBrightness(xTouchConfig.xTouchBacklightLevel);
-    if (xTouchConfig.xTouchChamberLedOnWake && !bambuStatus.chamberLed)
+    xptouch_screen_setBrightness(xPTouchConfig.xTouchBacklightLevel);
+    if (xPTouchConfig.xTouchChamberLedOnWake && !bambuStatus.chamberLed)
     {
-        lv_msg_send(XTOUCH_COMMAND_LIGHT_TOGGLE, NULL);
+        lv_msg_send(XPTOUCH_COMMAND_LIGHT_TOGGLE, NULL);
     }
 }
 
-void xtouch_screen_onScreenTimeout(lv_timer_t *timer)
+void xptouch_screen_onScreenTimeout(lv_timer_t *timer)
 {
-    if (xTouchConfig.currentScreenIndex == 17)
+    if (xPTouchConfig.currentScreenIndex == 17)
     {
         return;
     }
 
-    if (bambuStatus.print_status == XTOUCH_PRINT_STATUS_RUNNING && xTouchConfig.xTouchWakeDuringPrint == true)
+    if (bambuStatus.print_status == XPTOUCH_PRINT_STATUS_RUNNING && xPTouchConfig.xTouchWakeDuringPrint == true)
     {
         return;
     }
 
-    if (xTouchConfig.xTouchTFTOFFValue < XTOUCH_LCD_MIN_SLEEP_TIME)
+    if (xPTouchConfig.xTouchTFTOFFValue < XPTOUCH_LCD_MIN_SLEEP_TIME)
     {
         return;
     }
 
     ConsoleInfo.println("[xPTouch][I][SCREEN] Screen Off");
-    xtouch_screen_sleep();
+    xptouch_screen_sleep();
 
 }
 
-void xtouch_screen_onLEDOff(lv_timer_t *timer)
+void xptouch_screen_onLEDOff(lv_timer_t *timer)
 {
 
-    if (bambuStatus.print_status == XTOUCH_PRINT_STATUS_RUNNING && bambuStatus.camera_timelapse == true)
+    if (bambuStatus.print_status == XPTOUCH_PRINT_STATUS_RUNNING && bambuStatus.camera_timelapse == true)
     {
         return;
     }
-    if (bambuStatus.print_status == XTOUCH_PRINT_STATUS_RUNNING && xTouchConfig.xTouchWakeDuringPrint == true)
+    if (bambuStatus.print_status == XPTOUCH_PRINT_STATUS_RUNNING && xPTouchConfig.xTouchWakeDuringPrint == true)
     {
         return;
     }
-#ifdef __XTOUCH_PLATFORM_S3__
-    if (xTouchConfig.currentScreenIndex == 17)
+#ifdef __XPTOUCH_PLATFORM_S3__
+    if (xPTouchConfig.currentScreenIndex == 17)
         return;
 #endif
 
-    if (xTouchConfig.xTouchLEDOffValue < XTOUCH_LIGHT_MIN_SLEEP_TIME || xTouchConfig.xTouchLEDOffValue == 0)
+    if (xPTouchConfig.xTouchLEDOffValue < XPTOUCH_LIGHT_MIN_SLEEP_TIME || xPTouchConfig.xTouchLEDOffValue == 0)
     {
         return;
     }
@@ -100,89 +100,89 @@ void xtouch_screen_onLEDOff(lv_timer_t *timer)
     if (bambuStatus.chamberLed == true)
     {
         ConsoleInfo.println("[xPTouch][I][LED] LED Off");
-        lv_msg_send(XTOUCH_COMMAND_LIGHT_TOGGLE, NULL);
+        lv_msg_send(XPTOUCH_COMMAND_LIGHT_TOGGLE, NULL);
     }
 }
 
-void xtouch_screen_setupScreenTimer()
+void xptouch_screen_setupScreenTimer()
 {
-    xtouch_screen_onScreenOffTimer = lv_timer_create(xtouch_screen_onScreenTimeout, xTouchConfig.xTouchTFTOFFValue * 1000 * 60, NULL);
-    lv_timer_pause(xtouch_screen_onScreenOffTimer);
+    xptouch_screen_onScreenOffTimer = lv_timer_create(xptouch_screen_onScreenTimeout, xPTouchConfig.xTouchTFTOFFValue * 1000 * 60, NULL);
+    lv_timer_pause(xptouch_screen_onScreenOffTimer);
 }
 
-void xtouch_screen_startScreenTimer()
+void xptouch_screen_startScreenTimer()
 {
     ConsoleInfo.println("[xPTouch][I][SCREEN] Screen Resume");
-    lv_timer_resume(xtouch_screen_onScreenOffTimer);
-    lv_timer_reset(xtouch_screen_onScreenOffTimer);
+    lv_timer_resume(xptouch_screen_onScreenOffTimer);
+    lv_timer_reset(xptouch_screen_onScreenOffTimer);
 }
 
-void xtouch_screen_setScreenTimer(uint32_t period)
+void xptouch_screen_setScreenTimer(uint32_t period)
 {
     ConsoleInfo.println("[xPTouch][I][SCREEN] Screen SetPeriod");
-    lv_timer_set_period(xtouch_screen_onScreenOffTimer, period);
-    lv_timer_reset(xtouch_screen_onScreenOffTimer);
+    lv_timer_set_period(xptouch_screen_onScreenOffTimer, period);
+    lv_timer_reset(xptouch_screen_onScreenOffTimer);
 }
 
-void xtouch_screen_setupLEDOffTimer()
+void xptouch_screen_setupLEDOffTimer()
 {
-    xtouch_screen_onLEDOffTimer = lv_timer_create(xtouch_screen_onLEDOff, xTouchConfig.xTouchLEDOffValue * 1000 * 60, NULL);
-    lv_timer_pause(xtouch_screen_onLEDOffTimer);
+    xptouch_screen_onLEDOffTimer = lv_timer_create(xptouch_screen_onLEDOff, xPTouchConfig.xTouchLEDOffValue * 1000 * 60, NULL);
+    lv_timer_pause(xptouch_screen_onLEDOffTimer);
 }
 
-void xtouch_screen_startLEDOffTimer()
+void xptouch_screen_startLEDOffTimer()
 {
     ConsoleInfo.println("[xPTouch][I][SCREEN] LED off Resume");
-    lv_timer_resume(xtouch_screen_onLEDOffTimer);
-    lv_timer_reset(xtouch_screen_onLEDOffTimer);
+    lv_timer_resume(xptouch_screen_onLEDOffTimer);
+    lv_timer_reset(xptouch_screen_onLEDOffTimer);
 }
 
-void xtouch_screen_stopLEDOffTimer()
+void xptouch_screen_stopLEDOffTimer()
 {
     ConsoleInfo.println("[xPTouch][I][SCREEN] LED off Stop");
-    lv_timer_pause(xtouch_screen_onLEDOffTimer);
-    lv_timer_reset(xtouch_screen_onLEDOffTimer);
+    lv_timer_pause(xptouch_screen_onLEDOffTimer);
+    lv_timer_reset(xptouch_screen_onLEDOffTimer);
 }
-void xtouch_screen_setLEDOffTimer(uint32_t period)
+void xptouch_screen_setLEDOffTimer(uint32_t period)
 {
     ConsoleInfo.println("[xPTouch][I][LED] LED off SetPeriod");
-    lv_timer_set_period(xtouch_screen_onLEDOffTimer, period);
-    lv_timer_reset(xtouch_screen_onLEDOffTimer);
+    lv_timer_set_period(xptouch_screen_onLEDOffTimer, period);
+    lv_timer_reset(xptouch_screen_onLEDOffTimer);
 }
 
-void xtouch_screen_invertColors()
+void xptouch_screen_invertColors()
 {
-    tft.invertDisplay(xTouchConfig.xTouchTFTInvert);
+    tft.invertDisplay(xPTouchConfig.xTouchTFTInvert);
 }
 
-byte xtouch_screen_getTFTFlip()
+byte xptouch_screen_getTFTFlip()
 {
-    byte val = xtouch_eeprom_read(XTOUCH_EEPROM_POS_TFTFLIP);
+    byte val = xptouch_eeprom_read(XPTOUCH_EEPROM_POS_TFTFLIP);
     ConsoleInfo.println("[xPTouch][I][SCREEN FLIP] " + String(val));
-    xTouchConfig.xTouchTFTFlip = val;
+    xPTouchConfig.xTouchTFTFlip = val;
     return val;
 }
 
-void xtouch_screen_setTFTFlip(byte mode)
+void xptouch_screen_setTFTFlip(byte mode)
 {
-    xTouchConfig.xTouchTFTFlip = mode;
+    xPTouchConfig.xTouchTFTFlip = mode;
     ConsoleInfo.println("[xPTouch][I][SCREEN FLIP] Set : " + String(mode));
-    xtouch_eeprom_write(XTOUCH_EEPROM_POS_TFTFLIP, mode);
+    xptouch_eeprom_write(XPTOUCH_EEPROM_POS_TFTFLIP, mode);
 }
 
-void xtouch_screen_toggleTFTFlip()
+void xptouch_screen_toggleTFTFlip()
 {
-    xtouch_screen_setTFTFlip(!xtouch_screen_getTFTFlip());
-    xtouch_resetTouchConfig();
+    xptouch_screen_setTFTFlip(!xptouch_screen_getTFTFlip());
+    xptouch_resetTouchConfig();
 }
 
-void xtouch_screen_setupTFTFlip()
+void xptouch_screen_setupTFTFlip()
 {
-    byte eepromTFTFlip = xtouch_screen_getTFTFlip();
+    byte eepromTFTFlip = xptouch_screen_getTFTFlip();
     tft.setRotation(eepromTFTFlip == 1 ? 3 : 1);
 }
 
-void xtouch_screen_dispFlush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p)
+void xptouch_screen_dispFlush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p)
 {
     uint32_t w = (area->x2 - area->x1 + 1);
     uint32_t h = (area->y2 - area->y1 + 1);
@@ -198,20 +198,20 @@ void xtouch_screen_dispFlush(lv_disp_drv_t *disp, const lv_area_t *area, lv_colo
     lv_disp_flush_ready(disp);
 }
 
-void xtouch_screen_touchRead(lv_indev_drv_t *indev_driver, lv_indev_data_t *data)
+void xptouch_screen_touchRead(lv_indev_drv_t *indev_driver, lv_indev_data_t *data)
 {
     uint16_t touchX, touchY;
     bool touched = tft.getTouch(&touchX, &touchY);
     if (touched)
     {
-        if (xtouch_screen_onScreenOffTimer != NULL) { // NULLチェック
-            lv_timer_reset(xtouch_screen_onScreenOffTimer);
+        if (xptouch_screen_onScreenOffTimer != NULL) { // NULLチェック
+            lv_timer_reset(xptouch_screen_onScreenOffTimer);
         }
 
         // dont pass first touch after power on
-        if (xtouch_screen_touchFromPowerOff)
+        if (xptouch_screen_touchFromPowerOff)
         {
-            xtouch_screen_wakeUp();
+            xptouch_screen_wakeUp();
             while (tft.getTouch(&touchX, &touchY))
                 ;
             return;
@@ -227,19 +227,19 @@ void xtouch_screen_touchRead(lv_indev_drv_t *indev_driver, lv_indev_data_t *data
     }
 }
 
-void xtouch_screen_setup()
+void xptouch_screen_setup()
 {
 
     ConsoleInfo.println("[xPTouch][I][SCREEN] Setup");
 
     tft.begin();
 
-    xtouch_screen_sleep();
+    xptouch_screen_sleep();
 
-    xtouch_screen_setupTFTFlip();
+    xptouch_screen_setupTFTFlip();
 
-    xtouch_screen_setBrightness(255);
-    xtouch_screen_touchFromPowerOff = false;
+    xptouch_screen_setBrightness(255);
+    xptouch_screen_touchFromPowerOff = false;
 
     // 実際の物理画面の解像度を取得
     screenWidth = tft.height();
@@ -255,7 +255,7 @@ void xtouch_screen_setup()
     lv_disp_drv_init(&disp_drv);
     disp_drv.hor_res = screenHeight;
     disp_drv.ver_res = screenWidth;
-    disp_drv.flush_cb = xtouch_screen_dispFlush;
+    disp_drv.flush_cb = xptouch_screen_dispFlush;
     disp_drv.draw_buf = &draw_buf;
     lv_disp_drv_register(&disp_drv);
 
@@ -263,7 +263,7 @@ void xtouch_screen_setup()
     static lv_indev_drv_t indev_drv;
     lv_indev_drv_init(&indev_drv);
     indev_drv.type = LV_INDEV_TYPE_POINTER;
-    indev_drv.read_cb = xtouch_screen_touchRead;
+    indev_drv.read_cb = xptouch_screen_touchRead;
     lv_indev_drv_register(&indev_drv);
 
     /*Initialize the graphics library */

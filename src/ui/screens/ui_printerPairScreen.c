@@ -6,7 +6,7 @@ void ui_event_printerPairScreenSubmitButton(lv_event_t *e)
     lv_obj_t *target = lv_event_get_target(e);
     if (event_code == LV_EVENT_CLICKED)
     {
-        lv_msg_send(XTOUCH_ON_CLOUD_SELECT, NULL);
+        lv_msg_send(XPTOUCH_ON_CLOUD_SELECT, NULL);
     }
 }
 
@@ -84,7 +84,7 @@ void ui_printerPairScreen_screen_init(void)
     lv_label_set_text(ui_printerPairScreenSubmitIcon, "q");
     lv_obj_set_style_text_color(ui_printerPairScreenSubmitIcon, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(ui_printerPairScreenSubmitIcon, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-#if defined(__XTOUCH_SCREEN_S3_050__)
+#if defined(__XPTOUCH_SCREEN_S3_050__)
     lv_obj_set_style_text_font(ui_printerPairScreenSubmitIcon, &ui_font_xlcd, LV_PART_MAIN | LV_STATE_DEFAULT);
 #else
     lv_obj_set_style_text_font(ui_printerPairScreenSubmitIcon, &ui_font_xlcdmin, LV_PART_MAIN | LV_STATE_DEFAULT);

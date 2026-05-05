@@ -6,24 +6,24 @@ extern "C"
 {
 #endif
 
-    bool xtouch_bblp_is_p1p()
+    bool xptouch_bblp_is_p1p()
     {
-        return strcmp(xTouchConfig.xTouchPrinterModel, "C11") == 0;
+        return strcmp(xPTouchConfig.xTouchPrinterModel, "C11") == 0;
     }
 
-    bool xtouch_bblp_is_p1s()
+    bool xptouch_bblp_is_p1s()
     {
-        return strcmp(xTouchConfig.xTouchPrinterModel, "C12") == 0;
+        return strcmp(xPTouchConfig.xTouchPrinterModel, "C12") == 0;
     }
 
-    bool xtouch_bblp_is_p1Series()
+    bool xptouch_bblp_is_p1Series()
     {
-        return xtouch_bblp_is_p1p() || xtouch_bblp_is_p1s();
+        return xptouch_bblp_is_p1p() || xptouch_bblp_is_p1s();
     }
 
-    bool xtouch_bblp_is_a1()
+    bool xptouch_bblp_is_a1()
     {
-        const char *m = xTouchConfig.xTouchPrinterModel;
+        const char *m = xPTouchConfig.xTouchPrinterModel;
         if (!m || !m[0])
             return false;
         if (strcmp(m, "A1") == 0)
@@ -31,9 +31,9 @@ extern "C"
         return false;
     }
 
-    bool xtouch_bblp_is_a1mini()
+    bool xptouch_bblp_is_a1mini()
     {
-        const char *m = xTouchConfig.xTouchPrinterModel;
+        const char *m = xPTouchConfig.xTouchPrinterModel;
         if (!m || !m[0])
             return false;
         if (strcmp(m, "A1 mini") == 0 || strcmp(m, "A1 Mini") == 0 || strcmp(m, "A1Mini") == 0)
@@ -41,35 +41,35 @@ extern "C"
         return strstr(m, "A1Mini") != NULL;
     }
 
-    bool xtouch_bblp_is_a1Series()
+    bool xptouch_bblp_is_a1Series()
     {
-        const char *m = xTouchConfig.xTouchPrinterModel;
+        const char *m = xPTouchConfig.xTouchPrinterModel;
         if (!m || !m[0])
             return false;
-        return xtouch_bblp_is_a1() || xtouch_bblp_is_a1mini() || (strstr(m, "A1") != NULL);
+        return xptouch_bblp_is_a1() || xptouch_bblp_is_a1mini() || (strstr(m, "A1") != NULL);
     }
 
-    bool xtouch_bblp_is_a1p1Series()
+    bool xptouch_bblp_is_a1p1Series()
     {
-        const char *m = xTouchConfig.xTouchPrinterModel;
+        const char *m = xPTouchConfig.xTouchPrinterModel;
         if (!m || !m[0])
             return false;
-        return xtouch_bblp_is_p1Series() || xtouch_bblp_is_a1Series();
+        return xptouch_bblp_is_p1Series() || xptouch_bblp_is_a1Series();
     }
 
-    bool xtouch_bblp_is_x1()
+    bool xptouch_bblp_is_x1()
     {
-        return strcmp(xTouchConfig.xTouchPrinterModel, "3DPrinter-X1") == 0;
+        return strcmp(xPTouchConfig.xTouchPrinterModel, "3DPrinter-X1") == 0;
     }
 
-    bool xtouch_bblp_is_x1c()
+    bool xptouch_bblp_is_x1c()
     {
-        return strcmp(xTouchConfig.xTouchPrinterModel, "3DPrinter-X1-Carbon") == 0;
+        return strcmp(xPTouchConfig.xTouchPrinterModel, "3DPrinter-X1-Carbon") == 0;
     }
 
-    bool xtouch_bblp_is_x1Series()
+    bool xptouch_bblp_is_x1Series()
     {
-        return xtouch_bblp_is_x1() || xtouch_bblp_is_x1c();
+        return xptouch_bblp_is_x1() || xptouch_bblp_is_x1c();
     }
 
 #ifdef __cplusplus

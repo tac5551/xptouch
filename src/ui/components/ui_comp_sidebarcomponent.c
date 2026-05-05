@@ -1,12 +1,12 @@
 #include "../ui.h"
 #include <string.h>
 
-#ifdef __XTOUCH_PLATFORM_S3__
+#ifdef __XPTOUCH_PLATFORM_S3__
 static bool ui_sidebar_show_camera_button(void)
 {
-    if (!xTouchConfig.xTouchP1sCameraStreamEnabled)
+    if (!xPTouchConfig.xTouchP1sCameraStreamEnabled)
         return false;
-    return xtouch_bblp_is_a1p1Series();
+    return xptouch_bblp_is_a1p1Series();
 }
 #endif
 
@@ -20,7 +20,7 @@ void ui_event_comp_sidebarComponent_sidebarHomeButton(lv_event_t *e)
         onSidebarHome(e);
     }
 }
-#ifdef __XTOUCH_PLATFORM_S3__
+#ifdef __XPTOUCH_PLATFORM_S3__
 void ui_event_comp_sidebarComponent_sidebarPrintersButton(lv_event_t *e)
 {
     lv_event_code_t event_code = lv_event_get_code(e);
@@ -84,7 +84,7 @@ void ui_event_comp_sidebarComponent_sidebarSettingsButton(lv_event_t *e)
     }
 }
 
-#ifdef __XTOUCH_PLATFORM_S3__
+#ifdef __XPTOUCH_PLATFORM_S3__
 void ui_sidebarComponent_updatePrintersVisibility(void)
 {
     if (ui_sidebarComponent == NULL)
@@ -92,7 +92,7 @@ void ui_sidebarComponent_updatePrintersVisibility(void)
     lv_obj_t *btn = ui_comp_get_child(ui_sidebarComponent, UI_COMP_SIDEBARCOMPONENT_SIDEBARPRINTERSBUTTON);
     if (btn == NULL)
         return;
-    if (xTouchConfig.xTouchLanOnlyMode || !xTouchConfig.xTouchMultiPrinterMonitorEnabled)
+    if (xPTouchConfig.xTouchLanOnlyMode || !xPTouchConfig.xTouchMultiPrinterMonitorEnabled)
         lv_obj_add_flag(btn, LV_OBJ_FLAG_HIDDEN);
     else
         lv_obj_clear_flag(btn, LV_OBJ_FLAG_HIDDEN);
@@ -105,7 +105,7 @@ void ui_sidebarComponent_updateHistoryVisibility(void)
     lv_obj_t *btn = ui_comp_get_child(ui_sidebarComponent, UI_COMP_SIDEBARCOMPONENT_SIDEBARHISTORYBUTTON);
     if (btn == NULL)
         return;
-    if (xTouchConfig.xTouchLanOnlyMode || !xTouchConfig.xTouchHistoryEnabled)
+    if (xPTouchConfig.xTouchLanOnlyMode || !xPTouchConfig.xTouchHistoryEnabled)
         lv_obj_add_flag(btn, LV_OBJ_FLAG_HIDDEN);
     else
         lv_obj_clear_flag(btn, LV_OBJ_FLAG_HIDDEN);
@@ -130,7 +130,7 @@ void ui_sidebarComponent_set_active(int index)
     if (ui_sidebarComponent == NULL || !lv_obj_is_valid(ui_sidebarComponent))
         return;
     lv_obj_t *target;
-#ifdef __XTOUCH_PLATFORM_S3__
+#ifdef __XPTOUCH_PLATFORM_S3__
     uint32_t indexes[7] = {
         UI_COMP_SIDEBARCOMPONENT_SIDEBARHOMEBUTTON,
         UI_COMP_SIDEBARCOMPONENT_SIDEBARPRINTERSBUTTON,
@@ -229,13 +229,13 @@ lv_obj_t *ui_sidebarComponent_create(lv_obj_t *comp_parent)
     lv_obj_clear_flag(cui_sidebarHomeButtonIcon, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN); /// Flags
     lv_obj_set_scrollbar_mode(cui_sidebarHomeButtonIcon, LV_SCROLLBAR_MODE_OFF);
     /* 5" サイドバー: ui_font_xlcd48（他画面のスモールアイコンと同系） */
-#if defined(__XTOUCH_SCREEN_S3_050__)
+#if defined(__XPTOUCH_SCREEN_S3_050__)
     lv_obj_set_style_text_font(cui_sidebarHomeButtonIcon, &ui_font_xlcd48, LV_PART_MAIN | LV_STATE_DEFAULT);
 #else
     lv_obj_set_style_text_font(cui_sidebarHomeButtonIcon, &ui_font_xlcd, LV_PART_MAIN | LV_STATE_DEFAULT);
 #endif
 
-#ifdef __XTOUCH_PLATFORM_S3__
+#ifdef __XPTOUCH_PLATFORM_S3__
     lv_obj_t *cui_sidebarPrintersButton;
     cui_sidebarPrintersButton = lv_obj_create(cui_sidebarComponent);
     lv_obj_set_width(cui_sidebarPrintersButton, lv_pct(100));
@@ -270,16 +270,16 @@ lv_obj_t *ui_sidebarComponent_create(lv_obj_t *comp_parent)
     lv_label_set_text(cui_sidebarPrintersButtonIcon, "B");
     lv_obj_clear_flag(cui_sidebarPrintersButtonIcon, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN);
     lv_obj_set_scrollbar_mode(cui_sidebarPrintersButtonIcon, LV_SCROLLBAR_MODE_OFF);
- #if defined(__XTOUCH_SCREEN_S3_050__)
+ #if defined(__XPTOUCH_SCREEN_S3_050__)
     lv_obj_set_style_text_font(cui_sidebarPrintersButtonIcon, &ui_font_xlcd48, LV_PART_MAIN | LV_STATE_DEFAULT);
  #else
     lv_obj_set_style_text_font(cui_sidebarPrintersButtonIcon, &ui_font_xlcd, LV_PART_MAIN | LV_STATE_DEFAULT);
  #endif
-    if (xTouchConfig.xTouchLanOnlyMode || !xTouchConfig.xTouchMultiPrinterMonitorEnabled)
+    if (xPTouchConfig.xTouchLanOnlyMode || !xPTouchConfig.xTouchMultiPrinterMonitorEnabled)
         lv_obj_add_flag(cui_sidebarPrintersButton, LV_OBJ_FLAG_HIDDEN);
 #endif
 
-#ifdef __XTOUCH_PLATFORM_S3__
+#ifdef __XPTOUCH_PLATFORM_S3__
     lv_obj_t *cui_sidebarHistoryButton;
     cui_sidebarHistoryButton = lv_obj_create(cui_sidebarComponent);
     lv_obj_set_width(cui_sidebarHistoryButton, lv_pct(100));
@@ -313,16 +313,16 @@ lv_obj_t *ui_sidebarComponent_create(lv_obj_t *comp_parent)
     lv_label_set_text(cui_sidebarHistoryButtonIcon, "C");
     lv_obj_clear_flag(cui_sidebarHistoryButtonIcon, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN);
     lv_obj_set_scrollbar_mode(cui_sidebarHistoryButtonIcon, LV_SCROLLBAR_MODE_OFF);
- #if defined(__XTOUCH_SCREEN_S3_050__)
+ #if defined(__XPTOUCH_SCREEN_S3_050__)
     lv_obj_set_style_text_font(cui_sidebarHistoryButtonIcon, &ui_font_xlcd48, LV_PART_MAIN | LV_STATE_DEFAULT);
  #else
     lv_obj_set_style_text_font(cui_sidebarHistoryButtonIcon, &ui_font_xlcd, LV_PART_MAIN | LV_STATE_DEFAULT);
  #endif
-    if (xTouchConfig.xTouchLanOnlyMode || !xTouchConfig.xTouchHistoryEnabled)
+    if (xPTouchConfig.xTouchLanOnlyMode || !xPTouchConfig.xTouchHistoryEnabled)
         lv_obj_add_flag(cui_sidebarHistoryButton, LV_OBJ_FLAG_HIDDEN);
 #endif
 
-#ifdef __XTOUCH_PLATFORM_S3__
+#ifdef __XPTOUCH_PLATFORM_S3__
     lv_obj_t *cui_sidebarCameraButton;
     cui_sidebarCameraButton = lv_obj_create(cui_sidebarComponent);
     lv_obj_set_width(cui_sidebarCameraButton, lv_pct(100));
@@ -357,7 +357,7 @@ lv_obj_t *ui_sidebarComponent_create(lv_obj_t *comp_parent)
     lv_label_set_text(cui_sidebarCameraButtonIcon, "y");
     lv_obj_clear_flag(cui_sidebarCameraButtonIcon, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN);
     lv_obj_set_scrollbar_mode(cui_sidebarCameraButtonIcon, LV_SCROLLBAR_MODE_OFF);
-#if defined(__XTOUCH_SCREEN_S3_050__)
+#if defined(__XPTOUCH_SCREEN_S3_050__)
     lv_obj_set_style_text_font(cui_sidebarCameraButtonIcon, &ui_font_xlcd48, LV_PART_MAIN | LV_STATE_DEFAULT);
 #else
     lv_obj_set_style_text_font(cui_sidebarCameraButtonIcon, &ui_font_xlcd, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -400,7 +400,7 @@ lv_obj_t *ui_sidebarComponent_create(lv_obj_t *comp_parent)
     lv_label_set_text(cui_sidebarTempButtonIcon, "p");
     lv_obj_clear_flag(cui_sidebarTempButtonIcon, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN); /// Flags
     lv_obj_set_scrollbar_mode(cui_sidebarTempButtonIcon, LV_SCROLLBAR_MODE_OFF);
- #if defined(__XTOUCH_SCREEN_S3_050__)
+ #if defined(__XPTOUCH_SCREEN_S3_050__)
     lv_obj_set_style_text_font(cui_sidebarTempButtonIcon, &ui_font_xlcd48, LV_PART_MAIN | LV_STATE_DEFAULT);
  #else
     lv_obj_set_style_text_font(cui_sidebarTempButtonIcon, &ui_font_xlcd, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -441,7 +441,7 @@ lv_obj_t *ui_sidebarComponent_create(lv_obj_t *comp_parent)
     lv_label_set_text(cui_sidebarAmsViewButtonIcon, "n");
     lv_obj_clear_flag(cui_sidebarAmsViewButtonIcon, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN); /// Flags
     lv_obj_set_scrollbar_mode(cui_sidebarAmsViewButtonIcon, LV_SCROLLBAR_MODE_OFF);
- #if defined(__XTOUCH_SCREEN_S3_050__)
+ #if defined(__XPTOUCH_SCREEN_S3_050__)
     lv_obj_set_style_text_font(cui_sidebarAmsViewButtonIcon, &ui_font_xlcd48, LV_PART_MAIN | LV_STATE_DEFAULT);
  #else
     lv_obj_set_style_text_font(cui_sidebarAmsViewButtonIcon, &ui_font_xlcd, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -481,7 +481,7 @@ lv_obj_t *ui_sidebarComponent_create(lv_obj_t *comp_parent)
     lv_label_set_text(cui_sidebarSettingsButtonIcon, "d");
     lv_obj_clear_flag(cui_sidebarSettingsButtonIcon, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN); /// Flags
     lv_obj_set_scrollbar_mode(cui_sidebarSettingsButtonIcon, LV_SCROLLBAR_MODE_OFF);
- #if defined(__XTOUCH_SCREEN_S3_050__)
+ #if defined(__XPTOUCH_SCREEN_S3_050__)
     lv_obj_set_style_text_font(cui_sidebarSettingsButtonIcon, &ui_font_xlcd48, LV_PART_MAIN | LV_STATE_DEFAULT);
  #else
     lv_obj_set_style_text_font(cui_sidebarSettingsButtonIcon, &ui_font_xlcd, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -491,7 +491,7 @@ lv_obj_t *ui_sidebarComponent_create(lv_obj_t *comp_parent)
     children[UI_COMP_SIDEBARCOMPONENT_SIDEBARCOMPONENT] = cui_sidebarComponent;
     children[UI_COMP_SIDEBARCOMPONENT_SIDEBARHOMEBUTTON] = cui_sidebarHomeButton;
     children[UI_COMP_SIDEBARCOMPONENT_SIDEBARHOMEBUTTON_SIDEBARHOMEBUTTONICON] = cui_sidebarHomeButtonIcon;
-#ifdef __XTOUCH_PLATFORM_S3__
+#ifdef __XPTOUCH_PLATFORM_S3__
     children[UI_COMP_SIDEBARCOMPONENT_SIDEBARPRINTERSBUTTON] = cui_sidebarPrintersButton;
     children[UI_COMP_SIDEBARCOMPONENT_SIDEBARPRINTERSBUTTON_SIDEBARPRINTERSBUTTONICON] = cui_sidebarPrintersButtonIcon;
     children[UI_COMP_SIDEBARCOMPONENT_SIDEBARHISTORYBUTTON] = cui_sidebarHistoryButton;
@@ -508,7 +508,7 @@ lv_obj_t *ui_sidebarComponent_create(lv_obj_t *comp_parent)
     lv_obj_add_event_cb(cui_sidebarComponent, get_component_child_event_cb, LV_EVENT_GET_COMP_CHILD, children);
     lv_obj_add_event_cb(cui_sidebarComponent, del_component_child_event_cb, LV_EVENT_DELETE, children);
     lv_obj_add_event_cb(cui_sidebarHomeButton, ui_event_comp_sidebarComponent_sidebarHomeButton, LV_EVENT_ALL, children);
-#ifdef __XTOUCH_PLATFORM_S3__
+#ifdef __XPTOUCH_PLATFORM_S3__
     lv_obj_add_event_cb(cui_sidebarPrintersButton, ui_event_comp_sidebarComponent_sidebarPrintersButton, LV_EVENT_ALL, children);
     lv_obj_add_event_cb(cui_sidebarHistoryButton, ui_event_comp_sidebarComponent_sidebarHistoryButton, LV_EVENT_ALL, children);
     lv_obj_add_event_cb(cui_sidebarCameraButton, ui_event_comp_sidebarComponent_sidebarCameraButton, LV_EVENT_ALL, children);
@@ -518,8 +518,8 @@ lv_obj_t *ui_sidebarComponent_create(lv_obj_t *comp_parent)
     lv_obj_add_event_cb(cui_sidebarSettingsButton, ui_event_comp_sidebarComponent_sidebarSettingsButton, LV_EVENT_ALL, children);
     ui_comp_sidebarComponent_create_hook(cui_sidebarComponent);
 
-    lv_msg_subsribe_obj(XTOUCH_ON_AMS_BITS, cui_sidebarAmsViewButton, NULL);
-    ui_msg_send(XTOUCH_ON_AMS_BITS, 0, 0);
+    lv_msg_subsribe_obj(XPTOUCH_ON_AMS_BITS, cui_sidebarAmsViewButton, NULL);
+    ui_msg_send(XPTOUCH_ON_AMS_BITS, 0, 0);
 
     return cui_sidebarComponent;
 }

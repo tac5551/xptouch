@@ -21,7 +21,7 @@ void ui_printerPairScreen_screen_init(void);
 void ui_amsViewScreen_screen_init(void);
 void ui_utilNozzleChangeScreen_screen_init(void);
 void ui_utilScreen_screen_init(void);
-#ifdef __XTOUCH_PLATFORM_S3__
+#ifdef __XPTOUCH_PLATFORM_S3__
 void ui_printersScreen_screen_init(void);
 void ui_historyScreen_screen_init(void);
 void ui_historyReprintScreen_screen_init(void);
@@ -62,7 +62,7 @@ lv_obj_t *ui_printerPairScreen;
 lv_obj_t *ui_printerPairScreenRoller;
 lv_obj_t *ui_printerPairScreenSubmitButton;
 lv_obj_t *ui_mainScreenChamberTempValue;
-#ifdef __XTOUCH_PLATFORM_S3__
+#ifdef __XPTOUCH_PLATFORM_S3__
 lv_obj_t *ui_printersScreen;
 lv_obj_t *ui_printersContentPanel;
 lv_obj_t *ui_printersListContainer = NULL;
@@ -72,17 +72,17 @@ lv_obj_t *ui_historyListContainer = NULL;
 lv_obj_t *ui_historyReprintScreen;
 lv_obj_t *ui_homeThumbImg = NULL;
 #endif
-void ui_event____initial_actions0(lv_event_t *e);
-lv_obj_t *ui____initial_actions0;
+void ui_event_initial_actions0(lv_event_t *e);
+lv_obj_t *ui_initial_actions0;
 
 
 
-#ifdef __XTOUCH_SCREEN_S3_050__
+#ifdef __XPTOUCH_SCREEN_S3_050__
  static const lv_font_t *_lv_font_small_ptr = &lv_font_montserrat_28;
  static const lv_font_t *_lv_font_middle_ptr = &lv_font_montserrat_32;
  static const lv_font_t *_lv_font_big_ptr = &lv_font_montserrat_48;
  static const lv_font_t *_lv_icon_font_small_ptr = &ui_font_xlcd48;
-#elif defined(__XTOUCH_SCREEN_S3_3248__)
+#elif defined(__XPTOUCH_SCREEN_S3_3248__)
  static const lv_font_t *_lv_font_small_ptr = &lv_font_montserrat_14;
  static const lv_font_t *_lv_font_middle_ptr = &lv_font_montserrat_24;
  static const lv_font_t *_lv_font_big_ptr = &lv_font_montserrat_28;
@@ -194,7 +194,7 @@ void ui_event_sidebarSettingsButton1(lv_event_t *e)
         onSidebarSettings(e);
     }
 }
-void ui_event____initial_actions0(lv_event_t *e)
+void ui_event_initial_actions0(lv_event_t *e)
 {
     lv_event_code_t event_code = lv_event_get_code(e);
     lv_obj_t *target = lv_event_get_target(e);
@@ -214,9 +214,9 @@ void ui_init(void)
     lv_theme_t *theme = lv_theme_default_init(dispp, lv_palette_main(LV_PALETTE_BLUE), lv_palette_main(LV_PALETTE_RED), true, LV_FONT_DEFAULT);
     lv_disp_set_theme(dispp, theme);
     ui_controlScreen_screen_init();
-    ui____initial_actions0 = lv_obj_create(NULL);
-    lv_obj_add_event_cb(ui____initial_actions0, ui_event____initial_actions0, LV_EVENT_ALL, NULL);
+    ui_initial_actions0 = lv_obj_create(NULL);
+    lv_obj_add_event_cb(ui_initial_actions0, ui_event_initial_actions0, LV_EVENT_ALL, NULL);
 
-    lv_disp_load_scr(ui____initial_actions0);
+    lv_disp_load_scr(ui_initial_actions0);
     lv_disp_load_scr(ui_controlScreen);
 }

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <set>
-#ifdef __XTOUCH_PLATFORM_S3__
+#ifdef __XPTOUCH_PLATFORM_S3__
 #include "esp_attr.h"
 #endif
 #include <WiFi.h>
@@ -18,7 +18,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
 
-bool xtouch_cloud_pair_loop_exit = false;
+bool xptouch_cloud_pair_loop_exit = false;
 #include <WiFiClientSecure.h>
 #include <cstring>
 #include <strings.h>
@@ -329,7 +329,7 @@ static bool cloud_parse_json_bool_key(const char *json, size_t len, const char *
   return p && (size_t)(p - json) < len;
 }
 
-#ifdef __XTOUCH_PLATFORM_S3__
+#ifdef __XPTOUCH_PLATFORM_S3__
 #include <cstdlib>
 #include <stdint.h>
 extern "C" const char *get_tray_color(uint8_t ams_id, uint8_t tray_id);
@@ -379,7 +379,7 @@ static void cloud_format_rrggbbaa(const char *tray_c, const char *fallback, char
   out[8] = '\0';
 }
 
-static int cloud_parse_ams_detail_mapping(const char *obj, size_t obj_len, xtouch_history_ams_map_t *maps, int max_maps)
+static int cloud_parse_ams_detail_mapping(const char *obj, size_t obj_len, xptouch_history_ams_map_t *maps, int max_maps)
 {
   const char *end = obj + obj_len;
   const char *k = strstr(obj, "\"amsDetailMapping\"");
@@ -423,7 +423,7 @@ static int cloud_parse_ams_detail_mapping(const char *obj, size_t obj_len, xtouc
     if (!oe)
       break;
     size_t ol = (size_t)(oe - os + 1);
-    xtouch_history_ams_map_t *m = &maps[cnt];
+    xptouch_history_ams_map_t *m = &maps[cnt];
     memset(m, 0, sizeof(*m));
     m->ams = cloud_parse_json_int_key(os, ol, "ams");
     m->amsId = cloud_parse_json_int_key(os, ol, "amsId");
@@ -445,7 +445,7 @@ static int cloud_parse_ams_detail_mapping(const char *obj, size_t obj_len, xtouc
  * 大きい JSON Document を確保せず、各 "{...}" を小バッファに切り出して既存の cloud_parse_json_* で読む。
  * 本文読取はタイムアウトまで read を試す（connected に依存しない）。task 詳細の filaments は getString + バッファ側を参照。 */
 static int cloud_parse_ams_detail_mapping_from_stream(HTTPClient &http, Stream &s, unsigned long timeout_ms,
-                                                      xtouch_history_ams_map_t *maps, int max_maps)
+                                                      xptouch_history_ams_map_t *maps, int max_maps)
 {
 
   ConsoleVerbose.println("[xPTouch][V][CLOUD] cloud_parse_ams_detail_mapping_from_stream");
@@ -559,7 +559,7 @@ static int cloud_parse_ams_detail_mapping_from_stream(HTTPClient &http, Stream &
 
     ConsoleDebug.printf("[xPTouch][F][CLOUD] cloud_parse_ams_detail_mapping_from_stream obj=%s\n", obj);
 
-    xtouch_history_ams_map_t *m = &maps[cnt];
+    xptouch_history_ams_map_t *m = &maps[cnt];
     memset(m, 0, sizeof(*m));
     m->ams = cloud_parse_json_int_key(obj, olen, "ams");
     m->amsId = cloud_parse_json_int_key(obj, olen, "amsId");
@@ -586,7 +586,7 @@ static int cloud_rb_next(const char *data, size_t len, size_t *idx)
   return (unsigned char)data[(*idx)++];
 }
 
-static int cloud_parse_reprint_mapping_from_buffer(const char *data, size_t len, xtouch_history_ams_map_t *maps, int max_maps)
+static int cloud_parse_reprint_mapping_from_buffer(const char *data, size_t len, xptouch_history_ams_map_t *maps, int max_maps)
 {
   if (!maps || max_maps <= 0 || !data || len == 0)
     return -1;
@@ -699,7 +699,7 @@ static int cloud_parse_reprint_mapping_from_buffer(const char *data, size_t len,
     if (depth != 0)
       break;
 
-    xtouch_history_ams_map_t *m = &maps[cnt];
+    xptouch_history_ams_map_t *m = &maps[cnt];
     memset(m, 0, sizeof(*m));
 
     char color_buf[16] = { 0 };
@@ -739,7 +739,7 @@ static int cloud_parse_reprint_mapping_from_buffer(const char *data, size_t len,
   return cnt;
 }
 
-#ifdef __XTOUCH_PLATFORM_S3__
+#ifdef __XPTOUCH_PLATFORM_S3__
 /** Task 詳細の filaments[].id が "2" のような内部IDのとき、POST の filamentId（GFLxx 等）に寄せる */
 static bool cloud_filament_id_looks_like_bambu_code(const char *s)
 {
@@ -778,7 +778,7 @@ static void cloud_resolve_filament_id_for_reprint(const char *raw_id, const char
  * WiFiClientSecure 等の Client から直接本文を走査できる版も用意する。 */
 template <typename ClientT>
 static int cloud_parse_ams_detail_mapping_from_client(ClientT &c, unsigned long timeout_ms,
-                                                      xtouch_history_ams_map_t *maps, int max_maps)
+                                                      xptouch_history_ams_map_t *maps, int max_maps)
 {
   if (!maps || max_maps <= 0)
     return -1;
@@ -885,7 +885,7 @@ static int cloud_parse_ams_detail_mapping_from_client(ClientT &c, unsigned long 
     if (depth != 0)
       break;
 
-    xtouch_history_ams_map_t *m = &maps[cnt];
+    xptouch_history_ams_map_t *m = &maps[cnt];
     memset(m, 0, sizeof(*m));
     m->ams = cloud_parse_json_int_key(obj, olen, "ams");
     m->amsId = cloud_parse_json_int_key(obj, olen, "amsId");
@@ -1107,7 +1107,7 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
       return false;
     const char *raw = response.c_str();
     size_t raw_len = response.length();
-// #ifdef XTOUCH_DEBUG
+// #ifdef XPTOUCH_DEBUG
     Serial.printf("[Cloud getSlicerSetting] url=%s\n", url.c_str());
     Serial.printf("[Cloud getSlicerSetting] id=%s raw_len=%u\n", setting_id, (unsigned)raw_len);
     Serial.print("[Cloud getSlicerSetting] raw=");
@@ -1127,7 +1127,7 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
   String getUsername() const
   {
     // cloud-username
-    DynamicJsonDocument config = xtouch_filesystem_readJson(xtouch_sdcard_fs(), xtouch_paths_provisioning, false, 2048);
+    DynamicJsonDocument config = xptouch_filesystem_readJson(xptouch_sdcard_fs(), xptouch_paths_provisioning, false, 2048);
     return config["cloud-username"].as<String>();
   }
 
@@ -1148,14 +1148,14 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
 
   /** 現在のデバイスの最新タスクが task_id と一致するか簡易チェックする。
    *  GET /v1/user-service/my/tasks?limit=1&deviceId=xxx を叩き、先頭要素の id と比較するだけで、
-   *  xtouch_history_* などのグローバル状態は一切更新しない。
+   *  xptouch_history_* などのグローバル状態は一切更新しない。
    *  @param device_serial 省略または空なら xTouchSerialNumber（メイン）。Printers 他行は otherPrinters[].dev_id を渡す。 */
   bool isCurrentTaskForDevice(const char *task_id, const char *device_serial = nullptr)
   {
     HttpLockGuard _g(this);
     if (!loggedIn || !task_id || !*task_id)
       return false;
-    const char *dev = (device_serial && device_serial[0]) ? device_serial : xTouchConfig.xTouchSerialNumber;
+    const char *dev = (device_serial && device_serial[0]) ? device_serial : xPTouchConfig.xTouchSerialNumber;
     if (!dev || !dev[0])
       return false;
 
@@ -1229,7 +1229,7 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
   /** GET /v1/iot-service/api/user/task/{task_id} から plates[0].thumbnail.url を取得する。 */
   bool getTaskThumbnailUrl(const char *task_id, char *out_url, size_t out_size)
   {
-#ifdef __XTOUCH_PLATFORM_S3__
+#ifdef __XPTOUCH_PLATFORM_S3__
     HttpLockGuard _g(this);
 #endif
     if (!task_id || !*task_id || !out_url || out_size == 0)
@@ -1260,7 +1260,7 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
     http.setTimeout(8000);
     int code = http.GET();
     String response = http.getString();
-#ifdef XTOUCH_DEBUG_VERBOSE
+#ifdef XPTOUCH_DEBUG_VERBOSE
     ConsoleVerbose.printf("[xPTouch][V][CLOUD] getTaskThumbnailUrl code=%d resp_len=%d\n", code, response.length());
     if (code != 200)
     {
@@ -1272,11 +1272,11 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
     if (response.length() == 0)
       return false;
 
-#ifdef XTOUCH_DEBUG_VERBOSE
+#ifdef XPTOUCH_DEBUG_VERBOSE
     /* Cloud個別デバッグ: task レスポンス全体を SD に保存 */
     char dump_path[64];
     snprintf(dump_path, sizeof(dump_path), "/tmp/task_%s.json", task_id);
-    File dump = xtouch_sdcard_open(dump_path, FILE_WRITE);
+    File dump = xptouch_sdcard_open(dump_path, FILE_WRITE);
     if (dump)
     {
       dump.print(response);
@@ -1290,7 +1290,7 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
     size_t raw_len = response.length();
 
     /* S3 の署名付き URL 用 2KB。5inch(PSRAM あり)のときは PSRAM に配置。 */
-#if defined(__XTOUCH_PLATFORM_S3__) && defined(CONFIG_SPIRAM)
+#if defined(__XPTOUCH_PLATFORM_S3__) && defined(CONFIG_SPIRAM)
     static EXT_RAM_ATTR char url_buf[2048];
 #else
     static char url_buf[2048];
@@ -1322,9 +1322,9 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
     return true;
   }
 
-#ifdef __XTOUCH_PLATFORM_S3__
+#ifdef __XPTOUCH_PLATFORM_S3__
   /** GET /v1/user-service/my/tasks（deviceId なし）。
-   * limit は XTOUCH_HISTORY_FETCH_PAGE_LIMIT まで。格納は xtouch_history_tasks[] なので XTOUCH_HISTORY_TASKS_MAX 件で打ち切る。after ページングは行わない。 */
+   * limit は XPTOUCH_HISTORY_FETCH_PAGE_LIMIT まで。格納は xptouch_history_tasks[] なのでXPTOUCH_HISTORY_TASKS_MAX 件で打ち切る。after ページングは行わない。 */
   bool getMyTasks(int limit, const char *after = nullptr, char *out_next_after = nullptr, size_t out_next_after_size = 0)
   {
     if (out_next_after && out_next_after_size > 0)
@@ -1339,9 +1339,9 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
     {
       DynamicJsonDocument printers = loadPrinters();
       JsonObject root = printers.as<JsonObject>();
-      if (root.containsKey(xTouchConfig.xTouchSerialNumber))
+      if (root.containsKey(xPTouchConfig.xTouchSerialNumber))
       {
-        JsonObject dev = root[xTouchConfig.xTouchSerialNumber].as<JsonObject>();
+        JsonObject dev = root[xPTouchConfig.xTouchSerialNumber].as<JsonObject>();
         if (!dev.isNull() && dev.containsKey("dev_product_name"))
         {
           const char *pn = dev["dev_product_name"].as<const char *>();
@@ -1356,7 +1356,7 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
 
     (void)after; /* after は使わない（1回取得固定） */
     String host = _region == "China" ? "api.bambulab.cn" : "api.bambulab.com";
-    int req_limit = (limit <= 0 || limit > XTOUCH_HISTORY_FETCH_PAGE_LIMIT) ? XTOUCH_HISTORY_FETCH_PAGE_LIMIT : limit;
+    int req_limit = (limit <= 0 || limit > XPTOUCH_HISTORY_FETCH_PAGE_LIMIT) ?XPTOUCH_HISTORY_FETCH_PAGE_LIMIT : limit;
     uint32_t free_heap = ESP.getFreeHeap();
     ConsoleVerbose.printf("[xPTouch][V][HIST] req_limit=%d free_heap=%u\n", req_limit, (unsigned)free_heap);
 
@@ -1383,7 +1383,7 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
     {
       http.end();
       c.stop();
-      xtouch_history_count = 0;
+      xptouch_history_count = 0;
       return false;
     }
 
@@ -1400,9 +1400,9 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
     bool obj_overflow = false;
     int obj_depth = 0;
     int raw_hits = 0;
-    char first_raw_id[XTOUCH_HISTORY_TASK_ID_LEN];
+    char first_raw_id[XPTOUCH_HISTORY_TASK_ID_LEN];
     first_raw_id[0] = '\0';
-    char last_raw_id[XTOUCH_HISTORY_TASK_ID_LEN];
+    char last_raw_id[XPTOUCH_HISTORY_TASK_ID_LEN];
     last_raw_id[0] = '\0';
 
     size_t obj_cap = 16 * 1024;
@@ -1417,7 +1417,7 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
     {
       http.end();
       c.stop();
-      xtouch_history_count = 0;
+      xptouch_history_count = 0;
       return false;
     }
     size_t obj_len = 0;
@@ -1526,7 +1526,7 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
               size_t obj_len_now = obj_len;
               raw_hits++;
 
-              char id_buf[XTOUCH_HISTORY_TASK_ID_LEN];
+              char id_buf[XPTOUCH_HISTORY_TASK_ID_LEN];
               id_buf[0] = '\0';
               cloud_parse_json_scalar_key_top_level_as_string(obj_start, obj_len_now, "taskId", id_buf, sizeof(id_buf));
               if (!id_buf[0])
@@ -1544,7 +1544,7 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
 
               /* API は FETCH_PAGE_LIMIT 件まで読むが、RAM のタスク配列は TASKS_MAX まで */
               const bool want_copy =
-                  (n < XTOUCH_HISTORY_TASKS_MAX && n < XTOUCH_HISTORY_FETCH_PAGE_LIMIT);
+                  (n < XPTOUCH_HISTORY_TASKS_MAX && n <XPTOUCH_HISTORY_FETCH_PAGE_LIMIT);
               char device_model[64];
               device_model[0] = '\0';
               cloud_parse_json_str_key(obj_start, obj_len_now, "deviceModel", device_model, sizeof(device_model));
@@ -1557,13 +1557,13 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
                 char task_dev_id[32];
                 task_dev_id[0] = '\0';
                 cloud_parse_json_str_key(obj_start, obj_len_now, "deviceId", task_dev_id, sizeof(task_dev_id));
-                filtered_ok = (task_dev_id[0] && xTouchConfig.xTouchSerialNumber[0] &&
-                              strcmp(task_dev_id, xTouchConfig.xTouchSerialNumber) == 0);
+                filtered_ok = (task_dev_id[0] && xPTouchConfig.xTouchSerialNumber[0] &&
+                              strcmp(task_dev_id, xPTouchConfig.xTouchSerialNumber) == 0);
               }
 
               if (filtered_ok && want_copy && id_buf[0])
               {
-                xtouch_history_task_t *t = &xtouch_history_tasks[n];
+                xptouch_history_task_t *t = &xptouch_history_tasks[n];
                 memset(t, 0, sizeof(*t));
                 strncpy(t->task_id, id_buf, sizeof(t->task_id) - 1);
                 t->task_id[sizeof(t->task_id) - 1] = '\0';
@@ -1598,7 +1598,7 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
     http.end();
     c.stop();
 
-    xtouch_history_count = n;
+    xptouch_history_count = n;
     if (out_next_after && out_next_after_size > 0)
       out_next_after[0] = '\0';
     ConsoleVerbose.printf("[xPTouch][V][HIST] single page first=%s last=%s raw_hits=%d n=%d\n",
@@ -1610,7 +1610,7 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
   }
 
   /** 履歴 task_id の詳細 GET /my/task/&lt;id&gt; から amsDetailMapping[] を読み、Reprint 用の行を maps に詰める（失敗時は -1）。 */
-  int getMyTaskAmsDetailMapping(const char *task_id, xtouch_history_ams_map_t *maps, int max_maps)
+  int getMyTaskAmsDetailMapping(const char *task_id, xptouch_history_ams_map_t *maps, int max_maps)
   {
     HttpLockGuard _g(this);
     if (!loggedIn || !task_id || !task_id[0] || !maps || max_maps <= 0)
@@ -1645,14 +1645,14 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
     ConsoleVerbose.printf("[xPTouch][V][CLOUD] task detail JSON len=%d\n", (unsigned)body.length());
     int cnt = cloud_parse_ams_detail_mapping(body.c_str(), body.length(), maps, max_maps);
 
-#ifdef XTOUCH_DEBUG_VERBOSE
+#ifdef XPTOUCH_DEBUG_VERBOSE
     ConsoleVerbose.printf("[xPTouch][V][CLOUD] cloud_parse_ams_detail_mapping (my/task) cnt=%d\n", cnt);
     ConsoleVerbose.printf("[xPTouch][V][CLOUD] amsDetailMapping parse task_id=%s\n", task_id);
     {
       const int nprint = (cnt > 16) ? 16 : cnt;
       for (int i = 0; i < nprint; i++)
       {
-        const xtouch_history_ams_map_t *m = &maps[i];
+        const xptouch_history_ams_map_t *m = &maps[i];
         ConsoleVerbose.printf("[xPTouch][V][CLOUD] amsMap[%d] id=%s type=%s srcColor=%s tgtColor=%s tgtType=%s w=%.2f ams=%d amsId=%d slot=%d nozzle=%d\n", i,
                             m->filamentId[0] ? m->filamentId : "(empty)", m->filamentType[0] ? m->filamentType : "?",
                             m->sourceColor[0] ? m->sourceColor : "?", m->targetColor[0] ? m->targetColor : "?",
@@ -1671,7 +1671,7 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
    * /v1/user-service/my/task/<id> から再印刷に必要な基本情報だけ抜き出す。
    * submitReprintTaskByTaskId 内で HttpLockGuard を保持している前提。
    */
-  bool getMyTaskBasicForReprint_no_lock(const char *task_id, xtouch_history_task_t *out)
+  bool getMyTaskBasicForReprint_no_lock(const char *task_id, xptouch_history_task_t *out)
   {
     if (!task_id || !task_id[0] || !out)
       return false;
@@ -1731,7 +1731,7 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
    * /v1/user-service/my/task/<id> から再印刷に必要な基本情報を取得（内部で HttpLockGuard 保護）。
    * getMyTaskBasicForReprint_no_lock の安全版。
    */
-  bool getMyTaskBasicForReprint(const char *task_id, xtouch_history_task_t *out)
+  bool getMyTaskBasicForReprint(const char *task_id, xptouch_history_task_t *out)
   {
     HttpLockGuard _g(this);
     return getMyTaskBasicForReprint_no_lock(task_id, out);
@@ -1744,20 +1744,20 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
   bool submitReprintTask(int history_index)
   {
     HttpLockGuard _g(this);
-    Serial.printf("[Cloud] submitReprintTask(%d) loggedIn=%d count=%d\n", history_index, (int)loggedIn, xtouch_history_count);
-    if (!loggedIn || history_index < 0 || history_index >= xtouch_history_count)
+    Serial.printf("[Cloud] submitReprintTask(%d) loggedIn=%d count=%d\n", history_index, (int)loggedIn, xptouch_history_count);
+    if (!loggedIn || history_index < 0 || history_index >= xptouch_history_count)
     {
       Serial.printf("[Cloud] submitReprintTask abort: !loggedIn or bad index\n");
       return false;
     }
-    const xtouch_history_task_t *t = &xtouch_history_tasks[history_index];
+    const xptouch_history_task_t *t = &xptouch_history_tasks[history_index];
     Serial.printf("[Cloud] submitReprintTask valid=%d is_printable=%d model_id[0]=%d\n", (int)t->valid, (int)t->is_printable, (int)t->model_id[0]);
     if (!t->valid || !t->is_printable || !t->model_id[0])
     {
       Serial.println("[Cloud] submitReprintTask abort: !valid or !is_printable or no model_id");
       return false;
     }
-    const char *device_id = xTouchConfig.xTouchSerialNumber;
+    const char *device_id = xPTouchConfig.xTouchSerialNumber;
     Serial.printf("[Cloud] submitReprintTask device_id=%s\n", device_id ? device_id : "(null)");
     if (!device_id || !device_id[0])
     {
@@ -1794,16 +1794,16 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
     doc["deviceId"] = device_id;
 
     JsonArray mapping = doc.createNestedArray("amsDetailMapping");
-    if (xtouch_history_selected_ams_map_count > 0)
+    if (xptouch_history_selected_ams_map_count > 0)
     {
-      int cnt = xtouch_history_selected_ams_map_count;
-      if (cnt > XTOUCH_HISTORY_AMS_MAP_MAX)
-        cnt = XTOUCH_HISTORY_AMS_MAP_MAX;
+      int cnt = xptouch_history_selected_ams_map_count;
+      if (cnt > XPTOUCH_HISTORY_AMS_MAP_MAX)
+        cnt = XPTOUCH_HISTORY_AMS_MAP_MAX;
       for (int i = 0; i < cnt; i++)
       {
-        const xtouch_history_ams_map_t *src = &xtouch_history_selected_ams_map[i];
-        uint8_t pick_ams = xtouch_history_reprint_pick_ams[i];
-        uint8_t pick_tray = xtouch_history_reprint_pick_tray[i];
+        const xptouch_history_ams_map_t *src = &xptouch_history_selected_ams_map[i];
+        uint8_t pick_ams = xptouch_history_reprint_pick_ams[i];
+        uint8_t pick_tray = xptouch_history_reprint_pick_tray[i];
         JsonObject m = mapping.createNestedObject();
         m["ams"] = src->ams;
         m["nozzleId"] = src->nozzleId;
@@ -1902,19 +1902,19 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
 
   /**
    * task_id だけから再印刷する（History の tasks 一覧が空でも動かす）。
-   * amsDetailMapping は xtouch_history_selected_ams_map_* に依存。
+   * amsDetailMapping は xptouch_history_selected_ams_map_* に依存。
    */
   bool submitReprintTaskByTaskId(const char *task_id)
   {
     HttpLockGuard _g(this);
-    Serial.printf("[Cloud] submitReprintTaskByTaskId(%s) loggedIn=%d count=%d\n", task_id ? task_id : "(null)", (int)loggedIn, xtouch_history_count);
+    Serial.printf("[Cloud] submitReprintTaskByTaskId(%s) loggedIn=%d count=%d\n", task_id ? task_id : "(null)", (int)loggedIn, xptouch_history_count);
     if (!loggedIn || !task_id || !task_id[0])
     {
       Serial.println("[Cloud] submitReprintTaskByTaskId abort: !loggedIn or empty task_id");
       return false;
     }
 
-    xtouch_history_task_t t;
+    xptouch_history_task_t t;
     if (!getMyTaskBasicForReprint_no_lock(task_id, &t))
     {
       Serial.println("[Cloud] submitReprintTaskByTaskId abort: get basic failed");
@@ -1928,13 +1928,13 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
       return false;
     }
 
-    const char *device_id = xTouchConfig.xTouchSerialNumber;
-    int dd_slot = xtouch_history_reprint_printer_dd_slot;
+    const char *device_id = xPTouchConfig.xTouchSerialNumber;
+    int dd_slot = xptouch_history_reprint_printer_dd_slot;
     if (dd_slot > 0)
     {
       int oi = dd_slot - 1;
-      if (oi >= 0 && oi < xtouch_other_printer_count && xtouch_other_printer_dev_ids[oi][0])
-        device_id = xtouch_other_printer_dev_ids[oi];
+      if (oi >= 0 && oi < xptouch_other_printer_count && xptouch_other_printer_dev_ids[oi][0])
+        device_id = xptouch_other_printer_dev_ids[oi];
     }
     Serial.printf("[Cloud] submitReprintTaskByTaskId device_id=%s dd_slot=%d\n", device_id ? device_id : "(null)", dd_slot);
     if (!device_id || !device_id[0])
@@ -1964,16 +1964,16 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
     doc["deviceId"] = device_id;
 
     JsonArray mapping = doc.createNestedArray("amsDetailMapping");
-    if (xtouch_history_selected_ams_map_count > 0)
+    if (xptouch_history_selected_ams_map_count > 0)
     {
-      int cnt = xtouch_history_selected_ams_map_count;
-      if (cnt > XTOUCH_HISTORY_AMS_MAP_MAX)
-        cnt = XTOUCH_HISTORY_AMS_MAP_MAX;
+      int cnt = xptouch_history_selected_ams_map_count;
+      if (cnt > XPTOUCH_HISTORY_AMS_MAP_MAX)
+        cnt = XPTOUCH_HISTORY_AMS_MAP_MAX;
       for (int i = 0; i < cnt; i++)
       {
-        const xtouch_history_ams_map_t *src = &xtouch_history_selected_ams_map[i];
-        uint8_t pick_ams = xtouch_history_reprint_pick_ams[i];
-        uint8_t pick_tray = xtouch_history_reprint_pick_tray[i];
+        const xptouch_history_ams_map_t *src = &xptouch_history_selected_ams_map[i];
+        uint8_t pick_ams = xptouch_history_reprint_pick_ams[i];
+        uint8_t pick_tray = xptouch_history_reprint_pick_tray[i];
         JsonObject m = mapping.createNestedObject();
         m["ams"] = src->ams;
         m["nozzleId"] = src->nozzleId;
@@ -2097,7 +2097,7 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
     };
 
     /* printer.json は SD 上の古い内容とマージしない。Cloud devices のみを正に書き込む（H2 系は上記で除外）。 */
-    DynamicJsonDocument printers_new(XTOUCH_PRINTERS_JSON_DOC_CAP);
+    DynamicJsonDocument printers_new(XPTOUCH_PRINTERS_JSON_DOC_CAP);
     JsonObject root_new = printers_new.to<JsonObject>();
     for (JsonVariant v : devices)
     {
@@ -2116,7 +2116,7 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
     }
 
     serializeJsonPretty(printers_new, Serial);
-    xtouch_filesystem_writeJson(xtouch_sdcard_fs(), xtouch_paths_printers, printers_new);
+    xptouch_filesystem_writeJson(xptouch_sdcard_fs(), xptouch_paths_printers, printers_new);
 
     // 除外後件数を数える（filteredDoc を使わずメモリ節約）
     size_t filteredCount = 0;
@@ -2182,7 +2182,7 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
       lv_roller_set_options(ui_printerPairScreenRoller, output.c_str(), LV_ROLLER_MODE_NORMAL);
       lv_obj_clear_flag(ui_printerPairScreenSubmitButton, LV_OBJ_FLAG_HIDDEN);
 
-      while (!xtouch_cloud_pair_loop_exit)
+      while (!xptouch_cloud_pair_loop_exit)
       {
         lv_timer_handler();
         lv_task_handler();
@@ -2207,137 +2207,137 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
   void savePrinterPair(String usn, String modelName, String printerName, String accessCode = "")
   {
 
-    DynamicJsonDocument doc = xtouch_filesystem_readJson(xtouch_sdcard_fs(), xtouch_paths_pair, false);
+    DynamicJsonDocument doc = xptouch_filesystem_readJson(xptouch_sdcard_fs(), xptouch_paths_pair, false);
 
     doc["paired"] = usn.c_str();
     doc["model"] = modelName.c_str();
     doc["printerName"] = printerName.c_str();
     doc["accessCode"] = accessCode.c_str();
 
-    xtouch_filesystem_writeJson(xtouch_sdcard_fs(), xtouch_paths_pair, doc);
-    strncpy(xTouchConfig.xTouchPairedSerialNumber, usn.c_str(), sizeof(xTouchConfig.xTouchPairedSerialNumber) - 1);
-    xTouchConfig.xTouchPairedSerialNumber[sizeof(xTouchConfig.xTouchPairedSerialNumber) - 1] = '\0';
+    xptouch_filesystem_writeJson(xptouch_sdcard_fs(), xptouch_paths_pair, doc);
+    strncpy(xPTouchConfig.xTouchPairedSerialNumber, usn.c_str(), sizeof(xPTouchConfig.xTouchPairedSerialNumber) - 1);
+    xPTouchConfig.xTouchPairedSerialNumber[sizeof(xPTouchConfig.xTouchPairedSerialNumber) - 1] = '\0';
   }
 
   bool isPaired()
   {
-    if (!xtouch_filesystem_exist(xtouch_sdcard_fs(), xtouch_paths_pair))
+    if (!xptouch_filesystem_exist(xptouch_sdcard_fs(), xptouch_paths_pair))
     {
       return false;
     }
-    DynamicJsonDocument doc = xtouch_filesystem_readJson(xtouch_sdcard_fs(), xtouch_paths_pair, false);
+    DynamicJsonDocument doc = xptouch_filesystem_readJson(xptouch_sdcard_fs(), xptouch_paths_pair, false);
     return doc["paired"].as<String>() != "";
   }
 
   void loadPair()
   {
-    DynamicJsonDocument doc = xtouch_filesystem_readJson(xtouch_sdcard_fs(), xtouch_paths_pair, false);
+    DynamicJsonDocument doc = xptouch_filesystem_readJson(xptouch_sdcard_fs(), xptouch_paths_pair, false);
     setCurrentDevice(doc["paired"].as<String>());
     setCurrentModel(doc["model"].as<String>());
     setPrinterName(doc["printerName"].as<String>());
     setCurrentAccessCode(doc["accessCode"].as<String>());
-    if (!xTouchConfig.xTouchAccessCode[0])
+    if (!xPTouchConfig.xTouchAccessCode[0])
     {
       DynamicJsonDocument lp = loadPrinters();
       JsonObject root = lp.as<JsonObject>();
-      if (root.containsKey(xTouchConfig.xTouchSerialNumber))
+      if (root.containsKey(xPTouchConfig.xTouchSerialNumber))
       {
-        JsonObject dev = root[xTouchConfig.xTouchSerialNumber].as<JsonObject>();
+        JsonObject dev = root[xPTouchConfig.xTouchSerialNumber].as<JsonObject>();
         if (!dev.isNull() && dev.containsKey("dev_access_code"))
           setCurrentAccessCode(dev["dev_access_code"].as<String>());
       }
     }
-    strncpy(xTouchConfig.xTouchPairedSerialNumber, xTouchConfig.xTouchSerialNumber,
-            sizeof(xTouchConfig.xTouchPairedSerialNumber) - 1);
-    xTouchConfig.xTouchPairedSerialNumber[sizeof(xTouchConfig.xTouchPairedSerialNumber) - 1] = '\0';
+    strncpy(xPTouchConfig.xTouchPairedSerialNumber, xPTouchConfig.xTouchSerialNumber,
+            sizeof(xPTouchConfig.xTouchPairedSerialNumber) - 1);
+    xPTouchConfig.xTouchPairedSerialNumber[sizeof(xPTouchConfig.xTouchPairedSerialNumber) - 1] = '\0';
   }
 
-  /** printer.json の現在シリアル直下の settings を xTouchConfig に反映（ペア確定・行切替え後など）。 */
+  /** printer.json の現在シリアル直下の settings を xPTouchConfig に反映（ペア確定・行切替え後など）。 */
   void applyStoredPrinterJsonSettingsToConfig()
   {
     DynamicJsonDocument lp = loadPrinters();
     JsonObject root = lp.as<JsonObject>();
     JsonObject st;
-    if (root.containsKey(xTouchConfig.xTouchSerialNumber))
+    if (root.containsKey(xPTouchConfig.xTouchSerialNumber))
     {
-      JsonObject dev = root[xTouchConfig.xTouchSerialNumber].as<JsonObject>();
+      JsonObject dev = root[xPTouchConfig.xTouchSerialNumber].as<JsonObject>();
       if (!dev.isNull() && dev.containsKey("settings"))
         st = dev["settings"].as<JsonObject>();
     }
-    xTouchConfig.xTouchChamberSensorEnabled =
+    xPTouchConfig.xTouchChamberSensorEnabled =
         (!st.isNull() && st.containsKey("chamberTemp")) ? st["chamberTemp"].as<bool>() : false;
-    xTouchConfig.xTouchAuxFanEnabled =
+    xPTouchConfig.xTouchAuxFanEnabled =
         (!st.isNull() && st.containsKey("auxFan")) ? st["auxFan"].as<bool>() : false;
-    xTouchConfig.xTouchChamberFanEnabled =
+    xPTouchConfig.xTouchChamberFanEnabled =
         (!st.isNull() && st.containsKey("chamberFan")) ? st["chamberFan"].as<bool>() : false;
   }
 
   void setCurrentDevice(String deviceId)
   {
-    strcpy(xTouchConfig.xTouchSerialNumber, deviceId.c_str());
+    strcpy(xPTouchConfig.xTouchSerialNumber, deviceId.c_str());
   }
 
   void setPrinterName(String printerName)
   {
-    strcpy(xTouchConfig.xTouchPrinterName, printerName.c_str());
+    strcpy(xPTouchConfig.xTouchPrinterName, printerName.c_str());
   }
 
   void setCurrentModel(String model)
   {
-    strcpy(xTouchConfig.xTouchPrinterModel, model.c_str());
+    strcpy(xPTouchConfig.xTouchPrinterModel, model.c_str());
   }
 
   void setCurrentAccessCode(String code)
   {
-    strncpy(xTouchConfig.xTouchAccessCode, code.c_str(), sizeof(xTouchConfig.xTouchAccessCode) - 1);
-    xTouchConfig.xTouchAccessCode[sizeof(xTouchConfig.xTouchAccessCode) - 1] = '\0';
+    strncpy(xPTouchConfig.xTouchAccessCode, code.c_str(), sizeof(xPTouchConfig.xTouchAccessCode) - 1);
+    xPTouchConfig.xTouchAccessCode[sizeof(xPTouchConfig.xTouchAccessCode) - 1] = '\0';
   }
 
   DynamicJsonDocument loadPrinters()
   {
-    return xtouch_filesystem_readJson(xtouch_sdcard_fs(), xtouch_paths_printers, false, XTOUCH_PRINTERS_JSON_DOC_CAP);
+    return xptouch_filesystem_readJson(xptouch_sdcard_fs(), xptouch_paths_printers, false, XPTOUCH_PRINTERS_JSON_DOC_CAP);
   }
 
   void clearDeviceList()
   {
     DynamicJsonDocument pairDoc(32);
-    xtouch_filesystem_writeJson(xtouch_sdcard_fs(), xtouch_paths_printers, pairDoc);
+    xptouch_filesystem_writeJson(xptouch_sdcard_fs(), xptouch_paths_printers, pairDoc);
   }
 
   void clearPairList()
   {
-    xtouch_filesystem_deleteFile(xtouch_sdcard_fs(), xtouch_paths_pair);
+    xptouch_filesystem_deleteFile(xptouch_sdcard_fs(), xptouch_paths_pair);
   }
   void clearTokens()
   {
-    DynamicJsonDocument config = xtouch_filesystem_readJson(xtouch_sdcard_fs(), xtouch_paths_provisioning, false, 2048);
+    DynamicJsonDocument config = xptouch_filesystem_readJson(xptouch_sdcard_fs(), xptouch_paths_provisioning, false, 2048);
     config["cloud-authToken"] = "";
-    xtouch_filesystem_writeJson(xtouch_sdcard_fs(), xtouch_paths_provisioning, config);
+    xptouch_filesystem_writeJson(xptouch_sdcard_fs(), xptouch_paths_provisioning, config);
   }
 
   void unpair()
   {
     ConsoleInfo.println("[xPTouch][I][SSDP] Unpairing device");
-    DynamicJsonDocument pairFile = xtouch_filesystem_readJson(xtouch_sdcard_fs(), xtouch_paths_pair, false);
+    DynamicJsonDocument pairFile = xptouch_filesystem_readJson(xptouch_sdcard_fs(), xptouch_paths_pair, false);
     pairFile["paired"] = "";
-    xtouch_filesystem_writeJson(xtouch_sdcard_fs(), xtouch_paths_pair, pairFile);
+    xptouch_filesystem_writeJson(xptouch_sdcard_fs(), xptouch_paths_pair, pairFile);
     ESP.restart();
   }
 
   void saveAuthTokens()
   {
-    DynamicJsonDocument config = xtouch_filesystem_readJson(xtouch_sdcard_fs(), xtouch_paths_provisioning);
+    DynamicJsonDocument config = xptouch_filesystem_readJson(xptouch_sdcard_fs(), xptouch_paths_provisioning);
     config["cloud-authToken"] = _auth_token;
-    xtouch_filesystem_writeJson(xtouch_sdcard_fs(), xtouch_paths_provisioning, config, false, 2048);
+    xptouch_filesystem_writeJson(xptouch_sdcard_fs(), xptouch_paths_provisioning, config, false, 2048);
     ESP.restart();
   }
 
   void loadAuthTokens()
   {
     ConsoleVerbose.println(ESP.getFreeHeap());
-    DynamicJsonDocument config = xtouch_filesystem_readJson(xtouch_sdcard_fs(), xtouch_paths_provisioning, false, 2048);
+    DynamicJsonDocument config = xptouch_filesystem_readJson(xptouch_sdcard_fs(), xptouch_paths_provisioning, false, 2048);
     _auth_token = config["cloud-authToken"].as<String>();
-    DynamicJsonDocument wifiConfig = xtouch_filesystem_readJson(xtouch_sdcard_fs(), xtouch_paths_provisioning);
+    DynamicJsonDocument wifiConfig = xptouch_filesystem_readJson(xptouch_sdcard_fs(), xptouch_paths_provisioning);
     _region = wifiConfig["cloud-region"].as<const char *>();
     _email = wifiConfig["cloud-email"].as<String>();
     loggedIn = true;
@@ -2345,11 +2345,11 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
 
   bool hasAuthTokens()
   {
-    if (!xtouch_filesystem_exist(xtouch_sdcard_fs(), xtouch_paths_provisioning))
+    if (!xptouch_filesystem_exist(xptouch_sdcard_fs(), xptouch_paths_provisioning))
     {
       return false;
     }
-    DynamicJsonDocument config = xtouch_filesystem_readJson(xtouch_sdcard_fs(), xtouch_paths_provisioning, false, 2048);
+    DynamicJsonDocument config = xptouch_filesystem_readJson(xptouch_sdcard_fs(), xptouch_paths_provisioning, false, 2048);
     return config["cloud-authToken"].as<String>() != "";
   }
 };

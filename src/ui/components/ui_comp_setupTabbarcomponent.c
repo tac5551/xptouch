@@ -2,7 +2,7 @@
 #include "ui_comp_setupTabbarcomponent.h"
 
 /* 5" 以外はタブ行を厚くしてタップしやすくする */
-#if defined(__XTOUCH_SCREEN_S3_050__)
+#if defined(__XPTOUCH_SCREEN_S3_050__)
 #define SETUP_TABBAR_H_PCT 15
 #else
 #define SETUP_TABBAR_H_PCT 20
@@ -102,7 +102,7 @@ static void on_save_click(lv_event_t *e)
     lv_event_code_t code = lv_event_get_code(e);
     if (code != LV_EVENT_CLICKED)
         return;
-    lv_msg_send(XTOUCH_SETTINGS_SAVE, NULL);
+    lv_msg_send(XPTOUCH_SETTINGS_SAVE, NULL);
     ui_settings_clear_dirty();
 }
 
@@ -122,7 +122,7 @@ static lv_obj_t *create_tab_button(lv_obj_t *parent, const char *label, int inde
     lv_obj_set_style_text_color(btn, lv_color_hex(0x111111), LV_PART_MAIN | LV_STATE_CHECKED);
     lv_obj_set_style_pad_left(btn, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_right(btn, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
-#if defined(__XTOUCH_SCREEN_S3_050__)
+#if defined(__XPTOUCH_SCREEN_S3_050__)
     lv_obj_set_style_pad_top(btn, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_bottom(btn, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
 #else
@@ -154,7 +154,7 @@ static lv_obj_t *create_save_button(lv_obj_t *parent)
     lv_obj_set_style_border_width(btn, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_left(btn, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_right(btn, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
-#if defined(__XTOUCH_SCREEN_S3_050__)
+#if defined(__XPTOUCH_SCREEN_S3_050__)
     lv_obj_set_style_pad_top(btn, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_bottom(btn, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
 #else

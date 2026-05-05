@@ -3,7 +3,7 @@
 
 #include "setting.h"
 
-XTouchPanelConfig x_touch_touchConfig;
+XTouchPanelConfig xPTouchTouchConfig;
 
 class ScreenPoint
 {
@@ -27,8 +27,8 @@ ScreenPoint getScreenCoords(int16_t x, int16_t y)
 {
     int16_t logical_w = (int16_t)tft.width();
     int16_t logical_h = (int16_t)tft.height();
-    int16_t xCoord = round((x * x_touch_touchConfig.xCalM) + x_touch_touchConfig.xCalC);
-    int16_t yCoord = round((y * x_touch_touchConfig.yCalM) + x_touch_touchConfig.yCalC);
+    int16_t xCoord = round((x * xPTouchTouchConfig.xCalM) + xPTouchTouchConfig.xCalC);
+    int16_t yCoord = round((y * xPTouchTouchConfig.yCalM) + xPTouchTouchConfig.yCalC);
     if (xCoord < 0)
         xCoord = 0;
     if (xCoord >= logical_w)
@@ -40,10 +40,10 @@ ScreenPoint getScreenCoords(int16_t x, int16_t y)
     return (ScreenPoint(xCoord, yCoord));
 }
 
-void xtouch_loadTouchConfig(XTouchPanelConfig &config)
+void xptouch_loadTouchConfig(XTouchPanelConfig &config)
 {
     // Open file for reading
-    File file = xtouch_filesystem_open(xtouch_sdcard_fs(), xtouch_paths_touch);
+    File file = xptouch_filesystem_open(xptouch_sdcard_fs(), xptouch_paths_touch);
 
     // Allocate a temporary JsonDocument
     // Don't forget to change the capacity to match your requirements.
@@ -63,20 +63,20 @@ void xtouch_loadTouchConfig(XTouchPanelConfig &config)
     file.close();
 }
 
-void xtouch_saveTouchConfig(XTouchPanelConfig &config)
+void xptouch_saveTouchConfig(XTouchPanelConfig &config)
 {
     DynamicJsonDocument doc(512); // Specify the size of the document
     doc["xCalM"] = config.xCalM;
     doc["yCalM"] = config.yCalM;
     doc["xCalC"] = config.xCalC;
     doc["yCalC"] = config.yCalC;
-    xtouch_filesystem_writeJson(xtouch_sdcard_fs(), xtouch_paths_touch, doc);
+    xptouch_filesystem_writeJson(xptouch_sdcard_fs()  xptouch_paths_touch, doc);
 }
 
-void xtouch_resetTouchConfig()
+void xptouch_resetTouchConfig()
 {
     ConsoleInfo.println(F("[xPTouch][I][TOUCH] Reset touch config"));
-    xtouch_filesystem_deleteFile(xtouch_sdcard_fs(), xtouch_paths_touch);
+    xptouch_filesystem_deleteFile(xptouch_sdcard_fs(), xptouch_paths_touch);
     delay(500);
     ESP.restart();
 }
@@ -84,15 +84,15 @@ void xtouch_resetTouchConfig()
 bool hasTouchConfig()
 {
     ConsoleInfo.println(F("[xPTouch][I][TOUCH] Checking for touch config"));
-    return xtouch_filesystem_exist(xtouch_sdcard_fs(), xtouch_paths_touch);
+    return xptouch_filesystem_exist(xptouch_sdcard_fs(), xptouch_paths_touch);
 }
 
-void xtouch_touch_setup()
+void xptouch_touch_setup()
 {
     if (hasTouchConfig())
     {
         ConsoleInfo.println(F("[xPTouch][I][TOUCH] Load touch config from SD card touch config"));
-        xtouch_loadTouchConfig(x_touch_touchConfig);
+        xptouch_loadTouchConfig(xPTouchTouchConfig);
     }
     else
     {
@@ -143,13 +143,13 @@ void xtouch_touch_setup()
         int16_t xDist = max_x - (edge_margin * 2);
         int16_t yDist = max_y - (edge_margin * 2);
 
-        x_touch_touchConfig.xCalM = (float)xDist / (float)(x2 - x1);
-        x_touch_touchConfig.xCalC = (float)edge_margin - ((float)x1 * x_touch_touchConfig.xCalM);
+        xPTouchTouchConfig.xCalM = (float)xDist / (float)(x2 - x1);
+        xPTouchTouchConfig.xCalC = (float)edge_margin - ((float)x1 * xPTouchTouchConfig.xCalM);
         // y
-        x_touch_touchConfig.yCalM = (float)yDist / (float)(y2 - y1);
-        x_touch_touchConfig.yCalC = (float)edge_margin - ((float)y1 * x_touch_touchConfig.yCalM);
+        xPTouchTouchConfig.yCalM = (float)yDist / (float)(y2 - y1);
+        xPTouchTouchConfig.yCalC = (float)edge_margin - ((float)y1 * xPTouchTouchConfig.yCalM);
 
-        xtouch_saveTouchConfig(x_touch_touchConfig);
+        xptouch_saveTouchConfig(xPTouchTouchConfig);
 
         loadScreen(-1);
     }

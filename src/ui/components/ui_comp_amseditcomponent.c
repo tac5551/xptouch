@@ -20,13 +20,13 @@ static void ams_edit_sd_load_timer_cb(lv_timer_t *t)
 {
     static char buf[AMSEDIT_OPTS_BUF_SIZE];
     buf[0] = '\0';
-    xtouch_filaments_load_for_current_printer_c();
-    xtouch_public_filaments_get_brand_options(buf, sizeof(buf));
+    xptouch_filaments_load_for_current_printer_c();
+    xptouch_public_filaments_get_brand_options(buf, sizeof(buf));
     if (s_dd_brand)
         lv_dropdown_set_options(s_dd_brand, buf[0] ? buf : "—");
     lv_dropdown_set_selected(s_dd_brand, 0);
     buf[0] = '\0';
-    xtouch_public_filaments_get_type_options_by_display_index(0, buf, sizeof(buf));
+    xptouch_public_filaments_get_type_options_by_display_index(0, buf, sizeof(buf));
     if (s_dd_type)
         lv_dropdown_set_options(s_dd_type, buf[0] ? buf : "—");
     lv_dropdown_set_selected(s_dd_type, 0);
@@ -38,7 +38,7 @@ static void ams_edit_sd_load_timer_cb(lv_timer_t *t)
         int ti = ams_edit_current_type_index;
         lv_dropdown_set_selected(s_dd_brand, bi);
         buf[0] = '\0';
-        xtouch_public_filaments_get_type_options_by_display_index(bi, buf, sizeof(buf));
+        xptouch_public_filaments_get_type_options_by_display_index(bi, buf, sizeof(buf));
         if (s_dd_type)
             lv_dropdown_set_options(s_dd_type, buf[0] ? buf : "—");
         lv_dropdown_set_selected(s_dd_type, ti);
@@ -57,9 +57,9 @@ static void ams_edit_sd_load_timer_cb(lv_timer_t *t)
             {
                 char brand_buf[24], type_buf[24];
                 brand_buf[0] = type_buf[0] = '\0';
-                if (xtouch_public_filaments_rev_lookup(setting_id, brand_buf, sizeof(brand_buf), type_buf, sizeof(type_buf)))
+                if (xptouch_public_filaments_rev_lookup(setting_id, brand_buf, sizeof(brand_buf), type_buf, sizeof(type_buf)))
                 {
-                    if (xtouch_public_filaments_find_indices_by_brand_and_type(brand_buf, type_buf, &bi, &ti))
+                    if (xptouch_public_filaments_find_indices_by_brand_and_type(brand_buf, type_buf, &bi, &ti))
                         set = 1;
                 }
             }
@@ -68,7 +68,7 @@ static void ams_edit_sd_load_timer_cb(lv_timer_t *t)
         {
             lv_dropdown_set_selected(s_dd_brand, bi);
             buf[0] = '\0';
-            xtouch_public_filaments_get_type_options_by_display_index(bi, buf, sizeof(buf));
+            xptouch_public_filaments_get_type_options_by_display_index(bi, buf, sizeof(buf));
             if (s_dd_type)
                 lv_dropdown_set_options(s_dd_type, buf[0] ? buf : "—");
             lv_dropdown_set_selected(s_dd_type, ti);
@@ -97,9 +97,9 @@ static void schedule_fetch_for_current_selection(void)
     if (type_idx < 0) type_idx = 0;
     static char id_buf[16];
     id_buf[0] = '\0';
-    xtouch_public_filaments_get_selected_id_n(brand_idx, type_idx, id_buf, sizeof(id_buf), NULL, 0, NULL, 0, NULL, NULL);
+    xptouch_public_filaments_get_selected_id_n(brand_idx, type_idx, id_buf, sizeof(id_buf), NULL, 0, NULL, 0, NULL, NULL);
     if (id_buf[0] != '\0')
-        lv_msg_send(XTOUCH_COMMAND_AMS_FETCH_SLICER_TEMP, id_buf);
+        lv_msg_send(XPTOUCH_COMMAND_AMS_FETCH_SLICER_TEMP, id_buf);
 }
 
 static void on_fetched_temp_msg(lv_event_t *e)
@@ -107,7 +107,7 @@ static void on_fetched_temp_msg(lv_event_t *e)
     if (lv_event_get_code(e) != LV_EVENT_MSG_RECEIVED)
         return;
     lv_msg_t *m = lv_event_get_msg(e);
-    if (m && lv_msg_get_id(m) == XTOUCH_AMS_EDIT_JSON_ERROR)
+    if (m && lv_msg_get_id(m) == XPTOUCH_AMS_EDIT_JSON_ERROR)
     {
         const void *p = lv_msg_get_payload(m);
         if (p)
@@ -131,7 +131,7 @@ static void update_temp_display(void)
         if (type_idx < 0) type_idx = 0;
         char id_buf[16];
         id_buf[0] = '\0';
-        xtouch_public_filaments_get_selected_id_n(brand_idx, type_idx, id_buf, sizeof(id_buf), NULL, 0, NULL, 0, &min_val, &max_val);
+        xptouch_public_filaments_get_selected_id_n(brand_idx, type_idx, id_buf, sizeof(id_buf), NULL, 0, NULL, 0, &min_val, &max_val);
         int id_match = (id_buf[0] != '\0' && strcmp(id_buf, ams_edit_fetched_setting_id) == 0);
         if (id_match && (ams_edit_fetched_min > 0 || ams_edit_fetched_max > 0))
         {
@@ -163,14 +163,14 @@ static void on_reset_clicked(lv_event_t *e)
     if (lv_event_get_code(e) != LV_EVENT_CLICKED)
         return;
     /* Bambu 側の挙動に合わせ、setting_id/tray_info_idx を ""、温度を 0 でリセットする */
-    struct XTOUCH_AMS_FILAMENT_SETTING_PAYLOAD payload;
+    struct XPTOUCH_AMS_FILAMENT_SETTING_PAYLOAD payload;
     memset(&payload, 0, sizeof(payload));
     payload.ams_id = ams_edit_current_ams_id;
     payload.tray_id = ams_edit_current_tray_id;
     payload.nozzle_temp_min = 0;
     payload.nozzle_temp_max = 0;
     snprintf(payload.tray_color, sizeof(payload.tray_color), "00000000"); /* RRGGBBAA デフォルトは透明 */
-    lv_msg_send(XTOUCH_COMMAND_AMS_FILAMENT_SETTING, &payload);
+    lv_msg_send(XPTOUCH_COMMAND_AMS_FILAMENT_SETTING, &payload);
     if (s_ams_edit_sd_timer)
     {
         lv_timer_del(s_ams_edit_sd_timer);
@@ -192,7 +192,7 @@ static void on_save_clicked(lv_event_t *e)
     char type_buf[16];
     int nozzle_temp_min = 0, nozzle_temp_max = 0;
     id_buf[0] = n_buf[0] = type_buf[0] = '\0';
-    xtouch_public_filaments_get_selected_id_n(brand_idx, type_idx, id_buf, sizeof(id_buf), n_buf, sizeof(n_buf), type_buf, sizeof(type_buf), &nozzle_temp_min, &nozzle_temp_max);
+    xptouch_public_filaments_get_selected_id_n(brand_idx, type_idx, id_buf, sizeof(id_buf), n_buf, sizeof(n_buf), type_buf, sizeof(type_buf), &nozzle_temp_min, &nozzle_temp_max);
     /* MQTT に送る温度は Cloud で取ってきた値を使う（id 一致時は ams_edit_fetched_* を優先） */
     int id_match = (id_buf[0] != '\0' && strcmp(id_buf, ams_edit_fetched_setting_id) == 0);
     if (id_match && (ams_edit_fetched_min > 0 || ams_edit_fetched_max > 0))
@@ -200,10 +200,7 @@ static void on_save_clicked(lv_event_t *e)
         nozzle_temp_min = ams_edit_fetched_min;
         nozzle_temp_max = ams_edit_fetched_max;
     }
-    /* #region agent log */
-    xtouch_debug_log_ams_save(id_buf, ams_edit_fetched_setting_id, id_match, ams_edit_fetched_min, ams_edit_fetched_max, nozzle_temp_min, nozzle_temp_max);
-    /* #endregion */
-    struct XTOUCH_AMS_FILAMENT_SETTING_PAYLOAD payload;
+    struct XPTOUCH_AMS_FILAMENT_SETTING_PAYLOAD payload;
     payload.ams_id = ams_edit_current_ams_id;
     payload.tray_id = ams_edit_current_tray_id;
     payload.nozzle_temp_min = nozzle_temp_min;
@@ -222,7 +219,7 @@ static void on_save_clicked(lv_event_t *e)
         snprintf(payload.tray_type, sizeof(payload.tray_type), "%s", ams_edit_fetched_tray_type);
     else
         snprintf(payload.tray_type, sizeof(payload.tray_type), "%s", type_buf[0] ? type_buf : "PLA");
-    lv_msg_send(XTOUCH_COMMAND_AMS_FILAMENT_SETTING, &payload);
+    lv_msg_send(XPTOUCH_COMMAND_AMS_FILAMENT_SETTING, &payload);
     if (s_ams_edit_sd_timer)
     {
         lv_timer_del(s_ams_edit_sd_timer);
@@ -275,7 +272,7 @@ static void on_brand_changed(lv_event_t *e)
         idx = 0;
     static char buf[AMSEDIT_OPTS_BUF_SIZE];
     buf[0] = '\0';
-    xtouch_public_filaments_get_type_options_by_display_index(idx, buf, sizeof(buf));
+    xptouch_public_filaments_get_type_options_by_display_index(idx, buf, sizeof(buf));
     lv_dropdown_set_options(dd_type, buf[0] ? buf : "—");
     lv_dropdown_set_selected(dd_type, 0);
     update_temp_display();
@@ -353,7 +350,7 @@ lv_obj_t *ui_amsEditComponent_create(lv_obj_t *comp_parent)
     // {
     //     char buf[AMSEDIT_OPTS_BUF_SIZE];
     //     buf[0] = '\0';
-    //     xtouch_public_filaments_get_brand_options(buf, sizeof(buf));
+    //     xptouch_public_filaments_get_brand_options(buf, sizeof(buf));
     //     lv_dropdown_set_options(dd_brand, buf[0] ? buf : "—");
     //     lv_dropdown_set_selected(dd_brand, 0);
     // }
@@ -451,8 +448,8 @@ lv_obj_t *ui_amsEditComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_text_font(s_lbl_temp_max, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
     update_temp_display();
     lv_obj_add_event_cb(content, on_fetched_temp_msg, LV_EVENT_MSG_RECEIVED, NULL);
-    lv_msg_subsribe_obj(XTOUCH_AMS_EDIT_FETCHED_TEMP, content, NULL);
-    lv_msg_subsribe_obj(XTOUCH_AMS_EDIT_JSON_ERROR, content, NULL);
+    lv_msg_subsribe_obj(XPTOUCH_AMS_EDIT_FETCHED_TEMP, content, NULL);
+    lv_msg_subsribe_obj(XPTOUCH_AMS_EDIT_JSON_ERROR, content, NULL);
 
     /* Footer: Back, Reset, Save */
     lv_obj_t *footer = lv_obj_create(cui_amsEditComponent);

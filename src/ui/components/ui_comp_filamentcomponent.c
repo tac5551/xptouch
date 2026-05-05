@@ -10,7 +10,7 @@ void ui_event_comp_filamentComponent_onNozzleTemp(lv_event_t *e)
     lv_obj_t *target = lv_event_get_target(e);
     lv_msg_t *m = lv_event_get_msg(e);
 
-    struct XTOUCH_MESSAGE_DATA *message = (struct XTOUCH_MESSAGE_DATA *)m->payload;
+    struct XPTOUCH_MESSAGE_DATA *message = (struct XPTOUCH_MESSAGE_DATA *)m->payload;
 
     char value[10];
     itoa(message->data, value, 10);
@@ -103,7 +103,7 @@ void ui_event_comp_filamentComponent_onAMSSlot4Click(lv_event_t *e)
 void onAmsLoad(lv_event_t *e)
 {
     void *user_data = lv_event_get_user_data(e);
-    lv_msg_send(XTOUCH_COMMAND_AMS_LOAD_SLOT, user_data);
+    lv_msg_send(XPTOUCH_COMMAND_AMS_LOAD_SLOT, user_data);
 }
 
 void ui_event_comp_filamentComponent_amsLoad(lv_event_t *e)
@@ -212,7 +212,7 @@ void ui_event_comp_filamentComponent_onAmsUpdate(lv_event_t *e)
     uintptr_t temp_user_data = (uintptr_t)lv_event_get_user_data(e);
     uint8_t user_data = (uint8_t)temp_user_data;
 
-    if (!(bambuStatus.ams_status_main == AMS_STATUS_MAIN_IDLE || bambuStatus.ams_status_main == AMS_STATUS_MAIN_ASSIST) || bambuStatus.print_status == XTOUCH_PRINT_STATUS_RUNNING)
+    if (!(bambuStatus.ams_status_main == AMS_STATUS_MAIN_IDLE || bambuStatus.ams_status_main == AMS_STATUS_MAIN_ASSIST) || bambuStatus.print_status == XPTOUCH_PRINT_STATUS_RUNNING)
     {
         lv_obj_add_state(target, LV_STATE_DISABLED);
     }
@@ -221,7 +221,7 @@ void ui_event_comp_filamentComponent_onAmsUpdate(lv_event_t *e)
         lv_obj_clear_state(target, LV_STATE_DISABLED);
     }
 
-    struct XTOUCH_MESSAGE_DATA *message = (struct XTOUCH_MESSAGE_DATA *)m->payload;
+    struct XPTOUCH_MESSAGE_DATA *message = (struct XPTOUCH_MESSAGE_DATA *)m->payload;
 
     uint8_t tmp_ams_id;
     uint8_t tmp_tray_id;
@@ -586,7 +586,7 @@ lv_obj_t *ui_filamentComponent_create(lv_obj_t *comp_parent)
     // Contraler
 
     lv_obj_add_event_cb(cui_filamentScreenNozzleTemp, ui_event_comp_filamentComponent_onNozzleTemp, LV_EVENT_MSG_RECEIVED, (void *)NULL);
-    lv_msg_subsribe_obj(XTOUCH_ON_NOZZLE_TEMP, cui_filamentScreenNozzleTemp, (void *)NULL);
+    lv_msg_subsribe_obj(XPTOUCH_ON_NOZZLE_TEMP, cui_filamentScreenNozzleTemp, (void *)NULL);
 
     ui_comp_filamentComponent_create_hook(cui_filamentControlComponent);
 

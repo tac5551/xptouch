@@ -8,22 +8,22 @@
 int led_red = 0;
 int led_green = 0;
 int led_blue = 0;
-bool xtouch_led_initialized = false;
+bool xptouch_led_initialized = false;
 
-#if defined(__XTOUCH_SCREEN_28__)
+#if defined(__XPTOUCH_SCREEN_28__)
 #include "devices/2.8/screen.h"
-#elif defined(__XTOUCH_SCREEN_S3_028__)
+#elif defined(__XPTOUCH_SCREEN_S3_028__)
 #include "devices/s3_2.8/screen.h"
-#elif defined(__XTOUCH_SCREEN_S3_3248__)
+#elif defined(__XPTOUCH_SCREEN_S3_3248__)
 #include "devices/s3_3248w535/screen.h"
-#elif defined(__XTOUCH_SCREEN_S3_050__)
+#elif defined(__XPTOUCH_SCREEN_S3_050__)
 #include "devices/5.0/screen.h"
 #endif
 
 
-void xtouch_led_set(int red, int green, int blue)
+void xptouch_led_set(int red, int green, int blue)
 {
-    if (!xtouch_led_initialized)
+    if (!xptouch_led_initialized)
         return;
     // アクティブローのLEDのため、PWM値を反転（255-値）
     ledcWrite(0, 255 - red);   // 赤色LED（チャンネル0）
@@ -31,9 +31,9 @@ void xtouch_led_set(int red, int green, int blue)
     ledcWrite(2, 255 - blue);  // 青色LED（チャンネル2）
 }
 
-void xtouch_led_init(void)
+void xptouch_led_init(void)
 {
-#if defined(__XTOUCH_SCREEN_28__)
+#if defined(__XPTOUCH_SCREEN_28__)
     lgfx::boards::board_t board = tft.getBoard();
     if (board == lgfx::boards::board_t::board_Guition_ESP32_2432W328R || board == lgfx::boards::board_t::board_Guition_ESP32_2432W328C)
     {
@@ -43,7 +43,7 @@ void xtouch_led_init(void)
         led_blue = 17;
     }
 #endif
-    ConsoleDebug.println("XTOUCH_LED_RED: " + String(led_red) + " GREEN: " + String(led_green) + " BLUE: " + String(led_blue));
+    ConsoleDebug.println("XPTOUCH_LED_RED: " + String(led_red) + " GREEN: " + String(led_green) + " BLUE: " + String(led_blue));
 
     // LED用GPIOの初期化とオフ設定
     pinMode(led_red, OUTPUT);
@@ -59,7 +59,7 @@ void xtouch_led_init(void)
     ledcAttachPin(led_green, 1);
     ledcAttachPin(led_blue, 2);
 
-    xtouch_led_initialized = true;
-    xtouch_led_set(0, 0, 0); // オフ
+    xptouch_led_initialized = true;
+    xptouch_led_set(0, 0, 0); // オフ
 }
 #endif

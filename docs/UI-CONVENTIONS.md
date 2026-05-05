@@ -21,12 +21,12 @@
 ## xtouch と UI 間のデータのやり取りは types の構造体を経由する
 
 - **xtouch と UI 間で共有するデータは、types.h に定義した構造体・配列を経由して行う。** xtouch がそれらを更新し、UI は参照するだけにする。
-- 例: `bambuStatus`, `xTouchConfig`, `otherPrinters`, `xtouch_thumbnail_slot_path[]` など。新規に共有データが必要なときも types.h に型・extern を追加し、実体は globals 等で定義する。
+- 例: `bambuStatus`, `xPTouchConfig`, `otherPrinters`, `xptouch_thumbnail_slot_path[]` など。新規に共有データが必要なときも types.h に型・extern を追加し、実体は globals 等で定義する。
 
 ## UI から xtouch の呼び出し
 
 - **xtouch の内部実装関数の呼び出しは、イベント（lv_msg 等）経由で行う。**
-- UI コンポーネントから直接 `xtouch_*` を呼ばず、メッセージを送信し、main または xtouch 層で受けて処理する。これにより UI と xtouch の結合を避け、ui_ ファイルの再生成時にも影響を抑えられる。
+- UI コンポーネントから直接 `xptouch_*` を呼ばず、メッセージを送信し、main または xtouch 層で受けて処理する。これにより UI と xtouch の結合を避け、ui_ ファイルの再生成時にも影響を抑えられる。
 
 ## 注意（ESPDEBUG）
 
@@ -51,33 +51,33 @@
 **Do not `#include` xtouch headers (e.g. `xtouch/public_filaments.h`, `xtouch/filesystem.h`) or call xtouch-layer functions from within ui/components (ui_comp_*.c).**
 
 - Reason: Including xtouch files from ui_comp_* causes build errors (e.g. undeclared `ConsoleDebug`/`ConsoleError` when filesystem.h is pulled in, or other dependency/link issues). It also couples the UI layer to the xtouch layer.
-- What to do: Have **Main (or the xtouch layer)** load data, check file existence, and set shared state (e.g. `bambuStatus`, `xTouchConfig`). The UI only reads that state or uses data prepared by Main. For dropdown options that come from xtouch (e.g. public_filaments), load in Main and expose results via globals or accessors that the UI can use without including xtouch headers.
+- What to do: Have **Main (or the xtouch layer)** load data, check file existence, and set shared state (e.g. `bambuStatus`, `xPTouchConfig`). The UI only reads that state or uses data prepared by Main. For dropdown options that come from xtouch (e.g. public_filaments), load in Main and expose results via globals or accessors that the UI can use without including xtouch headers.
 
-## Do not call xtouch_* from UI
+## Do not call xptouch_* from UI
 
-**Do not call `xtouch_*` functions from within ui/components (ui_comp_*.c).**
+**Do not call `xptouch_*` functions from within ui/components (ui_comp_*.c).**
 
 - Reason: To avoid link-time multiple definitions and coupling between UI and the xtouch layer.
 - What to do: Have **Main (or the xtouch layer)** fetch or determine the needed state once and store it in `bambuStatus` or another shared global. The UI should only read that value.
 
 ### Example
 
-- ❌ Calling `xtouch_has_public_filaments()` from the UI
+- ❌ Calling `xptouch_has_public_filaments()` from the UI
 - ✅ Main sets `bambuStatus.has_public_filaments = (file exists) ? 1 : 0` at startup; the UI reads `bambuStatus.has_public_filaments`
 
-Similarly, SD/file existence, settings read/write, etc. should be done on the **Main side**, and the result passed to the UI via **bambuStatus**, **xTouchConfig**, or similar.
+Similarly, SD/file existence, settings read/write, etc. should be done on the **Main side**, and the result passed to the UI via **bambuStatus**, **xPTouchConfig**, or similar.
 
 ## 方針: コンポーネントで xtouch に依頼したいときは「イベント送信 → xtouch 側で購読して呼ぶ」
 
 **ui_comp_\*.c からは xtouch を include せず、呼び出しも行わない。** 代わりに次の形にする。
 
 1. **コンポーネント**: やりたいこと用のメッセージを ui_msgs.h に定義し、`lv_msg_send(メッセージID, &payload)` で送るだけにする。
-2. **xtouch 側**: mqtt.h の `xtouch_mqtt_subscribe_commands` のように、**xtouch の .h 内で** `lv_msg_subscribe(メッセージID, callback, NULL)` を登録し、コールバック内で `xtouch_*` を呼ぶ。main の setup でその購読登録関数を一度呼ぶ。
+2. **xtouch 側**: mqtt.h の `xptouch_mqtt_subscribe_commands` のように、**xtouch の .h 内で** `lv_msg_subscribe(メッセージID, callback, NULL)` を登録し、コールバック内で `xptouch_*` を呼ぶ。main の setup でその購読登録関数を一度呼ぶ。
 
-こうすると、UI はイベントを送るだけで、**呼び出しは xtouch の購読に集約**され、ui.h に xtouch の宣言を並べる必要がない。**表示用データ（例: サムネイルのパス）は types.h の共有構造体・配列に xtouch が書き、UI はそれを参照するだけ**にし、`xtouch_*` の直接呼び出しは避ける。
+こうすると、UI はイベントを送るだけで、**呼び出しは xtouch の購読に集約**され、ui.h に xtouch の宣言を並べる必要がない。**表示用データ（例: サムネイルのパス）は types.h の共有構造体・配列に xtouch が書き、UI はそれを参照するだけ**にし、`xptouch_*` の直接呼び出しは避ける。
 
 ### 実例: Printers 画面のサムネイル全スロット取得
 
-- **メッセージ**: `XTOUCH_PRINTERS_SCHEDULE_THUMB_FETCH`（ui_msgs.h で定義）
-- **ui_comp_printerscomponent.c**: コンポーネント作成時に `lv_msg_send(XTOUCH_PRINTERS_SCHEDULE_THUMB_FETCH, &eventData)` のみ送信。`xtouch/thumbnail.h` は include しない。
-- **xtouch 側で購読**: mqtt.h の `xtouch_mqtt_subscribe_commands` と同様に、**xtouch/thumbnail.h** で `lv_msg_subscribe(XTOUCH_PRINTERS_SCHEDULE_THUMB_FETCH, callback, NULL)` を登録。main の setup で `xtouch_thumbnail_subscribe_events()` を一度呼ぶ。UI は送信だけし、**呼び出しは xtouch の購読コールバック**で行う（ui.h に宣言を並べず、イベント定義＋xtouch 側購読で完結）。
+- **メッセージ**: `XPTOUCH_PRINTERS_SCHEDULE_THUMB_FETCH`（ui_msgs.h で定義）
+- **ui_comp_printerscomponent.c**: コンポーネント作成時に `lv_msg_send(XPTOUCH_PRINTERS_SCHEDULE_THUMB_FETCH, &eventData)` のみ送信。`xtouch/thumbnail.h` は include しない。
+- **xtouch 側で購読**: mqtt.h の `xptouch_mqtt_subscribe_commands` と同様に、**xtouch/thumbnail.h** で `lv_msg_subscribe(XPTOUCH_PRINTERS_SCHEDULE_THUMB_FETCH, callback, NULL)` を登録。main の setup で `xptouch_thumbnail_subscribe_events()` を一度呼ぶ。UI は送信だけし、**呼び出しは xtouch の購読コールバック**で行う（ui.h に宣言を並べず、イベント定義＋xtouch 側購読で完結）。

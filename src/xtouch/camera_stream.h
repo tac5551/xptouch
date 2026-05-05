@@ -1,5 +1,5 @@
-#ifndef _XTOUCH_CAMERA_STREAM_H
-#define _XTOUCH_CAMERA_STREAM_H
+#ifndef _XPTOUCH_CAMERA_STREAM_H
+#define _XPTOUCH_CAMERA_STREAM_H
 
 #include <Arduino.h>
 #include <WiFi.h>
@@ -12,9 +12,9 @@
 #include "xtouch/sdcard.h"
 #include "xtouch/paths.h"
 
-#ifdef __XTOUCH_PLATFORM_S3__
+#ifdef __XPTOUCH_PLATFORM_S3__
 
-namespace xtouch_camera_stream
+namespace xptouch_camera_stream
 {
 static const uint16_t CAMERA_PORT = 6000;
 static const char *CAMERA_USER = "bblp";
@@ -36,25 +36,25 @@ inline void set_endpoint(const char *host, const char *access_code)
 {
     if (host && host[0])
     {
-        strncpy(xTouchConfig.xTouchCameraHost, host, sizeof(xTouchConfig.xTouchCameraHost) - 1);
-        xTouchConfig.xTouchCameraHost[sizeof(xTouchConfig.xTouchCameraHost) - 1] = '\0';
+        strncpy(xPTouchConfig.xTouchCameraHost, host, sizeof(xPTouchConfig.xTouchCameraHost) - 1);
+        xPTouchConfig.xTouchCameraHost[sizeof(xPTouchConfig.xTouchCameraHost) - 1] = '\0';
     }
     if (access_code && access_code[0])
     {
-        strncpy(xTouchConfig.xTouchCameraAccessCode, access_code, sizeof(xTouchConfig.xTouchCameraAccessCode) - 1);
-        xTouchConfig.xTouchCameraAccessCode[sizeof(xTouchConfig.xTouchCameraAccessCode) - 1] = '\0';
+        strncpy(xPTouchConfig.xTouchCameraAccessCode, access_code, sizeof(xPTouchConfig.xTouchCameraAccessCode) - 1);
+        xPTouchConfig.xTouchCameraAccessCode[sizeof(xPTouchConfig.xTouchCameraAccessCode) - 1] = '\0';
     }
 }
 
 inline bool update_from_wifi_json_if_exists()
 {
-    const bool has_wifi_json = xtouch_filesystem_exist(xtouch_sdcard_fs(), CAMERA_WIFI_JSON_PATH);
-    const bool has_xtouch_json = xtouch_filesystem_exist(xtouch_sdcard_fs(), xtouch_paths_config);
-    if (!has_wifi_json && !has_xtouch_json)
+    const bool has_wifi_json = xptouch_filesystem_exist(xptouch_sdcard_fs(), CAMERA_WIFI_JSON_PATH);
+    const bool has_xptouch_json = xptouch_filesystem_exist(xptouch_sdcard_fs(), xptouch_paths_config);
+    if (!has_wifi_json && !has_xptouch_json)
         return false;
 
-    const char *cfg_path = has_wifi_json ? CAMERA_WIFI_JSON_PATH : xtouch_paths_config;
-    DynamicJsonDocument cfg = xtouch_filesystem_readJson(xtouch_sdcard_fs(), cfg_path, false);
+    const char *cfg_path = has_wifi_json ? CAMERA_WIFI_JSON_PATH : xptouch_paths_config;
+    DynamicJsonDocument cfg = xptouch_filesystem_readJson(xptouch_sdcard_fs(), cfg_path, false);
     if (cfg.isNull())
         return false;
 
@@ -107,12 +107,12 @@ inline bool update_from_wifi_json_if_exists()
 
 inline const char *get_host()
 {
-    return xTouchConfig.xTouchCameraHost[0] ? xTouchConfig.xTouchCameraHost : xTouchConfig.xTouchHost;
+    return xPTouchConfig.xTouchCameraHost[0] ? xPTouchConfig.xTouchCameraHost : xPTouchConfig.xTouchHost;
 }
 
 inline const char *get_access_code()
 {
-    return xTouchConfig.xTouchCameraAccessCode[0] ? xTouchConfig.xTouchCameraAccessCode : xTouchConfig.xTouchAccessCode;
+    return xPTouchConfig.xTouchCameraAccessCode[0] ? xPTouchConfig.xTouchCameraAccessCode : xPTouchConfig.xTouchAccessCode;
 }
 
 inline void reset_frame_parser()
@@ -347,11 +347,11 @@ inline void update_from_push_status_net(JsonObject print_obj)
         set_endpoint(host_buf, access_buf);
 
     /* MQTT にカメラ用 IP がまだ無いときだけ SD の wifi.json / xtouch.json で補完 */
-    if (!xTouchConfig.xTouchCameraHost[0])
+    if (!xPTouchConfig.xTouchCameraHost[0])
         (void)update_from_wifi_json_if_exists();
 }
-} // namespace xtouch_camera_stream
+} // namespace xptouch_camera_stream
 
-#endif // __XTOUCH_PLATFORM_S3__
+#endif // __XPTOUCH_PLATFORM_S3__
 
-#endif // _XTOUCH_CAMERA_STREAM_H
+#endif // _XPTOUCH_CAMERA_STREAM_H

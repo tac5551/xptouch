@@ -2,7 +2,7 @@
 #include "types.h"
 #include "trays.h"
 
-void xtouch_ams_parse_tray_now(const char *tray_now)
+void xptouch_ams_parse_tray_now(const char *tray_now)
 {
     if (strlen(tray_now) == 0)
     {
@@ -25,7 +25,7 @@ void xtouch_ams_parse_tray_now(const char *tray_now)
 }
 
 
-void xtouch_ams_parse_status(int ams_status)
+void xptouch_ams_parse_status(int ams_status)
 {
     bambuStatus.ams_status_sub = ams_status & 0xFF;
     int ams_status_main_int = (ams_status & 0xFF00) >> 8;
@@ -63,18 +63,18 @@ void xtouch_ams_parse_status(int ams_status)
     }
 }
 
-bool xtouch_has_ams() { return bambuStatus.ams_exist_bits != 0; }
+bool xptouch_has_ams() { return bambuStatus.ams_exist_bits != 0; }
 
-bool xtouch_can_load_filament()
+bool xptouch_can_load_filament()
 {
     /* AMS 未接続・接続のどちらでも外部スプール(EXT)ロードを許可（以前は AMS 有りで常に不可だった） */
     return true;
 }
 
-bool xtouch_can_unload_filament()
+bool xptouch_can_unload_filament()
 {
     bool result = false;
-    if (!xtouch_has_ams())
+    if (!xptouch_has_ams())
         return true;
 
     {

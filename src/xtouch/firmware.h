@@ -52,14 +52,14 @@ bool isSemVerEqualTo(const SemVer &v1, const SemVer &v2)
     return compareSemVer(v1, v2) == 0;
 }
 
-#define XTOUCH_FIRMWARE_DOWNLOAD_RETRIES 5
-byte xtouch_firmware_updateDownloadRetries = 0;
+#define XPTOUCH_FIRMWARE_DOWNLOAD_RETRIES 5
+byte xptouch_firmware_updateDownloadRetries = 0;
 
-bool xtouch_firmware_semverNeedsUpdate(const char *compare)
+bool xptouch_firmware_semverNeedsUpdate(const char *compare)
 {
     SemVer version1, version2;
 
-    if (parseSemVer(XTOUCH_FIRMWARE_VERSION, version1) && parseSemVer(compare, version2))
+    if (parseSemVer(XPTOUCH_FIRMWARE_VERSION, version1) && parseSemVer(compare, version2))
     {
         if (isSemVerGreaterThan(version2, version1))
         {
@@ -71,7 +71,7 @@ bool xtouch_firmware_semverNeedsUpdate(const char *compare)
     return false;
 }
 
-void xtouch_firmware_onProgress(size_t currSize, size_t totalSize)
+void xptouch_firmware_onProgress(size_t currSize, size_t totalSize)
 {
     int16_t progress = (currSize * 100) / totalSize;
     lv_label_set_text_fmt(introScreenCaption, LV_SYMBOL_CHARGE " Updating %d%%", progress);
@@ -80,9 +80,9 @@ void xtouch_firmware_onProgress(size_t currSize, size_t totalSize)
 }
 
 /* force: 手動「Update Now」用。true のとき OTA 設定に関わらずチェックする。起動時は false。 */
-void xtouch_firmware_checkOnlineFirmwareUpdate(bool force = false)
+void xptouch_firmware_checkOnlineFirmwareUpdate(bool force = false)
 {
-    if (!force && !xTouchConfig.xTouchOTAEnabled)
+    if (!force && !xPTouchConfig.xTouchOTAEnabled)
     {
         return;
     }
@@ -91,22 +91,22 @@ void xtouch_firmware_checkOnlineFirmwareUpdate(bool force = false)
     lv_timer_handler();
     lv_task_handler();
 
-    bool hasOTAConfigFile = downloadFileToSDCard(xtouch_paths_firmware_ota_file, xtouch_paths_firmware_ota_json);
+    bool hasOTAConfigFile = downloadFileToSDCard(xptouch_paths_firmware_ota_file, xptouch_paths_firmware_ota_json);
 
     if (hasOTAConfigFile)
     {
 
-        DynamicJsonDocument doc = xtouch_filesystem_readJson(xtouch_sdcard_fs(), xtouch_paths_firmware_ota_json);
-        if (xtouch_firmware_semverNeedsUpdate(doc["version"]))
+        DynamicJsonDocument doc = xptouch_filesystem_readJson(xptouch_sdcard_fs(), xptouch_paths_firmware_ota_json);
+        if (xptouch_firmware_semverNeedsUpdate(doc["version"]))
         {
             printf(" Downloading Update%d%%\n", 0);
             lv_label_set_text_fmt(introScreenCaption, LV_SYMBOL_CHARGE " Downloading Update %d%%", 0);
             lv_timer_handler();
             lv_task_handler();
 
-            bool xtouch_firmware_hasFirmwareUpdate = downloadFileToSDCard(
+            bool xptouch_firmware_hasFirmwareUpdate = downloadFileToSDCard(
                 doc["url"],
-                xtouch_paths_firmware_ota_fw,
+                xptouch_paths_firmware_ota_fw,
                 [](int progress)
                 {
                     printf(" Downloading Update%d%%\n", progress);
@@ -136,7 +136,7 @@ void xtouch_firmware_checkOnlineFirmwareUpdate(bool force = false)
                 },
                 doc["md5"]);
 
-            if (xtouch_firmware_hasFirmwareUpdate)
+            if (xptouch_firmware_hasFirmwareUpdate)
             {
                 printf(" Update downloaded\n");
                 lv_label_set_text(introScreenCaption, LV_SYMBOL_OK " Update downloaded");
@@ -147,34 +147,34 @@ void xtouch_firmware_checkOnlineFirmwareUpdate(bool force = false)
             }
             else
             {
-                printf(" Failed to download update. Retry (%d/%d)\n", xtouch_firmware_updateDownloadRetries + 1, XTOUCH_FIRMWARE_DOWNLOAD_RETRIES);
-                lv_label_set_text_fmt(introScreenCaption, LV_SYMBOL_WARNING " Failed to download update. Retry (%d/%d)", xtouch_firmware_updateDownloadRetries + 1, XTOUCH_FIRMWARE_DOWNLOAD_RETRIES);
+                printf(" Failed to download update. Retry (%d/%d)\n", xptouch_firmware_updateDownloadRetries + 1, XPTOUCH_FIRMWARE_DOWNLOAD_RETRIES);
+                lv_label_set_text_fmt(introScreenCaption, LV_SYMBOL_WARNING " Failed to download update. Retry (%d/%d)", xptouch_firmware_updateDownloadRetries + 1, XPTOUCH_FIRMWARE_DOWNLOAD_RETRIES);
                 lv_timer_handler();
                 lv_task_handler();
                 delay(32);
                 lv_timer_handler();
                 lv_task_handler();
                 delay(3000);
-                xtouch_firmware_updateDownloadRetries++;
-                if (xtouch_firmware_updateDownloadRetries == XTOUCH_FIRMWARE_DOWNLOAD_RETRIES)
+                xptouch_firmware_updateDownloadRetries++;
+                if (xptouch_firmware_updateDownloadRetries == XPTOUCH_FIRMWARE_DOWNLOAD_RETRIES)
                 {
                     // we are unable to download correctly the file
                     // disable OTA to be able to boot
-                    xTouchConfig.xTouchOTAEnabled = false;
-                    xtouch_settings_save();
-                    xtouch_filesystem_deleteFile(xtouch_sdcard_fs(), xtouch_paths_firmware_ota_fw);
-                    xtouch_filesystem_deleteFile(xtouch_sdcard_fs(), xtouch_paths_firmware_ota_json);
+                    xPTouchConfig.xTouchOTAEnabled = false;
+                    xptouch_settings_save();
+                    xptouch_filesystem_deleteFile(xptouch_sdcard_fs(), xptouch_paths_firmware_ota_fw);
+                    xptouch_filesystem_deleteFile(xptouch_sdcard_fs(), xptouch_paths_firmware_ota_json);
                     ESP.restart();
                 }
                 else
                 {
-                    xtouch_firmware_checkOnlineFirmwareUpdate(force);
+                    xptouch_firmware_checkOnlineFirmwareUpdate(force);
                 }
             }
         }
         else
         {
-            xtouch_filesystem_deleteFile(xtouch_sdcard_fs(), xtouch_paths_firmware_ota_json);
+            xptouch_filesystem_deleteFile(xptouch_sdcard_fs(), xptouch_paths_firmware_ota_json);
         }
     }
     else
@@ -190,14 +190,14 @@ void xtouch_firmware_checkOnlineFirmwareUpdate(bool force = false)
     lv_task_handler();
 }
 
-void xtouch_firmware_checkFirmwareUpdate(void)
+void xptouch_firmware_checkFirmwareUpdate(void)
 {
 
-    if (xtouch_filesystem_exist(xtouch_sdcard_fs(), xtouch_paths_firmware_ota_fw))
+    if (xptouch_filesystem_exist(xptouch_sdcard_fs(), xptouch_paths_firmware_ota_fw))
     {
-        DynamicJsonDocument doc = xtouch_filesystem_readJson(xtouch_sdcard_fs(), xtouch_paths_firmware_ota_json);
-        File firmware = xtouch_filesystem_open(xtouch_sdcard_fs(), xtouch_paths_firmware_ota_fw);
-        Update.onProgress(xtouch_firmware_onProgress);
+        DynamicJsonDocument doc = xptouch_filesystem_readJson(xptouch_sdcard_fs(), xptouch_paths_firmware_ota_json);
+        File firmware = xptouch_filesystem_open(xptouch_sdcard_fs(), xptouch_paths_firmware_ota_fw);
+        Update.onProgress(xptouch_firmware_onProgress);
         Update.begin(firmware.size(), U_FLASH);
         if (doc.containsKey("md5"))
         {
@@ -227,8 +227,8 @@ void xtouch_firmware_checkFirmwareUpdate(void)
             lv_task_handler();
         }
 
-        xtouch_filesystem_deleteFile(xtouch_sdcard_fs(), xtouch_paths_firmware_ota_json);
-        xtouch_filesystem_deleteFile(xtouch_sdcard_fs(), xtouch_paths_firmware_ota_fw);
+        xptouch_filesystem_deleteFile(xptouch_sdcard_fs(), xptouch_paths_firmware_ota_json);
+        xptouch_filesystem_deleteFile(xptouch_sdcard_fs(), xptouch_paths_firmware_ota_fw);
 
         delay(2000);
         ESP.restart();

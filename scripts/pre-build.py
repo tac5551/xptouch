@@ -199,7 +199,7 @@ def prebuild():
     if is_upload_target():
         print("Upload target detected -Noting to do")
     elif is_build_target():
-        print(f"============================★★ XTOUCH PREBUILD ★★==========================")
+        print(f"============================★★ XPTOUCH PREBUILD ★★==========================")
         print("Build target detected ")
         # MarkFlagチェック: 既に実行済みかチェック
         if is_prebuild_already_executed():
@@ -220,7 +220,7 @@ def prebuild():
         mark_prebuild_executed()
 
     elif is_clean_target():
-        print(f"============================★★ XTOUCH CLEAN ★★==========================")
+        print(f"============================★★ XPTOUCH CLEAN ★★==========================")
         print("Clean target detected - clear flag file")
         clear_prebuild_flag()
         return

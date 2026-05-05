@@ -54,7 +54,7 @@ static void ui_event_comp_amsViewComponent_onAmsUpdateBySlotIndex(lv_event_t *e)
     uintptr_t ud = (uintptr_t)lv_event_get_user_data(e);
     uint8_t slot_index = (uint8_t)(ud & 3);
 
-    if (!(bambuStatus.ams_status_main == AMS_STATUS_MAIN_IDLE || bambuStatus.ams_status_main == AMS_STATUS_MAIN_ASSIST) || bambuStatus.print_status == XTOUCH_PRINT_STATUS_RUNNING)
+    if (!(bambuStatus.ams_status_main == AMS_STATUS_MAIN_IDLE || bambuStatus.ams_status_main == AMS_STATUS_MAIN_ASSIST) || bambuStatus.print_status == XPTOUCH_PRINT_STATUS_RUNNING)
         lv_obj_add_state(target, LV_STATE_DISABLED);
     else
         lv_obj_clear_state(target, LV_STATE_DISABLED);
@@ -136,7 +136,7 @@ static void ui_amsViewComponent_onAmsLockSyncUnloadBtn(lv_event_t *e)
     if (lv_event_get_code(e) != LV_EVENT_MSG_RECEIVED)
         return;
     lv_obj_t *btn = lv_event_get_target(e);
-    int disabled = (!(bambuStatus.ams_status_main == AMS_STATUS_MAIN_IDLE || bambuStatus.ams_status_main == AMS_STATUS_MAIN_ASSIST) || bambuStatus.print_status == XTOUCH_PRINT_STATUS_RUNNING) ? 1 : 0;
+    int disabled = (!(bambuStatus.ams_status_main == AMS_STATUS_MAIN_IDLE || bambuStatus.ams_status_main == AMS_STATUS_MAIN_ASSIST) || bambuStatus.print_status == XPTOUCH_PRINT_STATUS_RUNNING) ? 1 : 0;
     if (disabled)
         lv_obj_add_state(btn, LV_STATE_DISABLED);
     else
@@ -152,10 +152,10 @@ static void ui_amsViewComponent_onAmsLockSyncButtons(lv_event_t *e)
     /* has_public_filaments を最新にする（ensure を走らせる） */
     {
         char ensure_buf[1];
-        xtouch_public_filaments_get_brand_options(ensure_buf, (unsigned int)sizeof(ensure_buf));
+        xptouch_public_filaments_get_brand_options(ensure_buf, (unsigned int)sizeof(ensure_buf));
     }
     lv_obj_t *row2 = lv_event_get_target(e);
-    int global_disabled = (!(bambuStatus.ams_status_main == AMS_STATUS_MAIN_IDLE || bambuStatus.ams_status_main == AMS_STATUS_MAIN_ASSIST) || bambuStatus.print_status == XTOUCH_PRINT_STATUS_RUNNING) ? 1 : 0;
+    int global_disabled = (!(bambuStatus.ams_status_main == AMS_STATUS_MAIN_IDLE || bambuStatus.ams_status_main == AMS_STATUS_MAIN_ASSIST) || bambuStatus.print_status == XPTOUCH_PRINT_STATUS_RUNNING) ? 1 : 0;
     uint32_t n = lv_obj_get_child_cnt(row2);
     for (uint32_t i = 0; i < n; i++)
     {
@@ -217,7 +217,7 @@ static void onAmsSlotColorClick(lv_event_t *e)
     uintptr_t ud = (uintptr_t)lv_event_get_user_data(e);
     uint8_t slot_index = (uint8_t)(ud & 3);
     uint16_t tray_index = (uint16_t)((s_ams_view_selector - 1) * 4 + slot_index);
-    lv_msg_send(XTOUCH_COMMAND_GCODE_M620_R, (void *)(uintptr_t)tray_index);
+    lv_msg_send(XPTOUCH_COMMAND_GCODE_M620_R, (void *)(uintptr_t)tray_index);
 }
 
 /* 2段目 LOAD ボタン用: user_data=slot_index(0-3)。device は payload-1 で 0-based にするので 1-based(1-4) で渡す */
@@ -318,7 +318,7 @@ void ui_event_comp_amsViewComponent_onAmsUpdate(lv_event_t *e)
     uintptr_t temp_user_data = (uintptr_t)lv_event_get_user_data(e);
     uint8_t user_data = (uint8_t)temp_user_data;
 
-    if (!(bambuStatus.ams_status_main == AMS_STATUS_MAIN_IDLE || bambuStatus.ams_status_main == AMS_STATUS_MAIN_ASSIST) || bambuStatus.print_status == XTOUCH_PRINT_STATUS_RUNNING)
+    if (!(bambuStatus.ams_status_main == AMS_STATUS_MAIN_IDLE || bambuStatus.ams_status_main == AMS_STATUS_MAIN_ASSIST) || bambuStatus.print_status == XPTOUCH_PRINT_STATUS_RUNNING)
     {
         lv_obj_add_state(target, LV_STATE_DISABLED);
     }
@@ -327,7 +327,7 @@ void ui_event_comp_amsViewComponent_onAmsUpdate(lv_event_t *e)
         lv_obj_clear_state(target, LV_STATE_DISABLED);
     }
 
-    struct XTOUCH_MESSAGE_DATA *message = (struct XTOUCH_MESSAGE_DATA *)m->payload;
+    struct XPTOUCH_MESSAGE_DATA *message = (struct XPTOUCH_MESSAGE_DATA *)m->payload;
 
     uint8_t tmp_ams_id;
     uint8_t tmp_tray_id;
@@ -394,7 +394,7 @@ static void on_ams_btn_unload(lv_event_t *e)
 {
     if (lv_event_get_code(e) != LV_EVENT_CLICKED)
         return;
-    lv_msg_send(XTOUCH_COMMAND_AMS_UNLOAD_SLOT, 0);
+    lv_msg_send(XPTOUCH_COMMAND_AMS_UNLOAD_SLOT, 0);
 }
 /** loadScreen(13) を遅延実行。fetch を先に発火してヒープが荒れる前に SSL を試すため。 */
 static void deferred_load_ams_edit_cb(lv_timer_t *t)
@@ -435,7 +435,7 @@ static void on_ams_btn_edit(lv_event_t *e)
     {
         const char *id = get_tray_setting_id((uint8_t)ams_id, (uint8_t)tray_id);
         if (id && id[0] != '\0' && strchr(id, '_') != NULL)
-            lv_msg_send(XTOUCH_COMMAND_AMS_FETCH_SLICER_TEMP, id);
+            lv_msg_send(XPTOUCH_COMMAND_AMS_FETCH_SLICER_TEMP, id);
     }
     lv_timer_create(deferred_load_ams_edit_cb, 100, NULL);
 }
@@ -648,7 +648,7 @@ static void apply_selector_visibility(lv_obj_t *comp, uint8_t sel)
         for (int i = 2; i <= 4; i++)
         {
             lv_obj_clear_flag(lv_obj_get_child(row1, i), LV_OBJ_FLAG_HIDDEN);
-            /* スロットは XTOUCH_ON_AMS_SLOT_UPDATE で再描画される */
+            /* スロットは XPTOUCH_ON_AMS_SLOT_UPDATE で再描画される */
         }
         for (int i = 2; i <= 4; i++)
         {
@@ -673,8 +673,8 @@ static void ui_amsViewComponent_on_selector_change(lv_event_t *e)
     lv_obj_t *comp = lv_obj_get_parent(lv_obj_get_parent(dropdown));
     apply_selector_visibility(comp, s_ams_view_selector);
     /* 1組のウィジェットの表示内容を再描画 */
-    ui_msg_send(XTOUCH_ON_AMS_SLOT_UPDATE, 0, 0);
-    ui_msg_send(XTOUCH_ON_AMS_HUMIDITY_UPDATE, 0, 0);
+    ui_msg_send(XPTOUCH_ON_AMS_SLOT_UPDATE, 0, 0);
+    ui_msg_send(XPTOUCH_ON_AMS_HUMIDITY_UPDATE, 0, 0);
 }
 
 /* AMS有無に応じてコンボの選択肢（接続されているAMSのみ）と初期選択を更新 */
@@ -787,7 +787,7 @@ lv_obj_t *ui_amsViewComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_pad_bottom(cui_amsSelectorRow, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     lv_obj_t *cui_amsSelectorDropDown = lv_dropdown_create(cui_amsSelectorRow);
-    /* 初期はEXTのみ。XTOUCH_ON_AMS_BITSで接続AMSがあれば「EXT+AMS1..」に更新しAMS1を選択 */
+    /* 初期はEXTのみ。XPTOUCH_ON_AMS_BITSで接続AMSがあれば「EXT+AMS1..」に更新しAMS1を選択 */
     lv_dropdown_set_options(cui_amsSelectorDropDown, "EXT");
     lv_obj_set_width(cui_amsSelectorDropDown, lv_pct(40));
     lv_obj_set_height(cui_amsSelectorDropDown, lv_pct(90));
@@ -815,8 +815,8 @@ lv_obj_t *ui_amsViewComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_text_font(cui_amsUnloadBtn_lbl, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_add_event_cb(cui_amsUnloadBtn, on_ams_btn_unload, LV_EVENT_CLICKED, NULL);
     lv_obj_add_event_cb(cui_amsUnloadBtn, ui_amsViewComponent_onAmsLockSyncUnloadBtn, LV_EVENT_MSG_RECEIVED, NULL);
-    lv_msg_subsribe_obj(XTOUCH_ON_AMS_SLOT_UPDATE, cui_amsUnloadBtn, NULL);
-    lv_msg_subsribe_obj(XTOUCH_ON_AMS_STATE_UPDATE, cui_amsUnloadBtn, NULL);
+    lv_msg_subsribe_obj(XPTOUCH_ON_AMS_SLOT_UPDATE, cui_amsUnloadBtn, NULL);
+    lv_msg_subsribe_obj(XPTOUCH_ON_AMS_STATE_UPDATE, cui_amsUnloadBtn, NULL);
 
     /* 1組のコンテンツ（EXT/AMS1〜4で使い回し）。コンボ25%の残り75%を取得し、その中で row1:row2 を 1:2（25%:50%）に配分 */
     lv_obj_t *cui_AmsControl1;
@@ -1047,8 +1047,8 @@ lv_obj_t *ui_amsViewComponent_create(lv_obj_t *comp_parent)
         }
     }
     lv_obj_add_event_cb(row2_1, ui_amsViewComponent_onAmsLockSyncButtons, LV_EVENT_MSG_RECEIVED, NULL);
-    lv_msg_subsribe_obj(XTOUCH_ON_AMS_SLOT_UPDATE, row2_1, NULL);
-    lv_msg_subsribe_obj(XTOUCH_ON_AMS_STATE_UPDATE, row2_1, NULL);
+    lv_msg_subsribe_obj(XPTOUCH_ON_AMS_SLOT_UPDATE, row2_1, NULL);
+    lv_msg_subsribe_obj(XPTOUCH_ON_AMS_STATE_UPDATE, row2_1, NULL);
 
     lv_obj_t **children = lv_mem_alloc(sizeof(lv_obj_t *) * _UI_COMP_AMSVIEWCOMPONENT_NUM);
     children[UI_COMP_AMSVIEWCOMPONENT_AMSVIEWCOMPONENT] = cui_amsViewComponent;
@@ -1080,7 +1080,7 @@ lv_obj_t *ui_amsViewComponent_create(lv_obj_t *comp_parent)
     lv_obj_add_event_cb(cui_amsViewComponent, get_component_child_event_cb, LV_EVENT_GET_COMP_CHILD, children);
     lv_obj_add_event_cb(cui_amsViewComponent, del_component_child_event_cb, LV_EVENT_DELETE, children);
     lv_obj_add_event_cb(cui_amsViewComponent, ui_amsViewComponent_onAMSBitsSyncDropdown, LV_EVENT_MSG_RECEIVED, NULL);
-    lv_msg_subsribe_obj(XTOUCH_ON_AMS_BITS, cui_amsViewComponent, NULL);
+    lv_msg_subsribe_obj(XPTOUCH_ON_AMS_BITS, cui_amsViewComponent, NULL);
 
     /* スロット■クリック → M620 R<tray_index> (AMS1=0-3, AMS2=4-7, …) */
     lv_obj_add_event_cb(cui_AmsSlot1_1, onAmsSlotColorClick, LV_EVENT_CLICKED, (void *)0);
@@ -1090,28 +1090,28 @@ lv_obj_t *ui_amsViewComponent_create(lv_obj_t *comp_parent)
 
     // Humidity: 1組のラベルを選択子に応じて更新
     lv_obj_add_event_cb(cui_AmsHumid1, ui_event_comp_amsViewComponent_onAmsHumidityUnified, LV_EVENT_MSG_RECEIVED, NULL);
-    lv_msg_subsribe_obj(XTOUCH_ON_AMS_HUMIDITY_UPDATE, cui_AmsHumid1, NULL);
+    lv_msg_subsribe_obj(XPTOUCH_ON_AMS_HUMIDITY_UPDATE, cui_AmsHumid1, NULL);
 
     // Slot表示: 1組の4ラベルを選択子＋slot_indexで更新
     lv_obj_add_event_cb(cui_AmsSlot1_1, ui_event_comp_amsViewComponent_onAmsUpdateBySlotIndex, LV_EVENT_MSG_RECEIVED, (void *)0);
-    lv_msg_subsribe_obj(XTOUCH_ON_AMS_SLOT_UPDATE, cui_AmsSlot1_1, (void *)0);
+    lv_msg_subsribe_obj(XPTOUCH_ON_AMS_SLOT_UPDATE, cui_AmsSlot1_1, (void *)0);
 
     lv_obj_add_event_cb(cui_AmsSlot1_2, ui_event_comp_amsViewComponent_onAmsUpdateBySlotIndex, LV_EVENT_MSG_RECEIVED, (void *)1);
-    lv_msg_subsribe_obj(XTOUCH_ON_AMS_SLOT_UPDATE, cui_AmsSlot1_2, (void *)1);
+    lv_msg_subsribe_obj(XPTOUCH_ON_AMS_SLOT_UPDATE, cui_AmsSlot1_2, (void *)1);
 
     lv_obj_add_event_cb(cui_AmsSlot1_3, ui_event_comp_amsViewComponent_onAmsUpdateBySlotIndex, LV_EVENT_MSG_RECEIVED, (void *)2);
-    lv_msg_subsribe_obj(XTOUCH_ON_AMS_SLOT_UPDATE, cui_AmsSlot1_3, (void *)2);
+    lv_msg_subsribe_obj(XPTOUCH_ON_AMS_SLOT_UPDATE, cui_AmsSlot1_3, (void *)2);
 
     lv_obj_add_event_cb(cui_AmsSlot1_4, ui_event_comp_amsViewComponent_onAmsUpdateBySlotIndex, LV_EVENT_MSG_RECEIVED, (void *)3);
-    lv_msg_subsribe_obj(XTOUCH_ON_AMS_SLOT_UPDATE, cui_AmsSlot1_4, (void *)3);
+    lv_msg_subsribe_obj(XPTOUCH_ON_AMS_SLOT_UPDATE, cui_AmsSlot1_4, (void *)3);
 
     apply_selector_visibility(cui_amsViewComponent, s_ams_view_selector);
 
     ui_comp_amsViewComponent_create_hook(cui_amsViewComponent);
 
-    ui_msg_send(XTOUCH_ON_AMS_BITS, 0, 0);
-    ui_msg_send(XTOUCH_ON_AMS_SLOT_UPDATE, 0, 0);
-    ui_msg_send(XTOUCH_ON_AMS_HUMIDITY_UPDATE, 0, 0);
+    ui_msg_send(XPTOUCH_ON_AMS_BITS, 0, 0);
+    ui_msg_send(XPTOUCH_ON_AMS_SLOT_UPDATE, 0, 0);
+    ui_msg_send(XPTOUCH_ON_AMS_HUMIDITY_UPDATE, 0, 0);
 
     return cui_amsViewComponent;
 }

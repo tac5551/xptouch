@@ -1,12 +1,12 @@
-#ifndef XTOUCH_MQTT_CLASS_HPP
-#define XTOUCH_MQTT_CLASS_HPP
+#ifndef XPTOUCH_MQTT_CLASS_HPP
+#define XPTOUCH_MQTT_CLASS_HPP
 
 /**
  * @file mqtt_class.hpp
  * @brief Bambu 系 MQTT 用の接続単位ラッパ（複数ホスト・複数 PubSubClient を共存させるため）。
  *
  * camera_stream.h と同様、ヘッダのみで完結。既存 mqtt.h のグローバル
- * xtouch_pubSubClient とは別インスタンスとして使う。
+ * xptouch_pubSubClient とは別インスタンスとして使う。
  */
 
 #include <Arduino.h>
@@ -14,7 +14,7 @@
 #include <PubSubClient.h>
 #include "autogrowstream.h"
 
-namespace xtouch_mqtt
+namespace xptouch_mqtt
 {
 
 class MqttConnection;
@@ -78,7 +78,7 @@ public:
         _on_message = handler;
     }
 
-    /** mqtt.h の xtouch_mqtt_configure_client に相当（TLS は検証しない） */
+    /** mqtt.h の xptouch_mqtt_configure_client に相当（TLS は検証しない） */
     void configure_client(const char *host, uint16_t port = 8883)
     {
         _wifi.flush();
@@ -178,6 +178,6 @@ private:
     }
 };
 
-} // namespace xtouch_mqtt
+} // namespace xptouch_mqtt
 
-#endif // XTOUCH_MQTT_CLASS_HPP
+#endif // XPTOUCH_MQTT_CLASS_HPP

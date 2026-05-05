@@ -1,6 +1,6 @@
 #include "../ui.h"
 
-#ifdef __XTOUCH_PLATFORM_S3__
+#ifdef __XPTOUCH_PLATFORM_S3__
 
 void ui_cameraScreen_screen_init(void)
 {

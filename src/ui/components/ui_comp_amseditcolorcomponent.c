@@ -15,7 +15,7 @@ static const uint32_t s_palette_colors[25] = {
 
 #define AMS_EDIT_COLOR_COUNT 25
 /* 5インチは横10、2.8インチ等は横5（幅に合わせる） */
-#if defined(__XTOUCH_SCREEN_S3_050__)
+#if defined(__XPTOUCH_SCREEN_S3_050__)
 #define AMS_EDIT_COLOR_COLS 10
 #define AMS_EDIT_COLOR_CHIP_SIZE 54 /* 36px の 1.5 倍 */
 #else

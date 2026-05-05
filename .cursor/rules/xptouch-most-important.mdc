@@ -14,12 +14,12 @@ alwaysApply: true
 
 ## 2. xtouch と UI 間のデータは types.h の構造体を経由する
 
-- **共有データは types.h に定義した構造体・配列（bambuStatus, xTouchConfig, otherPrinters, xtouch_thumbnail_slot_path 等）を経由する。** xtouch が更新し、UI は参照するだけ。`xtouch_*` を UI から呼んでデータを取らない。
+- **共有データは types.h に定義した構造体・配列（bambuStatus, xPTouchConfig, otherPrinters, xptouch_thumbnail_slot_path 等）を経由する。** xtouch が更新し、UI は参照するだけ。`xtouch_*` を UI から呼んでデータを取らない。
 
 ## 3. UI（ui_comp_*, ui/*.c）から xtouch を直接呼ばない
 
 - **ui_comp_*.c で `#include "xtouch/..."` や `xtouch_*()` の直接呼び出しをしない。**
-- UI がやりたいことは **イベント（lv_msg_send）で送るだけ**。**購読と xtouch_* の呼び出しは xtouch 側**（mqtt.h の `lv_msg_subscribe` のように）で行う。
+- UI がやりたいことは **イベント（lv_msg_send）で送るだけ**。**購読と xptouch_* の呼び出しは xtouch 側**（mqtt.h の `lv_msg_subscribe` のように）で行う。
 - 詳細は `docs/UI-CONVENTIONS.md` を参照。
 
 ## 4. 画面追加時は ui_comp 側に実装する。必ず他画面を参照し同様のルールで実装する

@@ -29,7 +29,7 @@ void ui_event_comp_utilCalibrationComponent_onSaveButtonClick(lv_event_t *e)
         if (vibrationCompensation) bitmask |= 1 << 2;
         if (motorCancellation) bitmask |= 1 << 3;
 
-        xTouchConfig.xTouchUtilCalibrationBitmask = bitmask;
+        xPTouchConfig.xTouchUtilCalibrationBitmask = bitmask;
 //print_gcode_action
 // 1 bet lebeling
 // 13 homeing
@@ -109,7 +109,7 @@ lv_obj_t *ui_utilCalibrationComponent_create(lv_obj_t *comp_parent)
     lv_checkbox_set_text(cui_utilCalibrationLidar, "Lidar Calibration");
     lv_obj_set_style_text_font(cui_utilCalibrationLidar, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-    if (xtouch_bblp_is_p1Series())
+    if (xptouch_bblp_is_p1Series())
     {
         lv_obj_add_flag(cui_utilCalibrationLidar, LV_OBJ_FLAG_HIDDEN);
     }

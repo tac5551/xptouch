@@ -51,17 +51,17 @@ lv_obj_t *ui_systemComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_pad_top(cui_unpairButton, 16, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_bottom(cui_unpairButton, 16, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_color(cui_unpairButton, lv_color_hex(0x000), LV_PART_MAIN | LV_STATE_DEFAULT);
-    if (xTouchConfig.xTouchLanOnlyMode)
+    if (xPTouchConfig.xTouchLanOnlyMode)
     {
         /* LAN モード: プリンタ名のみ表示、Unlink 禁止（ボタン無効）、その下に接続先 IP を表示 */
-        lv_label_set_text_fmt(cui_unpairButton, "[ %s ]", xTouchConfig.xTouchPrinterName[0] ? xTouchConfig.xTouchPrinterName : xTouchConfig.xTouchSerialNumber);
+        lv_label_set_text_fmt(cui_unpairButton, "[ %s ]", xPTouchConfig.xTouchPrinterName[0] ? xPTouchConfig.xTouchPrinterName : xPTouchConfig.xTouchSerialNumber);
         lv_obj_clear_flag(cui_unpairButton, LV_OBJ_FLAG_CLICKABLE);
         lv_obj_add_state(cui_unpairButton, LV_STATE_DISABLED);
 
         lv_obj_t *cui_lanIpLabel = lv_label_create(cui_systemComponent);
         lv_obj_set_width(cui_lanIpLabel, lv_pct(100));
         lv_obj_set_height(cui_lanIpLabel, LV_SIZE_CONTENT);
-        lv_label_set_text_fmt(cui_lanIpLabel, LV_SYMBOL_WIFI " %s", xTouchConfig.xTouchHost[0] ? xTouchConfig.xTouchHost : "-");
+        lv_label_set_text_fmt(cui_lanIpLabel, LV_SYMBOL_WIFI " %s", xPTouchConfig.xTouchHost[0] ? xPTouchConfig.xTouchHost : "-");
         lv_obj_set_style_text_font(cui_lanIpLabel, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_pad_left(cui_lanIpLabel, 16, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_pad_right(cui_lanIpLabel, 16, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -74,13 +74,13 @@ lv_obj_t *ui_systemComponent_create(lv_obj_t *comp_parent)
     }
     else
     {
-        lv_label_set_text_fmt(cui_unpairButton, LV_SYMBOL_SHUFFLE " Unlink [ %s ]", xTouchConfig.xTouchPrinterName);
+        lv_label_set_text_fmt(cui_unpairButton, LV_SYMBOL_SHUFFLE " Unlink [ %s ]", xPTouchConfig.xTouchPrinterName);
     }
 
     lv_obj_t *cui_deviceTitle = lv_label_create(cui_systemComponent);
     lv_obj_set_width(cui_deviceTitle, lv_pct(100));
     lv_obj_set_height(cui_deviceTitle, LV_SIZE_CONTENT);
-    lv_label_set_text_fmt(cui_deviceTitle, LV_SYMBOL_LIST " XPtouch v%s", XTOUCH_FIRMWARE_VERSION);
+    lv_label_set_text_fmt(cui_deviceTitle, LV_SYMBOL_LIST " XPtouch v%s", XPTOUCH_FIRMWARE_VERSION);
     lv_obj_set_scrollbar_mode(cui_deviceTitle, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_style_text_font(cui_deviceTitle, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_left(cui_deviceTitle, 16, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -125,7 +125,7 @@ lv_obj_t *ui_systemComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_bg_opa(ui_settings_otaSwitch, 255, LV_PART_KNOB | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(ui_settings_otaSwitch, lv_color_hex(0x000000), LV_PART_KNOB | LV_STATE_CHECKED);
     lv_obj_set_style_bg_opa(ui_settings_otaSwitch, 255, LV_PART_KNOB | LV_STATE_CHECKED);
-    if (xTouchConfig.xTouchOTAEnabled)
+    if (xPTouchConfig.xTouchOTAEnabled)
         lv_obj_add_state(ui_settings_otaSwitch, LV_STATE_CHECKED);
 
     lv_obj_t *cui_otaNowButton = lv_label_create(cui_systemComponent);
@@ -162,7 +162,7 @@ lv_obj_t *ui_systemComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_pad_bottom(cui_reseDeviceButton, 16, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_color(cui_reseDeviceButton, lv_color_hex(0x000), LV_PART_MAIN | LV_STATE_DEFAULT);
 
-#ifdef __XTOUCH_PLATFORM_S3__
+#ifdef __XPTOUCH_PLATFORM_S3__
     lv_obj_t *cui_clearCacheButton = lv_label_create(cui_systemComponent);
     lv_obj_set_width(cui_clearCacheButton, lv_pct(100));
     lv_obj_set_height(cui_clearCacheButton, LV_SIZE_CONTENT);
@@ -185,7 +185,7 @@ lv_obj_t *ui_systemComponent_create(lv_obj_t *comp_parent)
     lv_obj_add_event_cb(cui_otaNowButton, ui_event_comp_settingsComponent_OtaUpdateNowButton, LV_EVENT_CLICKED, NULL);
     lv_obj_add_event_cb(cui_reseDeviceButton, ui_event_comp_settingsComponent_resetDeviceButton, LV_EVENT_CLICKED, NULL);
     lv_obj_add_event_cb(ui_settings_otaSwitch, ui_event_comp_settingsComponent_onOTA, LV_EVENT_VALUE_CHANGED, NULL);
-#ifdef __XTOUCH_PLATFORM_S3__
+#ifdef __XPTOUCH_PLATFORM_S3__
     lv_obj_add_event_cb(cui_clearCacheButton, ui_event_comp_settingsComponent_clearCacheButton, LV_EVENT_CLICKED, NULL);
 #endif
 
