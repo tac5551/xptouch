@@ -7,6 +7,7 @@
 #include "filesystem.h"
 #include "sdcard.h"
 #include "paths.h"
+#include "net.h"
 
 bool xptouch_wifi_setup()
 {
@@ -103,10 +104,12 @@ bool xptouch_wifi_setup()
 
     WiFi.setTxPower(WIFI_POWER_19_5dBm); // https://github.com/G6EJD/ESP32-8266-Adjust-WiFi-RF-Power-Output/blob/main/README.md
 
-    /* Cloudモードのときだけ DNS を 1.1.1.1 に固定（us.mqtt.bambulab.com 解決用） */
-    if (cloud_mode)
+    /* Cloudモードのときのみ DNS を調整する（xptouch_cloud_apply_dns()参照）。
+    * WiFi.dnsIP(0) は WiFi.config() 呼び出し前に取得してDHCP DNSを保存する。 */
+    if (cloud_mode || cloud.loggedIn)
     {
-        WiFi.config(WiFi.localIP(), WiFi.gatewayIP(), WiFi.subnetMask(), IPAddress(1, 1, 1, 1));
+        xptouch_dhcp_dns = WiFi.dnsIP(0);   /* DHCP DNS を保存（reconnect 後の再設定用） */
+        xptouch_cloud_apply_dns();
     }
 
     delay(1000);

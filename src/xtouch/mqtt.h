@@ -1722,6 +1722,14 @@ static void xptouch_mqtt_wifi_reconnect_and_wait(int timeout_ms)
         esp_task_wdt_reset();
     }
     delay(500);
+    /* WiFi.reconnect() は DHCP を再ネゴシエートして DNS を上書きするため、
+    * クラウド MQTT 使用中は起動時に保存した DHCP DNS を primary として再設定する。 */
+    if (cloud.loggedIn)
+    {
+        xptouch_cloud_apply_dns();
+        delay(200);
+        ConsoleInfo.printf("[xPTouch][MQTT] DNS re-applied: primary=%s fallback=1.1.1.1\n", WiFi.dnsIP().toString().c_str());
+    }
 }
 
 /* 起動後はじめて MQTT 接続できたときだけホームへ。再接続では画面を変えない（不定期にロード画面に戻るのを防ぐ） */

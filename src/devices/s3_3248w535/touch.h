@@ -49,7 +49,7 @@ ScreenPoint getScreenCoords(int16_t x, int16_t y)
 
 void xptouch_loadTouchConfig(XTouchPanelConfig &config)
 {
-    File file = xptouch_filesystem_open(xptouch_sdcard_fs()  xptouch_paths_touch);
+    File file = xptouch_filesystem_open(xptouch_sdcard_fs(), xptouch_paths_touch);
     StaticJsonDocument<512> doc;
     DeserializationError error = deserializeJson(doc, file);
     if (error)
@@ -70,7 +70,7 @@ void xptouch_saveTouchConfig(XTouchPanelConfig &config)
     doc["yCalM"] = config.yCalM;
     doc["xCalC"] = config.xCalC;
     doc["yCalC"] = config.yCalC;
-    xptouch_filesystem_writeJson(xptouch_sdcard_fs()  xptouch_paths_touch, doc);
+    xptouch_filesystem_writeJson(xptouch_sdcard_fs(), xptouch_paths_touch, doc);
 }
 
 void xptouch_resetTouchConfig()

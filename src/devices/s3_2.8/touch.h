@@ -70,7 +70,7 @@ void xptouch_saveTouchConfig(XTouchPanelConfig &config)
     doc["yCalM"] = config.yCalM;
     doc["xCalC"] = config.xCalC;
     doc["yCalC"] = config.yCalC;
-    xptouch_filesystem_writeJson(xptouch_sdcard_fs()  xptouch_paths_touch, doc);
+    xptouch_filesystem_writeJson(xptouch_sdcard_fs(), xptouch_paths_touch, doc);
 }
 
 void xptouch_resetTouchConfig()
