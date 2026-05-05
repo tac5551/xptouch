@@ -4,9 +4,9 @@
 #include "../ui_msgs.h"
 #include "../ui_helpers.h"
 
-#ifdef __XTOUCH_PLATFORM_S3__
+#ifdef __XPTOUCH_PLATFORM_S3__
 
-#if defined(__XTOUCH_SCREEN_S3_050__)
+#if defined(__XPTOUCH_SCREEN_S3_050__)
 #define ROW_LEFT_THUMB_W 150
 #define ROW_LEFT_THUMB_H 150
 #else
@@ -19,12 +19,12 @@ static const char *print_status_str(int s)
     switch (s)
     {
     /* 待機中（未接続スロットは行ごと非表示なのでここには来ない） */
-    case XTOUCH_PRINT_STATUS_IDLE: return "IDLE";
-    case XTOUCH_PRINT_STATUS_RUNNING: return "Running";
-    case XTOUCH_PRINT_STATUS_PAUSED: return "Paused";
-    case XTOUCH_PRINT_STATUS_FINISHED: return "Finished";
-    case XTOUCH_PRINT_STATUS_PREPARE: return "Prepare";
-    case XTOUCH_PRINT_STATUS_FAILED: return "Failed";
+    case XPTOUCH_PRINT_STATUS_IDLE: return "IDLE";
+    case XPTOUCH_PRINT_STATUS_RUNNING: return "Running";
+    case XPTOUCH_PRINT_STATUS_PAUSED: return "Paused";
+    case XPTOUCH_PRINT_STATUS_FINISHED: return "Finished";
+    case XPTOUCH_PRINT_STATUS_PREPARE: return "Prepare";
+    case XPTOUCH_PRINT_STATUS_FAILED: return "Failed";
     default: return "-";
     }
 }
@@ -38,9 +38,9 @@ static lv_timer_t *s_printers_pushall_timer = NULL;
 
 static int printers_target_show_count(void)
 {
-    int show_count = 1 + xtouch_other_printer_count;
-    if (show_count > XTOUCH_MULTI_PRINTER_MAX)
-        show_count = XTOUCH_MULTI_PRINTER_MAX;
+    int show_count = 1 + xptouch_other_printer_count;
+    if (show_count > XPTOUCH_MULTI_PRINTER_MAX)
+        show_count = XPTOUCH_MULTI_PRINTER_MAX;
     if (show_count < 0)
         show_count = 0;
     return show_count;
@@ -51,18 +51,18 @@ static void printers_start_thumbnails_after_list_ready(void)
     if (s_printers_thumbs_started)
         return;
     s_printers_thumbs_started = true;
-    ui_msg_send(XTOUCH_PRINTERS_THUMB_TIMER_START, 0, 0);
-    ui_msg_send(XTOUCH_PRINTERS_SCHEDULE_THUMB_FETCH, 0, 0);
+    ui_msg_send(XPTOUCH_PRINTERS_THUMB_TIMER_START, 0, 0);
+    ui_msg_send(XPTOUCH_PRINTERS_SCHEDULE_THUMB_FETCH, 0, 0);
 }
 
 static void printers_pushall_then_thumb_timer_cb(lv_timer_t *t)
 {
     (void)t;
     s_printers_pushall_timer = NULL;
-    if (xTouchConfig.currentScreenIndex == 6)
+    if (xPTouchConfig.currentScreenIndex == 6)
     {
-        extern void xtouch_mqtt_pushall_all_printers_for_screen_c(void);
-        xtouch_mqtt_pushall_all_printers_for_screen_c();
+        extern void xptouch_mqtt_pushall_all_printers_for_screen_c(void);
+        xptouch_mqtt_pushall_all_printers_for_screen_c();
         printers_start_thumbnails_after_list_ready();
     }
     lv_timer_del(t);
@@ -75,13 +75,13 @@ static void printers_progress_timer_cb(lv_timer_t *t)
     if (s_printers_visible_count < target)
     {
         s_printers_visible_count++;
-        ui_msg_send(XTOUCH_PRINTERS_LIST_REFRESH, (unsigned long long)s_printers_visible_count, 0);
+        ui_msg_send(XPTOUCH_PRINTERS_LIST_REFRESH, (unsigned long long)s_printers_visible_count, 0);
         return;
     }
     if (!s_printers_rebind_done)
     {
         /* 1) リスト表示完了後に rebind */
-        ui_msg_send(XTOUCH_PRINTERS_THUMB_REBIND, 0, 0);
+        ui_msg_send(XPTOUCH_PRINTERS_THUMB_REBIND, 0, 0);
         s_printers_rebind_done = true;
         /* 2) rebind の後段で pushall -> thumbnail 開始 */
         if (s_printers_pushall_timer)
@@ -123,18 +123,18 @@ static void update_one_row(int slot, lv_obj_t *row)
     int left_time = 0;
     int cur_layer = 0;
     int tot_layers = 0;
-    int status = XTOUCH_PRINT_STATUS_IDLE;
+    int status = XPTOUCH_PRINT_STATUS_IDLE;
 
     if (slot == 0)
     {
-        name = xTouchConfig.xTouchPrinterName[0] ? xTouchConfig.xTouchPrinterName : xTouchConfig.xTouchSerialNumber;
+        name = xPTouchConfig.xTouchPrinterName[0] ? xPTouchConfig.xTouchPrinterName : xPTouchConfig.xTouchSerialNumber;
         percent = bambuStatus.mc_print_percent;
         left_time = bambuStatus.mc_left_time;
         cur_layer = bambuStatus.current_layer;
         tot_layers = bambuStatus.total_layers;
         status = bambuStatus.print_status;
     }
-    else if (slot - 1 < xtouch_other_printer_count && otherPrinters[slot - 1].valid)
+    else if (slot - 1 < xptouch_other_printer_count && otherPrinters[slot - 1].valid)
     {
         name = otherPrinters[slot - 1].name[0] ? otherPrinters[slot - 1].name : otherPrinters[slot - 1].dev_id;
         percent = otherPrinters[slot - 1].mc_print_percent;
@@ -145,7 +145,7 @@ static void update_one_row(int slot, lv_obj_t *row)
     }
 
     bool row_offline = false;
-    if (slot > 0 && slot - 1 < xtouch_other_printer_count && otherPrinters[slot - 1].valid)
+    if (slot > 0 && slot - 1 < xptouch_other_printer_count && otherPrinters[slot - 1].valid)
         row_offline = !otherPrinters[slot - 1].online;
 
     lv_label_set_text(nameLabel, name);
@@ -154,7 +154,7 @@ static void update_one_row(int slot, lv_obj_t *row)
     const char *subtask_src = "";
     if (slot == 0)
         subtask_src = bambuStatus.subtask_name[0] ? bambuStatus.subtask_name : "";
-    else if (slot - 1 < xtouch_other_printer_count && otherPrinters[slot - 1].valid)
+    else if (slot - 1 < xptouch_other_printer_count && otherPrinters[slot - 1].valid)
         subtask_src = otherPrinters[slot - 1].subtask_name[0] ? otherPrinters[slot - 1].subtask_name : "";
     if (row_offline)
         subtask_src = "";
@@ -162,9 +162,9 @@ static void update_one_row(int slot, lv_obj_t *row)
 
     lv_slider_set_value(progressBar, percent, LV_ANIM_OFF);
     /* 印刷中(RUNNING/PAUSED/PREPARE)のみゲージ表示。それ以外(IDLE/FINISHED/FAILED 等)は非表示。 */
-    if (!row_offline && (status == XTOUCH_PRINT_STATUS_RUNNING ||
-                         status == XTOUCH_PRINT_STATUS_PAUSED ||
-                         status == XTOUCH_PRINT_STATUS_PREPARE))
+    if (!row_offline && (status == XPTOUCH_PRINT_STATUS_RUNNING ||
+                         status == XPTOUCH_PRINT_STATUS_PAUSED ||
+                         status == XPTOUCH_PRINT_STATUS_PREPARE))
         lv_obj_clear_flag(progressBar, LV_OBJ_FLAG_HIDDEN);
     else
         lv_obj_add_flag(progressBar, LV_OBJ_FLAG_HIDDEN);
@@ -178,9 +178,9 @@ static void update_one_row(int slot, lv_obj_t *row)
     {
         snprintf(layerBuf, sizeof(layerBuf), "Offline");
     }
-    else if (status == XTOUCH_PRINT_STATUS_RUNNING ||
-        status == XTOUCH_PRINT_STATUS_PAUSED ||
-        status == XTOUCH_PRINT_STATUS_PREPARE)
+    else if (status == XPTOUCH_PRINT_STATUS_RUNNING ||
+        status == XPTOUCH_PRINT_STATUS_PAUSED ||
+        status == XPTOUCH_PRINT_STATUS_PREPARE)
     {
         if (tot_layers > 0)
             snprintf(layerBuf, sizeof(layerBuf), "%d/%d | %s", cur_layer, tot_layers, timeBuf);
@@ -195,9 +195,9 @@ static void update_one_row(int slot, lv_obj_t *row)
     lv_obj_clear_flag(layerLabel, LV_OBJ_FLAG_HIDDEN);
 
     /* 印刷中のみボタン表示、終了時は非表示（スペースはそのまま）。ボタンはコンテナで子がラベル */
-    if (!row_offline && (status == XTOUCH_PRINT_STATUS_RUNNING ||
-        status == XTOUCH_PRINT_STATUS_PAUSED ||
-        status == XTOUCH_PRINT_STATUS_PREPARE))
+    if (!row_offline && (status == XPTOUCH_PRINT_STATUS_RUNNING ||
+        status == XPTOUCH_PRINT_STATUS_PAUSED ||
+        status == XPTOUCH_PRINT_STATUS_PREPARE))
     {
         lv_obj_clear_flag(pauseBtn, LV_OBJ_FLAG_HIDDEN);
         lv_obj_clear_flag(stopBtn, LV_OBJ_FLAG_HIDDEN);
@@ -205,7 +205,7 @@ static void update_one_row(int slot, lv_obj_t *row)
         lv_obj_t *pauseLbl = lv_obj_get_child(pauseBtn, 0);
         if (pauseLbl)
         {
-            if (status == XTOUCH_PRINT_STATUS_PAUSED)
+            if (status == XPTOUCH_PRINT_STATUS_PAUSED)
                 lv_label_set_text(pauseLbl, "z");
             else
                 lv_label_set_text(pauseLbl, "0");
@@ -218,10 +218,10 @@ static void update_one_row(int slot, lv_obj_t *row)
         const char *tid = "";
         if (slot == 0)
             tid = bambuStatus.task_id;
-        else if (slot - 1 < xtouch_other_printer_count && otherPrinters[slot - 1].valid)
+        else if (slot - 1 < xptouch_other_printer_count && otherPrinters[slot - 1].valid)
             tid = otherPrinters[slot - 1].task_id;
         if (!row_offline &&
-            (status == XTOUCH_PRINT_STATUS_FINISHED || status == XTOUCH_PRINT_STATUS_FAILED) &&
+            (status == XPTOUCH_PRINT_STATUS_FINISHED || status ==XPTOUCH_PRINT_STATUS_FAILED) &&
             tid && tid[0] && strcmp(tid, "0") != 0)
             lv_obj_clear_flag(reprintBtn, LV_OBJ_FLAG_HIDDEN);
         else
@@ -231,8 +231,8 @@ static void update_one_row(int slot, lv_obj_t *row)
     /* 一時切替中のみ先頭行に「SW」: ペア確定機へ戻す */
     if (slot == 0)
     {
-        bool show_back_sw = (xTouchConfig.xTouchPairedSerialNumber[0] != '\0' &&
-                             strcmp(xTouchConfig.xTouchSerialNumber, xTouchConfig.xTouchPairedSerialNumber) != 0);
+        bool show_back_sw = (xPTouchConfig.xTouchPairedSerialNumber[0] != '\0' &&
+                             strcmp(xPTouchConfig.xTouchSerialNumber, xPTouchConfig.xTouchPairedSerialNumber) != 0);
         if (show_back_sw)
             lv_obj_clear_flag(selectBtn, LV_OBJ_FLAG_HIDDEN);
         else
@@ -245,7 +245,7 @@ static void update_one_row(int slot, lv_obj_t *row)
 /* 指定スロットのサムネイル img を slot_dsc または path で即時描画 */
 static void thumb_refresh_slot(int slot)
 {
-    if (ui_printersListContainer == NULL || xTouchConfig.currentScreenIndex != 6)
+    if (ui_printersListContainer == NULL || xPTouchConfig.currentScreenIndex != 6)
         return;
     lv_obj_t *row = lv_obj_get_child(ui_printersListContainer, slot);
     if (!row)
@@ -256,13 +256,13 @@ static void thumb_refresh_slot(int slot)
     lv_obj_t *img = lv_obj_get_child(leftBox, 0);
     if (!img)
         return;
-    if (xTouchConfig.xTouchHideAllThumbnails)
+    if (xPTouchConfig.xTouchHideAllThumbnails)
     {
         lv_obj_add_flag(leftBox, LV_OBJ_FLAG_HIDDEN);
         return;
     }
     lv_obj_clear_flag(leftBox, LV_OBJ_FLAG_HIDDEN);
-    if (slot >= 0 && slot < XTOUCH_THUMB_SLOT_MAX)
+    if (slot >= 0 && slot < XPTOUCH_THUMB_SLOT_MAX)
     {
         ui_thumb_set_img_src_from_slot(img, slot);
         /* 即時再入を避け、通常のメインループ描画に任せる */
@@ -279,21 +279,21 @@ static void thumb_refresh_timer_cb(lv_timer_t *t)
 void ui_printers_on_other_update(lv_msg_t *m, void *user_data)
 {
     (void)user_data;
-    if (ui_printersListContainer == NULL || xTouchConfig.currentScreenIndex != 6)
+    if (ui_printersListContainer == NULL || xPTouchConfig.currentScreenIndex != 6)
         return;
 
     const bool refresh_all_thumb_slots =
-        (m == NULL || lv_msg_get_id(m) == XTOUCH_PRINTERS_LIST_REFRESH);
+        (m == NULL || lv_msg_get_id(m) == XPTOUCH_PRINTERS_LIST_REFRESH);
 
-    /* サムネイルDL完了通知（XTOUCH_ON_OTHER_PRINTER_UPDATE）のとき payload のスロットを即描画。
+    /* サムネイルDL完了通知（XPTOUCH_ON_OTHER_PRINTER_UPDATE）のとき payload のスロットを即描画。
      * 遅延しない: 送信側で DL→LGFX デコード済みなので、ここで即 set_src して次のスロット DL ブロック前に描画する。
-     * payload: MQTT は &XTOUCH_MESSAGE_DATA (data = 行インデックス 0=メイン,1=他1台目…)、サムネは (void*)(slot+1)。 */
-    if (m && lv_msg_get_id(m) == XTOUCH_PRINTERS_LIST_REFRESH)
+     * payload: MQTT は &XPTOUCH_MESSAGE_DATA (data = 行インデックス 0=メイン,1=他1台目…)、サムネは (void*)(slot+1)。 */
+    if (m && lv_msg_get_id(m) == XPTOUCH_PRINTERS_LIST_REFRESH)
     {
         const void *payload = lv_msg_get_payload(m);
         if (payload && (uintptr_t)payload >= 256u)
         {
-            const struct XTOUCH_MESSAGE_DATA *d = (const struct XTOUCH_MESSAGE_DATA *)payload;
+            const struct XPTOUCH_MESSAGE_DATA *d = (const struct XPTOUCH_MESSAGE_DATA *)payload;
             int requested = (int)d->data;
             if (requested < 0)
                 requested = 0;
@@ -307,7 +307,7 @@ void ui_printers_on_other_update(lv_msg_t *m, void *user_data)
      * Printers オープン直後は pushall 完了まで s_printers_thumbs_started が false の間があり、
      * その前に DL が終わると通知だけ落ちてロゴのままになる。サムネ経路だけ常に img を更新する。
      * MQTT の ui_msg_send 経路は構造体ポインタのため >=256 → 従来どおり一覧準備後だけ thumb を触る。 */
-    if (m && lv_msg_get_id(m) == XTOUCH_ON_OTHER_PRINTER_UPDATE)
+    if (m && lv_msg_get_id(m) == XPTOUCH_ON_OTHER_PRINTER_UPDATE)
     {
         const void *p = lv_msg_get_payload(m);
         if (p)
@@ -317,7 +317,7 @@ void ui_printers_on_other_update(lv_msg_t *m, void *user_data)
             if (thumb_slot_payload)
                 slot = (int)(intptr_t)p - 1; /* サムネ側: slot+1 */
             else
-                slot = (int)((const struct XTOUCH_MESSAGE_DATA *)p)->data; /* MQTT: data = 行インデックス */
+                slot = (int)((const struct XPTOUCH_MESSAGE_DATA *)p)->data; /* MQTT: data = 行インデックス */
             if (slot >= 0 && slot < PRINTERS_ROW_MAX && (thumb_slot_payload || s_printers_thumbs_started))
                 thumb_refresh_slot(slot);
         }
@@ -328,7 +328,7 @@ void ui_printers_on_other_update(lv_msg_t *m, void *user_data)
     int visible_count = show_count;
     if (s_printers_visible_count >= 0 && s_printers_visible_count < visible_count)
         visible_count = s_printers_visible_count;
-    for (int i = 0; i < XTOUCH_MULTI_PRINTER_MAX; i++)
+    for (int i = 0; i < XPTOUCH_MULTI_PRINTER_MAX; i++)
     {
         lv_obj_t *row = lv_obj_get_child(ui_printersListContainer, i);
         if (row == NULL)
@@ -392,11 +392,11 @@ void ui_printersScreen_screen_init(void)
     /* コンテンツ部分はコンポーネントに委譲 */
     ui_printersComponent_create(ui_printersScreen);
     /* 一覧の購読・コールバックは画面側で登録。初期表示もイベントで依頼 */
-    lv_msg_subsribe_obj(XTOUCH_ON_OTHER_PRINTER_UPDATE, ui_printersListContainer, NULL);
-    lv_msg_subsribe_obj(XTOUCH_PRINTERS_LIST_REFRESH, ui_printersListContainer, NULL);
+    lv_msg_subsribe_obj(XPTOUCH_ON_OTHER_PRINTER_UPDATE, ui_printersListContainer, NULL);
+    lv_msg_subsribe_obj(XPTOUCH_PRINTERS_LIST_REFRESH, ui_printersListContainer, NULL);
     lv_obj_add_event_cb(ui_printersListContainer, ui_event_printers_on_other_update, LV_EVENT_MSG_RECEIVED, NULL);
     {
-        ui_msg_send(XTOUCH_PRINTERS_LIST_REFRESH, 0, 0);
+        ui_msg_send(XPTOUCH_PRINTERS_LIST_REFRESH, 0, 0);
     }
     s_printers_progress_timer = lv_timer_create(printers_progress_timer_cb, 45, NULL);
     lv_timer_set_repeat_count(s_printers_progress_timer, -1);

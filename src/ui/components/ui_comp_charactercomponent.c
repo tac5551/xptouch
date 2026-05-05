@@ -1,8 +1,8 @@
 #include "../ui.h"
 
 // 関数宣言
-void xtouch_events_onCharacterAnimation();
-void xtouch_character_init();  // 初期化関数（タイマー不要）
+void xptouch_events_onCharacterAnimation();
+void xptouch_character_init();  // 初期化関数（タイマー不要）
 
 // キャラクター制御用変数
 bool is_blinking = false;
@@ -70,10 +70,10 @@ void inir_face_position(lv_obj_t *comp_parent)
 
 
 // キャラクター関連イベント関数
-void xtouch_events_onCharacterAnimation()
+void xptouch_events_onCharacterAnimation()
 {
     // screenが9の場合のみ処理を実行
-    if (xTouchConfig.currentScreenIndex != 9)
+    if (xPTouchConfig.currentScreenIndex != 9)
     {
         return;
     }
@@ -86,8 +86,8 @@ void xtouch_events_onCharacterAnimation()
         // 100ms経過で目を開く
         if (current_time - blink_start_time >= 100)
         {
-            ui_msg_send(XTOUCH_ON_CHARACTER_LEFT_EYE_UPDATE, 8, 0);
-            ui_msg_send(XTOUCH_ON_CHARACTER_RIGHT_EYE_UPDATE, 8, 0);
+            ui_msg_send(XPTOUCH_ON_CHARACTER_LEFT_EYE_UPDATE, 8, 0);
+            ui_msg_send(XPTOUCH_ON_CHARACTER_RIGHT_EYE_UPDATE, 8, 0);
             is_blinking = false;
             last_blink_time = current_time;
         }
@@ -98,8 +98,8 @@ void xtouch_events_onCharacterAnimation()
         if (current_time - last_blink_time >= 3000 && rand() % 100 < 2)
         {
             // 目を細くする（瞬き開始）
-            ui_msg_send(XTOUCH_ON_CHARACTER_LEFT_EYE_UPDATE, 2, 0);
-            ui_msg_send(XTOUCH_ON_CHARACTER_RIGHT_EYE_UPDATE, 2, 0);
+            ui_msg_send(XPTOUCH_ON_CHARACTER_LEFT_EYE_UPDATE, 2, 0);
+            ui_msg_send(XPTOUCH_ON_CHARACTER_RIGHT_EYE_UPDATE, 2, 0);
 
             is_blinking = true;
             blink_start_time = current_time;
@@ -109,10 +109,10 @@ void xtouch_events_onCharacterAnimation()
             eye_position = (rand() % 17) - 8;  // -8から8の範囲
 
             // 左目のX位置を更新
-            ui_msg_send(XTOUCH_ON_CHARACTER_LEFT_EYE_POSITION_X_UPDATE,  eye_position_x + eye_position, 0);
+            ui_msg_send(XPTOUCH_ON_CHARACTER_LEFT_EYE_POSITION_X_UPDATE,  eye_position_x + eye_position, 0);
             
             // 右目のX位置を更新
-            ui_msg_send(XTOUCH_ON_CHARACTER_RIGHT_EYE_POSITION_X_UPDATE,  eye_position_x + eye_diff + eye_position, 0);
+            ui_msg_send(XPTOUCH_ON_CHARACTER_RIGHT_EYE_POSITION_X_UPDATE,  eye_position_x + eye_diff + eye_position, 0);
 
         }
     }
@@ -129,13 +129,13 @@ void xtouch_events_onCharacterAnimation()
             if (mouth_is_open)
             {
                 // 口を開く（4倍の高さに拡大）
-                ui_msg_send(XTOUCH_ON_CHARACTER_MOUTH_UPDATE, mouth_height * 4, 0);
+                ui_msg_send(XPTOUCH_ON_CHARACTER_MOUTH_UPDATE, mouth_height * 4, 0);
                 mouth_pakupaku_count++;
             }
             else
             {
                 // 口を閉じる（元のサイズ）
-                ui_msg_send(XTOUCH_ON_CHARACTER_MOUTH_UPDATE, mouth_height, 0);
+                ui_msg_send(XPTOUCH_ON_CHARACTER_MOUTH_UPDATE, mouth_height, 0);
             }
             
             // 3回パクパク（6回の状態変更）したら終了
@@ -145,7 +145,7 @@ void xtouch_events_onCharacterAnimation()
                 mouth_pakupaku_count = 0;
                 last_mouth_time = current_time;
                 // 口を閉じる（元のサイズ）
-                ui_msg_send(XTOUCH_ON_CHARACTER_MOUTH_UPDATE, mouth_height, 0);
+                ui_msg_send(XPTOUCH_ON_CHARACTER_MOUTH_UPDATE, mouth_height, 0);
                 mouth_is_open = false;
             }
         }
@@ -172,7 +172,7 @@ void xtouch_events_onCharacterAnimation()
         int random_y = (rand() % (screen_height-character_height));
         last_position_time = current_time;
         
-        ui_msg_send(XTOUCH_ON_CHARACTER_FACEPOTITION_UPDATE, random_x, random_y);
+        ui_msg_send(XPTOUCH_ON_CHARACTER_FACEPOTITION_UPDATE, random_x, random_y);
     }
 }
 
@@ -191,7 +191,7 @@ void ui_event_comp_characterComponent_characterFace(lv_event_t *e)
 
 
 // キャラクター初期化関数（タイマー不要、loop()で直接呼び出す）
-void xtouch_character_init()
+void xptouch_character_init()
 {
     // millis()ベースの変数を初期化
     unsigned long current_time = millis();
@@ -212,13 +212,13 @@ void onXTouchCharacterHeightUpdate(lv_event_t *e)
     
     // メッセージIDをチェック（高さ更新メッセージのみ処理）
     uint32_t msg_id = lv_msg_get_id(m);
-    if (msg_id != XTOUCH_ON_CHARACTER_LEFT_EYE_UPDATE && 
-        msg_id != XTOUCH_ON_CHARACTER_RIGHT_EYE_UPDATE &&
-        msg_id != XTOUCH_ON_CHARACTER_MOUTH_UPDATE) {
+    if (msg_id != XPTOUCH_ON_CHARACTER_LEFT_EYE_UPDATE && 
+        msg_id != XPTOUCH_ON_CHARACTER_RIGHT_EYE_UPDATE &&
+        msg_id != XPTOUCH_ON_CHARACTER_MOUTH_UPDATE) {
         return;  // 該当するメッセージでない場合は処理しない
     }
     
-    struct XTOUCH_MESSAGE_DATA *message = (struct XTOUCH_MESSAGE_DATA *)lv_msg_get_payload(m);
+    struct XPTOUCH_MESSAGE_DATA *message = (struct XPTOUCH_MESSAGE_DATA *)lv_msg_get_payload(m);
     lv_obj_set_height(target, message->data);
 }
 
@@ -230,12 +230,12 @@ void onXTouchCharacterEyePositionXUpdate(lv_event_t *e)
     
     // メッセージIDをチェック（位置更新メッセージのみ処理）
     uint32_t msg_id = lv_msg_get_id(m);
-    if (msg_id != XTOUCH_ON_CHARACTER_LEFT_EYE_POSITION_X_UPDATE && 
-        msg_id != XTOUCH_ON_CHARACTER_RIGHT_EYE_POSITION_X_UPDATE) {
+    if (msg_id != XPTOUCH_ON_CHARACTER_LEFT_EYE_POSITION_X_UPDATE && 
+        msg_id != XPTOUCH_ON_CHARACTER_RIGHT_EYE_POSITION_X_UPDATE) {
         return;  // 該当するメッセージでない場合は処理しない
     }
     
-    struct XTOUCH_MESSAGE_DATA *message = (struct XTOUCH_MESSAGE_DATA *)lv_msg_get_payload(m);
+    struct XPTOUCH_MESSAGE_DATA *message = (struct XPTOUCH_MESSAGE_DATA *)lv_msg_get_payload(m);
     lv_obj_set_x(target, message->data);
 }
 
@@ -245,7 +245,7 @@ void onXTouchCharacterPositionXYUpdate(lv_event_t *e)
     lv_obj_t *target = lv_event_get_target(e);
     lv_msg_t *m = lv_event_get_msg(e);
     
-    struct XTOUCH_MESSAGE_DATA *message = (struct XTOUCH_MESSAGE_DATA *)m->payload;
+    struct XPTOUCH_MESSAGE_DATA *message = (struct XPTOUCH_MESSAGE_DATA *)m->payload;
 
     // data に X座標、data2 に Y座標が入っている
     lv_obj_set_pos(target, message->data, message->data2);  // XとYを同時に設定
@@ -388,22 +388,22 @@ printf("ui_event_comp_characterComponent_characterFace\n");
     lv_obj_add_event_cb(ui_characterComponent, del_component_child_event_cb, LV_EVENT_DELETE, children);
 
     lv_obj_add_event_cb(ui_characterComponent, onXTouchCharacterPositionXYUpdate, LV_EVENT_MSG_RECEIVED, NULL);
-    lv_msg_subsribe_obj(XTOUCH_ON_CHARACTER_FACEPOTITION_UPDATE, ui_characterComponent, NULL);
+    lv_msg_subsribe_obj(XPTOUCH_ON_CHARACTER_FACEPOTITION_UPDATE, ui_characterComponent, NULL);
 
 
     lv_obj_add_event_cb(left_eye, onXTouchCharacterHeightUpdate, LV_EVENT_MSG_RECEIVED, NULL);
-    lv_msg_subsribe_obj(XTOUCH_ON_CHARACTER_LEFT_EYE_UPDATE, left_eye, NULL);
+    lv_msg_subsribe_obj(XPTOUCH_ON_CHARACTER_LEFT_EYE_UPDATE, left_eye, NULL);
     lv_obj_add_event_cb(right_eye, onXTouchCharacterHeightUpdate, LV_EVENT_MSG_RECEIVED, NULL);
-    lv_msg_subsribe_obj(XTOUCH_ON_CHARACTER_RIGHT_EYE_UPDATE, right_eye, NULL);
+    lv_msg_subsribe_obj(XPTOUCH_ON_CHARACTER_RIGHT_EYE_UPDATE, right_eye, NULL);
 
     lv_obj_add_event_cb(mouth, onXTouchCharacterHeightUpdate, LV_EVENT_MSG_RECEIVED, NULL);
-    lv_msg_subsribe_obj(XTOUCH_ON_CHARACTER_MOUTH_UPDATE, mouth, NULL);
+    lv_msg_subsribe_obj(XPTOUCH_ON_CHARACTER_MOUTH_UPDATE, mouth, NULL);
 
     lv_obj_add_event_cb(left_eye, onXTouchCharacterEyePositionXUpdate, LV_EVENT_MSG_RECEIVED, NULL);
-    lv_msg_subsribe_obj(XTOUCH_ON_CHARACTER_LEFT_EYE_POSITION_X_UPDATE, left_eye, NULL);
+    lv_msg_subsribe_obj(XPTOUCH_ON_CHARACTER_LEFT_EYE_POSITION_X_UPDATE, left_eye, NULL);
 
     lv_obj_add_event_cb(right_eye, onXTouchCharacterEyePositionXUpdate, LV_EVENT_MSG_RECEIVED, NULL);
-    lv_msg_subsribe_obj(XTOUCH_ON_CHARACTER_RIGHT_EYE_POSITION_X_UPDATE, right_eye, NULL);
+    lv_msg_subsribe_obj(XPTOUCH_ON_CHARACTER_RIGHT_EYE_POSITION_X_UPDATE, right_eye, NULL);
 
 
 

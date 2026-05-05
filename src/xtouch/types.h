@@ -5,18 +5,18 @@
 #include <stdint.h>
 
 
-#define XTOUCH_LCD_MIN_SLEEP_TIME 5
-#define XTOUCH_LIGHT_MIN_SLEEP_TIME 5
+#define XPTOUCH_LCD_MIN_SLEEP_TIME 5
+#define XPTOUCH_LIGHT_MIN_SLEEP_TIME 5
 
 /** バックライト。範囲外・欠損時は MAX に寄せる。5" は 170〜255、2.8" は 10〜255。 */
-#if defined(__XTOUCH_SCREEN_S3_050__)
-#define XTOUCH_BACKLIGHT_SLIDER_MIN 170
-#define XTOUCH_BACKLIGHT_SLIDER_MAX 255
+#if defined(__XPTOUCH_SCREEN_S3_050__)
+#define XPTOUCH_BACKLIGHT_SLIDER_MIN 170
+#define XPTOUCH_BACKLIGHT_SLIDER_MAX 255
 #else
-#define XTOUCH_BACKLIGHT_SLIDER_MIN 10
-#define XTOUCH_BACKLIGHT_SLIDER_MAX 255
+#define XPTOUCH_BACKLIGHT_SLIDER_MIN 10
+#define XPTOUCH_BACKLIGHT_SLIDER_MAX 255
 #endif
-#define XTOUCH_BACKLIGHT_SLIDER_DEFAULT XTOUCH_BACKLIGHT_SLIDER_MAX
+#define XPTOUCH_BACKLIGHT_SLIDER_DEFAULT XPTOUCH_BACKLIGHT_SLIDER_MAX
 
 #ifdef __cplusplus
 extern "C"
@@ -39,22 +39,22 @@ extern "C"
 
     enum XTouchPrintStatus
     {
-        XTOUCH_PRINT_STATUS_IDLE,
-        XTOUCH_PRINT_STATUS_RUNNING,
-        XTOUCH_PRINT_STATUS_PAUSED,
-        XTOUCH_PRINT_STATUS_FINISHED,
-        XTOUCH_PRINT_STATUS_PREPARE,
-        XTOUCH_PRINT_STATUS_FAILED,
+        XPTOUCH_PRINT_STATUS_IDLE,
+        XPTOUCH_PRINT_STATUS_RUNNING,
+        XPTOUCH_PRINT_STATUS_PAUSED,
+        XPTOUCH_PRINT_STATUS_FINISHED,
+        XPTOUCH_PRINT_STATUS_PREPARE,
+        XPTOUCH_PRINT_STATUS_FAILED,
     };
 
     enum XTouchPrintingSpeedLevel
     {
-        XTOUCH_SPEED_LEVEL_INVALID = 0,
-        XTOUCH_SPEED_LEVEL_SILENCE = 1,
-        XTOUCH_SPEED_LEVEL_NORMAL = 2,
-        XTOUCH_SPEED_LEVEL_RAPID = 3,
-        XTOUCH_SPEED_LEVEL_RAMPAGE = 4,
-        XTOUCH_SPEED_LEVEL_COUNT
+        XPTOUCH_SPEED_LEVEL_INVALID = 0,
+        XPTOUCH_SPEED_LEVEL_SILENCE = 1,
+        XPTOUCH_SPEED_LEVEL_NORMAL = 2,
+        XPTOUCH_SPEED_LEVEL_RAPID = 3,
+        XPTOUCH_SPEED_LEVEL_RAMPAGE = 4,
+        XPTOUCH_SPEED_LEVEL_COUNT
     };
 
     enum XTouchAmsStatusMain
@@ -147,9 +147,9 @@ extern "C"
     XTouchBambuStatus bambuStatus;
 
     /* Public filaments: 都度組み立て。SD から表示時に読み、オプション文字列と「現在ブランドの items」だけ保持。 */
-#define XTOUCH_FILAMENT_MAX_BRANDS 8
-#define XTOUCH_FILAMENT_MAX_ITEMS_PER_BRAND 20
-#define XTOUCH_FILAMENT_OPTS_BUF_SIZE 256
+#define XPTOUCH_FILAMENT_MAX_BRANDS 8
+#define XPTOUCH_FILAMENT_MAX_ITEMS_PER_BRAND 20
+#define XPTOUCH_FILAMENT_OPTS_BUF_SIZE 256
     typedef struct
     {
         char id[12];  /* setting_id */
@@ -158,21 +158,21 @@ extern "C"
     } XTouchFilamentItem;
 
     /** 都度組み立て用: ブランド一覧オプション文字列 "B1\nB2\n" */
-    extern char xtouch_filament_brand_options[XTOUCH_FILAMENT_OPTS_BUF_SIZE];
+    extern char xptouch_filament_brand_options[XPTOUCH_FILAMENT_OPTS_BUF_SIZE];
     /** 都度組み立て用: Type オプション文字列 "T1\nT2\n" */
-    extern char xtouch_filament_type_options[XTOUCH_FILAMENT_OPTS_BUF_SIZE];
-    extern int xtouch_filament_num_brands;
+    extern char xptouch_filament_type_options[XPTOUCH_FILAMENT_OPTS_BUF_SIZE];
+    extern int xptouch_filament_num_brands;
     /** 最後に load_type_options したブランドの表示インデックス。−1 は未ロード。 */
-    extern int xtouch_filament_current_brand_index;
-    extern int xtouch_filament_current_type_count;
+    extern int xptouch_filament_current_brand_index;
+    extern int xptouch_filament_current_type_count;
     /** 1＝パイプバッファに _brands.txt が入っている（get_ith_brand で再読しない）。0＝ブランドファイル等が入っている。 */
-    extern int xtouch_filament_pipe_holds_brands;
+    extern int xptouch_filament_pipe_holds_brands;
     /** 1＝ブランドは固定（Bambu Lab, Generic の2つのみ。_brands.txt は読まない）。 */
-    extern int xtouch_filament_use_fixed_brands;
+    extern int xptouch_filament_use_fixed_brands;
 
     /** パイプ形式テキスト用バッファ（SD /xtouch/filament/ から読み込み）。DRAM 節約のため 3064。 */
-#define XTOUCH_FILAMENTS_PIPE_BUF_SIZE 1024
-    extern char xTouchFilamentsPipeBuf[XTOUCH_FILAMENTS_PIPE_BUF_SIZE];
+#define XPTOUCH_FILAMENTS_PIPE_BUF_SIZE 1024
+    extern char xTouchFilamentsPipeBuf[XPTOUCH_FILAMENTS_PIPE_BUF_SIZE];
     extern unsigned int xTouchFilamentsPipeLen;
 
     typedef struct XTouchControlModeStruct
@@ -234,9 +234,9 @@ extern "C"
         int xTouchUtilCalibrationBitmask;
         bool xTouchLanOnlyMode;
         bool xTouchProvisioningMode;
-    } XTouchConfig;
+    } xPTouchConfigParam;
 
-    XTouchConfig xTouchConfig;
+    xPTouchConfigParam xPTouchConfig;
     
 
     /* HMS */
@@ -288,10 +288,10 @@ extern "C"
         int print_error;
     } ClearErrorMessage;
 
-#ifdef __XTOUCH_PLATFORM_S3__
-#define XTOUCH_MULTI_PRINTER_MAX 5
-#define XTOUCH_OTHER_PRINTERS_MAX (XTOUCH_MULTI_PRINTER_MAX - 1)
-#define XTOUCH_DEV_PRODUCT_NAME_LEN 24
+#ifdef __XPTOUCH_PLATFORM_S3__
+#define XPTOUCH_MULTI_PRINTER_MAX 5
+#define XPTOUCH_OTHER_PRINTERS_MAX (XPTOUCH_MULTI_PRINTER_MAX - 1)
+#define XPTOUCH_DEV_PRODUCT_NAME_LEN 24
 
     typedef struct
     {
@@ -310,67 +310,67 @@ extern "C"
         unsigned char online;
     } other_printer_status_t;
 
-    extern other_printer_status_t otherPrinters[XTOUCH_OTHER_PRINTERS_MAX];
-    extern char xtouch_other_printer_dev_ids[XTOUCH_OTHER_PRINTERS_MAX][16];
-    extern char xtouch_current_printer_dev_product_name[XTOUCH_DEV_PRODUCT_NAME_LEN];
-    extern char xtouch_other_printer_dev_product_names[XTOUCH_OTHER_PRINTERS_MAX][XTOUCH_DEV_PRODUCT_NAME_LEN];
-    extern int xtouch_other_printer_count;
+    extern other_printer_status_t otherPrinters[XPTOUCH_OTHER_PRINTERS_MAX];
+    extern char xptouch_other_printer_dev_ids[XPTOUCH_OTHER_PRINTERS_MAX][16];
+    extern char xptouch_current_printer_dev_product_name[XPTOUCH_DEV_PRODUCT_NAME_LEN];
+    extern char xptouch_other_printer_dev_product_names[XPTOUCH_OTHER_PRINTERS_MAX][XPTOUCH_DEV_PRODUCT_NAME_LEN];
+    extern int xptouch_other_printer_count;
 
     /** サムネイル表示用: スロット番号ごとの SD パス（"S:/tmp/{task_id}.png"）。UI はこれを参照するだけ。xtouch が init で埋める。 */
-#define XTOUCH_THUMB_SLOT_MAX 5
-#define XTOUCH_THUMB_PATH_LEN 64
-    extern char xtouch_thumbnail_slot_path[XTOUCH_THUMB_SLOT_MAX][XTOUCH_THUMB_PATH_LEN];
-    /** LGFX デコード済みサムネイルの descriptor ポインタ（スロット毎）。UI は lv_img_set_src(img, (lv_img_dsc_t*)xtouch_thumbnail_slot_dsc[slot]) で表示。 */
-    extern void *xtouch_thumbnail_slot_dsc[XTOUCH_THUMB_SLOT_MAX];
+#define XPTOUCH_THUMB_SLOT_MAX 5
+#define XPTOUCH_THUMB_PATH_LEN 64
+    extern char xptouch_thumbnail_slot_path[XPTOUCH_THUMB_SLOT_MAX][XPTOUCH_THUMB_PATH_LEN];
+    /** LGFX デコード済みサムネイルの descriptor ポインタ（スロット毎）。UI は lv_img_set_src(img, (lv_img_dsc_t*)xptouch_thumbnail_slot_dsc[slot]) で表示。 */
+    extern void *xptouch_thumbnail_slot_dsc[XPTOUCH_THUMB_SLOT_MAX];
 
     /** Cloud 印刷履歴（user-service/my/tasks）。件数・文字列長・API/ワーカー・サムネ decode はすべてここで揃える。 */
-#define XTOUCH_HISTORY_TASKS_MAX 10
-#define XTOUCH_HISTORY_UI_ROW_SLOTS XTOUCH_HISTORY_TASKS_MAX
-#define XTOUCH_HISTORY_COVER_SLOTS XTOUCH_HISTORY_TASKS_MAX
-#define XTOUCH_HISTORY_TITLE_LEN 64
-#define XTOUCH_HISTORY_COVER_URL_LEN 1024
-#define XTOUCH_HISTORY_DEVICE_NAME_LEN 32
-#define XTOUCH_HISTORY_DEVICE_MODEL_LEN 24
+#define XPTOUCH_HISTORY_TASKS_MAX 10
+#define XPTOUCH_HISTORY_UI_ROW_SLOTS XPTOUCH_HISTORY_TASKS_MAX
+#define XPTOUCH_HISTORY_COVER_SLOTS XPTOUCH_HISTORY_TASKS_MAX
+#define XPTOUCH_HISTORY_TITLE_LEN 64
+#define XPTOUCH_HISTORY_COVER_URL_LEN 1024
+#define XPTOUCH_HISTORY_DEVICE_NAME_LEN 32
+#define XPTOUCH_HISTORY_DEVICE_MODEL_LEN 24
 /** Cloud / MQTT の task id と揃える（History 行と Home の /tmp/{id}.png を一致させる） */
-#define XTOUCH_HISTORY_TASK_ID_LEN 32
-#define XTOUCH_HISTORY_MODEL_ID_LEN 32
-#define XTOUCH_HISTORY_TIME_LEN 32
-/** GET /my/tasks の 1 回の limit（API 取得件数。画面・xtouch_history_tasks[] は XTOUCH_HISTORY_TASKS_MAX まで） */
-#define XTOUCH_HISTORY_FETCH_PAGE_LIMIT 15
+#define XPTOUCH_HISTORY_TASK_ID_LEN 32
+#define XPTOUCH_HISTORY_MODEL_ID_LEN 32
+#define XPTOUCH_HISTORY_TIME_LEN 32
+/** GET /my/tasks の 1 回の limit（API 取得件数。画面・xptouch_history_tasks[] は XPTOUCH_HISTORY_TASKS_MAX まで） */
+#define XPTOUCH_HISTORY_FETCH_PAGE_LIMIT 15
 /** カバー DL 完了キュー深度 */
-#define XTOUCH_HISTORY_COVER_QUEUE_LEN XTOUCH_HISTORY_TASKS_MAX
-#define XTOUCH_HISTORY_COVER_TASK_STACK_WORDS 6144
-#define XTOUCH_HISTORY_COVER_POLL_MS 150
+#define XPTOUCH_HISTORY_COVER_QUEUE_LEN (XPTOUCH_HISTORY_TASKS_MAX)
+#define XPTOUCH_HISTORY_COVER_TASK_STACK_WORDS 6144
+#define XPTOUCH_HISTORY_COVER_POLL_MS 150
 /** Printers→History 直後の SSL と競合しにくくする取得開始遅延 */
-#define XTOUCH_HISTORY_FETCH_DELAY_MS 900
-#define XTOUCH_HISTORY_FETCH_RETRY_DELAY_MS 2500
-#define XTOUCH_HISTORY_FETCH_RETRY_MAX 3
+#define XPTOUCH_HISTORY_FETCH_DELAY_MS 900
+#define XPTOUCH_HISTORY_FETCH_RETRY_DELAY_MS 2500
+#define XPTOUCH_HISTORY_FETCH_RETRY_MAX 3
 /** LIST_REFRESH 後にサムネ処理を始めるまでの待ち ms */
-#define XTOUCH_HISTORY_COVER_DEFER_AFTER_LIST_MS 30
+#define XPTOUCH_HISTORY_COVER_DEFER_AFTER_LIST_MS 30
 /** History 一覧カバー画像のデコード解像度（thumbnail の LGFX パスと一致。5" のみ 150px） */
-#if defined(__XTOUCH_SCREEN_S3_050__)
-#define XTOUCH_HISTORY_COVER_W 150
-#define XTOUCH_HISTORY_COVER_H 150
+#if defined(__XPTOUCH_SCREEN_S3_050__)
+#define XPTOUCH_HISTORY_COVER_W 150
+#define XPTOUCH_HISTORY_COVER_H 150
 #else
-#define XTOUCH_HISTORY_COVER_W 75
-#define XTOUCH_HISTORY_COVER_H 75
+#define XPTOUCH_HISTORY_COVER_W 75
+#define XPTOUCH_HISTORY_COVER_H 75
 #endif
     /** Bambu 想定: AMS 最大 4 ユニット × 各 4 トレイ = 16 スロット。amsDetailMapping も最大 16 要素 */
-#define XTOUCH_BAMBU_AMS_UNITS 4
-#define XTOUCH_BAMBU_AMS_SLOTS_PER_UNIT 4
-#define XTOUCH_HISTORY_AMS_MAP_MAX ((XTOUCH_BAMBU_AMS_UNITS) * (XTOUCH_BAMBU_AMS_SLOTS_PER_UNIT))
-#define XTOUCH_OTHER_TRAY_SETTING_ID_LEN 16
+#define XPTOUCH_BAMBU_AMS_UNITS 4
+#define XPTOUCH_BAMBU_AMS_SLOTS_PER_UNIT 4
+#define XPTOUCH_HISTORY_AMS_MAP_MAX ((XPTOUCH_BAMBU_AMS_UNITS) * (XPTOUCH_BAMBU_AMS_SLOTS_PER_UNIT))
+#define XPTOUCH_OTHER_TRAY_SETTING_ID_LEN 16
     /** 他プリンタ用: push_status の AMS を自機の trays[] とは別に保持（Reprint のスロット表示・API 用） */
     typedef struct
     {
         uint64_t tray_status;
         char tray_color[16];
         char tray_type[24];
-        char tray_setting_id[XTOUCH_OTHER_TRAY_SETTING_ID_LEN];
-    } xtouch_other_printer_tray_cell_t;
-    extern xtouch_other_printer_tray_cell_t xtouch_other_printer_trays[XTOUCH_OTHER_PRINTERS_MAX][XTOUCH_BAMBU_AMS_UNITS][XTOUCH_BAMBU_AMS_SLOTS_PER_UNIT];
-    extern long xtouch_other_printer_tray_ams_exist_bits[XTOUCH_OTHER_PRINTERS_MAX];
-    extern int xtouch_history_reprint_printer_dd_slot;
+        char tray_setting_id[XPTOUCH_OTHER_TRAY_SETTING_ID_LEN];
+    } xptouch_other_printer_tray_cell_t;
+    extern xptouch_other_printer_tray_cell_t xptouch_other_printer_trays[XPTOUCH_OTHER_PRINTERS_MAX][XPTOUCH_BAMBU_AMS_UNITS][XPTOUCH_BAMBU_AMS_SLOTS_PER_UNIT];
+    extern long xptouch_other_printer_tray_ams_exist_bits[XPTOUCH_OTHER_PRINTERS_MAX];
+    extern int xptouch_history_reprint_printer_dd_slot;
     typedef struct
     {
         int ams;
@@ -383,17 +383,17 @@ extern "C"
         char sourceColor[16];
         char targetColor[16];
         char targetFilamentType[20];
-    } xtouch_history_ams_map_t;
+    } xptouch_history_ams_map_t;
     typedef struct
     {
-        char task_id[XTOUCH_HISTORY_TASK_ID_LEN];  /* API の id を文字列で */
-        char title[XTOUCH_HISTORY_TITLE_LEN];
-        char cover_url[XTOUCH_HISTORY_COVER_URL_LEN];
-        char device_name[XTOUCH_HISTORY_DEVICE_NAME_LEN];
-        char device_model[XTOUCH_HISTORY_DEVICE_MODEL_LEN]; /* API deviceModel（deviceName 空時の表示用） */
-        char start_time[XTOUCH_HISTORY_TIME_LEN];
-        char end_time[XTOUCH_HISTORY_TIME_LEN];
-        char model_id[XTOUCH_HISTORY_MODEL_ID_LEN]; /* create_task 用 */
+        char task_id[XPTOUCH_HISTORY_TASK_ID_LEN];  /* API の id を文字列で */
+        char title[XPTOUCH_HISTORY_TITLE_LEN];
+        char cover_url[XPTOUCH_HISTORY_COVER_URL_LEN];
+        char device_name[XPTOUCH_HISTORY_DEVICE_NAME_LEN];
+        char device_model[XPTOUCH_HISTORY_DEVICE_MODEL_LEN]; /* API deviceModel（deviceName 空時の表示用） */
+        char start_time[XPTOUCH_HISTORY_TIME_LEN];
+        char end_time[XPTOUCH_HISTORY_TIME_LEN];
+        char model_id[XPTOUCH_HISTORY_MODEL_ID_LEN]; /* create_task 用 */
         int profile_id;   /* create_task 用 (profileId) */
         int plate_index;  /* create_task 用 (plateIndex) */
         int status;      /* 2=失敗, 3=完了 等 */
@@ -401,54 +401,54 @@ extern "C"
         /** 履歴一覧取得時点で amsDetailMapping を含むか（詳細は Reprint 押下時に別取得して展開） */
         unsigned char has_ams_mapping;
         unsigned char valid;
-    } xtouch_history_task_t;
-    extern xtouch_history_task_t xtouch_history_tasks[XTOUCH_HISTORY_TASKS_MAX];
-    extern int xtouch_history_count;
-    /** History 画面 行別: LGFX デコード済み cover 画像の descriptor。UI は lv_img_set_src(img, (lv_img_dsc_t*)xtouch_history_cover_dsc[idx]) で表示。 */
-    extern void *xtouch_history_cover_dsc[XTOUCH_HISTORY_COVER_SLOTS];
+    } xptouch_history_task_t;
+    extern xptouch_history_task_t xptouch_history_tasks[XPTOUCH_HISTORY_TASKS_MAX];
+    extern int xptouch_history_count;
+    /** History 画面 行別: LGFX デコード済み cover 画像の descriptor。UI は lv_img_set_src(img, (lv_img_dsc_t*)xptouch_history_cover_dsc[idx]) で表示。 */
+    extern void *xptouch_history_cover_dsc[XPTOUCH_HISTORY_COVER_SLOTS];
     /** History リプリント対象の task_id を保持する（tasks 一覧が空でも再印刷可能にする）。空なら無効。 */
-    extern char xtouch_history_reprint_task_id[XTOUCH_HISTORY_TASK_ID_LEN];
-    /** xtouch_history_reprint_task_id が有効か（空文字列判定の代わり）。 */
-    extern int xtouch_history_reprint_task_id_valid;
+    extern char xptouch_history_reprint_task_id[XPTOUCH_HISTORY_TASK_ID_LEN];
+    /** xptouch_history_reprint_task_id が有効か（空文字列判定の代わり）。 */
+    extern int xptouch_history_reprint_task_id_valid;
     /** Reprint 上半分（タイトル/デバイス/Plate/サムネ）表示用の task 基本情報 */
-    extern xtouch_history_task_t xtouch_history_reprint_task_basic;
-    extern int xtouch_history_reprint_task_basic_valid;
+    extern xptouch_history_task_t xptouch_history_reprint_task_basic;
+    extern int xptouch_history_reprint_task_basic_valid;
     /** Reprint 用カバー画像デコード済み descriptor（History一覧の行とは独立） */
-    extern void *xtouch_history_reprint_cover_dsc;
+    extern void *xptouch_history_reprint_cover_dsc;
     /** Reprint 対象タスクの amsDetailMapping を展開した共有バッファ（必要時のみ取得）。count<0 は取得中、0 は無し */
-    extern int xtouch_history_selected_ams_map_count;
+    extern int xptouch_history_selected_ams_map_count;
     /** HistoryReprint の task_id detail fetch を多重実行しないためのフラグ */
-    extern int xtouch_history_reprint_detail_fetch_inflight;
+    extern int xptouch_history_reprint_detail_fetch_inflight;
     /** HistoryReprint セッションの task_id detail fetch 完了フラグ（再初期化でも再取得しない） */
-    extern int xtouch_history_reprint_detail_fetch_done;
-    extern xtouch_history_ams_map_t xtouch_history_selected_ams_map[XTOUCH_HISTORY_AMS_MAP_MAX];
-    /** リプリント確定時: ams_map[i] に割り当てる AMS ユニット(0..XTOUCH_BAMBU_AMS_UNITS-1)とトレイ(0..3)。External は ams=0 tray=254。 */
-    extern uint8_t xtouch_history_reprint_pick_ams[XTOUCH_HISTORY_AMS_MAP_MAX];
-    extern uint8_t xtouch_history_reprint_pick_tray[XTOUCH_HISTORY_AMS_MAP_MAX];
+    extern int xptouch_history_reprint_detail_fetch_done;
+    extern xptouch_history_ams_map_t xptouch_history_selected_ams_map[XPTOUCH_HISTORY_AMS_MAP_MAX];
+    /** リプリント確定時: ams_map[i] に割り当てる AMS ユニット(0..XPTOUCH_BAMBU_AMS_UNITS-1)とトレイ(0..3)。External は ams=0 tray=254。 */
+    extern uint8_t xptouch_history_reprint_pick_ams[XPTOUCH_HISTORY_AMS_MAP_MAX];
+    extern uint8_t xptouch_history_reprint_pick_tray[XPTOUCH_HISTORY_AMS_MAP_MAX];
 #endif
 
     /** フィラメント Brand/Type ドロップダウン用。都度 SD から組み立てたオプション文字列を返す。実装は filaments_options.c。 */
-    void xtouch_public_filaments_get_brand_options(char *buf, unsigned int buf_len);
-    void xtouch_public_filaments_get_type_options(int brand_idx, char *buf, unsigned int buf_len);
-    void xtouch_public_filaments_get_type_options_by_name(const char *brand_name, char *buf, unsigned int buf_len);
+    void xptouch_public_filaments_get_brand_options(char *buf, unsigned int buf_len);
+    void xptouch_public_filaments_get_type_options(int brand_idx, char *buf, unsigned int buf_len);
+    void xptouch_public_filaments_get_type_options_by_name(const char *brand_name, char *buf, unsigned int buf_len);
     /** 表示インデックス（Brand ドロップダウンの選択番号）で Type 候補を取得。get_brand_options と同じ並びで対応。 */
-    void xtouch_public_filaments_get_type_options_by_display_index(int display_index, char *buf, unsigned int buf_len);
+    void xptouch_public_filaments_get_type_options_by_display_index(int display_index, char *buf, unsigned int buf_len);
     /** ブランド一覧を SD から読んでオプション文字列を組み立てる。get_brand_options の前に呼ぶ。 */
-    void xtouch_filaments_ensure_brands_loaded(void);
+    void xptouch_filaments_ensure_brands_loaded(void);
     /** 指定表示インデックスのブランドの Type 一覧を SD から読んで組み立てる。get_type_options_by_display_index の前に呼ぶ。 */
-    void xtouch_filaments_load_type_options_for_display_index(int display_index);
+    void xptouch_filaments_load_type_options_for_display_index(int display_index);
     /** AMS 編集画面を開くときに呼ぶ（ensure_brands_loaded のエイリアス）。 */
-    void xtouch_filaments_load_for_current_printer_c(void);
+    void xptouch_filaments_load_for_current_printer_c(void);
     /** i 番目のブランド名を _brands.txt から都度取得。buf に最大 buf_len-1 文字＋NUL。 */
-    void xtouch_filaments_get_brand_name_at_index(int index, char *buf, unsigned int buf_len);
+    void xptouch_filaments_get_brand_name_at_index(int index, char *buf, unsigned int buf_len);
     /** 指定ブランド・Type の setting_id / name / type / 温度をファイルから取得。行は id|n|t または id|n|t|min|max。out_min/out_max は NULL 可。 */
-    void xtouch_filaments_get_id_n_for_brand_type_index(int brand_display_index, int type_display_index, char *id_buf, unsigned int id_len, char *n_buf, unsigned int n_len, char *type_buf, unsigned int type_len, int *out_nozzle_temp_min, int *out_nozzle_temp_max);
+    void xptouch_filaments_get_id_n_for_brand_type_index(int brand_display_index, int type_display_index, char *id_buf, unsigned int id_len, char *n_buf, unsigned int n_len, char *type_buf, unsigned int type_len, int *out_nozzle_temp_min, int *out_nozzle_temp_max);
     /** 選択中の Brand/Type の setting_id / name / type / 温度を取得。Save 実装用。 */
-    void xtouch_public_filaments_get_selected_id_n(int brand_display_index, int type_display_index, char *id_buf, unsigned int id_len, char *n_buf, unsigned int n_len, char *type_buf, unsigned int type_len, int *out_nozzle_temp_min, int *out_nozzle_temp_max);
+    void xptouch_public_filaments_get_selected_id_n(int brand_display_index, int type_display_index, char *id_buf, unsigned int id_len, char *n_buf, unsigned int n_len, char *type_buf, unsigned int type_len, int *out_nozzle_temp_min, int *out_nozzle_temp_max);
     /** filaments_rev.json で filament_id → b/t 逆引き。見つかれば 1、なければ 0。 */
-    int xtouch_public_filaments_rev_lookup(const char *filament_id, char *out_brand, size_t out_brand_len, char *out_type, size_t out_type_len);
+    int xptouch_public_filaments_rev_lookup(const char *filament_id, char *out_brand, size_t out_brand_len, char *out_type, size_t out_type_len);
     /** brand_str と type_str に一致する表示インデックスを返す。見つかれば 1、なければ 0。 */
-    int xtouch_public_filaments_find_indices_by_brand_and_type(const char *brand_str, const char *type_str, int *out_brand_idx, int *out_type_idx);
+    int xptouch_public_filaments_find_indices_by_brand_and_type(const char *brand_str, const char *type_str, int *out_brand_idx, int *out_type_idx);
 
 #ifdef __cplusplus
 } /*extern "C"*/

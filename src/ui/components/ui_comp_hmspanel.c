@@ -46,12 +46,12 @@ void ui_hmsPanel_hide()
     lv_obj_add_flag(ui_hmsComponent, LV_OBJ_FLAG_HIDDEN);
 }
 
-const char *ui_hmsPanel_xtouch_errors_getHMSError(unsigned long long prefix)
+const char *ui_hmsPanel_xptouch_errors_getHMSError(unsigned long long prefix)
 {
     char prefix_str[17];
     sprintf(prefix_str, "%016llX", (unsigned long long)prefix);
 
-    return xtouch_errors_getHMSError(prefix_str);
+    return xptouch_errors_getHMSError(prefix_str);
 }
 
 const char *ui_hmsPanel_deviceHMSError(unsigned long long prefix)
@@ -59,7 +59,7 @@ const char *ui_hmsPanel_deviceHMSError(unsigned long long prefix)
     char prefix_str[9];
     sprintf(prefix_str, "%08X", (unsigned long long)prefix);
 
-    return xtouch_errors_getDeviceError(prefix_str);
+    return xptouch_errors_getDeviceError(prefix_str);
 }
 
 void ui_hmsPanelComponent_onXTouchHMSError(lv_event_t *e)
@@ -75,8 +75,8 @@ void ui_hmsPanelComponent_onXTouchHMSError(lv_event_t *e)
             {
                 char ui_hmsPanel_currentErrorString[9];
                 sprintf(ui_hmsPanel_currentErrorString, "%08X", bambuStatus.print_error);
-                bool hasRetry = xtouch_errors_deviceErrorHasRetry(ui_hmsPanel_currentErrorString);
-                bool hasDone = xtouch_errors_deviceErrorHasDone(ui_hmsPanel_currentErrorString);
+                bool hasRetry = xptouch_errors_deviceErrorHasRetry(ui_hmsPanel_currentErrorString);
+                bool hasDone = xptouch_errors_deviceErrorHasDone(ui_hmsPanel_currentErrorString);
                 const char *error = ui_hmsPanel_deviceHMSError(ui_hmsPanel_currentError);
                 if (error != "")
                 {
@@ -92,7 +92,7 @@ void ui_hmsPanelComponent_onXTouchHMSError(lv_event_t *e)
             // HMSERROR
             {
                 unsigned int reversed_msg_level = (ui_hmsPanel_currentError >> 16) & 0x1F;
-                const char *error = ui_hmsPanel_xtouch_errors_getHMSError(ui_hmsPanel_currentError);
+                const char *error = ui_hmsPanel_xptouch_errors_getHMSError(ui_hmsPanel_currentError);
                 switch (reversed_msg_level)
                 {
                 case HMS_INFO:
@@ -131,7 +131,7 @@ void ui_event_comp_hmsPanel_onDoneClick(lv_event_t *e)
     if (event_code == LV_EVENT_CLICKED)
     {
         ui_hmsPanel_hide();
-        lv_msg_send(XTOUCH_COMMAND_AMS_CONTROL, "done");
+        lv_msg_send(XPTOUCH_COMMAND_AMS_CONTROL, "done");
         if (!hms_isQueueEmpty())
         {
             ui_event_comp_hmsPanel_onButtonDequeue();
@@ -150,7 +150,7 @@ void ui_event_comp_hmsPanel_onConfirmClick(lv_event_t *e)
         clearErrorMessage.print_error = ui_hmsPanel_currentError;
         strcpy(clearErrorMessage.subtask_id, bambuStatus.subtask_id_);
 
-        lv_msg_send(XTOUCH_COMMAND_CLEAN_PRINT_ERROR, &clearErrorMessage);
+        lv_msg_send(XPTOUCH_COMMAND_CLEAN_PRINT_ERROR, &clearErrorMessage);
 
         if (!hms_isQueueEmpty())
         {
@@ -165,7 +165,7 @@ void ui_event_comp_hmsPanel_onRetryClick(lv_event_t *e)
     if (event_code == LV_EVENT_CLICKED)
     {
         ui_hmsPanel_hide();
-        lv_msg_send(XTOUCH_COMMAND_AMS_CONTROL, "resume");
+        lv_msg_send(XPTOUCH_COMMAND_AMS_CONTROL, "resume");
         if (!hms_isQueueEmpty())
         {
             ui_event_comp_hmsPanel_onButtonDequeue();
@@ -324,7 +324,7 @@ lv_obj_t *ui_hmsPanel_create(lv_obj_t *comp_parent)
     lv_obj_add_event_cb(cui_hmsPanelDoneButton, ui_event_comp_hmsPanel_onDoneClick, LV_EVENT_ALL, children);
 
     lv_obj_add_event_cb(cui_hmsPanel, ui_hmsPanelComponent_onXTouchHMSError, LV_EVENT_MSG_RECEIVED, NULL);
-    lv_msg_subsribe_obj(XTOUCH_ON_ERROR, cui_hmsPanel, NULL);
+    lv_msg_subsribe_obj(XPTOUCH_ON_ERROR, cui_hmsPanel, NULL);
 
     ui_comp_hmsPanel_create_hook(cui_hmsPanel);
     return cui_hmsPanel;

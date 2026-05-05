@@ -3,8 +3,8 @@
  * JSON 形式: { "filaments_by_id": { "GFL99": { "b": "Bambu Lab", "t": "ABS" }, ... } }
  * 実装はこの .h のみ。main.cpp で include して使い回す。
  */
-#ifndef _XTOUCH_FILAMENTS_REV_H
-#define _XTOUCH_FILAMENTS_REV_H
+#ifndef _XPTOUCH_FILAMENTS_REV_H
+#define _XPTOUCH_FILAMENTS_REV_H
 
 #ifdef __cplusplus
 #include <ArduinoJson.h>
@@ -13,31 +13,31 @@
 
 extern "C" {
 
-int xtouch_public_filaments_rev_lookup(const char *filament_id, char *out_brand, size_t out_brand_len, char *out_type, size_t out_type_len);
+int xptouch_public_filaments_rev_lookup(const char *filament_id, char *out_brand, size_t out_brand_len, char *out_type, size_t out_type_len);
 
 } /* extern "C" */
 
 #endif /* __cplusplus */
-#endif /* _XTOUCH_FILAMENTS_REV_H */
+#endif /* _XPTOUCH_FILAMENTS_REV_H */
 
 /* 実装: この .h を include した TU で1回だけコンパイル（main.cpp で include して使い回す） */
-#ifndef _XTOUCH_FILAMENTS_REV_IMPL_GUARD
-#define _XTOUCH_FILAMENTS_REV_IMPL_GUARD
+#ifndef _XPTOUCH_FILAMENTS_REV_IMPL_GUARD
+#define _XPTOUCH_FILAMENTS_REV_IMPL_GUARD
 #if defined(__cplusplus)
-/* xtouch_paths_filaments_rev は main.cpp が paths.h で取得済みの前提 */
+/* xptouch_paths_filaments_rev は main.cpp が paths.h で取得済みの前提 */
 extern "C" {
 
-int xtouch_public_filaments_rev_lookup(const char *filament_id, char *out_brand, size_t out_brand_len, char *out_type, size_t out_type_len)
+int xptouch_public_filaments_rev_lookup(const char *filament_id, char *out_brand, size_t out_brand_len, char *out_type, size_t out_type_len)
 {
     if (!filament_id || filament_id[0] == '\0' || !out_brand || out_brand_len == 0 || !out_type || out_type_len == 0)
         return 0;
     out_brand[0] = '\0';
     out_type[0] = '\0';
 
-    if (!xtouch_sdcard_exists(xtouch_paths_filaments_rev))
+    if (!xptouch_sdcard_exists(xptouch_paths_filaments_rev))
         return 0;
 
-    File f = xtouch_sdcard_open(xtouch_paths_filaments_rev, FILE_READ);
+    File f = xptouch_sdcard_open(xptouch_paths_filaments_rev, FILE_READ);
     if (!f || !f.available())
     {
         if (f)
@@ -82,4 +82,4 @@ int xtouch_public_filaments_rev_lookup(const char *filament_id, char *out_brand,
 
 } /* extern "C" */
 #endif /* __cplusplus */
-#endif /* _XTOUCH_FILAMENTS_REV_IMPL_GUARD */
+#endif /* _XPTOUCH_FILAMENTS_REV_IMPL_GUARD */

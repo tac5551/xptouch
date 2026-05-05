@@ -1,7 +1,7 @@
 
 #include "ui.h"
 
-#ifdef __XTOUCH_PLATFORM_S3__
+#ifdef __XPTOUCH_PLATFORM_S3__
 #include "xtouch/globals.h"
 static bool s_home_thumb_global_subscribed = false;
 static lv_timer_t *s_home_pushall_timer = NULL;
@@ -9,11 +9,11 @@ static lv_timer_t *s_home_pushall_timer = NULL;
 static void on_home_thumb_global(lv_msg_t *m, void *user_data)
 {
     (void)user_data;
-    if (!m || lv_msg_get_id(m) != XTOUCH_ON_OTHER_PRINTER_UPDATE)
+    if (!m || lv_msg_get_id(m) != XPTOUCH_ON_OTHER_PRINTER_UPDATE)
         return;
     if (!ui_msg_payload_is_main_thumb_refresh(lv_msg_get_payload(m)))
         return;
-    if (xTouchConfig.currentScreenIndex != 0 || !ui_homeThumbImg)
+    if (xPTouchConfig.currentScreenIndex != 0 || !ui_homeThumbImg)
         return;
     ui_thumb_set_img_src_from_slot(ui_homeThumbImg, 0);
 }
@@ -22,13 +22,13 @@ static void ui_home_pushall_timer_cb(lv_timer_t *t)
 {
     (void)t;
     s_home_pushall_timer = NULL;
-    if (xTouchConfig.currentScreenIndex != 0)
+    if (xPTouchConfig.currentScreenIndex != 0)
     {
         lv_timer_del(t);
         return;
     }
-    extern void xtouch_mqtt_pushall_main_printer_for_screen_c(void);
-    xtouch_mqtt_pushall_main_printer_for_screen_c();
+    extern void xptouch_mqtt_pushall_main_printer_for_screen_c(void);
+    xptouch_mqtt_pushall_main_printer_for_screen_c();
     lv_timer_del(t);
 }
 
@@ -55,7 +55,7 @@ bool ui_settings_has_unsaved_changes(void)
 
 static void on_settings_leave_save_yes(void)
 {
-    lv_msg_send(XTOUCH_SETTINGS_SAVE, NULL);
+    lv_msg_send(XPTOUCH_SETTINGS_SAVE, NULL);
     ui_settings_clear_dirty();
     s_settings_confirm_bypass = true;
     loadScreen(s_settings_pending_screen);
@@ -77,55 +77,55 @@ void fillScreenData(int screen)
     switch (screen)
     {
     case 0:
-        ui_msg_send(XTOUCH_ON_BED_TEMP, bambuStatus.bed_temper, 0);
-        ui_msg_send(XTOUCH_ON_BED_TARGET_TEMP, bambuStatus.bed_target_temper, 0);
-        ui_msg_send(XTOUCH_ON_NOZZLE_TEMP, bambuStatus.nozzle_temper, 0);
-        ui_msg_send(XTOUCH_ON_NOZZLE_TARGET_TEMP, bambuStatus.nozzle_target_temper, 0);
-        ui_msg_send(XTOUCH_ON_LIGHT_REPORT, bambuStatus.chamberLed, 0);
-        ui_msg_send(XTOUCH_ON_AMS, bambuStatus.ams, 0);
-        ui_msg_send(XTOUCH_ON_PRINT_STATUS, 0, 0);
-        ui_msg_send(XTOUCH_ON_CHAMBER_TEMP, bambuStatus.chamber_temper, 0);
+        ui_msg_send(XPTOUCH_ON_BED_TEMP, bambuStatus.bed_temper, 0);
+        ui_msg_send(XPTOUCH_ON_BED_TARGET_TEMP, bambuStatus.bed_target_temper, 0);
+        ui_msg_send(XPTOUCH_ON_NOZZLE_TEMP, bambuStatus.nozzle_temper, 0);
+        ui_msg_send(XPTOUCH_ON_NOZZLE_TARGET_TEMP, bambuStatus.nozzle_target_temper, 0);
+        ui_msg_send(XPTOUCH_ON_LIGHT_REPORT, bambuStatus.chamberLed, 0);
+        ui_msg_send(XPTOUCH_ON_AMS, bambuStatus.ams, 0);
+        ui_msg_send(XPTOUCH_ON_PRINT_STATUS, 0, 0);
+        ui_msg_send(XPTOUCH_ON_CHAMBER_TEMP, bambuStatus.chamber_temper, 0);
         break;
     case 1:
-        ui_msg_send(XTOUCH_ON_BED_TEMP, bambuStatus.bed_temper, 0);
-        ui_msg_send(XTOUCH_ON_BED_TARGET_TEMP, bambuStatus.bed_target_temper, 0);
-        ui_msg_send(XTOUCH_ON_NOZZLE_TEMP, bambuStatus.nozzle_temper, 0);
-        ui_msg_send(XTOUCH_ON_NOZZLE_TARGET_TEMP, bambuStatus.nozzle_target_temper, 0);
-        ui_msg_send(XTOUCH_ON_PART_FAN_SPEED, bambuStatus.cooling_fan_speed, 0);
-        ui_msg_send(XTOUCH_ON_PART_AUX_SPEED, bambuStatus.big_fan1_speed, 0);
-        ui_msg_send(XTOUCH_ON_PART_CHAMBER_SPEED, bambuStatus.big_fan2_speed, 0);
+        ui_msg_send(XPTOUCH_ON_BED_TEMP, bambuStatus.bed_temper, 0);
+        ui_msg_send(XPTOUCH_ON_BED_TARGET_TEMP, bambuStatus.bed_target_temper, 0);
+        ui_msg_send(XPTOUCH_ON_NOZZLE_TEMP, bambuStatus.nozzle_temper, 0);
+        ui_msg_send(XPTOUCH_ON_NOZZLE_TARGET_TEMP, bambuStatus.nozzle_target_temper, 0);
+        ui_msg_send(XPTOUCH_ON_PART_FAN_SPEED, bambuStatus.cooling_fan_speed, 0);
+        ui_msg_send(XPTOUCH_ON_PART_AUX_SPEED, bambuStatus.big_fan1_speed, 0);
+        ui_msg_send(XPTOUCH_ON_PART_CHAMBER_SPEED, bambuStatus.big_fan2_speed, 0);
         break;
     case 2:
-        ui_msg_send(XTOUCH_CONTROL_INC_SWITCH, controlMode.inc, 0);
-        ui_msg_send(XTOUCH_ON_NOZZLE_TEMP, bambuStatus.nozzle_temper, 0);
+        ui_msg_send(XPTOUCH_CONTROL_INC_SWITCH, controlMode.inc, 0);
+        ui_msg_send(XPTOUCH_ON_NOZZLE_TEMP, bambuStatus.nozzle_temper, 0);
         break;
     case 7:
     case 13:
-        ui_msg_send(XTOUCH_ON_AMS, bambuStatus.ams, 0);
-        ui_msg_send(XTOUCH_ON_AMS_BITS, 0, 0);
-        ui_msg_send(XTOUCH_ON_AMS_SLOT_UPDATE, 0, 0);
-        ui_msg_send(XTOUCH_ON_AMS_HUMIDITY_UPDATE, 0, 0);
+        ui_msg_send(XPTOUCH_ON_AMS, bambuStatus.ams, 0);
+        ui_msg_send(XPTOUCH_ON_AMS_BITS, 0, 0);
+        ui_msg_send(XPTOUCH_ON_AMS_SLOT_UPDATE, 0, 0);
+        ui_msg_send(XPTOUCH_ON_AMS_HUMIDITY_UPDATE, 0, 0);
         break;
     }
 }
 
 void loadScreen(int screen)
 {
-    const int prev_screen = xTouchConfig.currentScreenIndex;
+    const int prev_screen = xPTouchConfig.currentScreenIndex;
     if (!s_settings_confirm_bypass && prev_screen == 4 && screen != 4 && ui_settings_has_unsaved_changes())
     {
         s_settings_pending_screen = screen;
         ui_confirmPanel_show_with_no("Unsaved changes.\nSave before leaving?", on_settings_leave_save_yes, on_settings_leave_save_no);
         return;
     }
-#ifdef __XTOUCH_PLATFORM_S3__
+#ifdef __XPTOUCH_PLATFORM_S3__
 
     /* History(15)・Reprint(16) から離れるときだけ一覧を捨てる。15↔16 は保持 */
     if ((prev_screen == 15 || prev_screen == 16) && screen != 15 && screen != 16)
-        xtouch_history_clear_tasks_on_leave_c();
+        xptouch_history_clear_tasks_on_leave_c();
 
     if (prev_screen == 17 && screen != 17)
-        xtouch_screen_led_off_timer_resume_c();
+        xptouch_screen_led_off_timer_resume_c();
 
     ui_printersListContainer = NULL;
     if (screen != 15)
@@ -134,16 +134,16 @@ void loadScreen(int screen)
     ui_sidebarComponent = NULL;
 
     if (screen != 6 && screen != 0)
-        ui_msg_send(XTOUCH_PRINTERS_THUMB_TIMER_STOP, 0, 0);
+        ui_msg_send(XPTOUCH_PRINTERS_THUMB_TIMER_STOP, 0, 0);
 
     /* History カバー DL 待ちを捨てる。History 未使用時はキュー空で実質ノーオペ。遷移先が 15 のときは FETCH 後に再キューされる */
     if (prev_screen != screen)
-        ui_msg_send(XTOUCH_HISTORY_COVER_DL_CANCEL, 0, 0);
+        ui_msg_send(XPTOUCH_HISTORY_COVER_DL_CANCEL, 0, 0);
 #endif
 
-    xTouchConfig.currentScreenIndex = screen;
+    xPTouchConfig.currentScreenIndex = screen;
     lv_obj_t *current = lv_scr_act();
-#ifdef __XTOUCH_PLATFORM_S3__
+#ifdef __XPTOUCH_PLATFORM_S3__
     if (current == ui_homeScreen)
         ui_homeThumbImg = NULL;
 #endif
@@ -161,14 +161,14 @@ void loadScreen(int screen)
     case 0:
         ui_homeScreen_screen_init();
         lv_disp_load_scr(ui_homeScreen);
-#ifdef __XTOUCH_PLATFORM_S3__
+#ifdef __XPTOUCH_PLATFORM_S3__
         if (!s_home_thumb_global_subscribed)
         {
-            lv_msg_subscribe(XTOUCH_ON_OTHER_PRINTER_UPDATE, (lv_msg_subscribe_cb_t)on_home_thumb_global, NULL);
+            lv_msg_subscribe(XPTOUCH_ON_OTHER_PRINTER_UPDATE, (lv_msg_subscribe_cb_t)on_home_thumb_global, NULL);
             s_home_thumb_global_subscribed = true;
         }
-        ui_msg_send(XTOUCH_PRINTERS_THUMB_TIMER_START, 0, 0);
-        ui_msg_send(XTOUCH_PRINTERS_SCHEDULE_THUMB_FETCH, 0, 0);
+        ui_msg_send(XPTOUCH_PRINTERS_THUMB_TIMER_START, 0, 0);
+        ui_msg_send(XPTOUCH_PRINTERS_SCHEDULE_THUMB_FETCH, 0, 0);
         /* cleanup は送らない（Printers 入室時のみ）。Home は描画後に pushall 実行。 */
         if (s_home_pushall_timer)
             lv_timer_del(s_home_pushall_timer);
@@ -192,11 +192,11 @@ void loadScreen(int screen)
         ui_printerPairScreen_screen_init();
         lv_disp_load_scr(ui_printerPairScreen);
         break;
-#ifdef __XTOUCH_PLATFORM_S3__
+#ifdef __XPTOUCH_PLATFORM_S3__
     case 6:
-        if (xTouchConfig.xTouchLanOnlyMode) {
+        if (xPTouchConfig.xTouchLanOnlyMode) {
             screen = 0;
-            xTouchConfig.currentScreenIndex = 0;
+            xPTouchConfig.currentScreenIndex = 0;
             ui_homeScreen_screen_init();
             lv_disp_load_scr(ui_homeScreen);
         } else {
@@ -235,12 +235,12 @@ void loadScreen(int screen)
         ui_amsEditColorScreen_screen_init();
         lv_disp_load_scr(ui_amsEditColorScreen);
         break;
-#ifdef __XTOUCH_PLATFORM_S3__
+#ifdef __XPTOUCH_PLATFORM_S3__
     case 15:
         ui_historyScreen_screen_init();
         lv_disp_load_scr(ui_historyScreen);
         /* 初回・再入場とも Cloud で一覧を取り直す（count>0 のとき COVER_RETRY だけだとリストが更新されない） */
-        ui_msg_send(XTOUCH_HISTORY_FETCH, 0, 0);
+        ui_msg_send(XPTOUCH_HISTORY_FETCH, 0, 0);
         break;
     case 16:
         ui_historyReprintScreen_screen_init();
@@ -249,10 +249,10 @@ void loadScreen(int screen)
     case 17:
         ui_cameraScreen_screen_init();
         lv_disp_load_scr(ui_cameraScreen);
-        xtouch_screen_led_off_timer_pause_for_camera_c();
+        xptouch_screen_led_off_timer_pause_for_camera_c();
         /* Chamber LED がオフなら点灯（トグルは led_mode=off のとき on を送る） */
         if (!bambuStatus.chamberLed)
-            ui_msg_send(XTOUCH_COMMAND_LIGHT_TOGGLE, 0, 0);
+            ui_msg_send(XPTOUCH_COMMAND_LIGHT_TOGGLE, 0, 0);
         break;
 #endif
     }
@@ -262,7 +262,7 @@ void loadScreen(int screen)
     // 5inch: 0=Home,1=Printers,2=History,3=Camera,4=Temp,5=AMS,6=Settings
     // 2.8inch: 0=Home,1=Temp,2=AMS,3=Settings
     int sidebar_index = -1;
-#ifdef __XTOUCH_PLATFORM_S3__
+#ifdef __XPTOUCH_PLATFORM_S3__
     switch (screen)
     {
     case 0:
@@ -317,7 +317,7 @@ void loadScreen(int screen)
     }
 }
 
-#ifdef __XTOUCH_PLATFORM_S3__
+#ifdef __XPTOUCH_PLATFORM_S3__
 static void on_settings_save_sidebar(const void *payload, void *user_data)
 {
     (void)payload;
@@ -341,8 +341,8 @@ void initTopLayer()
     lv_obj_add_flag(ui_confirmComponent, LV_OBJ_FLAG_HIDDEN);
     ui_hmsComponent = ui_hmsPanel_create(lv_layer_top());
     lv_obj_add_flag(ui_hmsComponent, LV_OBJ_FLAG_HIDDEN);
-#ifdef __XTOUCH_PLATFORM_S3__
-    lv_msg_subscribe(XTOUCH_SETTINGS_SAVE, (lv_msg_subscribe_cb_t)on_settings_save_sidebar, NULL);
-    lv_msg_subscribe(XTOUCH_HISTORY_REPRINT_DONE, (lv_msg_subscribe_cb_t)on_reprint_done_goto_home, NULL);
+#ifdef __XPTOUCH_PLATFORM_S3__
+    lv_msg_subscribe(XPTOUCH_SETTINGS_SAVE, (lv_msg_subscribe_cb_t)on_settings_save_sidebar, NULL);
+    lv_msg_subscribe(XPTOUCH_HISTORY_REPRINT_DONE, (lv_msg_subscribe_cb_t)on_reprint_done_goto_home, NULL);
 #endif
 }

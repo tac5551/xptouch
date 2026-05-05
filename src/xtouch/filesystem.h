@@ -6,36 +6,36 @@
 #include <ArduinoJson.h>
 #include <Arduino.h>
 
-bool xtouch_filesystem_exist(fs::FS &fs, const char *path)
+bool xptouch_filesystem_exist(fs::FS &fs, const char *path)
 {
     return fs.exists(path);
 }
 
-File xtouch_filesystem_open(fs::FS &fs, const char *path)
+File xptouch_filesystem_open(fs::FS &fs, const char *path)
 {
     return fs.open(path);
 }
 
-bool xtouch_filesystem_deleteFile(fs::FS &fs, const char *path)
+bool xptouch_filesystem_deleteFile(fs::FS &fs, const char *path)
 {
     return fs.remove(path);
 }
 
-bool xtouch_filesystem_mkdir(fs::FS &fs, const char *path)
+bool xptouch_filesystem_mkdir(fs::FS &fs, const char *path)
 {
-    if (!xtouch_filesystem_exist(fs, path))
+    if (!xptouch_filesystem_exist(fs, path))
     {
         return fs.mkdir(path);
     }
     return true;
 }
 
-bool xtouch_filesystem_rmdir(fs::FS &fs, const char *path)
+bool xptouch_filesystem_rmdir(fs::FS &fs, const char *path)
 {
     return fs.rmdir(path);
 }
 
-void xtouch_filesystem_writeJson(fs::FS &fs, const char *filename, DynamicJsonDocument json, bool defaultsToArray = false, int size = 1024)
+void xptouch_filesystem_writeJson(fs::FS &fs, const char *filename, DynamicJsonDocument json, bool defaultsToArray = false, int size = 1024)
 {
     ConsoleDebug.printf("[xPTouch][I][FILESYSTEM] Writing JSON file: %s\n", filename);
     File configFile = fs.open(filename, FILE_WRITE);
@@ -49,7 +49,7 @@ void xtouch_filesystem_writeJson(fs::FS &fs, const char *filename, DynamicJsonDo
     configFile.close();
 }
 
-DynamicJsonDocument xtouch_filesystem_readJson(fs::FS &fs, const char *filename, bool defaultsToArray = false, int size = 1024)
+DynamicJsonDocument xptouch_filesystem_readJson(fs::FS &fs, const char *filename, bool defaultsToArray = false, int size = 1024)
 {
     ConsoleDebug.printf("[xPTouch][I][FILESYSTEM] Reading JSON file: %s\n", filename);
     DynamicJsonDocument doc(size); // Adjust the size as needed

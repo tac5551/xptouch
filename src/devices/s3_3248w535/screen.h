@@ -41,10 +41,10 @@ static void jc3248_backlight_pwm_init()
     s_bl_pwm_inited = true;
 }
 
-bool xtouch_screen_touchFromPowerOff = false;
-bool xtouch_screen_neoPixelFromPowerOff = false;
+bool xptouch_screen_touchFromPowerOff = false;
+bool xptouch_screen_neoPixelFromPowerOff = false;
 
-void xtouch_screen_setBrightness(byte brightness)
+void xptouch_screen_setBrightness(byte brightness)
 {
     jc3248_backlight_pwm_init();
 #if JC3248_TFT_BL_ACTIVE_LOW
@@ -57,7 +57,7 @@ void xtouch_screen_setBrightness(byte brightness)
 static void jc3248_gfx_begin(uint8_t rotation)
 {
     pinMode(JC3248_TFT_BL, OUTPUT);
-    xtouch_screen_setBrightness(255);
+    xptouch_screen_setBrightness(255);
 
     s_bus = new Arduino_ESP32QSPI(
         JC3248_LCD_CS,
@@ -82,75 +82,75 @@ static void jc3248_gfx_begin(uint8_t rotation)
     s_touch.setRotation(s_canvas->getRotation(), s_canvas->width(), s_canvas->height());
 }
 
-void xtouch_screen_sleep()
+void xptouch_screen_sleep()
 {
-    xtouch_screen_touchFromPowerOff = true;
-    if (xTouchConfig.xTouchStackChanEnabled == true)
+    xptouch_screen_touchFromPowerOff = true;
+    if (xPTouchConfig.xTouchStackChanEnabled == true)
     {
         loadScreen(9);
     }
     else
     {
-        xtouch_screen_setBrightness(0);
+        xptouch_screen_setBrightness(0);
     }
 }
 
-void xtouch_screen_wakeUp()
+void xptouch_screen_wakeUp()
 {
     ConsoleInfo.println("[xPTouch][I][SCREEN] Wake Up");
-    if (xtouch_screen_onScreenOffTimer != NULL)
+    if (xptouch_screen_onScreenOffTimer != NULL)
     {
-        lv_timer_reset(xtouch_screen_onScreenOffTimer);
+        lv_timer_reset(xptouch_screen_onScreenOffTimer);
     }
-    xtouch_screen_touchFromPowerOff = false;
+    xptouch_screen_touchFromPowerOff = false;
     loadScreen(0);
-    xtouch_screen_setBrightness(xTouchConfig.xTouchBacklightLevel);
-    if (xTouchConfig.xTouchChamberLedOnWake && !bambuStatus.chamberLed)
+    xptouch_screen_setBrightness(xPTouchConfig.xTouchBacklightLevel);
+    if (xPTouchConfig.xTouchChamberLedOnWake && !bambuStatus.chamberLed)
     {
-        lv_msg_send(XTOUCH_COMMAND_LIGHT_TOGGLE, NULL);
+        lv_msg_send(XPTOUCH_COMMAND_LIGHT_TOGGLE, NULL);
     }
 }
 
-void xtouch_screen_onScreenTimeout(lv_timer_t *timer)
+void xptouch_screen_onScreenTimeout(lv_timer_t *timer)
 {
     (void)timer;
-    if (xTouchConfig.currentScreenIndex == 17)
+    if (xPTouchConfig.currentScreenIndex == 17)
     {
         return;
     }
 
-    if (bambuStatus.print_status == XTOUCH_PRINT_STATUS_RUNNING && xTouchConfig.xTouchWakeDuringPrint == true)
+    if (bambuStatus.print_status == XPTOUCH_PRINT_STATUS_RUNNING && xPTouchConfig.xTouchWakeDuringPrint == true)
     {
         return;
     }
 
-    if (xTouchConfig.xTouchTFTOFFValue < XTOUCH_LCD_MIN_SLEEP_TIME)
+    if (xPTouchConfig.xTouchTFTOFFValue < XPTOUCH_LCD_MIN_SLEEP_TIME)
     {
         return;
     }
 
     ConsoleInfo.println("[xPTouch][I][SCREEN] Screen Off");
-    xtouch_screen_sleep();
+    xptouch_screen_sleep();
 }
 
-void xtouch_screen_onLEDOff(lv_timer_t *timer)
+void xptouch_screen_onLEDOff(lv_timer_t *timer)
 {
     (void)timer;
 
-    if (bambuStatus.print_status == XTOUCH_PRINT_STATUS_RUNNING && bambuStatus.camera_timelapse == true)
+    if (bambuStatus.print_status == XPTOUCH_PRINT_STATUS_RUNNING && bambuStatus.camera_timelapse == true)
     {
         return;
     }
-    if (bambuStatus.print_status == XTOUCH_PRINT_STATUS_RUNNING && xTouchConfig.xTouchWakeDuringPrint == true)
+    if (bambuStatus.print_status == XPTOUCH_PRINT_STATUS_RUNNING && xPTouchConfig.xTouchWakeDuringPrint == true)
     {
         return;
     }
-#ifdef __XTOUCH_PLATFORM_S3__
-    if (xTouchConfig.currentScreenIndex == 17)
+#ifdef __XPTOUCH_PLATFORM_S3__
+    if (xPTouchConfig.currentScreenIndex == 17)
         return;
 #endif
 
-    if (xTouchConfig.xTouchLEDOffValue < XTOUCH_LIGHT_MIN_SLEEP_TIME || xTouchConfig.xTouchLEDOffValue == 0)
+    if (xPTouchConfig.xTouchLEDOffValue < XPTOUCH_LIGHT_MIN_SLEEP_TIME || xPTouchConfig.xTouchLEDOffValue == 0)
     {
         return;
     }
@@ -158,89 +158,89 @@ void xtouch_screen_onLEDOff(lv_timer_t *timer)
     if (bambuStatus.chamberLed == true)
     {
         ConsoleInfo.println("[xPTouch][I][LED] LED Off");
-        lv_msg_send(XTOUCH_COMMAND_LIGHT_TOGGLE, NULL);
+        lv_msg_send(XPTOUCH_COMMAND_LIGHT_TOGGLE, NULL);
     }
 }
 
-void xtouch_screen_setupScreenTimer()
+void xptouch_screen_setupScreenTimer()
 {
-    xtouch_screen_onScreenOffTimer = lv_timer_create(xtouch_screen_onScreenTimeout, xTouchConfig.xTouchTFTOFFValue * 1000 * 60, NULL);
-    lv_timer_pause(xtouch_screen_onScreenOffTimer);
+    xptouch_screen_onScreenOffTimer = lv_timer_create(xptouch_screen_onScreenTimeout, xPTouchConfig.xTouchTFTOFFValue * 1000 * 60, NULL);
+    lv_timer_pause(xptouch_screen_onScreenOffTimer);
 }
 
-void xtouch_screen_startScreenTimer()
+void xptouch_screen_startScreenTimer()
 {
     ConsoleInfo.println("[xPTouch][I][SCREEN] Screen Resume");
-    lv_timer_resume(xtouch_screen_onScreenOffTimer);
-    lv_timer_reset(xtouch_screen_onScreenOffTimer);
+    lv_timer_resume(xptouch_screen_onScreenOffTimer);
+    lv_timer_reset(xptouch_screen_onScreenOffTimer);
 }
 
-void xtouch_screen_setScreenTimer(uint32_t period)
+void xptouch_screen_setScreenTimer(uint32_t period)
 {
     ConsoleInfo.println("[xPTouch][I][SCREEN] Screen SetPeriod");
-    lv_timer_set_period(xtouch_screen_onScreenOffTimer, period);
-    lv_timer_reset(xtouch_screen_onScreenOffTimer);
+    lv_timer_set_period(xptouch_screen_onScreenOffTimer, period);
+    lv_timer_reset(xptouch_screen_onScreenOffTimer);
 }
 
-void xtouch_screen_setupLEDOffTimer()
+void xptouch_screen_setupLEDOffTimer()
 {
-    xtouch_screen_onLEDOffTimer = lv_timer_create(xtouch_screen_onLEDOff, xTouchConfig.xTouchLEDOffValue * 1000 * 60, NULL);
-    lv_timer_pause(xtouch_screen_onLEDOffTimer);
+    xptouch_screen_onLEDOffTimer = lv_timer_create(xptouch_screen_onLEDOff, xPTouchConfig.xTouchLEDOffValue * 1000 * 60, NULL);
+    lv_timer_pause(xptouch_screen_onLEDOffTimer);
 }
 
-void xtouch_screen_startLEDOffTimer()
+void xptouch_screen_startLEDOffTimer()
 {
     ConsoleInfo.println("[xPTouch][I][SCREEN] LED off Resume");
-    lv_timer_resume(xtouch_screen_onLEDOffTimer);
-    lv_timer_reset(xtouch_screen_onLEDOffTimer);
+    lv_timer_resume(xptouch_screen_onLEDOffTimer);
+    lv_timer_reset(xptouch_screen_onLEDOffTimer);
 }
 
-void xtouch_screen_stopLEDOffTimer()
+void xptouch_screen_stopLEDOffTimer()
 {
     ConsoleInfo.println("[xPTouch][I][SCREEN] LED off Stop");
-    lv_timer_pause(xtouch_screen_onLEDOffTimer);
-    lv_timer_reset(xtouch_screen_onLEDOffTimer);
+    lv_timer_pause(xptouch_screen_onLEDOffTimer);
+    lv_timer_reset(xptouch_screen_onLEDOffTimer);
 }
 
-void xtouch_screen_setLEDOffTimer(uint32_t period)
+void xptouch_screen_setLEDOffTimer(uint32_t period)
 {
     ConsoleInfo.println("[xPTouch][I][LED] LED off SetPeriod");
-    lv_timer_set_period(xtouch_screen_onLEDOffTimer, period);
-    lv_timer_reset(xtouch_screen_onLEDOffTimer);
+    lv_timer_set_period(xptouch_screen_onLEDOffTimer, period);
+    lv_timer_reset(xptouch_screen_onLEDOffTimer);
 }
 
-void xtouch_screen_invertColors()
+void xptouch_screen_invertColors()
 {
     if (s_panel != nullptr)
     {
-        s_panel->invertDisplay(xTouchConfig.xTouchTFTInvert);
+        s_panel->invertDisplay(xPTouchConfig.xTouchTFTInvert);
     }
 }
 
-byte xtouch_screen_getTFTFlip()
+byte xptouch_screen_getTFTFlip()
 {
-    byte val = xtouch_eeprom_read(XTOUCH_EEPROM_POS_TFTFLIP);
+    byte val = xptouch_eeprom_read(XPTOUCH_EEPROM_POS_TFTFLIP);
     ConsoleInfo.println("[xPTouch][I][SCREEN FLIP] " + String(val));
-    xTouchConfig.xTouchTFTFlip = val;
+    xPTouchConfig.xTouchTFTFlip = val;
     return val;
 }
 
-void xtouch_screen_setTFTFlip(byte mode)
+void xptouch_screen_setTFTFlip(byte mode)
 {
-    xTouchConfig.xTouchTFTFlip = mode;
+    xPTouchConfig.xTouchTFTFlip = mode;
     ConsoleInfo.println("[xPTouch][I][SCREEN FLIP] Set : " + String(mode));
-    xtouch_eeprom_write(XTOUCH_EEPROM_POS_TFTFLIP, mode);
+    xptouch_eeprom_write(XPTOUCH_EEPROM_POS_TFTFLIP, mode);
 }
 
-void xtouch_screen_toggleTFTFlip()
+void xptouch_screen_toggleTFTFlip()
 {
-    xtouch_screen_setTFTFlip(!xtouch_screen_getTFTFlip());
-    xtouch_resetTouchConfig();
+    xptouch_screen_setTFTFlip(!xptouch_screen_getTFTFlip());
+    xptouch_resetTouchConfig();
 }
 
-void xtouch_screen_setupTFTFlip()
+void xptouch_screen_setupTFTFlip()
 {
-    byte eepromTFTFlip = xtouch_screen_getTFTFlip();
+    byte eepromTFTFlip = xptouch_screen_getTFTFlip();
     uint8_t rot = (eepromTFTFlip == 1) ? 3 : 1;
     if (s_canvas != nullptr)
     {
@@ -251,7 +251,7 @@ void xtouch_screen_setupTFTFlip()
     }
 }
 
-void xtouch_screen_dispFlush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p)
+void xptouch_screen_dispFlush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p)
 {
     auto *cv = (Arduino_Canvas *)disp->user_data;
     uint32_t w = (uint32_t)(area->x2 - area->x1 + 1);
@@ -266,20 +266,20 @@ void xtouch_screen_dispFlush(lv_disp_drv_t *disp, const lv_area_t *area, lv_colo
     lv_disp_flush_ready(disp);
 }
 
-void xtouch_screen_touchRead(lv_indev_drv_t *indev_driver, lv_indev_data_t *data)
+void xptouch_screen_touchRead(lv_indev_drv_t *indev_driver, lv_indev_data_t *data)
 {
     (void)indev_driver;
     JC3248TouchPoint p;
     if (s_touch.read(p) && p.touched)
     {
-        if (xtouch_screen_onScreenOffTimer != NULL)
+        if (xptouch_screen_onScreenOffTimer != NULL)
         {
-            lv_timer_reset(xtouch_screen_onScreenOffTimer);
+            lv_timer_reset(xptouch_screen_onScreenOffTimer);
         }
 
-        if (xtouch_screen_touchFromPowerOff)
+        if (xptouch_screen_touchFromPowerOff)
         {
-            xtouch_screen_wakeUp();
+            xptouch_screen_wakeUp();
             while (s_touch.read(p) && p.touched)
             {
             }
@@ -296,22 +296,22 @@ void xtouch_screen_touchRead(lv_indev_drv_t *indev_driver, lv_indev_data_t *data
     }
 }
 
-void xtouch_screen_setup()
+void xptouch_screen_setup()
 {
     ConsoleInfo.println("[xPTouch][I][SCREEN] Setup screen (JC3248W535 / Arduino_GFX)");
 
-    jc3248_gfx_begin((uint8_t)XTOUCH_TFT_DEFAULT_ROTATION);
+    jc3248_gfx_begin((uint8_t)XPTOUCH_TFT_DEFAULT_ROTATION);
 
     screenWidth = s_canvas->width();
     screenHeight = s_canvas->height();
 
-    /* lv_init ?? xtouch_screen_sleep() ???E��EtackChan ???�E BL=0 ??????�E????????????E
+    /* lv_init ?? xptouch_screen_sleep() ???E��EtackChan ???�E BL=0 ??????�E????????????E
      * ?�E????????�E????????�E intro ???�E???????E*/
-    xtouch_screen_touchFromPowerOff = false;
+    xptouch_screen_touchFromPowerOff = false;
 
-    xtouch_screen_setupTFTFlip();
+    xptouch_screen_setupTFTFlip();
 
-    xtouch_screen_setBrightness(255);
+    xptouch_screen_setBrightness(255);
 
     if (s_canvas != nullptr)
     {
@@ -321,7 +321,7 @@ void xtouch_screen_setup()
 
     lv_init();
 
-    int buf_size = screenWidth * screenHeight / XTOUCH_LVGL_DRAW_BUF_DENOM;
+    int buf_size = screenWidth * screenHeight / XPTOUCH_LVGL_DRAW_BUF_DENOM;
     disp_draw_buf1 = (lv_color_t *)heap_caps_malloc(sizeof(lv_color_t) * buf_size, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
     /* 3248 ? History ?????????????????????? 1 ???????? */
     disp_draw_buf2 = nullptr;
@@ -331,7 +331,7 @@ void xtouch_screen_setup()
     lv_disp_drv_init(&disp_drv);
     disp_drv.hor_res = screenWidth;
     disp_drv.ver_res = screenHeight;
-    disp_drv.flush_cb = xtouch_screen_dispFlush;
+    disp_drv.flush_cb = xptouch_screen_dispFlush;
     disp_drv.draw_buf = &draw_buf;
     disp_drv.user_data = s_canvas;
     lv_disp_drv_register(&disp_drv);
@@ -339,7 +339,7 @@ void xtouch_screen_setup()
     static lv_indev_drv_t indev_drv;
     lv_indev_drv_init(&indev_drv);
     indev_drv.type = LV_INDEV_TYPE_POINTER;
-    indev_drv.read_cb = xtouch_screen_touchRead;
+    indev_drv.read_cb = xptouch_screen_touchRead;
     lv_indev_drv_register(&indev_drv);
 
     LV_EVENT_GET_COMP_CHILD = lv_event_register_id();

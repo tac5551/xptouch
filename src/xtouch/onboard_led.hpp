@@ -1,27 +1,27 @@
-#ifndef _XTOUCH_ONBOARD_LED_HPP
-#define _XTOUCH_ONBOARD_LED_HPP
+#ifndef _XPTOUCH_ONBOARD_LED_HPP
+#define _XPTOUCH_ONBOARD_LED_HPP
 
 /**
  * @file onboard_led.hpp
  * @brief オンボード RGB（PWM）のシングルトン。static や C コールバックからは
- *        xtouch_onboard_led::OnboardRgbLed::instance() または xtouch_onboard_led_set 等で呼ぶ。
+ *        xptouch_onboard_led::OnboardRgbLed::instance() または xptouch_onboard_led_set 等で呼ぶ。
  */
 
 #include "globals.h"
 #include "debug.h"
 #include "types.h"
 
-#if defined(__XTOUCH_SCREEN_28__)
+#if defined(__XPTOUCH_SCREEN_28__)
 #include "devices/2.8/screen.h"
-#elif defined(__XTOUCH_SCREEN_S3_028__)
+#elif defined(__XPTOUCH_SCREEN_S3_028__)
 #include "devices/s3_2.8/screen.h"
-#elif defined(__XTOUCH_SCREEN_S3_3248__)
+#elif defined(__XPTOUCH_SCREEN_S3_3248__)
 #include "devices/s3_3248w535/screen.h"
-#elif defined(__XTOUCH_SCREEN_S3_050__)
+#elif defined(__XPTOUCH_SCREEN_S3_050__)
 #include "devices/5.0/screen.h"
 #endif
 
-namespace xtouch_onboard_led
+namespace xptouch_onboard_led
 {
 
 class OnboardRgbLed
@@ -47,7 +47,7 @@ public:
         if (initialized_)
             return;
 
-#if defined(__XTOUCH_SCREEN_28__)
+#if defined(__XPTOUCH_SCREEN_28__)
         lgfx::boards::board_t board = tft.getBoard();
         if (board == lgfx::boards::board_t::board_Guition_ESP32_2432W328R ||
             board == lgfx::boards::board_t::board_Guition_ESP32_2432W328C)
@@ -58,7 +58,7 @@ public:
             gpio_b_ = 17;
         }
 #endif
-        ConsoleDebug.println("XTOUCH_ONBOARD_LED R: " + String(gpio_r_) + " G: " + String(gpio_g_) + " B: " + String(gpio_b_));
+        ConsoleDebug.println("XPTOUCH_ONBOARD_LED R: " + String(gpio_r_) + " G: " + String(gpio_g_) + " B: " + String(gpio_b_));
 
         pinMode(gpio_r_, OUTPUT);
         pinMode(gpio_b_, OUTPUT);
@@ -95,22 +95,22 @@ private:
     bool initialized_ = false;
 };
 
-} // namespace xtouch_onboard_led
+} // namespace xptouch_onboard_led
 
 /** 既存呼び出し互換・static からのショートカット */
-inline void xtouch_onboard_led_init(void)
+inline void xptouch_onboard_led_init(void)
 {
-    xtouch_onboard_led::OnboardRgbLed::instance().init();
+    xptouch_onboard_led::OnboardRgbLed::instance().init();
 }
 
-inline void xtouch_onboard_led_set(int red, int green, int blue)
+inline void xptouch_onboard_led_set(int red, int green, int blue)
 {
-    xtouch_onboard_led::OnboardRgbLed::instance().set(red, green, blue);
+    xptouch_onboard_led::OnboardRgbLed::instance().set(red, green, blue);
 }
 
-inline bool xtouch_onboard_led_ready(void)
+inline bool xptouch_onboard_led_ready(void)
 {
-    return xtouch_onboard_led::OnboardRgbLed::instance().ready();
+    return xptouch_onboard_led::OnboardRgbLed::instance().ready();
 }
 
-#endif // _XTOUCH_ONBOARD_LED_HPP
+#endif // _XPTOUCH_ONBOARD_LED_HPP

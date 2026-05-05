@@ -143,7 +143,7 @@ void ui_event_comp_utilNozzleChagneComponent_onSaveButtonClick(lv_event_t *e)
         printf("Setting: nozzle_type=%s, nozzle_diameter=%.1f\n", bambuStatus.nozzle_type, bambuStatus.nozzle_diameter);
 
         // メッセージを送信
-        lv_msg_send(XTOUCH_COMMAND_SET_UTIL_NOZZLE_CHANGE, NULL);
+        lv_msg_send(XPTOUCH_COMMAND_SET_UTIL_NOZZLE_CHANGE, NULL);
         onMoveHomeScreen(e);
     }
 }

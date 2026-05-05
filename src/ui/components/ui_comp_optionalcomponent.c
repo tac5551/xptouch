@@ -20,7 +20,7 @@ void ui_event_comp_optionalComponent_onNeoPixelNum(lv_event_t *e)
    }
    if (event_code == LV_EVENT_RELEASED)
    {
-       lv_msg_send(XTOUCH_OPTIONAL_NEOPIXEL_NUM_SET, NULL);
+       lv_msg_send(XPTOUCH_OPTIONAL_NEOPIXEL_NUM_SET, NULL);
    }
 }
 
@@ -34,7 +34,7 @@ void ui_event_comp_optionalComponent_onNeoPixelBrightness(lv_event_t *e)
     }
     if (event_code == LV_EVENT_RELEASED)
     {
-        lv_msg_send(XTOUCH_OPTIONAL_NEOPIXEL_SET, NULL);
+        lv_msg_send(XPTOUCH_OPTIONAL_NEOPIXEL_SET, NULL);
     }
 }
 
@@ -56,7 +56,7 @@ void ui_event_comp_optionalComponent_onAlarmTimeout(lv_event_t *e)
     }
     if (event_code == LV_EVENT_RELEASED)
     {
-        lv_msg_send(XTOUCH_OPTIONAL_ALARM_TIMEOUT_SET, NULL);
+        lv_msg_send(XPTOUCH_OPTIONAL_ALARM_TIMEOUT_SET, NULL);
     }
 }
 
@@ -87,7 +87,7 @@ void ui_event_comp_optionalComponent_onPreheat(lv_event_t *e)
     }
 }
 
-#ifdef __XTOUCH_PLATFORM_S3__
+#ifdef __XPTOUCH_PLATFORM_S3__
 void ui_event_comp_optionalComponent_onMultiPrinterMonitor(lv_event_t *e)
 {
     lv_event_code_t event_code = lv_event_get_code(e);
@@ -98,7 +98,7 @@ void ui_event_comp_optionalComponent_onMultiPrinterMonitor(lv_event_t *e)
 }
 #endif
 
-#ifdef __XTOUCH_PLATFORM_S3__
+#ifdef __XPTOUCH_PLATFORM_S3__
 void ui_event_comp_optionalComponent_onHistory(lv_event_t *e)
 {
     lv_event_code_t event_code = lv_event_get_code(e);
@@ -211,7 +211,7 @@ lv_obj_t *ui_optionalComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_bg_color(ui_optional_stackChanSwitch, lv_color_hex(0x000000), LV_PART_KNOB | LV_STATE_CHECKED);
     lv_obj_set_style_bg_opa(ui_optional_stackChanSwitch, 255, LV_PART_KNOB | LV_STATE_CHECKED);
 
-    if (xTouchConfig.xTouchStackChanEnabled)
+    if (xPTouchConfig.xTouchStackChanEnabled)
     {
         lv_obj_add_state(ui_optional_stackChanSwitch, LV_STATE_CHECKED);
     }
@@ -254,13 +254,13 @@ lv_obj_t *ui_optionalComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_bg_color(ui_optional_preheatSwitch, lv_color_hex(0x000000), LV_PART_KNOB | LV_STATE_CHECKED);
     lv_obj_set_style_bg_opa(ui_optional_preheatSwitch, 255, LV_PART_KNOB | LV_STATE_CHECKED);
 
-    if (xTouchConfig.xTouchPreheatEnabled)
+    if (xPTouchConfig.xTouchPreheatEnabled)
     {
         lv_obj_add_state(ui_optional_preheatSwitch, LV_STATE_CHECKED);
     }
     //---Preheat End------------------------------
 
-#if defined(__XTOUCH_PLATFORM_S3__)
+#if defined(__XPTOUCH_PLATFORM_S3__)
     //---Multi Printer Monitor (Printers) Start------------------------------
     lv_obj_t *cui_optional_multiPrinterMonitor;
     cui_optional_multiPrinterMonitor = lv_obj_create(cui_optionalComponent);
@@ -294,7 +294,7 @@ lv_obj_t *ui_optionalComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_bg_opa(ui_optional_multiPrinterMonitorSwitch, 255, LV_PART_KNOB | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(ui_optional_multiPrinterMonitorSwitch, lv_color_hex(0x000000), LV_PART_KNOB | LV_STATE_CHECKED);
     lv_obj_set_style_bg_opa(ui_optional_multiPrinterMonitorSwitch, 255, LV_PART_KNOB | LV_STATE_CHECKED);
-    if (xTouchConfig.xTouchMultiPrinterMonitorEnabled)
+    if (xPTouchConfig.xTouchMultiPrinterMonitorEnabled)
     {
         lv_obj_add_state(ui_optional_multiPrinterMonitorSwitch, LV_STATE_CHECKED);
     }
@@ -333,7 +333,7 @@ lv_obj_t *ui_optionalComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_bg_opa(ui_optional_historySwitch, 255, LV_PART_KNOB | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(ui_optional_historySwitch, lv_color_hex(0x000000), LV_PART_KNOB | LV_STATE_CHECKED);
     lv_obj_set_style_bg_opa(ui_optional_historySwitch, 255, LV_PART_KNOB | LV_STATE_CHECKED);
-    if (xTouchConfig.xTouchHistoryEnabled)
+    if (xPTouchConfig.xTouchHistoryEnabled)
     {
         lv_obj_add_state(ui_optional_historySwitch, LV_STATE_CHECKED);
     }
@@ -372,7 +372,7 @@ lv_obj_t *ui_optionalComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_bg_opa(ui_optional_hideThumbnailsSwitch, 255, LV_PART_KNOB | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(ui_optional_hideThumbnailsSwitch, lv_color_hex(0x000000), LV_PART_KNOB | LV_STATE_CHECKED);
     lv_obj_set_style_bg_opa(ui_optional_hideThumbnailsSwitch, 255, LV_PART_KNOB | LV_STATE_CHECKED);
-    if (xTouchConfig.xTouchHideAllThumbnails)
+    if (xPTouchConfig.xTouchHideAllThumbnails)
         lv_obj_add_state(ui_optional_hideThumbnailsSwitch, LV_STATE_CHECKED);
     //---Hide all thumbnails End------------------------------
 
@@ -409,9 +409,9 @@ lv_obj_t *ui_optionalComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_bg_opa(ui_optional_p1sCameraStreamSwitch, 255, LV_PART_KNOB | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(ui_optional_p1sCameraStreamSwitch, lv_color_hex(0x000000), LV_PART_KNOB | LV_STATE_CHECKED);
     lv_obj_set_style_bg_opa(ui_optional_p1sCameraStreamSwitch, 255, LV_PART_KNOB | LV_STATE_CHECKED);
-    if (xTouchConfig.xTouchP1sCameraStreamEnabled)
+    if (xPTouchConfig.xTouchP1sCameraStreamEnabled)
         lv_obj_add_state(ui_optional_p1sCameraStreamSwitch, LV_STATE_CHECKED);
-    if (!xtouch_bblp_is_a1p1Series())
+    if (!xptouch_bblp_is_a1p1Series())
         lv_obj_add_flag(cui_optional_p1sCameraStream, LV_OBJ_FLAG_HIDDEN);
     //---P1S Camera Stream End------------------------------
 #endif
@@ -439,7 +439,7 @@ lv_obj_t *ui_optionalComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_width(cui_optionalNeoPixelGpioHint, lv_pct(100));
     lv_obj_set_height(cui_optionalNeoPixelGpioHint, LV_SIZE_CONTENT);
     {
-        int pin = xTouchConfig.xTouchNeoPixelPinValue;
+        int pin = xPTouchConfig.xTouchNeoPixelPinValue;
         if (pin <= 0)
             pin = 17;
         lv_label_set_text_fmt(cui_optionalNeoPixelGpioHint, "Connect to GPIO%d", pin);
@@ -480,7 +480,7 @@ lv_obj_t *ui_optionalComponent_create(lv_obj_t *comp_parent)
 
     ui_optionalNeoPixelNumSlider = lv_slider_create(cui_optionalNeoPixelNumPanel);
     lv_slider_set_range(ui_optionalNeoPixelNumSlider, 0, 50);
-    lv_slider_set_value(ui_optionalNeoPixelNumSlider, xTouchConfig.xTouchNeoPixelNumValue, LV_ANIM_OFF);
+    lv_slider_set_value(ui_optionalNeoPixelNumSlider, xPTouchConfig.xTouchNeoPixelNumValue, LV_ANIM_OFF);
     lv_obj_set_height(ui_optionalNeoPixelNumSlider, 10);
     lv_obj_set_flex_grow(ui_optionalNeoPixelNumSlider, 1);
     lv_obj_set_x(ui_optionalNeoPixelNumSlider, 9);
@@ -537,7 +537,7 @@ lv_obj_t *ui_optionalComponent_create(lv_obj_t *comp_parent)
 
     ui_optionalNeoPixelBrightnessSlider = lv_slider_create(cui_optionalNeoPixelBrightnessPanel);
     lv_slider_set_range(ui_optionalNeoPixelBrightnessSlider, 15, 255);
-    lv_slider_set_value(ui_optionalNeoPixelBrightnessSlider, xTouchConfig.xTouchNeoPixelBrightnessValue, LV_ANIM_OFF);
+    lv_slider_set_value(ui_optionalNeoPixelBrightnessSlider, xPTouchConfig.xTouchNeoPixelBrightnessValue, LV_ANIM_OFF);
     lv_obj_set_height(ui_optionalNeoPixelBrightnessSlider, 10);
     lv_obj_set_flex_grow(ui_optionalNeoPixelBrightnessSlider, 1);
     lv_obj_set_x(ui_optionalNeoPixelBrightnessSlider, 9);
@@ -556,7 +556,7 @@ lv_obj_t *ui_optionalComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_height(ui_optionalNeoPixelBrightnessValue, LV_SIZE_CONTENT); /// 1
 
     int32_t value3 = lv_slider_get_value(ui_optionalNeoPixelBrightnessSlider);
-    lv_label_set_text_fmt(ui_optionalNeoPixelBrightnessValue, value3 < XTOUCH_LIGHT_MIN_SLEEP_TIME ? LV_SYMBOL_POWER : "%d", value3);
+    lv_label_set_text_fmt(ui_optionalNeoPixelBrightnessValue, value3 < XPTOUCH_LIGHT_MIN_SLEEP_TIME ? LV_SYMBOL_POWER : "%d", value3);
     lv_obj_set_style_text_font(ui_optionalNeoPixelBrightnessValue, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_left(ui_optionalNeoPixelBrightnessValue, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_right(ui_optionalNeoPixelBrightnessValue, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -594,7 +594,7 @@ lv_obj_t *ui_optionalComponent_create(lv_obj_t *comp_parent)
 
     ui_optionalAlarmTimeoutSlider = lv_slider_create(cui_optionalAlarmTimeoutPanel);
     lv_slider_set_range(ui_optionalAlarmTimeoutSlider, 0, 20);
-    lv_slider_set_value(ui_optionalAlarmTimeoutSlider, xTouchConfig.xTouchAlarmTimeoutValue, LV_ANIM_OFF);
+    lv_slider_set_value(ui_optionalAlarmTimeoutSlider, xPTouchConfig.xTouchAlarmTimeoutValue, LV_ANIM_OFF);
     lv_obj_set_height(ui_optionalAlarmTimeoutSlider, 10);
     lv_obj_set_flex_grow(ui_optionalAlarmTimeoutSlider, 1);
     lv_obj_set_x(ui_optionalAlarmTimeoutSlider, 9);
@@ -657,7 +657,7 @@ lv_obj_t *ui_optionalComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_bg_color(ui_optional_Idle_ledSwitch, lv_color_hex(0x000000), LV_PART_KNOB | LV_STATE_CHECKED);
     lv_obj_set_style_bg_opa(ui_optional_Idle_ledSwitch, 255, LV_PART_KNOB | LV_STATE_CHECKED);
 
-    if (xTouchConfig.xTouchIdleLEDEnabled)
+    if (xPTouchConfig.xTouchIdleLEDEnabled)
     {
         lv_obj_add_state(ui_optional_Idle_ledSwitch, LV_STATE_CHECKED);
     }
@@ -681,9 +681,9 @@ lv_obj_t *ui_optionalComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_radius(cui_optional_ds18b20Title, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_color(cui_optional_ds18b20Title, lv_color_hex(0xffffff), LV_PART_MAIN | LV_STATE_DEFAULT);
 
-#if defined(__XTOUCH_SCREEN_S3_028__)
+#if defined(__XPTOUCH_SCREEN_S3_028__)
 #define _UI_CHAMBER_TEMP_PIN 44
-#elif defined(__XTOUCH_PLATFORM_S3__)
+#elif defined(__XPTOUCH_PLATFORM_S3__)
 #define _UI_CHAMBER_TEMP_PIN 18
 #else
 #define _UI_CHAMBER_TEMP_PIN 22
@@ -738,7 +738,7 @@ lv_obj_t *ui_optionalComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_bg_color(ui_optional_chamberSensorSwitch, lv_color_hex(0x000000), LV_PART_KNOB | LV_STATE_CHECKED);
     lv_obj_set_style_bg_opa(ui_optional_chamberSensorSwitch, 255, LV_PART_KNOB | LV_STATE_CHECKED);
 
-    if (!xtouch_bblp_is_p1Series())
+    if (!xptouch_bblp_is_p1Series())
     {
         lv_obj_add_flag(cui_optional_ds18b20Title, LV_OBJ_FLAG_HIDDEN);
         lv_obj_add_flag(cui_optional_ds18b20GpioHint, LV_OBJ_FLAG_HIDDEN);
@@ -746,7 +746,7 @@ lv_obj_t *ui_optionalComponent_create(lv_obj_t *comp_parent)
     }
     else
     {
-        if (xTouchConfig.xTouchChamberSensorEnabled)
+        if (xPTouchConfig.xTouchChamberSensorEnabled)
         {
             lv_obj_add_state(ui_optional_chamberSensorSwitch, LV_STATE_CHECKED);
         }
@@ -789,7 +789,7 @@ lv_obj_t *ui_optionalComponent_create(lv_obj_t *comp_parent)
     children[UI_COMP_OPTIONALCOMPONENT_PREHEAT_LABEL] = cui_optional_preheatLabel;
     children[UI_COMP_OPTIONALCOMPONENT_PREHEAT_SWITCH] = ui_optional_preheatSwitch;
 
-#if defined(__XTOUCH_PLATFORM_S3__)
+#if defined(__XPTOUCH_PLATFORM_S3__)
     children[UI_COMP_OPTIONALCOMPONENT_MULTI_PRINTER_MONITOR] = cui_optional_multiPrinterMonitor;
     children[UI_COMP_OPTIONALCOMPONENT_MULTI_PRINTER_MONITOR_LABEL] = cui_optional_multiPrinterMonitorLabel;
     children[UI_COMP_OPTIONALCOMPONENT_MULTI_PRINTER_MONITOR_SWITCH] = ui_optional_multiPrinterMonitorSwitch;
@@ -826,7 +826,7 @@ lv_obj_t *ui_optionalComponent_create(lv_obj_t *comp_parent)
     lv_obj_add_event_cb(ui_optional_chamberSensorSwitch, ui_event_comp_optionalComponent_onChamberTemp, LV_EVENT_VALUE_CHANGED, NULL);
     lv_obj_add_event_cb(ui_optional_stackChanSwitch, ui_event_comp_optionalComponent_onStackChan, LV_EVENT_VALUE_CHANGED, NULL);
     lv_obj_add_event_cb(ui_optional_preheatSwitch, ui_event_comp_optionalComponent_onPreheat, LV_EVENT_VALUE_CHANGED, NULL);
-#if defined(__XTOUCH_PLATFORM_S3__)
+#if defined(__XPTOUCH_PLATFORM_S3__)
     lv_obj_add_event_cb(ui_optional_multiPrinterMonitorSwitch, ui_event_comp_optionalComponent_onMultiPrinterMonitor, LV_EVENT_VALUE_CHANGED, NULL);
     lv_obj_add_event_cb(ui_optional_historySwitch, ui_event_comp_optionalComponent_onHistory, LV_EVENT_VALUE_CHANGED, NULL);
     lv_obj_add_event_cb(ui_optional_hideThumbnailsSwitch, ui_event_comp_optionalComponent_onHideThumbnails, LV_EVENT_VALUE_CHANGED, NULL);

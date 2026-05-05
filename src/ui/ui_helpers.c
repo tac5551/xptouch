@@ -315,12 +315,12 @@ void _ui_seconds_to_timeleft(uint32_t seconds, char *ret)
    }
 }
 
-#ifdef __XTOUCH_PLATFORM_S3__
+#ifdef __XPTOUCH_PLATFORM_S3__
 void ui_thumb_set_img_src_from_slot(lv_obj_t *img, int slot)
 {
-   if (!img || slot < 0 || slot >= XTOUCH_THUMB_SLOT_MAX)
+   if (!img || slot < 0 || slot >= XPTOUCH_THUMB_SLOT_MAX)
       return;
-   if (xTouchConfig.xTouchHideAllThumbnails)
+   if (xPTouchConfig.xTouchHideAllThumbnails)
    {
       lv_img_set_src(img, NULL);
       lv_obj_add_flag(img, LV_OBJ_FLAG_HIDDEN);
@@ -330,8 +330,8 @@ void ui_thumb_set_img_src_from_slot(lv_obj_t *img, int slot)
    /* History と同じ方針: 既存表示を維持し、デコード済み dsc が来た時だけ差し替える。
     * 毎回 NULL クリアすると黒/白フラッシュの原因になる。 */
    const void *next_src = NULL;
-   if (xtouch_thumbnail_slot_dsc[slot] != NULL)
-      next_src = (const lv_img_dsc_t *)xtouch_thumbnail_slot_dsc[slot];
+   if (xptouch_thumbnail_slot_dsc[slot] != NULL)
+      next_src = (const lv_img_dsc_t *)xptouch_thumbnail_slot_dsc[slot];
    if (next_src != NULL)
    {
       const void *cur_src = lv_img_get_src(img);

@@ -495,7 +495,7 @@ async function downloadFilamentZip() {
     const blob = await zip.generateAsync({ type: "blob" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = "xtouch_filaments.zip";
+    a.download = "xptouch_filaments.zip";
     a.click();
     URL.revokeObjectURL(a.href);
     a.remove();

@@ -1,5 +1,5 @@
-#ifndef _XTOUCH_LV_FS_ARDUINO_SD_H_
-#define _XTOUCH_LV_FS_ARDUINO_SD_H_
+#ifndef _XPTOUCH_LV_FS_ARDUINO_SD_H_
+#define _XPTOUCH_LV_FS_ARDUINO_SD_H_
 
 #include "lvgl.h"
 #include "debug.h"
@@ -18,7 +18,7 @@ static void *fs_open(lv_fs_drv_t *drv, const char *path, lv_fs_mode_t mode)
     if (!path)
         return nullptr;
 
-    if (!xtouch_sdcard_is_present_cached())
+    if (!xptouch_sdcard_is_present_cached())
     {
         ConsoleDetail.printf("[LVFS] open skipped (SD not present) path=\"%s\"\n", path);
         return nullptr;
@@ -38,7 +38,7 @@ static void *fs_open(lv_fs_drv_t *drv, const char *path, lv_fs_mode_t mode)
     if (path[0] == 'S' && path[1] == ':')
         sd_path = path + 2;
 
-    File *f = new File(xtouch_sdcard_open(sd_path, open_mode));
+    File *f = new File(xptouch_sdcard_open(sd_path, open_mode));
     if (!f || !*f)
     {
         ConsoleDetail.printf("[LVFS] SD.open FAIL path=\"%s\" sd_path=\"%s\"\n", path, sd_path);

@@ -2,7 +2,7 @@
 #include <pgmspace.h>
 #include <Arduino.h>
 
-bool xtouch_errors_isKeyPresent(const char *key, const char *keys[], int length)
+bool xptouch_errors_isKeyPresent(const char *key, const char *keys[], int length)
 {
     for (int i = 0; i < length; i++)
     {
@@ -15,17 +15,17 @@ bool xtouch_errors_isKeyPresent(const char *key, const char *keys[], int length)
     return false; // Key not found
 }
 
-bool xtouch_errors_deviceErrorHasDone(const char *key)
+bool xptouch_errors_deviceErrorHasDone(const char *key)
 {
-    return xtouch_errors_isKeyPresent(key, message_containing_done, message_containing_done_total);
+    return xptouch_errors_isKeyPresent(key, message_containing_done, message_containing_done_total);
 }
 
-bool xtouch_errors_deviceErrorHasRetry(const char *key)
+bool xptouch_errors_deviceErrorHasRetry(const char *key)
 {
-    return xtouch_errors_isKeyPresent(key, message_containing_retry, message_containing_retry_total);
+    return xptouch_errors_isKeyPresent(key, message_containing_retry, message_containing_retry_total);
 }
 
-const char *xtouch_errors_getValueByKey(const char *key, const char *keys[], const char *values[], int numEntries)
+const char *xptouch_errors_getValueByKey(const char *key, const char *keys[], const char *values[], int numEntries)
 {
     for (int i = 0; i < numEntries; i++)
     {
@@ -37,17 +37,17 @@ const char *xtouch_errors_getValueByKey(const char *key, const char *keys[], con
     return (const char *)0; // Key not found
 }
 
-const char *xtouch_errors_getHMSError(const char *key)
+const char *xptouch_errors_getHMSError(const char *key)
 {
-    return xtouch_errors_getValueByKey(key, hms_error_keys, hms_error_values, hms_error_length);
+    return xptouch_errors_getValueByKey(key, hms_error_keys, hms_error_values, hms_error_length);
 }
 
-const char *xtouch_errors_getDeviceError(const char *key)
+const char *xptouch_errors_getDeviceError(const char *key)
 {
-    return xtouch_errors_getValueByKey(key, device_error_keys, device_error_values, device_error_length);
+    return xptouch_errors_getValueByKey(key, device_error_keys, device_error_values, device_error_length);
 }
 
-const char *xtouch_errors_getFormattedErrorCode(const char *key)
+const char *xptouch_errors_getFormattedErrorCode(const char *key)
 {
     static char formattedCode[20]; // "0000-0000-0000-0000" + null terminator
     
@@ -73,7 +73,7 @@ const char *xtouch_errors_getFormattedErrorCode(const char *key)
     }
     
     // エラーコードが見つからない場合は、エラーコード自体をフォーマットして返す
-    if (xtouch_errors_getHMSError(key) == NULL && xtouch_errors_getDeviceError(key) == NULL) {
+    if (xptouch_errors_getHMSError(key) == NULL && xptouch_errors_getDeviceError(key) == NULL) {
         // 16文字のエラーコードを "0000-0000-0000-0000" 形式にフォーマット
         snprintf(formattedCode, sizeof(formattedCode), "%c%c%c%c-%c%c%c%c-%c%c%c%c-%c%c%c%c",
                  key[0], key[1], key[2], key[3],
@@ -87,7 +87,7 @@ const char *xtouch_errors_getFormattedErrorCode(const char *key)
     return key;
 }
 
-const char *xtouch_errors_formatErrorCode(const char *key)
+const char *xptouch_errors_formatErrorCode(const char *key)
 {
     static char formattedCode[20]; // "0000-0000-0000" + null terminator
     
@@ -113,7 +113,7 @@ const char *xtouch_errors_formatErrorCode(const char *key)
     }
     
     // エラーコードが見つからない場合は、エラーコード自体をフォーマットして返す
-    if (xtouch_errors_getHMSError(key) == NULL && xtouch_errors_getDeviceError(key) == NULL) {
+    if (xptouch_errors_getHMSError(key) == NULL && xptouch_errors_getDeviceError(key) == NULL) {
         // 16文字のエラーコードを "0000-0000-0000-0000" 形式にフォーマット
         snprintf(formattedCode, sizeof(formattedCode), "%c%c%c%c-%c%c%c%c-%c%c%c%c-%c%c%c%c",
                  key[0], key[1], key[2], key[3],
@@ -134,7 +134,7 @@ const char *xtouch_errors_formatErrorCode(const char *key)
     return formattedCode;
 }
 
-const char *xtouch_errors_getErrorMessage(const char *key)
+const char *xptouch_errors_getErrorMessage(const char *key)
 {
     static char errorMessage[20]; // "0000-0000-0000-0000" + null terminator
     
@@ -160,13 +160,13 @@ const char *xtouch_errors_getErrorMessage(const char *key)
     }
     
     // まずHMSエラーをチェック
-    const char *hmsError = xtouch_errors_getHMSError(key);
+    const char *hmsError = xptouch_errors_getHMSError(key);
     if (hmsError != NULL) {
         return hmsError;
     }
     
     // 次にDeviceエラーをチェック
-    const char *deviceError = xtouch_errors_getDeviceError(key);
+    const char *deviceError = xptouch_errors_getDeviceError(key);
     if (deviceError != NULL) {
         return deviceError;
     }

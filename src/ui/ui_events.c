@@ -8,13 +8,13 @@ void initialActions(lv_event_t *e) {}
 
 /* -----------Sidebar-------------- */
 void onSidebarHome(lv_event_t *e) { loadScreen(0); }
-#ifdef __XTOUCH_PLATFORM_S3__
-void onSidebarPrinters(lv_event_t *e) { if (!xTouchConfig.xTouchLanOnlyMode && xTouchConfig.xTouchMultiPrinterMonitorEnabled) loadScreen(6); }
-void onSidebarHistory(lv_event_t *e) { (void)e; if (!xTouchConfig.xTouchLanOnlyMode && xTouchConfig.xTouchHistoryEnabled) loadScreen(15); }
+#ifdef __XPTOUCH_PLATFORM_S3__
+void onSidebarPrinters(lv_event_t *e) { if (!xPTouchConfig.xTouchLanOnlyMode && xPTouchConfig.xTouchMultiPrinterMonitorEnabled) loadScreen(6); }
+void onSidebarHistory(lv_event_t *e) { (void)e; if (!xPTouchConfig.xTouchLanOnlyMode && xPTouchConfig.xTouchHistoryEnabled) loadScreen(15); }
 void onSidebarCamera(lv_event_t *e)
 {
     (void)e;
-    if (!xTouchConfig.xTouchP1sCameraStreamEnabled)
+    if (!xPTouchConfig.xTouchP1sCameraStreamEnabled)
         return;
     loadScreen(17);
 }
@@ -29,7 +29,7 @@ void onSidebarSettings(lv_event_t *e) { loadScreen(4); }
 void onHomeControllerPlayPauseConfirm()
 {
     lv_obj_t *target = ui_comp_get_child(ui_homeComponent, UI_COMP_HOMECOMPONENT_MAINSCREENLEFT_MAINSCREENPLAYER_MAINSCREENCONTROLLER_MAINSCREENPLAYPAUSEBUTTON);
-    lv_msg_send(XTOUCH_COMMAND_PAUSE, NULL);
+    lv_msg_send(XPTOUCH_COMMAND_PAUSE, NULL);
     lv_obj_add_state(target, LV_STATE_DISABLED);
 }
 void onHomeControllerPlayPause(lv_event_t *e)
@@ -39,13 +39,13 @@ void onHomeControllerPlayPause(lv_event_t *e)
 
     switch (bambuStatus.print_status)
     {
-    case XTOUCH_PRINT_STATUS_PAUSED:
-        lv_msg_send(XTOUCH_COMMAND_RESUME, NULL);
+    case XPTOUCH_PRINT_STATUS_PAUSED:
+        lv_msg_send(XPTOUCH_COMMAND_RESUME, NULL);
         lv_obj_add_state(target, LV_STATE_DISABLED);
 
         break;
-    case XTOUCH_PRINT_STATUS_RUNNING:
-    case XTOUCH_PRINT_STATUS_PREPARE:
+    case XPTOUCH_PRINT_STATUS_RUNNING:
+    case XPTOUCH_PRINT_STATUS_PREPARE:
         ui_confirmPanel_show(LV_SYMBOL_WARNING " Pause Print?", onHomeControllerPlayPauseConfirm);
         break;
     }
@@ -53,7 +53,7 @@ void onHomeControllerPlayPause(lv_event_t *e)
     // cui_mainScreenPlayPauseButton
 }
 
-void onHomeControllerStopConfirm() { lv_msg_send(XTOUCH_COMMAND_STOP, NULL); }
+void onHomeControllerStopConfirm() { lv_msg_send(XPTOUCH_COMMAND_STOP, NULL); }
 void onHomeControllerStop(lv_event_t *e)
 {
     ui_confirmPanel_show(LV_SYMBOL_WARNING " Cancel Print?", onHomeControllerStopConfirm);
@@ -62,10 +62,10 @@ void onHomeSpeedSelection(lv_event_t *e) {}
 
 /* -----------Lighting-------------- */
 void onHomeLightToggle(){
-    lv_msg_send(XTOUCH_COMMAND_LIGHT_TOGGLE, NULL); 
+    lv_msg_send(XPTOUCH_COMMAND_LIGHT_TOGGLE, NULL); 
 }
 void onHomeLight(lv_event_t *e) { 
-    // if (xTouchConfig.xTouchNeoPixelNumValue > 0){
+    // if (xPTouchConfig.xTouchNeoPixelNumValue > 0){
     //     ui_confirmPanel_show(LV_SYMBOL_WARNING " NeoPixel Light is not enabled", onHomeLightToggle);
     // }else{
         onHomeLightToggle();
@@ -74,12 +74,12 @@ void onHomeLight(lv_event_t *e) {
 
 void onHomeNeoPixel(lv_event_t *e)
 {
-    lv_msg_send(XTOUCH_COMMAND_NEOPIXEL_TOGGLE, NULL);
+    lv_msg_send(XPTOUCH_COMMAND_NEOPIXEL_TOGGLE, NULL);
 }
 
 void onHomeLCD(lv_event_t *e)
 {
-    lv_msg_send(XTOUCH_COMMAND_LCD_TOGGLE, NULL);
+    lv_msg_send(XPTOUCH_COMMAND_LCD_TOGGLE, NULL);
 }
 
 void onHomeBedTemp(lv_event_t *e)
@@ -105,31 +105,31 @@ void onTemperatureBed(const char *value)
 {
     LV_LOG_USER("onTemperatureBed: %s", value);
 
-    lv_msg_send(XTOUCH_COMMAND_BED_TARGET_TEMP, value);
+    lv_msg_send(XPTOUCH_COMMAND_BED_TARGET_TEMP, value);
 }
-void onTemperatureNozzle(int32_t value) { lv_msg_send(XTOUCH_COMMAND_NOZZLE_TARGET_TEMP, &value); }
-void onTemperaturePart(lv_event_t *e) { lv_msg_send(XTOUCH_CONTROL_INC_SWITCH, NULL); }
-void onTemperatureAux(lv_event_t *e) { lv_msg_send(XTOUCH_CONTROL_INC_SWITCH, NULL); }
-void onTemperatureKeypad(lv_event_t *e) { lv_msg_send(XTOUCH_CONTROL_INC_SWITCH, NULL); }
+void onTemperatureNozzle(int32_t value) { lv_msg_send(XPTOUCH_COMMAND_NOZZLE_TARGET_TEMP, &value); }
+void onTemperaturePart(lv_event_t *e) { lv_msg_send(XPTOUCH_CONTROL_INC_SWITCH, NULL); }
+void onTemperatureAux(lv_event_t *e) { lv_msg_send(XPTOUCH_CONTROL_INC_SWITCH, NULL); }
+void onTemperatureKeypad(lv_event_t *e) { lv_msg_send(XPTOUCH_CONTROL_INC_SWITCH, NULL); }
 
 /* -----------Control-------------- */
-void onControlRange(lv_event_t *e) { lv_msg_send(XTOUCH_CONTROL_INC_SWITCH, NULL); }
-void onControlHome(lv_event_t *e) { lv_msg_send(XTOUCH_COMMAND_HOME, NULL); }
-void onControlLeft(lv_event_t *e) { lv_msg_send(XTOUCH_COMMAND_LEFT, NULL); }
-void onControlRight(lv_event_t *e) { lv_msg_send(XTOUCH_COMMAND_RIGHT, NULL); }
-void onControlUp(lv_event_t *e) { lv_msg_send(XTOUCH_COMMAND_UP, NULL); }
-void onControlDown(lv_event_t *e) { lv_msg_send(XTOUCH_COMMAND_DOWN, NULL); }
-void onControlMotorUnlock(lv_event_t *e) { lv_msg_send(XTOUCH_COMMAND_MOTOR_UNLOCK, NULL); }
-void onControlBedUp(lv_event_t *e) { lv_msg_send(XTOUCH_COMMAND_BED_UP, NULL); }
-void onControlBedDown(lv_event_t *e) { lv_msg_send(XTOUCH_COMMAND_BED_DOWN, NULL); }
+void onControlRange(lv_event_t *e) { lv_msg_send(XPTOUCH_CONTROL_INC_SWITCH, NULL); }
+void onControlHome(lv_event_t *e) { lv_msg_send(XPTOUCH_COMMAND_HOME, NULL); }
+void onControlLeft(lv_event_t *e) { lv_msg_send(XPTOUCH_COMMAND_LEFT, NULL); }
+void onControlRight(lv_event_t *e) { lv_msg_send(XPTOUCH_COMMAND_RIGHT, NULL); }
+void onControlUp(lv_event_t *e) { lv_msg_send(XPTOUCH_COMMAND_UP, NULL); }
+void onControlDown(lv_event_t *e) { lv_msg_send(XPTOUCH_COMMAND_DOWN, NULL); }
+void onControlMotorUnlock(lv_event_t *e) { lv_msg_send(XPTOUCH_COMMAND_MOTOR_UNLOCK, NULL); }
+void onControlBedUp(lv_event_t *e) { lv_msg_send(XPTOUCH_COMMAND_BED_UP, NULL); }
+void onControlBedDown(lv_event_t *e) { lv_msg_send(XPTOUCH_COMMAND_BED_DOWN, NULL); }
 
 /* Settings */
 
-void onSettingsResetDeviceConfirm() { lv_msg_send(XTOUCH_SETTINGS_RESET_DEVICE, NULL); }
-void onSettingsClearCacheConfirm() { lv_msg_send(XTOUCH_SETTINGS_CLEAR_CACHE, NULL); }
+void onSettingsResetDeviceConfirm() { lv_msg_send(XPTOUCH_SETTINGS_RESET_DEVICE, NULL); }
+void onSettingsClearCacheConfirm() { lv_msg_send(XPTOUCH_SETTINGS_CLEAR_CACHE, NULL); }
 void onSettingsOtaUpdateNowOnYES()
 {
-    xtouch_ota_update_flag = true;
+    xptouch_ota_update_flag = true;
     loadScreen(-1);
 }
 
@@ -143,38 +143,38 @@ void onMoveAmsViewScreen(lv_event_t *e)
     loadScreen(7);
 }
 
-#ifdef __XTOUCH_PLATFORM_S3__
+#ifdef __XPTOUCH_PLATFORM_S3__
 static int _printers_slot = 0;
 
 static void onPrintersPauseConfirm(void)
 {
     /* payload に 0 を送ると NULL になり受信側で捨てられるため、slot+1 を送る */
-    lv_msg_send(XTOUCH_COMMAND_PAUSE_SLOT, (void *)(intptr_t)(_printers_slot + 1));
+    lv_msg_send(XPTOUCH_COMMAND_PAUSE_SLOT, (void *)(intptr_t)(_printers_slot + 1));
 }
 
 static void onPrintersStopConfirm(void)
 {
-    lv_msg_send(XTOUCH_COMMAND_STOP_SLOT, (void *)(intptr_t)(_printers_slot + 1));
+    lv_msg_send(XPTOUCH_COMMAND_STOP_SLOT, (void *)(intptr_t)(_printers_slot + 1));
 }
 
 void onPrintersPause(lv_event_t *e)
 {
     lv_obj_t *target = lv_event_get_target(e);
     int slot = (int)(intptr_t)lv_obj_get_user_data(target);
-    if (slot > 0 && slot - 1 < xtouch_other_printer_count && otherPrinters[slot - 1].valid && !otherPrinters[slot - 1].online)
+    if (slot > 0 && slot - 1 < xptouch_other_printer_count && otherPrinters[slot - 1].valid && !otherPrinters[slot - 1].online)
         return;
-    int status = XTOUCH_PRINT_STATUS_IDLE;
+    int status = XPTOUCH_PRINT_STATUS_IDLE;
     if (slot == 0)
         status = bambuStatus.print_status;
-    else if (slot - 1 < xtouch_other_printer_count && otherPrinters[slot - 1].valid)
+    else if (slot - 1 < xptouch_other_printer_count && otherPrinters[slot - 1].valid)
         status = otherPrinters[slot - 1].print_status;
 
-    if (status == XTOUCH_PRINT_STATUS_PAUSED)
+    if (status == XPTOUCH_PRINT_STATUS_PAUSED)
     {
-        lv_msg_send(XTOUCH_COMMAND_RESUME_SLOT, (void *)(intptr_t)(slot + 1));
+        lv_msg_send(XPTOUCH_COMMAND_RESUME_SLOT, (void *)(intptr_t)(slot + 1));
         return;
     }
-    if (status == XTOUCH_PRINT_STATUS_RUNNING || status == XTOUCH_PRINT_STATUS_PREPARE)
+    if (status == XPTOUCH_PRINT_STATUS_RUNNING || status ==XPTOUCH_PRINT_STATUS_PREPARE)
     {
         _printers_slot = slot;
         ui_confirmPanel_show(LV_SYMBOL_WARNING " Pause Print?", onPrintersPauseConfirm);
@@ -185,7 +185,7 @@ void onPrintersStop(lv_event_t *e)
 {
     lv_obj_t *target = lv_event_get_target(e);
     _printers_slot = (int)(intptr_t)lv_obj_get_user_data(target);
-    if (_printers_slot > 0 && _printers_slot - 1 < xtouch_other_printer_count && otherPrinters[_printers_slot - 1].valid &&
+    if (_printers_slot > 0 && _printers_slot - 1 < xptouch_other_printer_count && otherPrinters[_printers_slot - 1].valid &&
         !otherPrinters[_printers_slot - 1].online)
         return;
     ui_confirmPanel_show(LV_SYMBOL_WARNING " Cancel Print?", onPrintersStopConfirm);
@@ -195,35 +195,35 @@ void onPrintersReprint(lv_event_t *e)
 {
     lv_obj_t *target = lv_event_get_target(e);
     int slot = (int)(intptr_t)lv_obj_get_user_data(target);
-    if (slot > 0 && slot - 1 < xtouch_other_printer_count && otherPrinters[slot - 1].valid && !otherPrinters[slot - 1].online)
+    if (slot > 0 && slot - 1 < xptouch_other_printer_count && otherPrinters[slot - 1].valid && !otherPrinters[slot - 1].online)
         return;
     const char *tid = NULL;
     if (slot == 0)
         tid = bambuStatus.task_id;
-    else if (slot - 1 < xtouch_other_printer_count && otherPrinters[slot - 1].valid)
+    else if (slot - 1 < xptouch_other_printer_count && otherPrinters[slot - 1].valid)
         tid = otherPrinters[slot - 1].task_id;
 
-    memset(xtouch_history_reprint_task_id, 0, XTOUCH_HISTORY_TASK_ID_LEN);
+    memset(xptouch_history_reprint_task_id, 0, XPTOUCH_HISTORY_TASK_ID_LEN);
     if (tid && tid[0] && strcmp(tid, "0") != 0)
     {
-        strncpy(xtouch_history_reprint_task_id, tid, XTOUCH_HISTORY_TASK_ID_LEN - 1);
-        xtouch_history_reprint_task_id[XTOUCH_HISTORY_TASK_ID_LEN - 1] = '\0';
-        xtouch_history_reprint_task_id_valid = 1;
+        strncpy(xptouch_history_reprint_task_id, tid, XPTOUCH_HISTORY_TASK_ID_LEN - 1);
+        xptouch_history_reprint_task_id[XPTOUCH_HISTORY_TASK_ID_LEN - 1] = '\0';
+        xptouch_history_reprint_task_id_valid = 1;
     }
     else
     {
-        xtouch_history_reprint_task_id_valid = 0;
+        xptouch_history_reprint_task_id_valid = 0;
         ui_confirmPanel_show(LV_SYMBOL_WARNING " No task ID for reprint.\nTry History or wait for status.", ui_confirmPanel_hide);
         return;
     }
 
-    xtouch_history_reprint_detail_fetch_inflight = 0;
-    xtouch_history_reprint_detail_fetch_done = 0;
-    xtouch_history_reprint_task_basic_valid = 0;
-    memset(&xtouch_history_reprint_task_basic, 0, sizeof(xtouch_history_reprint_task_basic));
-    xtouch_history_reprint_cover_dsc = NULL;
-    xtouch_history_selected_ams_map_count = -1;
-    xtouch_history_reprint_printer_dd_slot = slot;
+    xptouch_history_reprint_detail_fetch_inflight = 0;
+    xptouch_history_reprint_detail_fetch_done = 0;
+    xptouch_history_reprint_task_basic_valid = 0;
+    memset(&xptouch_history_reprint_task_basic, 0, sizeof(xptouch_history_reprint_task_basic));
+    xptouch_history_reprint_cover_dsc = NULL;
+    xptouch_history_selected_ams_map_count = -1;
+    xptouch_history_reprint_printer_dd_slot = slot;
     loadScreen(16);
 }
 
@@ -241,7 +241,7 @@ void onHistoryReprint(lv_event_t *e)
         return;
     }
     int idx = -1;
-    for (int i = 0; i < XTOUCH_HISTORY_TASKS_MAX; i++)
+    for (int i = 0; i < XPTOUCH_HISTORY_TASKS_MAX; i++)
     {
         if (lv_obj_get_child(ui_historyListContainer, i) == row)
         {
@@ -256,27 +256,27 @@ void onHistoryReprint(lv_event_t *e)
     }
     printf("[HistoryReprint] goto HistoryReprintScreen idx=%d task_id='%s' valid=%d\n",
            idx,
-           (xtouch_history_tasks[idx].task_id[0] ? xtouch_history_tasks[idx].task_id : ""),
-           (int)xtouch_history_tasks[idx].valid);
+           (xptouch_history_tasks[idx].task_id[0] ? xptouch_history_tasks[idx].task_id : ""),
+           (int)xptouch_history_tasks[idx].valid);
     /* History一覧からも task_id 指定で再印刷する */
-    memset(xtouch_history_reprint_task_id, 0, XTOUCH_HISTORY_TASK_ID_LEN);
-    if (xtouch_history_tasks[idx].task_id[0] && strcmp(xtouch_history_tasks[idx].task_id, "0") != 0)
+    memset(xptouch_history_reprint_task_id, 0, XPTOUCH_HISTORY_TASK_ID_LEN);
+    if (xptouch_history_tasks[idx].task_id[0] && strcmp(xptouch_history_tasks[idx].task_id, "0") != 0)
     {
-        strncpy(xtouch_history_reprint_task_id, xtouch_history_tasks[idx].task_id, XTOUCH_HISTORY_TASK_ID_LEN - 1);
-        xtouch_history_reprint_task_id[XTOUCH_HISTORY_TASK_ID_LEN - 1] = '\0';
-        xtouch_history_reprint_task_id_valid = 1;
+        strncpy(xptouch_history_reprint_task_id, xptouch_history_tasks[idx].task_id, XPTOUCH_HISTORY_TASK_ID_LEN - 1);
+        xptouch_history_reprint_task_id[XPTOUCH_HISTORY_TASK_ID_LEN - 1] = '\0';
+        xptouch_history_reprint_task_id_valid = 1;
     }
     else
     {
-        xtouch_history_reprint_task_id_valid = 0;
+        xptouch_history_reprint_task_id_valid = 0;
     }
-    xtouch_history_reprint_detail_fetch_inflight = 0;
-    xtouch_history_reprint_detail_fetch_done = 0;
-    xtouch_history_reprint_task_basic_valid = 0;
-    memset(&xtouch_history_reprint_task_basic, 0, sizeof(xtouch_history_reprint_task_basic));
-    xtouch_history_reprint_cover_dsc = NULL;
-    xtouch_history_selected_ams_map_count = -1;
-    xtouch_history_reprint_printer_dd_slot = 0;
+    xptouch_history_reprint_detail_fetch_inflight = 0;
+    xptouch_history_reprint_detail_fetch_done = 0;
+    xptouch_history_reprint_task_basic_valid = 0;
+    memset(&xptouch_history_reprint_task_basic, 0, sizeof(xptouch_history_reprint_task_basic));
+    xptouch_history_reprint_cover_dsc = NULL;
+    xptouch_history_selected_ams_map_count = -1;
+    xptouch_history_reprint_printer_dd_slot = 0;
     loadScreen(16);
 }
 #endif
@@ -304,7 +304,7 @@ void onSettingsClearCache(lv_event_t *e)
     ui_confirmPanel_show(LV_SYMBOL_WARNING " Clear Cache", onSettingsClearCacheConfirm);
 }
 
-void onSettingsUnPairConfirm() { lv_msg_send(XTOUCH_SETTINGS_UNPAIR, NULL); }
+void onSettingsUnPairConfirm() { lv_msg_send(XPTOUCH_SETTINGS_UNPAIR, NULL); }
 void onSettingsUnPair(lv_event_t *e)
 {
     ui_confirmPanel_show(LV_SYMBOL_WARNING " Unlink Printer", onSettingsUnPairConfirm);
@@ -312,38 +312,38 @@ void onSettingsUnPair(lv_event_t *e)
 
 void onSettingsWOP(lv_event_t *e)
 {
-    xTouchConfig.xTouchWakeOnPrint = !xTouchConfig.xTouchWakeOnPrint;
+    xPTouchConfig.xTouchWakeOnPrint = !xPTouchConfig.xTouchWakeOnPrint;
     ui_settings_mark_dirty();
 }
 
 void onSettingsWDP(lv_event_t *e)
 {
-    xTouchConfig.xTouchWakeDuringPrint = !xTouchConfig.xTouchWakeDuringPrint;
+    xPTouchConfig.xTouchWakeDuringPrint = !xPTouchConfig.xTouchWakeDuringPrint;
     ui_settings_mark_dirty();
 }
 
 void onSettingsAuxFan(lv_event_t *e)
 {
-    xTouchConfig.xTouchAuxFanEnabled = !xTouchConfig.xTouchAuxFanEnabled;
+    xPTouchConfig.xTouchAuxFanEnabled = !xPTouchConfig.xTouchAuxFanEnabled;
     ui_settings_mark_dirty();
 }
 
 void onSettingsChamberFan(lv_event_t *e)
 {
-    xTouchConfig.xTouchChamberFanEnabled = !xTouchConfig.xTouchChamberFanEnabled;
+    xPTouchConfig.xTouchChamberFanEnabled = !xPTouchConfig.xTouchChamberFanEnabled;
     ui_settings_mark_dirty();
 }
 
 void onSettingsChamberLedWake(lv_event_t *e)
 {
-    xTouchConfig.xTouchChamberLedOnWake = !xTouchConfig.xTouchChamberLedOnWake;
+    xPTouchConfig.xTouchChamberLedOnWake = !xPTouchConfig.xTouchChamberLedOnWake;
     ui_settings_mark_dirty();
 }
 
 
 void onOptionalChamberSensor(lv_event_t *e)
 {
-    xTouchConfig.xTouchChamberSensorEnabled = !xTouchConfig.xTouchChamberSensorEnabled;
+    xPTouchConfig.xTouchChamberSensorEnabled = !xPTouchConfig.xTouchChamberSensorEnabled;
     ui_settings_mark_dirty();
 }
 
@@ -351,45 +351,45 @@ void onOptionalChamberSensor(lv_event_t *e)
 void onOptionalStackChan(lv_event_t *e)
 {
     lv_obj_t *sw = lv_event_get_target(e);
-    xTouchConfig.xTouchStackChanEnabled = lv_obj_has_state(sw, LV_STATE_CHECKED);
+    xPTouchConfig.xTouchStackChanEnabled = lv_obj_has_state(sw, LV_STATE_CHECKED);
     ui_settings_mark_dirty();
 }
 
 void onOptionalPreheat(lv_event_t *e)
 {
     lv_obj_t *sw = lv_event_get_target(e);
-    xTouchConfig.xTouchPreheatEnabled = lv_obj_has_state(sw, LV_STATE_CHECKED);
+    xPTouchConfig.xTouchPreheatEnabled = lv_obj_has_state(sw, LV_STATE_CHECKED);
     ui_settings_mark_dirty();
 }
 
-#ifdef __XTOUCH_PLATFORM_S3__
+#ifdef __XPTOUCH_PLATFORM_S3__
 void onOptionalMultiPrinterMonitor(lv_event_t *e)
 {
     lv_obj_t *sw = lv_event_get_target(e);
-    xTouchConfig.xTouchMultiPrinterMonitorEnabled = lv_obj_has_state(sw, LV_STATE_CHECKED);
+    xPTouchConfig.xTouchMultiPrinterMonitorEnabled = lv_obj_has_state(sw, LV_STATE_CHECKED);
     ui_settings_mark_dirty();
 }
 #endif
 
-#ifdef __XTOUCH_PLATFORM_S3__
+#ifdef __XPTOUCH_PLATFORM_S3__
 void onOptionalHistory(lv_event_t *e)
 {
     lv_obj_t *sw = lv_event_get_target(e);
-    xTouchConfig.xTouchHistoryEnabled = lv_obj_has_state(sw, LV_STATE_CHECKED);
+    xPTouchConfig.xTouchHistoryEnabled = lv_obj_has_state(sw, LV_STATE_CHECKED);
     ui_settings_mark_dirty();
 }
 
 void onOptionalHideAllThumbnails(lv_event_t *e)
 {
     lv_obj_t *sw = lv_event_get_target(e);
-    xTouchConfig.xTouchHideAllThumbnails = lv_obj_has_state(sw, LV_STATE_CHECKED);
+    xPTouchConfig.xTouchHideAllThumbnails = lv_obj_has_state(sw, LV_STATE_CHECKED);
     ui_settings_mark_dirty();
 }
 
 void onOptionalP1sCameraStream(lv_event_t *e)
 {
     lv_obj_t *sw = lv_event_get_target(e);
-    xTouchConfig.xTouchP1sCameraStreamEnabled = lv_obj_has_state(sw, LV_STATE_CHECKED);
+    xPTouchConfig.xTouchP1sCameraStreamEnabled = lv_obj_has_state(sw, LV_STATE_CHECKED);
     ui_settings_mark_dirty();
 }
 #endif
@@ -397,7 +397,7 @@ void onOptionalP1sCameraStream(lv_event_t *e)
 void onOptionalIdleLED(lv_event_t *e)
 {
     lv_obj_t *sw = lv_event_get_target(e);
-    xTouchConfig.xTouchIdleLEDEnabled = lv_obj_has_state(sw, LV_STATE_CHECKED);
+    xPTouchConfig.xTouchIdleLEDEnabled = lv_obj_has_state(sw, LV_STATE_CHECKED);
     ui_settings_mark_dirty();
 }
 
@@ -409,12 +409,12 @@ void onTouchStackChan(lv_event_t *e)
 
 void onSettingsTFTFlipConfirm()
 {
-    lv_msg_send(XTOUCH_SETTINGS_TFT_FLIP, NULL);
+    lv_msg_send(XPTOUCH_SETTINGS_TFT_FLIP, NULL);
 }
 
 void onSettingsOTA(lv_event_t *e)
 {
-    xTouchConfig.xTouchOTAEnabled = !xTouchConfig.xTouchOTAEnabled;
+    xPTouchConfig.xTouchOTAEnabled = !xPTouchConfig.xTouchOTAEnabled;
     ui_settings_mark_dirty();
 }
 
@@ -426,27 +426,27 @@ void onSettingsTFTFlip(lv_event_t *e)
 /* filament */
 void onNozzleUp(lv_event_t *e)
 {
-    lv_msg_send(XTOUCH_COMMAND_EXTRUDE_UP, NULL);
+    lv_msg_send(XPTOUCH_COMMAND_EXTRUDE_UP, NULL);
 }
 
 void onNozzleDown(lv_event_t *e)
 {
-    lv_msg_send(XTOUCH_COMMAND_EXTRUDE_DOWN, NULL);
+    lv_msg_send(XPTOUCH_COMMAND_EXTRUDE_DOWN, NULL);
 }
 
-void onFilamentUnloadConfirm() { lv_msg_send(XTOUCH_COMMAND_UNLOAD_FILAMENT, NULL); }
+void onFilamentUnloadConfirm() { lv_msg_send(XPTOUCH_COMMAND_UNLOAD_FILAMENT, NULL); }
 void onFilamentUnload(lv_event_t *e)
 {
     if (bambuStatus.m_tray_now < 16)
     {
-        lv_msg_send(XTOUCH_COMMAND_AMS_UNLOAD_SLOT, 0);
+        lv_msg_send(XPTOUCH_COMMAND_AMS_UNLOAD_SLOT, 0);
         return;
     }
 
     ui_confirmPanel_show("Please remove\nthe filament after\n" LV_SYMBOL_CUT, onFilamentUnloadConfirm);
 }
 
-void onFilamentLoadConfirm() { lv_msg_send(XTOUCH_COMMAND_LOAD_FILAMENT, NULL); }
+void onFilamentLoadConfirm() { lv_msg_send(XPTOUCH_COMMAND_LOAD_FILAMENT, NULL); }
 void onFilamentLoad(lv_event_t *e)
 {
     ui_confirmPanel_show(LV_SYMBOL_PLAY " Load new Filament\n" LV_SYMBOL_PLAY " into the Printer\n\n" LV_SYMBOL_OK " Tap YES to continue", onFilamentLoadConfirm);
@@ -455,10 +455,10 @@ void onFilamentLoad(lv_event_t *e)
 int _slot = 255;
 void onAmsSlotLoadConfirm()
 {
-#ifdef XTOUCH_DEBUG
+#ifdef XPTOUCH_DEBUG
     ConsoleDebug_Printf("[xPTouch][D][AMS load] YES tapped, sending _slot=%d\n", _slot);
 #endif
-    lv_msg_send(XTOUCH_COMMAND_AMS_LOAD_SLOT, (void *)(unsigned long)_slot);
+    lv_msg_send(XPTOUCH_COMMAND_AMS_LOAD_SLOT, (void *)(unsigned long)_slot);
     _slot = 255;
 }
 void onAmsSlotLoad(lv_event_t *e, int slot)
@@ -473,35 +473,35 @@ void onCalibrationConfirm( lv_event_t *e, uint8_t bitmask)
     // 静的変数を使用してbitmaskを保存し、ポインタとして渡す
     static uint8_t calibration_bitmask;
     calibration_bitmask = bitmask;
-    lv_msg_send(XTOUCH_COMMAND_SET_UTIL_CALIBRATION, (void *)&calibration_bitmask);
+    lv_msg_send(XPTOUCH_COMMAND_SET_UTIL_CALIBRATION, (void *)&calibration_bitmask);
 
 }
 
 void onPreHeatPLA(lv_event_t *e)
 {
-    lv_msg_send(XTOUCH_PREHEAT_BUTTON1, NULL);
+    lv_msg_send(XPTOUCH_PREHEAT_BUTTON1, NULL);
     controlMode.target_bed_temper = 60;
-    lv_msg_send(XTOUCH_COMMAND_BED_TARGET_TEMP, NULL);
+    lv_msg_send(XPTOUCH_COMMAND_BED_TARGET_TEMP, NULL);
     bambuStatus.big_fan1_speed = 80 * 255 / 100;
-    lv_msg_send(XTOUCH_COMMAND_AUX_FAN_SPEED, NULL);
+    lv_msg_send(XPTOUCH_COMMAND_AUX_FAN_SPEED, NULL);
 }
 
 void onPreHeatABS(lv_event_t *e)
 {
-    lv_msg_send(XTOUCH_PREHEAT_BUTTON2, NULL);
+    lv_msg_send(XPTOUCH_PREHEAT_BUTTON2, NULL);
     controlMode.target_bed_temper = 100;
-    lv_msg_send(XTOUCH_COMMAND_BED_TARGET_TEMP, NULL);
+    lv_msg_send(XPTOUCH_COMMAND_BED_TARGET_TEMP, NULL);
 
     bambuStatus.big_fan1_speed = 80 * 255 / 100;
-    lv_msg_send(XTOUCH_COMMAND_AUX_FAN_SPEED, NULL);
+    lv_msg_send(XPTOUCH_COMMAND_AUX_FAN_SPEED, NULL);
 }
 
 void onPreHeatOff(lv_event_t *e)   
 {
-    lv_msg_send(XTOUCH_PREHEAT_BUTTON3, NULL);
+    lv_msg_send(XPTOUCH_PREHEAT_BUTTON3, NULL);
 
     controlMode.target_bed_temper = 0;
-    lv_msg_send(XTOUCH_COMMAND_BED_TARGET_TEMP, NULL);
+    lv_msg_send(XPTOUCH_COMMAND_BED_TARGET_TEMP, NULL);
     bambuStatus.big_fan1_speed = 0 ;
-    lv_msg_send(XTOUCH_COMMAND_AUX_FAN_SPEED, NULL);
+    lv_msg_send(XPTOUCH_COMMAND_AUX_FAN_SPEED, NULL);
 }

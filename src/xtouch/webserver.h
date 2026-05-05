@@ -63,7 +63,7 @@ String urldecode(String str)
 
     return encodedString;
 }
-void xtouch_webserver_end()
+void xptouch_webserver_end()
 {
     server.reset();
     server.end();
@@ -84,7 +84,7 @@ void sendError(AsyncWebServerRequest *request, String desc)
     request->send(500, "application/json", jsonString);
 }
 
-void xtouch_webserver_begin()
+void xptouch_webserver_begin()
 {
     Serial.println("Starting webserver...");
     if (!MDNS.begin("xtouch"))
@@ -111,7 +111,7 @@ void xtouch_webserver_begin()
             DeserializationError error = deserializeJson(jsonDoc, data, len);
             serializeJsonPretty(jsonDoc, Serial);
 
-            xtouch_filesystem_writeJson(xtouch_sdcard_fs(), xtouch_paths_provisioning, jsonDoc);
+            xptouch_filesystem_writeJson(xptouch_sdcard_fs(), xptouch_paths_provisioning, jsonDoc);
 
             request->send(200, "application/json", "{\"status\":\"ok\"}");
 

@@ -17,5 +17,5 @@ printf("ui_characterScreen : lv_obj_create\n");
 printf("ui_characterScreen : ui_characterComponent_create\n");
     ui_characterComponent = ui_characterComponent_create(ui_characterScreen);
 
-    xtouch_character_init();
+    xptouch_character_init();
 }

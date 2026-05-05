@@ -3,9 +3,9 @@
 #include "../ui_helpers.h"
 #include "../ui_events.h"
 
-#ifdef __XTOUCH_PLATFORM_S3__
+#ifdef __XPTOUCH_PLATFORM_S3__
 
-#if defined(__XTOUCH_SCREEN_S3_050__)
+#if defined(__XPTOUCH_SCREEN_S3_050__)
 #define ROW_LEFT_W 150
 #define ROW_LEFT_H 150
 /* 5" は lv_font_small が大きめのため、ラベル周りに十分な内側パッドでボタンらしく */
@@ -28,7 +28,7 @@ lv_obj_t *ui_historyComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_flex_grow(cui_historyComponent, 1);
     lv_obj_set_flex_flow(cui_historyComponent, LV_FLEX_FLOW_COLUMN);
     lv_obj_set_flex_align(cui_historyComponent, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
-#if defined(__XTOUCH_SCREEN_S3_050__)
+#if defined(__XPTOUCH_SCREEN_S3_050__)
     lv_obj_set_style_pad_hor(cui_historyComponent, HISTORY_REPRINT_BTN_PAD_H, LV_PART_MAIN | LV_STATE_DEFAULT);
 #else
     lv_obj_set_style_pad_left(cui_historyComponent, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -58,7 +58,7 @@ lv_obj_t *ui_historyComponent_create(lv_obj_t *comp_parent)
     ui_historyContentPanel = cui_historyComponent;
     ui_historyListContainer = list;
 
-    for (int i = 0; i < XTOUCH_HISTORY_UI_ROW_SLOTS; i++)
+    for (int i = 0; i < XPTOUCH_HISTORY_UI_ROW_SLOTS; i++)
     {
         lv_obj_t *row = lv_obj_create(list);
         lv_obj_set_width(row, lv_pct(100));
@@ -66,7 +66,7 @@ lv_obj_t *ui_historyComponent_create(lv_obj_t *comp_parent)
         lv_obj_set_flex_flow(row, LV_FLEX_FLOW_ROW);
         lv_obj_set_flex_align(row, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
         lv_obj_set_style_bg_color(row, lv_color_hex(0x444444), LV_PART_MAIN | LV_STATE_DEFAULT);
-#if defined(__XTOUCH_SCREEN_S3_050__)
+#if defined(__XPTOUCH_SCREEN_S3_050__)
         lv_obj_set_style_pad_hor(row, HISTORY_REPRINT_BTN_PAD_H, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_pad_top(row, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_pad_bottom(row, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -110,7 +110,7 @@ lv_obj_t *ui_historyComponent_create(lv_obj_t *comp_parent)
         lv_obj_set_width(titleLabel, lv_pct(100));
         lv_label_set_text(titleLabel, "-");
         lv_obj_set_style_text_color(titleLabel, lv_color_hex(0xDDDDDD), LV_PART_MAIN | LV_STATE_DEFAULT);
-#if defined(__XTOUCH_SCREEN_S3_050__)
+#if defined(__XPTOUCH_SCREEN_S3_050__)
            lv_obj_set_style_text_font(titleLabel,&lv_font_notosans_28, LV_PART_MAIN | LV_STATE_DEFAULT);
 #else
            lv_obj_set_style_text_font(titleLabel, &lv_font_notosans_14, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -124,7 +124,7 @@ lv_obj_t *ui_historyComponent_create(lv_obj_t *comp_parent)
         lv_obj_set_width(printerLabel, lv_pct(100));
         lv_obj_set_style_text_color(printerLabel, lv_color_hex(0xAAAAAA), LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_text_font(printerLabel, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
-#if defined(__XTOUCH_SCREEN_S3_050__)
+#if defined(__XPTOUCH_SCREEN_S3_050__)
         lv_label_set_long_mode(printerLabel, LV_LABEL_LONG_SCROLL_CIRCULAR);
 #else
         lv_label_set_long_mode(printerLabel, LV_LABEL_LONG_CLIP);
@@ -154,7 +154,7 @@ lv_obj_t *ui_historyComponent_create(lv_obj_t *comp_parent)
         lv_obj_set_style_bg_opa(reprintBtn, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_bg_color(reprintBtn, lv_color_hex(0x008800), LV_PART_MAIN | LV_STATE_PRESSED);
         lv_obj_set_style_bg_opa(reprintBtn, 255, LV_PART_MAIN | LV_STATE_PRESSED);
-#if defined(__XTOUCH_SCREEN_S3_050__)
+#if defined(__XPTOUCH_SCREEN_S3_050__)
         lv_obj_set_style_pad_hor(reprintBtn, HISTORY_REPRINT_BTN_PAD_H, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_pad_ver(reprintBtn, HISTORY_REPRINT_BTN_PAD_V, LV_PART_MAIN | LV_STATE_DEFAULT);
 #endif

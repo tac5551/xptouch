@@ -223,35 +223,35 @@ void ui_event_comp_temperatureComponent_numpadKeyOk(lv_event_t *e)
         {
             const char *data = lv_textarea_get_text(bed);
             controlMode.target_bed_temper = atoi(data);
-            lv_msg_send(XTOUCH_COMMAND_BED_TARGET_TEMP, NULL);
+            lv_msg_send(XPTOUCH_COMMAND_BED_TARGET_TEMP, NULL);
             lv_textarea_set_text(bed, "");
         }
         else if (ui_temperatureComponent_input_target == nozzle)
         {
             const char *data = lv_textarea_get_text(nozzle);
             controlMode.target_nozzle_temper = atoi(data);
-            lv_msg_send(XTOUCH_COMMAND_NOZZLE_TARGET_TEMP, NULL);
+            lv_msg_send(XPTOUCH_COMMAND_NOZZLE_TARGET_TEMP, NULL);
             lv_textarea_set_text(nozzle, "");
         }
         else if (ui_temperatureComponent_input_target == part)
         {
             const char *data = lv_textarea_get_text(part);
             bambuStatus.cooling_fan_speed = atoi(data) * 255 / 100;
-            lv_msg_send(XTOUCH_COMMAND_PART_FAN_SPEED, NULL);
+            lv_msg_send(XPTOUCH_COMMAND_PART_FAN_SPEED, NULL);
             lv_textarea_set_text(part, "");
         }
         else if (ui_temperatureComponent_input_target == aux)
         {
             const char *data = lv_textarea_get_text(aux);
             bambuStatus.big_fan1_speed = atoi(data) * 255 / 100;
-            lv_msg_send(XTOUCH_COMMAND_AUX_FAN_SPEED, NULL);
+            lv_msg_send(XPTOUCH_COMMAND_AUX_FAN_SPEED, NULL);
             lv_textarea_set_text(aux, "");
         }
         else if (ui_temperatureComponent_input_target == chamber)
         {
             const char *data = lv_textarea_get_text(chamber);
             bambuStatus.big_fan2_speed = atoi(data) * 255 / 100;
-            lv_msg_send(XTOUCH_COMMAND_CHAMBER_FAN_SPEED, NULL);
+            lv_msg_send(XPTOUCH_COMMAND_CHAMBER_FAN_SPEED, NULL);
             lv_textarea_set_text(chamber, "");
         }
 
@@ -265,7 +265,7 @@ void ui_temperatureComponent_onXtouchTemp(lv_event_t *e)
     lv_obj_t *target = lv_event_get_target(e);
     lv_msg_t *m = lv_event_get_msg(e);
 
-    struct XTOUCH_MESSAGE_DATA *message = (struct XTOUCH_MESSAGE_DATA *)m->payload;
+    struct XPTOUCH_MESSAGE_DATA *message = (struct XPTOUCH_MESSAGE_DATA *)m->payload;
 
     char value[10];
 
@@ -279,7 +279,7 @@ void ui_temperatureComponent_onXtouchTempTarget(lv_event_t *e)
     lv_obj_t *target = lv_event_get_target(e);
     lv_msg_t *m = lv_event_get_msg(e);
 
-    struct XTOUCH_MESSAGE_DATA *message = (struct XTOUCH_MESSAGE_DATA *)m->payload;
+    struct XPTOUCH_MESSAGE_DATA *message = (struct XPTOUCH_MESSAGE_DATA *)m->payload;
     lv_obj_set_style_text_color(target, message->data > 0 ? lv_color_hex(0xff682a) : lv_color_hex(0xCCCCCC), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_t *inputTarget;
     if (target == ui_comp_get_child(ui_temperatureComponent, UI_COMP_TEMPERATURECOMPONENT_TEMPERATURECOMPONENTTEMPS_TEMPERATURECOMPONENTBED_MAINSCREENBEDTEMPICON))
@@ -302,7 +302,7 @@ void ui_temperatureComponent_onXtouchPartFanSpeed(lv_event_t *e)
     lv_obj_t *target = lv_event_get_target(e);
     lv_msg_t *m = lv_event_get_msg(e);
 
-    struct XTOUCH_MESSAGE_DATA *message = (struct XTOUCH_MESSAGE_DATA *)m->payload;
+    struct XPTOUCH_MESSAGE_DATA *message = (struct XPTOUCH_MESSAGE_DATA *)m->payload;
     char value[3];
 
     itoa(round(message->data * 100 / 255.), value, 10);
@@ -314,7 +314,7 @@ void ui_temperatureComponent_onXtouchAuxFanSpeed(lv_event_t *e)
     lv_obj_t *target = lv_event_get_target(e);
     lv_msg_t *m = lv_event_get_msg(e);
 
-    struct XTOUCH_MESSAGE_DATA *message = (struct XTOUCH_MESSAGE_DATA *)m->payload;
+    struct XPTOUCH_MESSAGE_DATA *message = (struct XPTOUCH_MESSAGE_DATA *)m->payload;
     char value[3];
 
     itoa(round(message->data * 100 / 255.), value, 10);
@@ -326,7 +326,7 @@ void ui_temperatureComponent_onXtouchChamberFanSpeed(lv_event_t *e)
     lv_obj_t *target = lv_event_get_target(e);
     lv_msg_t *m = lv_event_get_msg(e);
 
-    struct XTOUCH_MESSAGE_DATA *message = (struct XTOUCH_MESSAGE_DATA *)m->payload;
+    struct XPTOUCH_MESSAGE_DATA *message = (struct XPTOUCH_MESSAGE_DATA *)m->payload;
     char value[4];
 
     itoa(round(message->data * 100 / 255.), value, 10);
@@ -364,7 +364,7 @@ lv_obj_t *ui_temperatureComponent_create(lv_obj_t *comp_parent)
     lv_obj_t *cui_temperatureComponentTemps;
     cui_temperatureComponentTemps = lv_obj_create(cui_temperatureComponent);
     lv_obj_set_height(cui_temperatureComponentTemps, lv_pct(100));
-#ifdef __XTOUCH_SCREEN_S3_050__
+#ifdef __XPTOUCH_SCREEN_S3_050__
     lv_obj_set_flex_grow(cui_temperatureComponentTemps, 4); /* 5インチ: 表示側:テンキー=4:6、CHAMBER 折り返し防止 */
 #else
     lv_obj_set_flex_grow(cui_temperatureComponentTemps, 3);
@@ -536,7 +536,7 @@ lv_obj_t *ui_temperatureComponent_create(lv_obj_t *comp_parent)
     lv_obj_t *cui_temperatureComponentFans;
     cui_temperatureComponentFans = lv_obj_create(cui_temperatureComponent);
     lv_obj_set_height(cui_temperatureComponentFans, lv_pct(100));
-#ifdef __XTOUCH_SCREEN_S3_050__
+#ifdef __XPTOUCH_SCREEN_S3_050__
     lv_obj_set_flex_grow(cui_temperatureComponentFans, 4); /* 5インチ: 表示側:テンキー=4:6 */
 #else
     lv_obj_set_flex_grow(cui_temperatureComponentFans, 3);
@@ -672,7 +672,7 @@ lv_obj_t *ui_temperatureComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_bg_color(cui_temperatureComponentAuxFan, lv_color_hex(0x2aff00), LV_PART_MAIN | LV_STATE_PRESSED);
     lv_obj_set_style_bg_opa(cui_temperatureComponentAuxFan, 255, LV_PART_MAIN | LV_STATE_PRESSED);
 
-    if ((xtouch_bblp_is_p1p() || xtouch_bblp_is_x1()) && !xTouchConfig.xTouchAuxFanEnabled)
+    if ((xptouch_bblp_is_p1p() || xptouch_bblp_is_x1()) && !xPTouchConfig.xTouchAuxFanEnabled)
     {
         lv_obj_add_flag(cui_temperatureComponentAuxFan, LV_OBJ_FLAG_HIDDEN);
     }
@@ -763,7 +763,7 @@ lv_obj_t *ui_temperatureComponent_create(lv_obj_t *comp_parent)
     lv_obj_set_style_bg_color(cui_temperatureComponentChamberFan, lv_color_hex(0x2aff00), LV_PART_MAIN | LV_STATE_PRESSED);
     lv_obj_set_style_bg_opa(cui_temperatureComponentChamberFan, 255, LV_PART_MAIN | LV_STATE_PRESSED);
 
-    if ((xtouch_bblp_is_p1p()) && !xTouchConfig.xTouchChamberFanEnabled)
+    if ((xptouch_bblp_is_p1p()) && !xPTouchConfig.xTouchChamberFanEnabled)
     {
         lv_obj_add_flag(cui_temperatureComponentChamberFan, LV_OBJ_FLAG_HIDDEN);
     }
@@ -830,7 +830,7 @@ lv_obj_t *ui_temperatureComponent_create(lv_obj_t *comp_parent)
     lv_obj_t *cui_temperatureComponentKeyboard;
     cui_temperatureComponentKeyboard = lv_obj_create(cui_temperatureComponent);
     lv_obj_set_height(cui_temperatureComponentKeyboard, lv_pct(100));
-#ifdef __XTOUCH_SCREEN_S3_050__
+#ifdef __XPTOUCH_SCREEN_S3_050__
     lv_obj_set_flex_grow(cui_temperatureComponentKeyboard, 6); /* 5インチ: 表示側:テンキー=4:6、CHAMBER 折り返し防止 */
 #else
     lv_obj_set_flex_grow(cui_temperatureComponentKeyboard, 7); /* 2.8インチ等: 表示側:テンキー=3:7 */
@@ -1181,25 +1181,25 @@ lv_obj_t *ui_temperatureComponent_create(lv_obj_t *comp_parent)
     lv_obj_add_event_cb(cui_numpadKeyOk, ui_event_comp_temperatureComponent_numpadKeyOk, LV_EVENT_ALL, children);
 
     lv_obj_add_event_cb(cui_mainScreenBedTempValue, ui_temperatureComponent_onXtouchTemp, LV_EVENT_MSG_RECEIVED, NULL);
-    lv_msg_subsribe_obj(XTOUCH_ON_BED_TEMP, cui_mainScreenBedTempValue, NULL);
+    lv_msg_subsribe_obj(XPTOUCH_ON_BED_TEMP, cui_mainScreenBedTempValue, NULL);
 
     lv_obj_add_event_cb(cui_mainScreenBedTempIcon, ui_temperatureComponent_onXtouchTempTarget, LV_EVENT_MSG_RECEIVED, NULL);
-    lv_msg_subsribe_obj(XTOUCH_ON_BED_TARGET_TEMP, cui_mainScreenBedTempIcon, NULL);
+    lv_msg_subsribe_obj(XPTOUCH_ON_BED_TARGET_TEMP, cui_mainScreenBedTempIcon, NULL);
 
     lv_obj_add_event_cb(cui_mainScreenNozzleTempValue, ui_temperatureComponent_onXtouchTemp, LV_EVENT_MSG_RECEIVED, NULL);
-    lv_msg_subsribe_obj(XTOUCH_ON_NOZZLE_TEMP, cui_mainScreenNozzleTempValue, NULL);
+    lv_msg_subsribe_obj(XPTOUCH_ON_NOZZLE_TEMP, cui_mainScreenNozzleTempValue, NULL);
 
     lv_obj_add_event_cb(cui_mainScreenNozzleTempIcon, ui_temperatureComponent_onXtouchTempTarget, LV_EVENT_MSG_RECEIVED, NULL);
-    lv_msg_subsribe_obj(XTOUCH_ON_NOZZLE_TARGET_TEMP, cui_mainScreenNozzleTempIcon, NULL);
+    lv_msg_subsribe_obj(XPTOUCH_ON_NOZZLE_TARGET_TEMP, cui_mainScreenNozzleTempIcon, NULL);
 
     lv_obj_add_event_cb(cui_temperatureComponentPartFanInput, ui_temperatureComponent_onXtouchPartFanSpeed, LV_EVENT_MSG_RECEIVED, NULL);
-    lv_msg_subsribe_obj(XTOUCH_ON_PART_FAN_SPEED, cui_temperatureComponentPartFanInput, NULL);
+    lv_msg_subsribe_obj(XPTOUCH_ON_PART_FAN_SPEED, cui_temperatureComponentPartFanInput, NULL);
 
     lv_obj_add_event_cb(cui_temperatureComponentAuxFanInput, ui_temperatureComponent_onXtouchAuxFanSpeed, LV_EVENT_MSG_RECEIVED, NULL);
-    lv_msg_subsribe_obj(XTOUCH_ON_PART_AUX_SPEED, cui_temperatureComponentAuxFanInput, NULL);
+    lv_msg_subsribe_obj(XPTOUCH_ON_PART_AUX_SPEED, cui_temperatureComponentAuxFanInput, NULL);
 
     lv_obj_add_event_cb(cui_temperatureComponentChamberFanInput, ui_temperatureComponent_onXtouchChamberFanSpeed, LV_EVENT_MSG_RECEIVED, NULL);
-    lv_msg_subsribe_obj(XTOUCH_ON_PART_CHAMBER_SPEED, cui_temperatureComponentChamberFanInput, NULL);
+    lv_msg_subsribe_obj(XPTOUCH_ON_PART_CHAMBER_SPEED, cui_temperatureComponentChamberFanInput, NULL);
 
     ui_comp_temperatureComponent_create_hook(cui_temperatureComponent);
 

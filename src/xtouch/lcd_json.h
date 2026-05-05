@@ -1,5 +1,5 @@
-#ifndef XTOUCH_LCD_JSON_H
-#define XTOUCH_LCD_JSON_H
+#ifndef XPTOUCH_LCD_JSON_H
+#define XPTOUCH_LCD_JSON_H
 
 #include <Arduino.h>
 #include <ArduinoJson.h>
@@ -10,21 +10,21 @@
 #include "xtouch/sdcard.h"
 #include "xtouch/eeprom.h"
 
-#if defined(__XTOUCH_SCREEN_S3_050__)
+#if defined(__XPTOUCH_SCREEN_S3_050__)
 
-#define XTOUCH_LCD_JSON_DOC_CAP 768
+#define XPTOUCH_LCD_JSON_DOC_CAP 768
 
 /** 書き込み直後に EEPROM を再読みし、written と一致するか。不一致時は差分を 1 バイトずつ出力 */
 static bool lcd_json_eeprom_verify_reread(const uint8_t *written, uint8_t *reread_out)
 {
-    xtouch_eeprom_read_all(reread_out);
-    if (memcmp(written, reread_out, XTOUCH_EEPROM_SIZE) == 0)
+    xptouch_eeprom_read_all(reread_out);
+    if (memcmp(written, reread_out, XPTOUCH_EEPROM_SIZE) == 0)
     {
         Serial.println("[lcd.json] verify: reread == written (all bytes OK)");
         return true;
     }
     Serial.println("[lcd.json] verify: FAIL reread != written");
-    for (size_t i = 0; i < XTOUCH_EEPROM_SIZE; i++)
+    for (size_t i = 0; i < XPTOUCH_EEPROM_SIZE; i++)
     {
         if (written[i] != reread_out[i])
             Serial.printf("[lcd.json] verify:   offset %u  written=0x%02X  reread=0x%02X\n", (unsigned)i,
@@ -36,9 +36,9 @@ static bool lcd_json_eeprom_verify_reread(const uint8_t *written, uint8_t *rerea
 static uint32_t lcd_json_eff_hz_from_raw(uint32_t raw)
 {
     if (raw == 0u || raw == 0xFFFFFFFFu)
-        return XTOUCH_RGB_PCLK_HZ_DEFAULT;
-    if (raw < XTOUCH_RGB_PCLK_HZ_MIN || raw > XTOUCH_RGB_PCLK_HZ_MAX)
-        return XTOUCH_RGB_PCLK_HZ_DEFAULT;
+        return XPTOUCH_RGB_PCLK_HZ_DEFAULT;
+    if (raw < XPTOUCH_RGB_PCLK_HZ_MIN || raw >XPTOUCH_RGB_PCLK_HZ_MAX)
+        return XPTOUCH_RGB_PCLK_HZ_DEFAULT;
     return raw;
 }
 
@@ -46,22 +46,22 @@ static uint32_t lcd_json_eff_hz_from_raw(uint32_t raw)
 static void lcd_json_serial_dump_eeprom_fields(const uint8_t *v)
 {
     Serial.println("[lcd.json] verify: --- EEPROM dump (per field) ---");
-    Serial.printf("[lcd.json] verify: tft_flip (byte 0) = %u\n", (unsigned)v[XTOUCH_EEPROM_POS_TFTFLIP]);
+    Serial.printf("[lcd.json] verify: tft_flip (byte 0) = %u\n", (unsigned)v[XPTOUCH_EEPROM_POS_TFTFLIP]);
     Serial.printf("[lcd.json] verify: reserved byte[1] = 0x%02X\n", (unsigned)v[1]);
     Serial.printf("[lcd.json] verify: reserved byte[2] = 0x%02X\n", (unsigned)v[2]);
     Serial.printf("[lcd.json] verify: reserved byte[3] = 0x%02X\n", (unsigned)v[3]);
 
-    uint32_t raw = xtouch_u32_from_le(v + XTOUCH_EEPROM_POS_RGB_PCLK_HZ);
+    uint32_t raw = xptouch_u32_from_le(v + XPTOUCH_EEPROM_POS_RGB_PCLK_HZ);
     uint32_t eff = lcd_json_eff_hz_from_raw(raw);
     Serial.printf("[lcd.json] verify: freq_write raw (bytes 4..7 LE) = 0x%08lX\n", (unsigned long)raw);
     Serial.printf("[lcd.json] verify: freq_write effective Hz (boot interpretation) = %lu\n", (unsigned long)eff);
 
-    uint8_t magic = v[XTOUCH_EEPROM_POS_LCD_TIMING_MAGIC];
-    bool timing_on = (magic == XTOUCH_EEPROM_LCD_TIMING_MAGIC);
+    uint8_t magic = v[XPTOUCH_EEPROM_POS_LCD_TIMING_MAGIC];
+    bool timing_on = (magic == XPTOUCH_EEPROM_LCD_TIMING_MAGIC);
     Serial.printf("[lcd.json] verify: lcd_timing_magic (byte 8) = 0x%02X (%s)\n", (unsigned)magic,
                   timing_on ? "timing block active" : "timing inactive, defaults at boot");
 
-    const uint8_t *t = v + XTOUCH_EEPROM_POS_LCD_TIMING_BASE;
+    const uint8_t *t = v + XPTOUCH_EEPROM_POS_LCD_TIMING_BASE;
     Serial.printf("[lcd.json] verify: hsync_polarity = %u\n", (unsigned)t[0]);
     Serial.printf("[lcd.json] verify: hsync_front_porch = %u\n", (unsigned)t[1]);
     Serial.printf("[lcd.json] verify: hsync_pulse_width = %u\n", (unsigned)t[2]);
@@ -74,12 +74,12 @@ static void lcd_json_serial_dump_eeprom_fields(const uint8_t *v)
     Serial.printf("[lcd.json] verify: de_idle_high = %u\n", (unsigned)t[9]);
     Serial.printf("[lcd.json] verify: pclk_idle_high = %u\n", (unsigned)t[10]);
 
-    if (XTOUCH_EEPROM_SIZE > 20)
+    if (XPTOUCH_EEPROM_SIZE > 20)
     {
         Serial.print("[lcd.json] verify: tail bytes[20..");
-        Serial.print(XTOUCH_EEPROM_SIZE - 1);
+        Serial.print(XPTOUCH_EEPROM_SIZE - 1);
         Serial.print("] =");
-        for (size_t i = 20; i < XTOUCH_EEPROM_SIZE; i++)
+        for (size_t i = 20; i < XPTOUCH_EEPROM_SIZE; i++)
             Serial.printf(" %02X", (unsigned)v[i]);
         Serial.println();
     }
@@ -120,12 +120,12 @@ static bool lcd_json_apply_u8(JsonObject o, const char *key, uint8_t *t, unsigne
  * disable: 1（または true）… LCD 拡張領域のみクリア（offset 4..19: PCLK+タイミング）。TFT 反転(0)は維持（他キーより優先）。
  * タイミングを 1 つでも指定したら EEPROM 拡張ブロック有効（magic）。freq のみなら周波数だけ更新。
  */
-void xtouch_lcd_json_apply_from_sd_and_reboot(void)
+void xptouch_lcd_json_apply_from_sd_and_reboot(void)
 {
-    if (!xtouch_filesystem_exist(xtouch_sdcard_fs(), xtouch_paths_lcd_json))
+    if (!xptouch_filesystem_exist(xptouch_sdcard_fs(), xptouch_paths_lcd_json))
         return;
 
-    DynamicJsonDocument doc = xtouch_filesystem_readJson(xtouch_sdcard_fs(), xtouch_paths_lcd_json, false, XTOUCH_LCD_JSON_DOC_CAP);
+    DynamicJsonDocument doc = xptouch_filesystem_readJson(xptouch_sdcard_fs(), xptouch_paths_lcd_json, false, XPTOUCH_LCD_JSON_DOC_CAP);
     JsonObject o = doc.as<JsonObject>();
     if (o.isNull())
     {
@@ -139,18 +139,18 @@ void xtouch_lcd_json_apply_from_sd_and_reboot(void)
         bool wipe = dv.is<bool>() ? dv.as<bool>() : (dv.as<int>() != 0);
         if (wipe)
         {
-            uint8_t buf[XTOUCH_EEPROM_SIZE];
-            xtouch_eeprom_read_all(buf);
-            xtouch_eeprom_lcd_extension_clear_keep_flip(buf);
-            xtouch_eeprom_write_all(buf);
-            uint8_t verify_dis[XTOUCH_EEPROM_SIZE];
+            uint8_t buf[XPTOUCH_EEPROM_SIZE];
+            xptouch_eeprom_read_all(buf);
+            xptouch_eeprom_lcd_extension_clear_keep_flip(buf);
+            xptouch_eeprom_write_all(buf);
+            uint8_t verify_dis[XPTOUCH_EEPROM_SIZE];
             if (!lcd_json_eeprom_verify_reread(buf, verify_dis))
             {
                 Serial.println("[lcd.json] disable: verify failed — kept lcd.json, no reboot");
                 return;
             }
             lcd_json_serial_dump_eeprom_fields(verify_dis);
-            if (!xtouch_filesystem_deleteFile(xtouch_sdcard_fs(), xtouch_paths_lcd_json))
+            if (!xptouch_filesystem_deleteFile(xptouch_sdcard_fs(), xptouch_paths_lcd_json))
             {
                 Serial.println("[lcd.json] LCD EEPROM area cleared but delete failed — not rebooting");
                 return;
@@ -175,8 +175,8 @@ void xtouch_lcd_json_apply_from_sd_and_reboot(void)
         return;
     }
 
-    uint8_t buf[XTOUCH_EEPROM_SIZE];
-    xtouch_eeprom_read_all(buf);
+    uint8_t buf[XPTOUCH_EEPROM_SIZE];
+    xptouch_eeprom_read_all(buf);
 
     if (has_freq)
     {
@@ -191,22 +191,22 @@ void xtouch_lcd_json_apply_from_sd_and_reboot(void)
         uint32_t hz = (uint32_t)v;
         if (hz != 0u && hz != 0xFFFFFFFFu)
         {
-            if (hz < XTOUCH_RGB_PCLK_HZ_MIN || hz > XTOUCH_RGB_PCLK_HZ_MAX)
+            if (hz < XPTOUCH_RGB_PCLK_HZ_MIN || hz >XPTOUCH_RGB_PCLK_HZ_MAX)
             {
                 Serial.printf("[lcd.json] invalid freq_write %lu — kept file\n", (unsigned long)hz);
                 return;
             }
         }
-        xtouch_u32_to_le(buf + XTOUCH_EEPROM_POS_RGB_PCLK_HZ, hz);
+        xptouch_u32_to_le(buf + XPTOUCH_EEPROM_POS_RGB_PCLK_HZ, hz);
     }
 
     if (has_timing)
     {
         uint8_t t[11];
-        if (xtouch_eeprom_lcd_ext_timing_valid(buf))
-            memcpy(t, buf + XTOUCH_EEPROM_POS_LCD_TIMING_BASE, 11);
+        if (xptouch_eeprom_lcd_ext_timing_valid(buf))
+            memcpy(t, buf + XPTOUCH_EEPROM_POS_LCD_TIMING_BASE, 11);
         else
-            xtouch_eeprom_lcd_timing_defaults_u8(t);
+            xptouch_eeprom_lcd_timing_defaults_u8(t);
 
         if (!lcd_json_apply_bool(o, "hsync_polarity", t, 0) ||
             !lcd_json_apply_u8(o, "hsync_front_porch", t, 1, 0, 127) ||
@@ -224,13 +224,13 @@ void xtouch_lcd_json_apply_from_sd_and_reboot(void)
             return;
         }
 
-        buf[XTOUCH_EEPROM_POS_LCD_TIMING_MAGIC] = XTOUCH_EEPROM_LCD_TIMING_MAGIC;
-        memcpy(buf + XTOUCH_EEPROM_POS_LCD_TIMING_BASE, t, 11);
+        buf[XPTOUCH_EEPROM_POS_LCD_TIMING_MAGIC] =XPTOUCH_EEPROM_LCD_TIMING_MAGIC;
+        memcpy(buf + XPTOUCH_EEPROM_POS_LCD_TIMING_BASE, t, 11);
     }
 
-    xtouch_eeprom_write_all(buf);
+    xptouch_eeprom_write_all(buf);
 
-    uint8_t verify[XTOUCH_EEPROM_SIZE];
+    uint8_t verify[XPTOUCH_EEPROM_SIZE];
     if (!lcd_json_eeprom_verify_reread(buf, verify))
     {
         Serial.println("[lcd.json] verify failed — kept lcd.json, no reboot");
@@ -238,7 +238,7 @@ void xtouch_lcd_json_apply_from_sd_and_reboot(void)
     }
     lcd_json_serial_dump_eeprom_fields(verify);
 
-    if (!xtouch_filesystem_deleteFile(xtouch_sdcard_fs(), xtouch_paths_lcd_json))
+    if (!xptouch_filesystem_deleteFile(xptouch_sdcard_fs(), xptouch_paths_lcd_json))
     {
         Serial.println("[lcd.json] EEPROM ok but delete failed — not rebooting");
         return;
@@ -251,7 +251,7 @@ void xtouch_lcd_json_apply_from_sd_and_reboot(void)
 
 #else
 
-static inline void xtouch_lcd_json_apply_from_sd_and_reboot(void) {}
+static inline void xptouch_lcd_json_apply_from_sd_and_reboot(void) {}
 
 #endif
 

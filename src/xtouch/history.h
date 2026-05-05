@@ -1,11 +1,11 @@
 /**
  * History 画面用: Cloud 履歴取得・再印刷のイベント購読。
- * UI は XTOUCH_HISTORY_FETCH / XTOUCH_HISTORY_REPRINT_WITH_OPTIONS を送信し、
+ * UI は XPTOUCH_HISTORY_FETCH / XPTOUCH_HISTORY_REPRINT_WITH_OPTIONS を送信し、
  * ここで購読して cloud.getMyTasks / cloud.submitReprintTask を呼ぶ。
  * 一覧テキストは常に一度に描画し、その後サムネのみ SD キャッシュ読み or DL 完了のたびに 1 行ずつ LIST_REFRESH + lv_refr_now で反映する。
- * loadScreen(15) のたびに XTOUCH_HISTORY_FETCH で getMyTasks し一覧を更新する（描画パターンは同じ）。
+ * loadScreen(15) のたびに XPTOUCH_HISTORY_FETCH で getMyTasks し一覧を更新する（描画パターンは同じ）。
  */
-#if defined(__XTOUCH_PLATFORM_S3__)
+#if defined(__XPTOUCH_PLATFORM_S3__)
 
 #include "lvgl.h"
 #include "ui/ui_msgs.h"
@@ -30,47 +30,47 @@ static lv_timer_t *s_history_fetch_done_timer = NULL;
 static QueueHandle_t s_history_detail_queue = NULL;
 static QueueHandle_t s_history_detail_done_queue = NULL;
 static lv_timer_t *s_history_detail_done_timer = NULL;
-static char s_history_last_append_after[XTOUCH_HISTORY_TASK_ID_LEN] = {0};
-static void xtouch_history_enqueue_cover_row(int row);
-static int xtouch_history_cover_path_for_task_id(const char *task_id, char *path, size_t path_size);
+static char s_history_last_append_after[XPTOUCH_HISTORY_TASK_ID_LEN] = {0};
+static void xptouch_history_enqueue_cover_row(int row);
+static int xptouch_history_cover_path_for_task_id(const char *task_id, char *path, size_t path_size);
 
 /** 一覧を全行まとめて再描画（テキスト・プレースホルダー）。サムネは別途 1 行ずつ。 */
-static inline void xtouch_history_list_refresh_full(void)
+static inline void xptouch_history_list_refresh_full(void)
 {
-  ui_msg_send(XTOUCH_HISTORY_LIST_REFRESH, 0, 0);
+  ui_msg_send(XPTOUCH_HISTORY_LIST_REFRESH, 0, 0);
 }
 
 /** 1 行ぶんの dsc 更新後に UI へ通知し、LVGL に即フラッシュ（同一タイマー内の連続処理で描画が溜まるのを防ぐ） */
-static inline void xtouch_history_cover_ui_refresh_now(void)
+static inline void xptouch_history_cover_ui_refresh_now(void)
 {
-  ui_msg_send(XTOUCH_HISTORY_LIST_REFRESH, 0, 0);
+  ui_msg_send(XPTOUCH_HISTORY_LIST_REFRESH, 0, 0);
   lv_disp_t *disp = lv_disp_get_default();
   if (disp)
     lv_refr_now(disp);
 }
 
 static bool s_hist_cover_draining = false;
-static void xtouch_history_cover_drain_one_cb(lv_timer_t *t);
+static void xptouch_history_cover_drain_one_cb(lv_timer_t *t);
 
 static lv_timer_t *s_history_cover_defer_timer = NULL;
 enum
 {
-  XTOUCH_HISTORY_DEFER_COVER_RETRY = 0,
-  XTOUCH_HISTORY_DEFER_THUMBS_SHOW = 1,
-  XTOUCH_HISTORY_DEFER_FETCH_ENQUEUE_FIRST = 2,
-  XTOUCH_HISTORY_DEFER_FETCH_ENQUEUE_APPEND = 3
+  XPTOUCH_HISTORY_DEFER_COVER_RETRY = 0,
+  XPTOUCH_HISTORY_DEFER_THUMBS_SHOW = 1,
+  XPTOUCH_HISTORY_DEFER_FETCH_ENQUEUE_FIRST = 2,
+  XPTOUCH_HISTORY_DEFER_FETCH_ENQUEUE_APPEND = 3
 };
-static void xtouch_history_cover_defer_cancel(void);
-static void xtouch_history_cover_retry_work_body(void);
-static void xtouch_history_thumbs_show_work_body(void);
-static void xtouch_history_fetch_enqueue_first_work_body(void);
-static void xtouch_history_fetch_enqueue_append_work_body(void);
-static void xtouch_history_cover_defer_work_cb(lv_timer_t *t);
-static void xtouch_history_schedule_cover_work_deferred(int kind);
+static void xptouch_history_cover_defer_cancel(void);
+static void xptouch_history_cover_retry_work_body(void);
+static void xptouch_history_thumbs_show_work_body(void);
+static void xptouch_history_fetch_enqueue_first_work_body(void);
+static void xptouch_history_fetch_enqueue_append_work_body(void);
+static void xptouch_history_cover_defer_work_cb(lv_timer_t *t);
+static void xptouch_history_schedule_cover_work_deferred(int kind);
 static int s_hist_fetch_defer_prev;
 static int s_hist_fetch_defer_new_n;
 
-static bool xtouch_history_task_id_equals(const char *a, const char *b)
+static bool xptouch_history_task_id_equals(const char *a, const char *b)
 {
   if (!a || !b)
     return false;
@@ -80,18 +80,18 @@ static bool xtouch_history_task_id_equals(const char *a, const char *b)
 }
 
 /* 同じ task_id が混入したときに後ろ側を落として先頭優先で一意化する */
-static int xtouch_history_dedup_tasks_inplace(void)
+static int xptouch_history_dedup_tasks_inplace(void)
 {
   int removed = 0;
-  if (xtouch_history_count <= 1)
+  if (xptouch_history_count <= 1)
     return 0;
   int write_idx = 0;
-  for (int i = 0; i < xtouch_history_count; i++)
+  for (int i = 0; i < xptouch_history_count; i++)
   {
     bool dup = false;
     for (int j = 0; j < write_idx; j++)
     {
-      if (xtouch_history_task_id_equals(xtouch_history_tasks[j].task_id, xtouch_history_tasks[i].task_id))
+      if (xptouch_history_task_id_equals(xptouch_history_tasks[j].task_id, xptouch_history_tasks[i].task_id))
       {
         dup = true;
         break;
@@ -103,42 +103,42 @@ static int xtouch_history_dedup_tasks_inplace(void)
       continue;
     }
     if (write_idx != i)
-      memcpy(&xtouch_history_tasks[write_idx], &xtouch_history_tasks[i], sizeof(xtouch_history_tasks[0]));
+      memcpy(&xptouch_history_tasks[write_idx], &xptouch_history_tasks[i], sizeof(xptouch_history_tasks[0]));
     write_idx++;
   }
-  for (int i = write_idx; i < xtouch_history_count; i++)
-    memset(&xtouch_history_tasks[i], 0, sizeof(xtouch_history_tasks[0]));
-  xtouch_history_count = write_idx;
+  for (int i = write_idx; i < xptouch_history_count; i++)
+    memset(&xptouch_history_tasks[i], 0, sizeof(xptouch_history_tasks[0]));
+  xptouch_history_count = write_idx;
   return removed;
 }
 
-static void xtouch_history_apply_cover_row(int row)
+static void xptouch_history_apply_cover_row(int row)
 {
-  if (xTouchConfig.xTouchHideAllThumbnails)
+  if (xPTouchConfig.xTouchHideAllThumbnails)
     return;
-  if (row < 0 || row >= xtouch_history_count)
+  if (row < 0 || row >= xptouch_history_count)
     return;
-  if (xTouchConfig.currentScreenIndex != 15)
+  if (xPTouchConfig.currentScreenIndex != 15)
     return;
   char path[64];
-  if (xtouch_history_cover_path_for_task_id(xtouch_history_tasks[row].task_id, path, sizeof(path)) != 0)
+  if (xptouch_history_cover_path_for_task_id(xptouch_history_tasks[row].task_id, path, sizeof(path)) != 0)
     return;
-  if (xtouch_history_cover_load_path(row, path))
-    xtouch_history_cover_ui_refresh_now();
+  if (xptouch_history_cover_load_path(row, path))
+    xptouch_history_cover_ui_refresh_now();
 }
 
-static void xtouch_history_cover_drain_chain_next(void)
+static void xptouch_history_cover_drain_chain_next(void)
 {
   if (s_history_done_queue && uxQueueMessagesWaiting(s_history_done_queue) > 0)
   {
-    lv_timer_t *next = lv_timer_create(xtouch_history_cover_drain_one_cb, 1, NULL);
+    lv_timer_t *next = lv_timer_create(xptouch_history_cover_drain_one_cb, 1, NULL);
     lv_timer_set_repeat_count(next, 1);
   }
   else
     s_hist_cover_draining = false;
 }
 
-static void xtouch_history_cover_drain_one_cb(lv_timer_t *t)
+static void xptouch_history_cover_drain_one_cb(lv_timer_t *t)
 {
   (void)t;
   int row;
@@ -147,26 +147,26 @@ static void xtouch_history_cover_drain_one_cb(lv_timer_t *t)
     s_hist_cover_draining = false;
     return;
   }
-  if (xTouchConfig.xTouchHideAllThumbnails)
+  if (xPTouchConfig.xTouchHideAllThumbnails)
   {
-    xtouch_history_cover_drain_chain_next();
+    xptouch_history_cover_drain_chain_next();
     return;
   }
-  if (row < 0 || row >= xtouch_history_count)
+  if (row < 0 || row >= xptouch_history_count)
   {
-    xtouch_history_cover_drain_chain_next();
+    xptouch_history_cover_drain_chain_next();
     return;
   }
-  if (xTouchConfig.currentScreenIndex != 15)
+  if (xPTouchConfig.currentScreenIndex != 15)
   {
-    xtouch_history_cover_drain_chain_next();
+    xptouch_history_cover_drain_chain_next();
     return;
   }
-  xtouch_history_apply_cover_row(row);
-  xtouch_history_cover_drain_chain_next();
+  xptouch_history_apply_cover_row(row);
+  xptouch_history_cover_drain_chain_next();
 }
 
-static void xtouch_history_cover_defer_cancel(void)
+static void xptouch_history_cover_defer_cancel(void)
 {
   if (s_history_cover_defer_timer)
   {
@@ -175,97 +175,97 @@ static void xtouch_history_cover_defer_cancel(void)
   }
 }
 
-static void xtouch_history_cover_retry_work_body(void)
+static void xptouch_history_cover_retry_work_body(void)
 {
-  if (xTouchConfig.xTouchHideAllThumbnails)
+  if (xPTouchConfig.xTouchHideAllThumbnails)
     return;
-  if (xTouchConfig.currentScreenIndex != 15)
+  if (xPTouchConfig.currentScreenIndex != 15)
     return;
-  int n = (xtouch_history_count < XTOUCH_HISTORY_COVER_SLOTS) ? xtouch_history_count : XTOUCH_HISTORY_COVER_SLOTS;
+  int n = (xptouch_history_count < XPTOUCH_HISTORY_COVER_SLOTS) ? xptouch_history_count : XPTOUCH_HISTORY_COVER_SLOTS;
   for (int row = 0; row < n; row++)
   {
-    if (!xtouch_history_tasks[row].valid)
+    if (!xptouch_history_tasks[row].valid)
       continue;
     char path[64];
-    if (xtouch_history_cover_path_for_task_id(xtouch_history_tasks[row].task_id, path, sizeof(path)) != 0)
+    if (xptouch_history_cover_path_for_task_id(xptouch_history_tasks[row].task_id, path, sizeof(path)) != 0)
       continue;
-    if (xtouch_sdcard_exists(path))
-      xtouch_history_apply_cover_row(row);
-    else if (xtouch_history_tasks[row].cover_url[0])
-      xtouch_history_enqueue_cover_row(row);
+    if (xptouch_sdcard_exists(path))
+      xptouch_history_apply_cover_row(row);
+    else if (xptouch_history_tasks[row].cover_url[0])
+      xptouch_history_enqueue_cover_row(row);
   }
 }
 
-static void xtouch_history_thumbs_show_work_body(void)
+static void xptouch_history_thumbs_show_work_body(void)
 {
-  if (xTouchConfig.xTouchHideAllThumbnails)
+  if (xPTouchConfig.xTouchHideAllThumbnails)
     return;
-  if (xTouchConfig.currentScreenIndex != 15)
+  if (xPTouchConfig.currentScreenIndex != 15)
     return;
-  int n = (xtouch_history_count < XTOUCH_HISTORY_COVER_SLOTS) ? xtouch_history_count : XTOUCH_HISTORY_COVER_SLOTS;
+  int n = (xptouch_history_count < XPTOUCH_HISTORY_COVER_SLOTS) ? xptouch_history_count : XPTOUCH_HISTORY_COVER_SLOTS;
   for (int row = 0; row < n; row++)
   {
     char path[64];
-    if (xtouch_history_cover_path_for_task_id(xtouch_history_tasks[row].task_id, path, sizeof(path)) != 0)
+    if (xptouch_history_cover_path_for_task_id(xptouch_history_tasks[row].task_id, path, sizeof(path)) != 0)
       continue;
-    if (xtouch_sdcard_exists(path))
-      xtouch_history_apply_cover_row(row);
-    else if (xtouch_history_tasks[row].cover_url[0])
-      xtouch_history_enqueue_cover_row(row);
+    if (xptouch_sdcard_exists(path))
+      xptouch_history_apply_cover_row(row);
+    else if (xptouch_history_tasks[row].cover_url[0])
+      xptouch_history_enqueue_cover_row(row);
   }
 }
 
-static void xtouch_history_fetch_enqueue_first_work_body(void)
+static void xptouch_history_fetch_enqueue_first_work_body(void)
 {
-  if (xTouchConfig.xTouchHideAllThumbnails)
+  if (xPTouchConfig.xTouchHideAllThumbnails)
     return;
-  int lim = (xtouch_history_count < XTOUCH_HISTORY_COVER_SLOTS) ? xtouch_history_count : XTOUCH_HISTORY_COVER_SLOTS;
+  int lim = (xptouch_history_count < XPTOUCH_HISTORY_COVER_SLOTS) ? xptouch_history_count : XPTOUCH_HISTORY_COVER_SLOTS;
   for (int row = 0; row < lim; row++)
   {
-    if (!xtouch_history_tasks[row].cover_url[0])
+    if (!xptouch_history_tasks[row].cover_url[0])
       continue;
-    xtouch_history_enqueue_cover_row(row);
+    xptouch_history_enqueue_cover_row(row);
   }
 }
 
-static void xtouch_history_fetch_enqueue_append_work_body(void)
+static void xptouch_history_fetch_enqueue_append_work_body(void)
 {
-  if (xTouchConfig.xTouchHideAllThumbnails)
+  if (xPTouchConfig.xTouchHideAllThumbnails)
     return;
   for (int row = s_hist_fetch_defer_prev; row < s_hist_fetch_defer_new_n; row++)
   {
-    if (!xtouch_history_tasks[row].cover_url[0])
+    if (!xptouch_history_tasks[row].cover_url[0])
       continue;
-    xtouch_history_enqueue_cover_row(row);
+    xptouch_history_enqueue_cover_row(row);
   }
 }
 
-static void xtouch_history_cover_defer_work_cb(lv_timer_t *t)
+static void xptouch_history_cover_defer_work_cb(lv_timer_t *t)
 {
   s_history_cover_defer_timer = nullptr;
   int kind = (int)(intptr_t)(t ? t->user_data : 0);
   switch (kind)
   {
-  case XTOUCH_HISTORY_DEFER_THUMBS_SHOW:
-    xtouch_history_thumbs_show_work_body();
+  case XPTOUCH_HISTORY_DEFER_THUMBS_SHOW:
+    xptouch_history_thumbs_show_work_body();
     break;
-  case XTOUCH_HISTORY_DEFER_FETCH_ENQUEUE_FIRST:
-    xtouch_history_fetch_enqueue_first_work_body();
+  case XPTOUCH_HISTORY_DEFER_FETCH_ENQUEUE_FIRST:
+    xptouch_history_fetch_enqueue_first_work_body();
     break;
-  case XTOUCH_HISTORY_DEFER_FETCH_ENQUEUE_APPEND:
-    xtouch_history_fetch_enqueue_append_work_body();
+  case XPTOUCH_HISTORY_DEFER_FETCH_ENQUEUE_APPEND:
+    xptouch_history_fetch_enqueue_append_work_body();
     break;
   default:
-    xtouch_history_cover_retry_work_body();
+    xptouch_history_cover_retry_work_body();
     break;
   }
 }
 
-static void xtouch_history_schedule_cover_work_deferred(int kind)
+static void xptouch_history_schedule_cover_work_deferred(int kind)
 {
-  xtouch_history_cover_defer_cancel();
+  xptouch_history_cover_defer_cancel();
   lv_timer_t *once =
-      lv_timer_create(xtouch_history_cover_defer_work_cb, XTOUCH_HISTORY_COVER_DEFER_AFTER_LIST_MS, (void *)(intptr_t)kind);
+      lv_timer_create(xptouch_history_cover_defer_work_cb, XPTOUCH_HISTORY_COVER_DEFER_AFTER_LIST_MS, (void *)(intptr_t)kind);
   lv_timer_set_repeat_count(once, 1);
   s_history_cover_defer_timer = once;
 }
@@ -274,8 +274,8 @@ typedef struct
 {
   int retry_count;
   int append;
-  char after[XTOUCH_HISTORY_TASK_ID_LEN];
-} xtouch_history_fetch_req_t;
+  char after[XPTOUCH_HISTORY_TASK_ID_LEN];
+} xptouch_history_fetch_req_t;
 
 typedef struct
 {
@@ -285,22 +285,22 @@ typedef struct
   int prev_count;
   int fetched_count;
   int has_more;
-  char next_after[XTOUCH_HISTORY_TASK_ID_LEN];
-} xtouch_history_fetch_res_t;
+  char next_after[XPTOUCH_HISTORY_TASK_ID_LEN];
+} xptouch_history_fetch_res_t;
 
 typedef struct
 {
   int history_index;
-} xtouch_history_detail_req_t;
+} xptouch_history_detail_req_t;
 
 typedef struct
 {
   int ok;
   int history_index;
   int map_count;
-} xtouch_history_detail_res_t;
+} xptouch_history_detail_res_t;
 
-static unsigned xtouch_color_dist_sq_rrggbbaa(const char *a, const char *b)
+static unsigned xptouch_color_dist_sq_rrggbbaa(const char *a, const char *b)
 {
   unsigned ar = 0, ag = 0, ab = 0, br = 0, bg = 0, bb = 0;
   if (a && strlen(a) >= 6)
@@ -313,18 +313,18 @@ static unsigned xtouch_color_dist_sq_rrggbbaa(const char *a, const char *b)
   return (unsigned)(dr * dr + dg * dg + db * db);
 }
 
-/** amsDetailMapping と現在の xtouch_history_reprint_printer_dd_slot に合わせてデフォルトの AMS 候補を埋める */
-static void xtouch_history_reprint_recompute_default_picks(void)
+/** amsDetailMapping と現在の xptouch_history_reprint_printer_dd_slot に合わせてデフォルトの AMS 候補を埋める */
+static void xptouch_history_reprint_recompute_default_picks(void)
 {
-  int cnt = xtouch_history_selected_ams_map_count;
+  int cnt = xptouch_history_selected_ams_map_count;
   if (cnt <= 0)
     return;
-  if (cnt > XTOUCH_HISTORY_AMS_MAP_MAX)
-    cnt = XTOUCH_HISTORY_AMS_MAP_MAX;
+  if (cnt > XPTOUCH_HISTORY_AMS_MAP_MAX)
+    cnt = XPTOUCH_HISTORY_AMS_MAP_MAX;
 
   for (int i = 0; i < cnt; i++)
   {
-    const xtouch_history_ams_map_t *m = &xtouch_history_selected_ams_map[i];
+    const xptouch_history_ams_map_t *m = &xptouch_history_selected_ams_map[i];
     const char *want_type = (m->filamentType[0] && strcmp(m->filamentType, "null") != 0) ? m->filamentType : NULL;
     unsigned best_d = 0xFFFFFFFFu;
     int best_ams = -1;
@@ -333,12 +333,12 @@ static void xtouch_history_reprint_recompute_default_picks(void)
     int first_loaded_tray = -1;
     int first_type_loaded_ams = -1;
     int first_type_loaded_tray = -1;
-    long ams_bits = xtouch_reprint_ams_exist_bits();
-    for (int ams_id = 0; ams_id < XTOUCH_BAMBU_AMS_UNITS; ams_id++)
+    long ams_bits = xptouch_reprint_ams_exist_bits();
+    for (int ams_id = 0; ams_id < XPTOUCH_BAMBU_AMS_UNITS; ams_id++)
     {
       if (((ams_bits >> ams_id) & 1) == 0)
         continue;
-      for (int tray_id = 0; tray_id < XTOUCH_BAMBU_AMS_SLOTS_PER_UNIT; tray_id++)
+      for (int tray_id = 0; tray_id < XPTOUCH_BAMBU_AMS_SLOTS_PER_UNIT; tray_id++)
       {
         uint32_t st = (uint32_t)get_tray_status_reprint((uint8_t)ams_id, (uint8_t)tray_id);
         if ((st & 1) == 0)
@@ -360,7 +360,7 @@ static void xtouch_history_reprint_recompute_default_picks(void)
         if (!type_ok)
           continue;
         const char *tc = get_tray_color_reprint((uint8_t)ams_id, (uint8_t)tray_id);
-        unsigned d = xtouch_color_dist_sq_rrggbbaa(m->sourceColor, tc);
+        unsigned d = xptouch_color_dist_sq_rrggbbaa(m->sourceColor, tc);
         if (best_ams < 0 || d < best_d)
         {
           best_d = d;
@@ -371,40 +371,40 @@ static void xtouch_history_reprint_recompute_default_picks(void)
     }
     if (best_ams >= 0)
     {
-      xtouch_history_reprint_pick_ams[i] = (uint8_t)best_ams;
-      xtouch_history_reprint_pick_tray[i] = (uint8_t)best_tray;
+      xptouch_history_reprint_pick_ams[i] = (uint8_t)best_ams;
+      xptouch_history_reprint_pick_tray[i] = (uint8_t)best_tray;
     }
     else if (first_type_loaded_ams >= 0)
     {
-      xtouch_history_reprint_pick_ams[i] = (uint8_t)first_type_loaded_ams;
-      xtouch_history_reprint_pick_tray[i] = (uint8_t)first_type_loaded_tray;
+      xptouch_history_reprint_pick_ams[i] = (uint8_t)first_type_loaded_ams;
+      xptouch_history_reprint_pick_tray[i] = (uint8_t)first_type_loaded_tray;
     }
     else if (first_loaded_ams >= 0)
     {
-      xtouch_history_reprint_pick_ams[i] = (uint8_t)first_loaded_ams;
-      xtouch_history_reprint_pick_tray[i] = (uint8_t)first_loaded_tray;
+      xptouch_history_reprint_pick_ams[i] = (uint8_t)first_loaded_ams;
+      xptouch_history_reprint_pick_tray[i] = (uint8_t)first_loaded_tray;
     }
-    else if (m->amsId >= 0 && m->amsId < XTOUCH_BAMBU_AMS_UNITS)
+    else if (m->amsId >= 0 && m->amsId < XPTOUCH_BAMBU_AMS_UNITS)
     {
-      xtouch_history_reprint_pick_ams[i] = (uint8_t)m->amsId;
-      xtouch_history_reprint_pick_tray[i] = (uint8_t)(m->slotId & 0xFF);
+      xptouch_history_reprint_pick_ams[i] = (uint8_t)m->amsId;
+      xptouch_history_reprint_pick_tray[i] = (uint8_t)(m->slotId & 0xFF);
     }
     else
     {
-      xtouch_history_reprint_pick_ams[i] = 0;
-      xtouch_history_reprint_pick_tray[i] = 0;
+      xptouch_history_reprint_pick_ams[i] = 0;
+      xptouch_history_reprint_pick_tray[i] = 0;
     }
   }
 }
 
 /* メインスレッド: 遅延後に fetch リクエストをキューへ投入 */
-static void xtouch_history_enqueue_fetch_cb(lv_timer_t *t)
+static void xptouch_history_enqueue_fetch_cb(lv_timer_t *t)
 {
   int retry_count = (t && t->user_data) ? (int)(intptr_t)t->user_data : 0;
   if (s_history_fetch_queue)
     xQueueReset(s_history_fetch_queue);
   s_history_last_append_after[0] = '\0';
-  xtouch_history_fetch_req_t req;
+  xptouch_history_fetch_req_t req;
   memset(&req, 0, sizeof(req));
   req.retry_count = retry_count;
   req.append = 0;
@@ -412,13 +412,13 @@ static void xtouch_history_enqueue_fetch_cb(lv_timer_t *t)
     xQueueSend(s_history_fetch_queue, &req, 0);
 }
 
-static bool xtouch_history_enqueue_fetch_append(const char *after)
+static bool xptouch_history_enqueue_fetch_append(const char *after)
 {
   if (!s_history_fetch_queue || !after || !after[0])
     return false;
   if (strcmp(s_history_last_append_after, after) == 0)
     return false;
-  xtouch_history_fetch_req_t req;
+  xptouch_history_fetch_req_t req;
   memset(&req, 0, sizeof(req));
   req.retry_count = 0;
   req.append = 1;
@@ -434,7 +434,7 @@ static bool xtouch_history_enqueue_fetch_append(const char *after)
 }
 
 /* task_id → path は net.h の getThumbPathForTaskId に集約（Home の getThumbPathForSlot と同一文字列になる）。戻り値: 0=OK */
-static int xtouch_history_cover_path_for_task_id(const char *task_id, char *path, size_t path_size)
+static int xptouch_history_cover_path_for_task_id(const char *task_id, char *path, size_t path_size)
 {
   if (!task_id || !path || path_size < 16)
     return -1;
@@ -444,33 +444,33 @@ static int xtouch_history_cover_path_for_task_id(const char *task_id, char *path
 }
 
 /** History 行のカバーを thumb_dl 共有キューへ投入（url/path はワーカーがそのまま使う） */
-static void xtouch_history_enqueue_cover_row(int row)
+static void xptouch_history_enqueue_cover_row(int row)
 {
-  if (row < 0 || row >= XTOUCH_HISTORY_COVER_SLOTS)
+  if (row < 0 || row >= XPTOUCH_HISTORY_COVER_SLOTS)
     return;
-  if (row >= xtouch_history_count || !xtouch_history_tasks[row].cover_url[0])
+  if (row >= xptouch_history_count || !xptouch_history_tasks[row].cover_url[0])
     return;
   char path[64];
-  if (xtouch_history_cover_path_for_task_id(xtouch_history_tasks[row].task_id, path, sizeof(path)) != 0)
+  if (xptouch_history_cover_path_for_task_id(xptouch_history_tasks[row].task_id, path, sizeof(path)) != 0)
     return;
-  (void)xtouch_thumbnail_enqueue_sd_download(XTOUCH_DL_KIND_HISTORY, row, xtouch_history_tasks[row].cover_url, path);
+  (void)xptouch_thumbnail_enqueue_sd_download(XPTOUCH_DL_KIND_HISTORY, row, xptouch_history_tasks[row].cover_url, path);
 }
 
 /* ワーカータスク: fetch キューから要求を取り、Cloud から履歴を取得して結果を done キューに投げる（UI/LVGL をブロックしない） */
-static void xtouch_history_fetch_task(void *pv)
+static void xptouch_history_fetch_task(void *pv)
 {
   (void)pv;
-  xtouch_history_fetch_req_t req;
+  xptouch_history_fetch_req_t req;
   for (;;)
   {
     if (xQueueReceive(s_history_fetch_queue, &req, portMAX_DELAY) != pdTRUE)
       continue;
-    const int limit = XTOUCH_HISTORY_FETCH_PAGE_LIMIT;
-    xtouch_history_fetch_res_t res;
+    const int limit = XPTOUCH_HISTORY_FETCH_PAGE_LIMIT;
+    xptouch_history_fetch_res_t res;
     memset(&res, 0, sizeof(res));
     res.retry_count = req.retry_count;
     res.append = req.append;
-    res.prev_count = xtouch_history_count;
+    res.prev_count = xptouch_history_count;
     res.has_more = 0;
     res.next_after[0] = '\0';
     if (req.append && req.after[0])
@@ -478,7 +478,7 @@ static void xtouch_history_fetch_task(void *pv)
     else
       res.ok = cloud.getMyTasks(limit, nullptr, res.next_after, sizeof(res.next_after)) ? 1 : 0;
     res.has_more = res.next_after[0] ? 1 : 0;
-    res.fetched_count = xtouch_history_count - res.prev_count;
+    res.fetched_count = xptouch_history_count - res.prev_count;
     if (res.fetched_count < 0)
       res.fetched_count = 0;
     if (s_history_fetch_done_queue)
@@ -487,72 +487,72 @@ static void xtouch_history_fetch_task(void *pv)
 }
 
 /* ワーカータスク: Reprint 用に 1タスクだけ詳細取得（GET /my/task/<id> の filaments[] を擬似マッピングに展開） */
-static void xtouch_history_detail_task(void *pv)
+static void xptouch_history_detail_task(void *pv)
 {
   (void)pv;
-  xtouch_history_detail_req_t req;
+  xptouch_history_detail_req_t req;
   for (;;)
   {
     if (xQueueReceive(s_history_detail_queue, &req, portMAX_DELAY) != pdTRUE)
       continue;
-    xtouch_history_detail_res_t res;
+    xptouch_history_detail_res_t res;
     res.history_index = req.history_index;
     res.ok = 0;
     res.map_count = 0;
     const char *tid = NULL;
-    if (xtouch_history_reprint_task_id_valid)
-      tid = xtouch_history_reprint_task_id;
+    if (xptouch_history_reprint_task_id_valid)
+      tid = xptouch_history_reprint_task_id;
 
     if (tid)
     {
-      bool basic_ok = cloud.getMyTaskBasicForReprint(tid, &xtouch_history_reprint_task_basic);
-      xtouch_history_reprint_task_basic_valid = basic_ok ? 1 : 0;
+      bool basic_ok = cloud.getMyTaskBasicForReprint(tid, &xptouch_history_reprint_task_basic);
+      xptouch_history_reprint_task_basic_valid = basic_ok ? 1 : 0;
 
       /* サムネイルは Reprint 専用 descriptor にデコードするため、
        * まず SD 上に PNG を用意して、デコードはメインスレッド側で行う。 */
-      if (!xTouchConfig.xTouchHideAllThumbnails &&
-          xtouch_history_reprint_task_basic.cover_url[0])
+      if (!xPTouchConfig.xTouchHideAllThumbnails &&
+          xptouch_history_reprint_task_basic.cover_url[0])
       {
         char path[64];
-        if (xtouch_history_cover_path_for_task_id(tid, path, sizeof(path)) == 0)
+        if (xptouch_history_cover_path_for_task_id(tid, path, sizeof(path)) == 0)
         {
-          if (!xtouch_sdcard_exists(path))
-            (void)downloadFileToSDCard(xtouch_history_reprint_task_basic.cover_url, path);
+          if (!xptouch_sdcard_exists(path))
+            (void)downloadFileToSDCard(xptouch_history_reprint_task_basic.cover_url, path);
           /* 重いPNGデコードはワーカー側で実行し、UIスレッドのブロッキングを避ける */
-          if (xtouch_sdcard_exists(path))
-            (void)xtouch_history_reprint_cover_load_path(path);
+          if (xptouch_sdcard_exists(path))
+            (void)xptouch_history_reprint_cover_load_path(path);
           else
-            xtouch_history_reprint_cover_clear();
+            xptouch_history_reprint_cover_clear();
         }
         else
         {
-          xtouch_history_reprint_cover_clear();
+          xptouch_history_reprint_cover_clear();
         }
       }
       else
       {
-        xtouch_history_reprint_cover_clear();
+        xptouch_history_reprint_cover_clear();
       }
 
-      int cnt = cloud.getMyTaskAmsDetailMapping(tid, xtouch_history_selected_ams_map, XTOUCH_HISTORY_AMS_MAP_MAX);
+      int cnt = cloud.getMyTaskAmsDetailMapping(tid, xptouch_history_selected_ams_map, XPTOUCH_HISTORY_AMS_MAP_MAX);
 
       if (cnt >= 0)
       {
-        if (cnt > XTOUCH_HISTORY_AMS_MAP_MAX)
-          cnt = XTOUCH_HISTORY_AMS_MAP_MAX;
-        xtouch_history_selected_ams_map_count = cnt;
+        if (cnt > XPTOUCH_HISTORY_AMS_MAP_MAX)
+          cnt = XPTOUCH_HISTORY_AMS_MAP_MAX;
+        xptouch_history_selected_ams_map_count = cnt;
         res.ok = 1;
         res.map_count = cnt;
-        xtouch_history_reprint_recompute_default_picks();
+        xptouch_history_reprint_recompute_default_picks();
       }
       else
       {
-        xtouch_history_selected_ams_map_count = 0;
+        xptouch_history_selected_ams_map_count = 0;
       }
     }
     else
     {
-      xtouch_history_selected_ams_map_count = 0;
+      xptouch_history_selected_ams_map_count = 0;
       res.ok = 0;
       res.map_count = 0;
     }
@@ -563,18 +563,18 @@ static void xtouch_history_detail_task(void *pv)
 }
 
 /* History 系画面外ではカバーを SD からデコードしない（遷移直後の done 残り・並行ヒープ消費を防ぐ） */
-static void xtouch_history_on_cover_dl_cancel(lv_msg_t *m, void *user_data)
+static void xptouch_history_on_cover_dl_cancel(lv_msg_t *m, void *user_data)
 {
   (void)m;
   (void)user_data;
   if (s_history_done_queue)
     xQueueReset(s_history_done_queue);
   s_hist_cover_draining = false;
-  xtouch_history_cover_defer_cancel();
+  xptouch_history_cover_defer_cancel();
 }
 
 /* メインスレッド: DL 完了キューは 1 件ずつデコード→UI 通知→lv_refr_now を挟み、次は 1ms 後に続行（全件を同一コールバックで捌かない） */
-static void xtouch_history_cover_done_timer_cb(lv_timer_t *t)
+static void xptouch_history_cover_done_timer_cb(lv_timer_t *t)
 {
   (void)t;
   if (s_hist_cover_draining)
@@ -582,23 +582,23 @@ static void xtouch_history_cover_done_timer_cb(lv_timer_t *t)
   if (!s_history_done_queue || uxQueueMessagesWaiting(s_history_done_queue) == 0)
     return;
   s_hist_cover_draining = true;
-  lv_timer_t *once = lv_timer_create(xtouch_history_cover_drain_one_cb, 0, NULL);
+  lv_timer_t *once = lv_timer_create(xptouch_history_cover_drain_one_cb, 0, NULL);
   lv_timer_set_repeat_count(once, 1);
 }
 
 /* メインスレッド: fetch 結果を受け取り UI 更新 or リトライをスケジュール */
-static void xtouch_history_fetch_done_timer_cb(lv_timer_t *t)
+static void xptouch_history_fetch_done_timer_cb(lv_timer_t *t)
 {
   (void)t;
-  xtouch_history_fetch_res_t res;
+  xptouch_history_fetch_res_t res;
   if (xQueueReceive(s_history_fetch_done_queue, &res, 0) != pdTRUE)
     return;
   if (!res.ok)
   {
-    if (res.retry_count < XTOUCH_HISTORY_FETCH_RETRY_MAX - 1)
+    if (res.retry_count < XPTOUCH_HISTORY_FETCH_RETRY_MAX - 1)
     {
       lv_timer_t *again =
-          lv_timer_create(xtouch_history_enqueue_fetch_cb, XTOUCH_HISTORY_FETCH_RETRY_DELAY_MS, (void *)(intptr_t)(res.retry_count + 1));
+          lv_timer_create(xptouch_history_enqueue_fetch_cb, XPTOUCH_HISTORY_FETCH_RETRY_DELAY_MS, (void *)(intptr_t)(res.retry_count + 1));
       lv_timer_set_repeat_count(again, 1);
     }
     return;
@@ -606,36 +606,36 @@ static void xtouch_history_fetch_done_timer_cb(lv_timer_t *t)
   int count_before = res.prev_count;
   if (count_before < 0)
     count_before = 0;
-  if (count_before > XTOUCH_HISTORY_TASKS_MAX)
-    count_before = XTOUCH_HISTORY_TASKS_MAX;
-  int removed_dup = xtouch_history_dedup_tasks_inplace();
-  int unique_added = xtouch_history_count - count_before;
+  if (count_before > XPTOUCH_HISTORY_TASKS_MAX)
+    count_before = XPTOUCH_HISTORY_TASKS_MAX;
+  int removed_dup = xptouch_history_dedup_tasks_inplace();
+  int unique_added = xptouch_history_count - count_before;
   if (unique_added < 0)
     unique_added = 0;
   if (removed_dup > 0)
   {
-    ConsoleVerbose.printf("[xPTouch][V][HIST] dedup removed=%d count=%d\n", removed_dup, xtouch_history_count);
+    ConsoleVerbose.printf("[xPTouch][V][HIST] dedup removed=%d count=%d\n", removed_dup, xptouch_history_count);
   }
   if (!res.append)
   {
-    xtouch_history_cover_clear();
-    xtouch_history_list_refresh_full();
+    xptouch_history_cover_clear();
+    xptouch_history_list_refresh_full();
     {
       lv_disp_t *disp = lv_disp_get_default();
       if (disp)
         lv_refr_now(disp);
     }
-    xtouch_history_schedule_cover_work_deferred(XTOUCH_HISTORY_DEFER_FETCH_ENQUEUE_FIRST);
+    xptouch_history_schedule_cover_work_deferred(XPTOUCH_HISTORY_DEFER_FETCH_ENQUEUE_FIRST);
   }
   else if (unique_added > 0)
   {
     int prev = count_before;
     if (prev < 0)
       prev = 0;
-    if (prev > XTOUCH_HISTORY_COVER_SLOTS)
-      prev = XTOUCH_HISTORY_COVER_SLOTS;
-    int new_n = (xtouch_history_count < XTOUCH_HISTORY_COVER_SLOTS) ? xtouch_history_count : XTOUCH_HISTORY_COVER_SLOTS;
-    xtouch_history_list_refresh_full();
+    if (prev > XPTOUCH_HISTORY_COVER_SLOTS)
+      prev = XPTOUCH_HISTORY_COVER_SLOTS;
+    int new_n = (xptouch_history_count < XPTOUCH_HISTORY_COVER_SLOTS) ? xptouch_history_count : XPTOUCH_HISTORY_COVER_SLOTS;
+    xptouch_history_list_refresh_full();
     {
       lv_disp_t *disp = lv_disp_get_default();
       if (disp)
@@ -643,78 +643,78 @@ static void xtouch_history_fetch_done_timer_cb(lv_timer_t *t)
     }
     s_hist_fetch_defer_prev = prev;
     s_hist_fetch_defer_new_n = new_n;
-    xtouch_history_schedule_cover_work_deferred(XTOUCH_HISTORY_DEFER_FETCH_ENQUEUE_APPEND);
+    xptouch_history_schedule_cover_work_deferred(XPTOUCH_HISTORY_DEFER_FETCH_ENQUEUE_APPEND);
   }
 
   /* History は 1 回取得（limit=20）に固定。after の連鎖取得は行わない。 */
 }
 
 /* メインスレッド: Reprint 詳細取得完了を通知（画面側で再描画） */
-static void xtouch_history_detail_done_timer_cb(lv_timer_t *t)
+static void xptouch_history_detail_done_timer_cb(lv_timer_t *t)
 {
   (void)t;
-  xtouch_history_detail_res_t res;
+  xptouch_history_detail_res_t res;
   if (xQueueReceive(s_history_detail_done_queue, &res, 0) != pdTRUE)
     return;
   /* サムネイルデコードはワーカー側で完了済み。ここではUI通知のみ。 */
-  xtouch_history_reprint_detail_fetch_inflight = 0;
-  xtouch_history_reprint_detail_fetch_done = 1;
-  lv_msg_send(XTOUCH_HISTORY_REPRINT_DETAIL_READY, NULL);
+  xptouch_history_reprint_detail_fetch_inflight = 0;
+  xptouch_history_reprint_detail_fetch_done = 1;
+  lv_msg_send(XPTOUCH_HISTORY_REPRINT_DETAIL_READY, NULL);
 }
 
-/* XTOUCH_HISTORY_FETCH 受信時は即 getMyTasks せず、遅延タイマーで非同期実行（Printers 直後の SSL メモリ競合を避ける）。user_data はリトライ回数（初回は 0）。 */
-static void xtouch_history_on_fetch(lv_msg_t *m, void *user_data)
+/* XPTOUCH_HISTORY_FETCH 受信時は即 getMyTasks せず、遅延タイマーで非同期実行（Printers 直後の SSL メモリ競合を避ける）。user_data はリトライ回数（初回は 0）。 */
+static void xptouch_history_on_fetch(lv_msg_t *m, void *user_data)
 {
   (void)m;
   (void)user_data;
   lv_timer_t *once =
-      lv_timer_create(xtouch_history_enqueue_fetch_cb, XTOUCH_HISTORY_FETCH_DELAY_MS, (void *)(intptr_t)0);
+      lv_timer_create(xptouch_history_enqueue_fetch_cb, XPTOUCH_HISTORY_FETCH_DELAY_MS, (void *)(intptr_t)0);
   lv_timer_set_repeat_count(once, 1);
 }
 
-static void xtouch_history_on_reprint_slot_picked(void *user_data, lv_msg_t *m)
+static void xptouch_history_on_reprint_slot_picked(void *user_data, lv_msg_t *m)
 {
   (void)user_data;
-  const struct XTOUCH_MESSAGE_DATA *payload =
-      m ? (const struct XTOUCH_MESSAGE_DATA *)lv_msg_get_payload(m) : NULL;
+  const struct XPTOUCH_MESSAGE_DATA *payload =
+      m ? (const struct XPTOUCH_MESSAGE_DATA *)lv_msg_get_payload(m) : NULL;
   if (!payload)
     return;
   int mi = (int)payload->data;
   unsigned long long d2 = payload->data2;
   uint8_t ams = (uint8_t)(d2 & 0xFFu);
   uint8_t tray = (uint8_t)((d2 >> 8) & 0xFFu);
-  if (mi < 0 || mi >= xtouch_history_selected_ams_map_count || mi >= XTOUCH_HISTORY_AMS_MAP_MAX)
+  if (mi < 0 || mi >= xptouch_history_selected_ams_map_count || mi >= XPTOUCH_HISTORY_AMS_MAP_MAX)
     return;
-  xtouch_history_reprint_pick_ams[mi] = ams;
-  xtouch_history_reprint_pick_tray[mi] = tray;
+  xptouch_history_reprint_pick_ams[mi] = ams;
+  xptouch_history_reprint_pick_tray[mi] = tray;
 }
 
 /* UI から Reprint 画面が開かれたタイミングで 1件の詳細を取りに行く */
-static void xtouch_history_on_reprint_detail_fetch(void *user_data, lv_msg_t *m)
+static void xptouch_history_on_reprint_detail_fetch(void *user_data, lv_msg_t *m)
 {
   (void)user_data;
-  const struct XTOUCH_MESSAGE_DATA *payload =
-      m ? (const struct XTOUCH_MESSAGE_DATA *)lv_msg_get_payload(m) : NULL;
+  const struct XPTOUCH_MESSAGE_DATA *payload =
+      m ? (const struct XPTOUCH_MESSAGE_DATA *)lv_msg_get_payload(m) : NULL;
   if (!payload)
     return;
 
   (void)payload; /* history_index ではなく task_id だけで detail を取得する */
-  if (!xtouch_history_reprint_task_id_valid)
+  if (!xptouch_history_reprint_task_id_valid)
     return;
-  if (xtouch_history_reprint_detail_fetch_inflight)
+  if (xptouch_history_reprint_detail_fetch_inflight)
     return;
 
-  xtouch_history_reprint_detail_fetch_inflight = 1;
-  xtouch_history_reprint_task_basic_valid = 0;
-  memset(&xtouch_history_reprint_task_basic, 0, sizeof(xtouch_history_reprint_task_basic));
-  xtouch_history_reprint_cover_clear();
-  memset(xtouch_history_reprint_pick_ams, 0, sizeof(xtouch_history_reprint_pick_ams));
-  memset(xtouch_history_reprint_pick_tray, 0, sizeof(xtouch_history_reprint_pick_tray));
-  xtouch_history_selected_ams_map_count = -1; /* loading */
+  xptouch_history_reprint_detail_fetch_inflight = 1;
+  xptouch_history_reprint_task_basic_valid = 0;
+  memset(&xptouch_history_reprint_task_basic, 0, sizeof(xptouch_history_reprint_task_basic));
+  xptouch_history_reprint_cover_clear();
+  memset(xptouch_history_reprint_pick_ams, 0, sizeof(xptouch_history_reprint_pick_ams));
+  memset(xptouch_history_reprint_pick_tray, 0, sizeof(xptouch_history_reprint_pick_tray));
+  xptouch_history_selected_ams_map_count = -1; /* loading */
   if (s_history_detail_queue)
   {
     xQueueReset(s_history_detail_queue);
-    xtouch_history_detail_req_t req = { 0 };
+    xptouch_history_detail_req_t req = { 0 };
     xQueueSend(s_history_detail_queue, &req, 0);
   }
 }
@@ -722,119 +722,119 @@ static void xtouch_history_on_reprint_detail_fetch(void *user_data, lv_msg_t *m)
 /* 新しい History リプリント設定画面からの確定用。
  * ひとまず printer_slot / filament は Cloud 側の submitReprintTask に反映せず、
  * 既存の submitReprintTask と同じ挙動で再印刷だけ行う。 */
-static void xtouch_history_on_reprint_printer_changed(void *user_data, lv_msg_t *m)
+static void xptouch_history_on_reprint_printer_changed(void *user_data, lv_msg_t *m)
 {
   (void)user_data;
   (void)m;
   /* -1=詳細未取得のときだけスキップ。0件マッピングでもプリンタ切替後の AMS 表示更新が必要 */
-  if (xtouch_history_selected_ams_map_count < 0)
+  if (xptouch_history_selected_ams_map_count < 0)
     return;
-  xtouch_history_reprint_recompute_default_picks();
+  xptouch_history_reprint_recompute_default_picks();
   /* プリンタ変更時は選択先 AMS を画面へ反映する */
-  lv_msg_send(XTOUCH_HISTORY_REPRINT_DETAIL_READY, NULL);
+  lv_msg_send(XPTOUCH_HISTORY_REPRINT_DETAIL_READY, NULL);
 }
 
-static void xtouch_history_on_reprint_with_options(void *user_data, lv_msg_t *m)
+static void xptouch_history_on_reprint_with_options(void *user_data, lv_msg_t *m)
 {
   (void)user_data;
-  const struct XTOUCH_MESSAGE_DATA *payload =
-      m ? (const struct XTOUCH_MESSAGE_DATA *)lv_msg_get_payload(m) : NULL;
+  const struct XPTOUCH_MESSAGE_DATA *payload =
+      m ? (const struct XPTOUCH_MESSAGE_DATA *)lv_msg_get_payload(m) : NULL;
   if (!payload)
     return;
-  xtouch_history_reprint_printer_dd_slot = (int)payload->data2;
+  xptouch_history_reprint_printer_dd_slot = (int)payload->data2;
   bool ok = false;
-  if (xtouch_history_reprint_task_id_valid)
-    ok = cloud.submitReprintTaskByTaskId(xtouch_history_reprint_task_id);
+  if (xptouch_history_reprint_task_id_valid)
+    ok = cloud.submitReprintTaskByTaskId(xptouch_history_reprint_task_id);
 
   if (ok)
   {
-    struct XTOUCH_MESSAGE_DATA done = { 0, 0 };
-    lv_msg_send(XTOUCH_HISTORY_REPRINT_DONE, &done);
+    struct XPTOUCH_MESSAGE_DATA done = { 0, 0 };
+    lv_msg_send(XPTOUCH_HISTORY_REPRINT_DONE, &done);
   }
 }
 
-static void xtouch_history_on_thumbnails_hide_changed(lv_msg_t *m, void *user_data)
+static void xptouch_history_on_thumbnails_hide_changed(lv_msg_t *m, void *user_data)
 {
   (void)m;
   (void)user_data;
-  if (xTouchConfig.xTouchHideAllThumbnails)
+  if (xPTouchConfig.xTouchHideAllThumbnails)
   {
-    xtouch_history_cover_clear();
-    xtouch_history_list_refresh_full();
+    xptouch_history_cover_clear();
+    xptouch_history_list_refresh_full();
   }
   else
   {
-    xtouch_history_list_refresh_full();
+    xptouch_history_list_refresh_full();
     {
       lv_disp_t *disp = lv_disp_get_default();
       if (disp)
         lv_refr_now(disp);
     }
-    xtouch_history_schedule_cover_work_deferred(XTOUCH_HISTORY_DEFER_THUMBS_SHOW);
+    xptouch_history_schedule_cover_work_deferred(XPTOUCH_HISTORY_DEFER_THUMBS_SHOW);
   }
-  lv_msg_send(XTOUCH_HISTORY_REPRINT_DETAIL_READY, NULL);
+  lv_msg_send(XPTOUCH_HISTORY_REPRINT_DETAIL_READY, NULL);
 }
 
 /** History 再入室時: 一覧はメモリにある。LIST_REFRESH のみ（lv_refr_now は load_scr 前に呼ぶとアクティブ画面不一致で Panic し得る）。サムネは遅延タイマーで開始。 */
-static void xtouch_history_on_cover_retry(lv_msg_t *m, void *user_data)
+static void xptouch_history_on_cover_retry(lv_msg_t *m, void *user_data)
 {
   (void)m;
   (void)user_data;
-  if (xTouchConfig.xTouchHideAllThumbnails)
+  if (xPTouchConfig.xTouchHideAllThumbnails)
     return;
-  xtouch_history_list_refresh_full();
-  xtouch_history_schedule_cover_work_deferred(XTOUCH_HISTORY_DEFER_COVER_RETRY);
+  xptouch_history_list_refresh_full();
+  xptouch_history_schedule_cover_work_deferred(XPTOUCH_HISTORY_DEFER_COVER_RETRY);
 }
 
-static void xtouch_history_subscribe_events_impl(void)
+static void xptouch_history_subscribe_events_impl(void)
 {
   if (s_history_done_queue == NULL)
   {
-    s_history_done_queue = xQueueCreate(XTOUCH_HISTORY_COVER_QUEUE_LEN, sizeof(int));
-    s_history_fetch_queue = xQueueCreate(2, sizeof(xtouch_history_fetch_req_t));
-    s_history_fetch_done_queue = xQueueCreate(2, sizeof(xtouch_history_fetch_res_t));
-    s_history_detail_queue = xQueueCreate(1, sizeof(xtouch_history_detail_req_t));
-    s_history_detail_done_queue = xQueueCreate(1, sizeof(xtouch_history_detail_res_t));
+    s_history_done_queue = xQueueCreate(XPTOUCH_HISTORY_COVER_QUEUE_LEN, sizeof(int));
+    s_history_fetch_queue = xQueueCreate(2, sizeof(xptouch_history_fetch_req_t));
+    s_history_fetch_done_queue = xQueueCreate(2, sizeof(xptouch_history_fetch_res_t));
+    s_history_detail_queue = xQueueCreate(1, sizeof(xptouch_history_detail_req_t));
+    s_history_detail_done_queue = xQueueCreate(1, sizeof(xptouch_history_detail_res_t));
     if (s_history_done_queue && s_history_fetch_queue && s_history_fetch_done_queue && s_history_detail_queue &&
         s_history_detail_done_queue)
     {
-      xtouch_thumbnail_register_history_cover_done_queue(s_history_done_queue);
-      s_history_done_timer = lv_timer_create(xtouch_history_cover_done_timer_cb, XTOUCH_HISTORY_COVER_POLL_MS, NULL);
+      xptouch_thumbnail_register_history_cover_done_queue(s_history_done_queue);
+      s_history_done_timer = lv_timer_create(xptouch_history_cover_done_timer_cb, XPTOUCH_HISTORY_COVER_POLL_MS, NULL);
       lv_timer_set_repeat_count(s_history_done_timer, -1);
-      xTaskCreate(xtouch_history_fetch_task, "hist_fetch", XTOUCH_HISTORY_COVER_TASK_STACK_WORDS, NULL, 1, NULL);
-      s_history_fetch_done_timer = lv_timer_create(xtouch_history_fetch_done_timer_cb, XTOUCH_HISTORY_COVER_POLL_MS, NULL);
+      xTaskCreate(xptouch_history_fetch_task, "hist_fetch", XPTOUCH_HISTORY_COVER_TASK_STACK_WORDS, NULL, 1, NULL);
+      s_history_fetch_done_timer = lv_timer_create(xptouch_history_fetch_done_timer_cb, XPTOUCH_HISTORY_COVER_POLL_MS, NULL);
       lv_timer_set_repeat_count(s_history_fetch_done_timer, -1);
-      xTaskCreate(xtouch_history_detail_task, "hist_detail", XTOUCH_HISTORY_COVER_TASK_STACK_WORDS, NULL, 1, NULL);
-      s_history_detail_done_timer = lv_timer_create(xtouch_history_detail_done_timer_cb, XTOUCH_HISTORY_COVER_POLL_MS, NULL);
+      xTaskCreate(xptouch_history_detail_task, "hist_detail", XPTOUCH_HISTORY_COVER_TASK_STACK_WORDS, NULL, 1, NULL);
+      s_history_detail_done_timer = lv_timer_create(xptouch_history_detail_done_timer_cb, XPTOUCH_HISTORY_COVER_POLL_MS, NULL);
       lv_timer_set_repeat_count(s_history_detail_done_timer, -1);
     }
   }
-  lv_msg_subscribe(XTOUCH_HISTORY_FETCH, (lv_msg_subscribe_cb_t)xtouch_history_on_fetch, NULL);
-  lv_msg_subscribe(XTOUCH_HISTORY_COVER_RETRY, (lv_msg_subscribe_cb_t)xtouch_history_on_cover_retry, NULL);
-  lv_msg_subscribe(XTOUCH_HISTORY_REPRINT_WITH_OPTIONS, (lv_msg_subscribe_cb_t)xtouch_history_on_reprint_with_options, NULL);
-  lv_msg_subscribe(XTOUCH_HISTORY_REPRINT_DETAIL_FETCH, (lv_msg_subscribe_cb_t)xtouch_history_on_reprint_detail_fetch, NULL);
-  lv_msg_subscribe(XTOUCH_HISTORY_REPRINT_SLOT_PICKED, (lv_msg_subscribe_cb_t)xtouch_history_on_reprint_slot_picked, NULL);
-  lv_msg_subscribe(XTOUCH_HISTORY_REPRINT_PRINTER_CHANGED, (lv_msg_subscribe_cb_t)xtouch_history_on_reprint_printer_changed, NULL);
-  lv_msg_subscribe(XTOUCH_HISTORY_COVER_DL_CANCEL, (lv_msg_subscribe_cb_t)xtouch_history_on_cover_dl_cancel, NULL);
-  lv_msg_subscribe(XTOUCH_THUMBNAILS_HIDE_MODE_CHANGED, (lv_msg_subscribe_cb_t)xtouch_history_on_thumbnails_hide_changed, NULL);
+  lv_msg_subscribe(XPTOUCH_HISTORY_FETCH, (lv_msg_subscribe_cb_t)xptouch_history_on_fetch, NULL);
+  lv_msg_subscribe(XPTOUCH_HISTORY_COVER_RETRY, (lv_msg_subscribe_cb_t)xptouch_history_on_cover_retry, NULL);
+  lv_msg_subscribe(XPTOUCH_HISTORY_REPRINT_WITH_OPTIONS, (lv_msg_subscribe_cb_t)xptouch_history_on_reprint_with_options, NULL);
+  lv_msg_subscribe(XPTOUCH_HISTORY_REPRINT_DETAIL_FETCH, (lv_msg_subscribe_cb_t)xptouch_history_on_reprint_detail_fetch, NULL);
+  lv_msg_subscribe(XPTOUCH_HISTORY_REPRINT_SLOT_PICKED, (lv_msg_subscribe_cb_t)xptouch_history_on_reprint_slot_picked, NULL);
+  lv_msg_subscribe(XPTOUCH_HISTORY_REPRINT_PRINTER_CHANGED, (lv_msg_subscribe_cb_t)xptouch_history_on_reprint_printer_changed, NULL);
+  lv_msg_subscribe(XPTOUCH_HISTORY_COVER_DL_CANCEL, (lv_msg_subscribe_cb_t)xptouch_history_on_cover_dl_cancel, NULL);
+  lv_msg_subscribe(XPTOUCH_THUMBNAILS_HIDE_MODE_CHANGED, (lv_msg_subscribe_cb_t)xptouch_history_on_thumbnails_hide_changed, NULL);
 }
 
-extern "C" void xtouch_history_clear_tasks_on_leave_c(void)
+extern "C" void xptouch_history_clear_tasks_on_leave_c(void)
 {
-  xtouch_history_count = 0;
-  memset(xtouch_history_tasks, 0, sizeof(xtouch_history_tasks));
+  xptouch_history_count = 0;
+  memset(xptouch_history_tasks, 0, sizeof(xptouch_history_tasks));
   s_history_last_append_after[0] = '\0';
-  xtouch_history_cover_clear();
+  xptouch_history_cover_clear();
 }
 
-void xtouch_history_subscribe_events(void)
+void xptouch_history_subscribe_events(void)
 {
-  xtouch_history_subscribe_events_impl();
+  xptouch_history_subscribe_events_impl();
 }
 
 #else
 
-void xtouch_history_subscribe_events(void)
+void xptouch_history_subscribe_events(void)
 {
   (void)0;
 }

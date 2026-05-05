@@ -117,8 +117,8 @@ extern "C"
      */
     void ui_img_zoom_to_fit_box(lv_obj_t *img, lv_coord_t box_w, lv_coord_t box_h);
 
-#ifdef __XTOUCH_PLATFORM_S3__
-    /** Printers/Home 共通: types の xtouch_thumbnail_slot_dsc/path を使って img にスロットのサムネを描画 */
+#ifdef __XPTOUCH_PLATFORM_S3__
+    /** Printers/Home 共通: types の xptouch_thumbnail_slot_dsc/path を使って img にスロットのサムネを描画 */
     void ui_thumb_set_img_src_from_slot(lv_obj_t *img, int slot);
 #endif
 

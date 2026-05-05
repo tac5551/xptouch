@@ -1,7 +1,7 @@
-#ifndef XTOUCH_M5STACK_H
-#define XTOUCH_M5STACK_H
+#ifndef XPTOUCH_M5STACK_H
+#define XPTOUCH_M5STACK_H
 
-#if defined(__XTOUCH_SCREEN_28__)
+#if defined(__XPTOUCH_SCREEN_28__)
 
 #include <Arduino.h>
 #include "devices/2.8/screen.h"
@@ -30,7 +30,7 @@ static bool m5stack_btn_c_pla_next = true;       // true=次押下でPLA, false=
 void IRAM_ATTR m5stack_btn_center_isr() { m5stack_btn_center = true; }
 
 /** board_id は (int)tft.getBoard()。M5Stack のときだけ有効。 */
-static void xtouch_m5stack_buttons_setup(int board_id)
+static void xptouch_m5stack_buttons_setup(int board_id)
 {
     if (board_id != M5STACK_BOARD_ID)
         return;
@@ -42,7 +42,7 @@ static void xtouch_m5stack_buttons_setup(int board_id)
     ConsoleDebug.println("M5Stack physical buttons enabled (L:wake/sleep C:light R:PLA/OFF)");
 }
 
-static void xtouch_m5stack_buttons_loop(void)
+static void xptouch_m5stack_buttons_loop(void)
 {
     if (!m5stack_buttons_enabled)
         return;
@@ -53,10 +53,10 @@ static void xtouch_m5stack_buttons_loop(void)
     {
         m5stack_btn_last_left = now;
         m5stack_left_was_released = false;
-        if (xtouch_screen_touchFromPowerOff)
-            xtouch_screen_wakeUp();
+        if (xptouch_screen_touchFromPowerOff)
+            xptouch_screen_wakeUp();
         else
-            xtouch_screen_sleep();
+            xptouch_screen_sleep();
     }
     if (!left_now)
         m5stack_left_was_released = true;
@@ -66,7 +66,7 @@ static void xtouch_m5stack_buttons_loop(void)
         if (now - m5stack_btn_last_center >= M5STACK_BTN_DEBOUNCE_MS)
         {
             m5stack_btn_last_center = now;
-            lv_msg_send(XTOUCH_COMMAND_LIGHT_TOGGLE, NULL);
+            lv_msg_send(XPTOUCH_COMMAND_LIGHT_TOGGLE, NULL);
         }
     }
     // 右ボタン: ポーリングでPLA/OFF交互（押下エッジのみ）
@@ -90,6 +90,6 @@ static void xtouch_m5stack_buttons_loop(void)
         m5stack_right_was_released = true;
 }
 
-#endif /* __XTOUCH_SCREEN_28__ */
+#endif /* __XPTOUCH_SCREEN_28__ */
 
-#endif /* XTOUCH_M5STACK_H */
+#endif /* XPTOUCH_M5STACK_H */

@@ -102,7 +102,7 @@ void ui_event_comp_controlComponent_nozzleTemp(lv_event_t *e)
 {
     lv_obj_t *target = lv_event_get_target(e);
     lv_msg_t *m = lv_event_get_msg(e);
-    struct XTOUCH_MESSAGE_DATA *message = (struct XTOUCH_MESSAGE_DATA *)m->payload;
+    struct XPTOUCH_MESSAGE_DATA *message = (struct XPTOUCH_MESSAGE_DATA *)m->payload;
     char value[10];
     itoa(message->data, value, 10);
     lv_label_set_text(target, value);
@@ -392,7 +392,7 @@ lv_obj_t *ui_controlComponent_create(lv_obj_t *comp_parent)
     lv_obj_t *cui_nozzleTempVal = lv_label_create(cui_nozzleTempBtn);
     lv_label_set_text(cui_nozzleTempVal, "");
     lv_obj_set_align(cui_nozzleTempVal, LV_ALIGN_RIGHT_MID);
-#if defined(__XTOUCH_SCREEN_S3_050__) || defined(__XTOUCH_SCREEN_S3_3248__)
+#if defined(__XPTOUCH_SCREEN_S3_050__) || defined(__XPTOUCH_SCREEN_S3_3248__)
     lv_obj_set_style_text_font(cui_nozzleTempVal, lv_font_middle, LV_PART_MAIN | LV_STATE_DEFAULT);
 #else
     /* default は 2.8 側 */
@@ -1426,8 +1426,8 @@ lv_obj_t *ui_controlComponent_create(lv_obj_t *comp_parent)
     lv_obj_add_event_cb(cui_nozzleTempVal, ui_event_comp_controlComponent_nozzleTemp, LV_EVENT_MSG_RECEIVED, NULL);
 
     lv_obj_add_event_cb(cui_controlScreenRangeValue, onXtouchRangeChange, LV_EVENT_MSG_RECEIVED, NULL);
-    lv_msg_subsribe_obj(XTOUCH_CONTROL_INC_SWITCH, cui_controlScreenRangeValue, NULL);
-    lv_msg_subsribe_obj(XTOUCH_ON_NOZZLE_TEMP, cui_nozzleTempVal, NULL);
+    lv_msg_subsribe_obj(XPTOUCH_CONTROL_INC_SWITCH, cui_controlScreenRangeValue, NULL);
+    lv_msg_subsribe_obj(XPTOUCH_ON_NOZZLE_TEMP, cui_nozzleTempVal, NULL);
 
     ui_comp_controlComponent_create_hook(cui_controlComponent);
     return cui_controlComponent;

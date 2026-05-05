@@ -9,35 +9,35 @@
 int NeoPixelCount = PIXEL_COUNT;
 
 #include <Adafruit_NeoPixel.h>
-#if defined(__XTOUCH_SCREEN_28__)
+#if defined(__XPTOUCH_SCREEN_28__)
 #include "devices/2.8/screen.h"
-#elif defined(__XTOUCH_SCREEN_S3_028__)
+#elif defined(__XPTOUCH_SCREEN_S3_028__)
 #include "devices/s3_2.8/screen.h"
-#elif defined(__XTOUCH_SCREEN_S3_3248__)
+#elif defined(__XPTOUCH_SCREEN_S3_3248__)
 #include "devices/s3_3248w535/screen.h"
-#elif defined(__XTOUCH_SCREEN_S3_050__)
+#elif defined(__XPTOUCH_SCREEN_S3_050__)
 #include "devices/5.0/screen.h"
 #endif
 Adafruit_NeoPixel strip  = Adafruit_NeoPixel(PIXEL_COUNT, 17, NEO_GRB + NEO_KHZ800);
 
-void xtouch_neo_pixel_timer_init(int pin);
-void xtouch_neo_pixel_init(int pin);
-void xtouch_neo_pixel_on(int iRed, int iGreen, int iBlue);
-void xtouch_neo_pixel_off();
-void xtouch_neo_pixel_control_timer_create();
-void xtouch_neo_pixel_control_timer_start(int pin);
-void xtouch_neo_pixel_control_timer_stop();
-void xtouch_neo_pixel_set_led_color(int red, int green, int blue);
-void xtouch_neo_pixel_set_pettern(int pattern);
-void xtouch_neo_pixel_set_status_timeout(int timeout);
-void xtouch_neo_pixel_control_timer_handler(lv_timer_t *timer);
-void xtouch_neo_pixel_set_brightness(int brightness);
-void xtouch_neo_pixel_set_num(int num);
-void xtouch_neo_pixel_reset_all();
-void xtouch_neo_pixel_set_idle_led_enabled(bool enabled);
+void xptouch_neo_pixel_timer_init(int pin);
+void xptouch_neo_pixel_init(int pin);
+void xptouch_neo_pixel_on(int iRed, int iGreen, int iBlue);
+void xptouch_neo_pixel_off();
+void xptouch_neo_pixel_control_timer_create();
+void xptouch_neo_pixel_control_timer_start(int pin);
+void xptouch_neo_pixel_control_timer_stop();
+void xptouch_neo_pixel_set_led_color(int red, int green, int blue);
+void xptouch_neo_pixel_set_pettern(int pattern);
+void xptouch_neo_pixel_set_status_timeout(int timeout);
+void xptouch_neo_pixel_control_timer_handler(lv_timer_t *timer);
+void xptouch_neo_pixel_set_brightness(int brightness);
+void xptouch_neo_pixel_set_num(int num);
+void xptouch_neo_pixel_reset_all();
+void xptouch_neo_pixel_set_idle_led_enabled(bool enabled);
 
-lv_timer_t *xtouch_neo_pixel_control_timer;
-bool xtouch_neo_pixel_control_started = false;
+lv_timer_t *xptouch_neo_pixel_control_timer;
+bool xptouch_neo_pixel_control_started = false;
 int last_print_status = 0;
 bool print_status_changed = false;
 int last_print_gcode_action = 0;
@@ -64,56 +64,56 @@ int brightness_min = 2;
 int flowing_speed = 8; // より滑らかな移動のため増加
 const int timer_tick = 5;
 
-void xtouch_neo_pixel_control_timer_create()
+void xptouch_neo_pixel_control_timer_create()
 {
     // 既存のタイマーが存在する場合は削除してから新しいタイマーを作成
     // これにより、複数のタイマーが同時に動作することを防ぐ
-    if (xtouch_neo_pixel_control_timer != NULL)
+    if (xptouch_neo_pixel_control_timer != NULL)
     {
-        lv_timer_del(xtouch_neo_pixel_control_timer);
-        xtouch_neo_pixel_control_timer = NULL;
+        lv_timer_del(xptouch_neo_pixel_control_timer);
+        xptouch_neo_pixel_control_timer = NULL;
     }
     
-    xtouch_neo_pixel_control_timer = lv_timer_create(xtouch_neo_pixel_control_timer_handler, timer_tick, NULL);
-    lv_timer_set_repeat_count(xtouch_neo_pixel_control_timer, -1); // 無限ループ
+    xptouch_neo_pixel_control_timer = lv_timer_create(xptouch_neo_pixel_control_timer_handler, timer_tick, NULL);
+    lv_timer_set_repeat_count(xptouch_neo_pixel_control_timer, -1); // 無限ループ
 }
 
-void xtouch_neo_pixel_control_timer_start(int pin)
+void xptouch_neo_pixel_control_timer_start(int pin)
 {
-    if (!xtouch_neo_pixel_control_started)
+    if (!xptouch_neo_pixel_control_started)
     {
-        xtouch_neo_pixel_init(pin);
-        xtouch_neo_pixel_control_started = true;
+        xptouch_neo_pixel_init(pin);
+        xptouch_neo_pixel_control_started = true;
     }
-    xtouch_neo_pixel_control_timer_create();
+    xptouch_neo_pixel_control_timer_create();
 }
 
-void xtouch_neo_pixel_control_timer_stop()
+void xptouch_neo_pixel_control_timer_stop()
 {
-    if (xtouch_neo_pixel_control_timer != NULL)
+    if (xptouch_neo_pixel_control_timer != NULL)
     {
-        lv_timer_pause(xtouch_neo_pixel_control_timer);
+        lv_timer_pause(xptouch_neo_pixel_control_timer);
     }
 }
 
-void xtouch_neo_pixel_timer_init(int pin)
+void xptouch_neo_pixel_timer_init(int pin)
 {
-    if (xTouchConfig.xTouchNeoPixelNumValue > 0)
+    if (xPTouchConfig.xTouchNeoPixelNumValue > 0)
     {
-        xtouch_neo_pixel_control_timer_start(pin);
+        xptouch_neo_pixel_control_timer_start(pin);
     }
     else
     {
-        if (xtouch_neo_pixel_control_started)
+        if (xptouch_neo_pixel_control_started)
         {
-            xtouch_neo_pixel_control_timer_stop();
+            xptouch_neo_pixel_control_timer_stop();
         }
         // LED個数が0の場合は消灯
-        xtouch_neo_pixel_reset_all();
+        xptouch_neo_pixel_reset_all();
     }
 }
 
-void xtouch_neo_pixel_init(int pin)
+void xptouch_neo_pixel_init(int pin)
 {
 
     strip.setPin(pin);
@@ -121,12 +121,12 @@ void xtouch_neo_pixel_init(int pin)
 
 }
 
-void xtouch_neo_pixel_off()
+void xptouch_neo_pixel_off()
 {
-    xtouch_neo_pixel_on(0, 0, 0);
+    xptouch_neo_pixel_on(0, 0, 0);
 }
 
-void xtouch_neo_pixel_on(int iRed, int iGreen, int iBlue)
+void xptouch_neo_pixel_on(int iRed, int iGreen, int iBlue)
 {
     // ひとつづつつけていく
     for (int j = 0; j < NeoPixelCount; j++)
@@ -137,14 +137,14 @@ void xtouch_neo_pixel_on(int iRed, int iGreen, int iBlue)
 }
 
 
-void xtouch_neo_pixel_set_led_color(int red, int green, int blue)
+void xptouch_neo_pixel_set_led_color(int red, int green, int blue)
 {
     led_color[0] = red;
     led_color[1] = green;
     led_color[2] = blue;
 }
 
-void xtouch_neo_pixel_set_num(int num)
+void xptouch_neo_pixel_set_num(int num)
 {
     int backup = NeoPixelCount;
     NeoPixelCount = num;
@@ -152,10 +152,10 @@ void xtouch_neo_pixel_set_num(int num)
     // LED個数が0に設定された場合は消灯
     if (num == 0)
     {
-        xtouch_neo_pixel_reset_all();
-        if (xtouch_neo_pixel_control_started)
+        xptouch_neo_pixel_reset_all();
+        if (xptouch_neo_pixel_control_started)
         {
-            xtouch_neo_pixel_control_timer_stop();
+            xptouch_neo_pixel_control_timer_stop();
         }
     }
     
@@ -174,7 +174,7 @@ void xtouch_neo_pixel_set_num(int num)
     }
 }
 
-void xtouch_neo_pixel_reset_all()
+void xptouch_neo_pixel_reset_all()
 {
     for (int i = 0; i < PIXEL_COUNT; i++)
     {
@@ -182,31 +182,31 @@ void xtouch_neo_pixel_reset_all()
     }
     strip.show();
 }
-void xtouch_neo_pixel_set_brightness(int brightness)
+void xptouch_neo_pixel_set_brightness(int brightness)
 {
     brightness_max = brightness;
 }
 
-void xtouch_neo_pixel_set_pettern(int pattern)
+void xptouch_neo_pixel_set_pettern(int pattern)
 {
     pettern = pattern;
 }
-void xtouch_neo_pixel_set_status_timeout(int timeout)
+void xptouch_neo_pixel_set_status_timeout(int timeout)
 {
     status_timeout = timeout;
 }
 
-void xtouch_neo_pixel_set_alarm_timeout(int timeout)
+void xptouch_neo_pixel_set_alarm_timeout(int timeout)
 {
     alarm_timeout = timeout;
 }
 
-void xtouch_neo_pixel_set_idle_led_enabled(bool enabled)
+void xptouch_neo_pixel_set_idle_led_enabled(bool enabled)
 {
     idle_led_enabled = enabled;
 }
 
-void xtouch_neo_pixel_control_timer_handler(lv_timer_t *timer)
+void xptouch_neo_pixel_control_timer_handler(lv_timer_t *timer)
 {
     // status_timeoutのカウントダウン処理
     if (status_timeout > 0)
@@ -242,104 +242,104 @@ void xtouch_neo_pixel_control_timer_handler(lv_timer_t *timer)
     if (print_status_changed || print_gcode_action_changed)
     {
 
-        if (bambuStatus.print_status == XTOUCH_PRINT_STATUS_PREPARE)
+        if (bambuStatus.print_status == XPTOUCH_PRINT_STATUS_PREPARE)
         {
-            xtouch_neo_pixel_set_led_color(128, 40, 0); // オレンジ色
-            xtouch_neo_pixel_set_pettern(4);
+            xptouch_neo_pixel_set_led_color(128, 40, 0); // オレンジ色
+            xptouch_neo_pixel_set_pettern(4);
         }
-        else if (bambuStatus.print_status == XTOUCH_PRINT_STATUS_RUNNING)
+        else if (bambuStatus.print_status == XPTOUCH_PRINT_STATUS_RUNNING)
         {
             if (bambuStatus.print_gcode_action == 0) // 0	turn off light and wait extrude temperature
             {
-                xtouch_neo_pixel_set_led_color(0, 0, 128); // 青色
-                xtouch_neo_pixel_set_pettern(4);           // 進捗表示パターン
+                xptouch_neo_pixel_set_led_color(0, 0, 128); // 青色
+                xptouch_neo_pixel_set_pettern(4);           // 進捗表示パターン
             }
             else if (bambuStatus.print_gcode_action == 1) // 1	bed leveling
             {
-                xtouch_neo_pixel_set_led_color(128, 55, 0); // オレンジ色
-                xtouch_neo_pixel_set_pettern(4);
+                xptouch_neo_pixel_set_led_color(128, 55, 0); // オレンジ色
+                xptouch_neo_pixel_set_pettern(4);
             }
             else if (bambuStatus.print_gcode_action == 2) // 2	heatbet preheat
             {
-                xtouch_neo_pixel_set_led_color(128, 30, 0); // オレンジ色
-                xtouch_neo_pixel_set_pettern(3);
+                xptouch_neo_pixel_set_led_color(128, 30, 0); // オレンジ色
+                xptouch_neo_pixel_set_pettern(3);
             }
             else if (bambuStatus.print_gcode_action == 3) // 3	振動補正 vibration compensation
             {
-                xtouch_neo_pixel_set_led_color(128, 50, 0); // オレンジ色
-                xtouch_neo_pixel_set_pettern(4);
+                xptouch_neo_pixel_set_led_color(128, 50, 0); // オレンジ色
+                xptouch_neo_pixel_set_pettern(4);
             }
             else if (bambuStatus.print_gcode_action == 8) // 8	draw extrinsic para cali pain
             {
-                xtouch_neo_pixel_set_led_color(128, 65, 0); // オレンジ色
-                xtouch_neo_pixel_set_pettern(4);
+                xptouch_neo_pixel_set_led_color(128, 65, 0); // オレンジ色
+                xptouch_neo_pixel_set_pettern(4);
             }
             else if (bambuStatus.print_gcode_action == 13) // 13	home after wipe mouth
             {
-                xtouch_neo_pixel_set_led_color(128, 70, 0); // オレンジ色
-                xtouch_neo_pixel_set_pettern(4);
+                xptouch_neo_pixel_set_led_color(128, 70, 0); // オレンジ色
+                xptouch_neo_pixel_set_pettern(4);
             }
             else if (bambuStatus.print_gcode_action == 14) // 14	nozzle wipe
             {
-                xtouch_neo_pixel_set_led_color(128, 75, 0); // オレンジ色
-                xtouch_neo_pixel_set_pettern(4);
+                xptouch_neo_pixel_set_led_color(128, 75, 0); // オレンジ色
+                xptouch_neo_pixel_set_pettern(4);
             }
             else if (bambuStatus.print_gcode_action == 18) // 18	MicroRider calibration
             {
-                xtouch_neo_pixel_set_led_color(128, 78, 0); // オレンジ色
-                xtouch_neo_pixel_set_pettern(4);
+                xptouch_neo_pixel_set_led_color(128, 78, 0); // オレンジ色
+                xptouch_neo_pixel_set_pettern(4);
             }
             else if (bambuStatus.print_gcode_action == 25 || bambuStatus.print_gcode_action == 48) // 25, 48	motor noise cancelling
             {
-                xtouch_neo_pixel_set_led_color(128, 80, 0); // オレンジ色
-                xtouch_neo_pixel_set_pettern(4);
+                xptouch_neo_pixel_set_led_color(128, 80, 0); // オレンジ色
+                xptouch_neo_pixel_set_pettern(4);
             }
             else if (bambuStatus.print_gcode_action == 255) // 255	unknown
             {
-                xtouch_neo_pixel_set_led_color(0, 80, 128); // シアン（水色）
-                xtouch_neo_pixel_set_pettern(3);
+                xptouch_neo_pixel_set_led_color(0, 80, 128); // シアン（水色）
+                xptouch_neo_pixel_set_pettern(3);
             }
             else
             {
-                xtouch_neo_pixel_set_led_color(0, 0, 0); // オフ
+                xptouch_neo_pixel_set_led_color(0, 0, 0); // オフ
             }
         }
-        else if (bambuStatus.print_status == XTOUCH_PRINT_STATUS_PAUSED)
+        else if (bambuStatus.print_status == XPTOUCH_PRINT_STATUS_PAUSED)
         {
-            xtouch_neo_pixel_set_led_color(64, 64, 128); // 白色
-            xtouch_neo_pixel_set_pettern(1);
+            xptouch_neo_pixel_set_led_color(64, 64, 128); // 白色
+            xptouch_neo_pixel_set_pettern(1);
         }
-        else if (bambuStatus.print_status == XTOUCH_PRINT_STATUS_FINISHED)
+        else if (bambuStatus.print_status == XPTOUCH_PRINT_STATUS_FINISHED)
         {
-            xtouch_neo_pixel_set_led_color(0, 128, 0);
-            xtouch_neo_pixel_set_pettern(1);
+            xptouch_neo_pixel_set_led_color(0, 128, 0);
+            xptouch_neo_pixel_set_pettern(1);
             if(alarm_timeout > 0){
-                xtouch_neo_pixel_set_status_timeout(alarm_timeout * 30 * 1000);
+                xptouch_neo_pixel_set_status_timeout(alarm_timeout * 30 * 1000);
             }
             else{
-                xtouch_neo_pixel_set_status_timeout(-1);
+                xptouch_neo_pixel_set_status_timeout(-1);
             }
         }
-        else if (bambuStatus.print_status == XTOUCH_PRINT_STATUS_FAILED)
+        else if (bambuStatus.print_status == XPTOUCH_PRINT_STATUS_FAILED)
         {
-            xtouch_neo_pixel_set_led_color(64, 0, 0); // 赤色の点滅
-            xtouch_neo_pixel_set_pettern(6);
+            xptouch_neo_pixel_set_led_color(64, 0, 0); // 赤色の点滅
+            xptouch_neo_pixel_set_pettern(6);
             if(alarm_timeout > 0){
-                xtouch_neo_pixel_set_status_timeout(alarm_timeout * 30 * 1000);
+                xptouch_neo_pixel_set_status_timeout(alarm_timeout * 30 * 1000);
             }
             else{
-                xtouch_neo_pixel_set_status_timeout(-1);
+                xptouch_neo_pixel_set_status_timeout(-1);
             }
         }
-        else if (bambuStatus.print_status == XTOUCH_PRINT_STATUS_IDLE)
+        else if (bambuStatus.print_status == XPTOUCH_PRINT_STATUS_IDLE)
         {
-            xtouch_neo_pixel_set_led_color(32, 0, 0);
-            xtouch_neo_pixel_set_pettern(5);
+            xptouch_neo_pixel_set_led_color(32, 0, 0);
+            xptouch_neo_pixel_set_pettern(5);
         }
         else
         {
-            xtouch_neo_pixel_set_led_color(0, 0, 0);
-            xtouch_neo_pixel_set_pettern(0);
+            xptouch_neo_pixel_set_led_color(0, 0, 0);
+            xptouch_neo_pixel_set_pettern(0);
         }
         ConsoleDebug.println("[xPTouch][D][LED] print_status : " + String(bambuStatus.print_status) + " , print_gcode_action : " + String(bambuStatus.print_gcode_action) + " , percent : " + String(bambuStatus.mc_print_percent));
         ConsoleDebug.println("[xPTouch][D][LED] pettern : " + String(pettern) + " , led_color : " + String(led_color[0]) + " , " + String(led_color[1]) + " , " + String(led_color[2]) + " status_timeout : " + String(status_timeout));
@@ -349,8 +349,8 @@ void xtouch_neo_pixel_control_timer_handler(lv_timer_t *timer)
     if (status_timeout == 0)
     {
         ConsoleDebug.println("[xPTouch][D][LED] status_timeout : " + String(status_timeout));
-        xtouch_neo_pixel_set_led_color(32, 0, 0);
-        xtouch_neo_pixel_set_pettern(5);
+        xptouch_neo_pixel_set_led_color(32, 0, 0);
+        xptouch_neo_pixel_set_pettern(5);
         print_status_changed = true; // ステータス変更状態とする
         status_timeout = -1;         // タイムアウトを無制限に。
     }
@@ -358,20 +358,20 @@ void xtouch_neo_pixel_control_timer_handler(lv_timer_t *timer)
     // Idle LEDが無効の場合はIDLE状態でもLEDを消灯
     if (!idle_led_enabled && pettern == 5)
     {
-        xtouch_neo_pixel_set_led_color(0, 0, 0);
-        xtouch_neo_pixel_set_pettern(0);
+        xptouch_neo_pixel_set_led_color(0, 0, 0);
+        xptouch_neo_pixel_set_pettern(0);
         print_status_changed = true;
     // Idle LEDが有効の場合はIDLE状態に戻す
     }else if (idle_led_enabled && pettern == 0 && led_color[0] == 0 && led_color[1] == 0 && led_color[2] == 0){
-        xtouch_neo_pixel_set_led_color(32, 0, 0);
-        xtouch_neo_pixel_set_pettern(5);
+        xptouch_neo_pixel_set_led_color(32, 0, 0);
+        xptouch_neo_pixel_set_pettern(5);
         print_status_changed = true;
     }
 
-    if (!xtouch_neopixel_enabled)
+    if (!xptouch_neopixel_enabled)
     {
-        xtouch_neo_pixel_set_led_color(0, 0, 0);
-        xtouch_neo_pixel_set_pettern(0);
+        xptouch_neo_pixel_set_led_color(0, 0, 0);
+        xptouch_neo_pixel_set_pettern(0);
         print_status_changed = true;
     }
 
@@ -389,9 +389,9 @@ void xtouch_neo_pixel_control_timer_handler(lv_timer_t *timer)
     int fade_interval = 1000;
 
     // Setting の明るさが0の場合は無条件でOFF
-    if (xTouchConfig.xTouchNeoPixelBrightnessValue <= 5)
+    if (xPTouchConfig.xTouchNeoPixelBrightnessValue <= 5)
     {
-        xtouch_neo_pixel_off();
+        xptouch_neo_pixel_off();
         // ステータス変更フラグをリセット
         print_status_changed = false;
         print_gcode_action_changed = false;
@@ -404,7 +404,7 @@ void xtouch_neo_pixel_control_timer_handler(lv_timer_t *timer)
             // 何もしない（既に設定された色で点灯し続ける）
         if (print_status_changed || print_gcode_action_changed)
         {
-            xtouch_neo_pixel_on(current_red, current_green, current_blue);
+            xptouch_neo_pixel_on(current_red, current_green, current_blue);
         }
         break;
 
@@ -431,7 +431,7 @@ void xtouch_neo_pixel_control_timer_handler(lv_timer_t *timer)
         current_red = (led_color[0] * current_brightness) / 255;
         current_green = (led_color[1] * current_brightness) / 255;
         current_blue = (led_color[2] * current_brightness) / 255;
-        xtouch_neo_pixel_on(current_red, current_green, current_blue);
+        xptouch_neo_pixel_on(current_red, current_green, current_blue);
         break;
 
     case 2: // 速いフェード（1秒周期でフェードアウト/フェードイン）
@@ -457,7 +457,7 @@ void xtouch_neo_pixel_control_timer_handler(lv_timer_t *timer)
         current_red = (led_color[0] * current_brightness) / 255;
         current_green = (led_color[1] * current_brightness) / 255;
         current_blue = (led_color[2] * current_brightness) / 255;
-        xtouch_neo_pixel_on(current_red, current_green, current_blue);
+        xptouch_neo_pixel_on(current_red, current_green, current_blue);
         break;
 
     case 3: // 流れる光（滑らか、ゆっくり）
@@ -692,27 +692,27 @@ void xtouch_neo_pixel_control_timer_handler(lv_timer_t *timer)
         // パッパ、パッパのパターン
         if (fade_counter < on1) // 100ms 点灯
         {
-            xtouch_neo_pixel_on(current_red, current_green, current_blue);
+            xptouch_neo_pixel_on(current_red, current_green, current_blue);
         }
         else if (fade_counter < off1) // 200ms 消灯
         {
-            xtouch_neo_pixel_off();
+            xptouch_neo_pixel_off();
         }
         else if (fade_counter < on2) // 100ms点灯
         {
-            xtouch_neo_pixel_on(current_red, current_green, current_blue);
+            xptouch_neo_pixel_on(current_red, current_green, current_blue);
         }
         else if (fade_counter < off2) // 200ms 消灯
         {
-            xtouch_neo_pixel_off();
+            xptouch_neo_pixel_off();
         }
         else if (fade_counter < on3) // 100ms点灯
         {
-            xtouch_neo_pixel_on(current_red, current_green, current_blue);
+            xptouch_neo_pixel_on(current_red, current_green, current_blue);
         }
         else // 1200ms 消灯
         {
-            xtouch_neo_pixel_off();
+            xptouch_neo_pixel_off();
         }
         break;
     }

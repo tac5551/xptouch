@@ -4,7 +4,7 @@
 static const int tab_to_screen[] = { 2, 1, 11 };
 
 /* Setup タブと同じ高さルール */
-#if defined(__XTOUCH_SCREEN_S3_050__)
+#if defined(__XPTOUCH_SCREEN_S3_050__)
 #define UTIL_TABBAR_H_PCT 15
 #else
 #define UTIL_TABBAR_H_PCT 20
@@ -37,7 +37,7 @@ static lv_obj_t *create_tab_button(lv_obj_t *parent, const char *label, int inde
     lv_obj_set_style_text_color(btn, lv_color_hex(0x111111), LV_PART_MAIN | LV_STATE_CHECKED);
     lv_obj_set_style_pad_left(btn, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_right(btn, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
-#if defined(__XTOUCH_SCREEN_S3_050__)
+#if defined(__XPTOUCH_SCREEN_S3_050__)
     lv_obj_set_style_pad_top(btn, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_bottom(btn, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
 #else

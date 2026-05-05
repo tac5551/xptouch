@@ -4,7 +4,7 @@
 #include "../ui_msgs.h"
 #include "../ui_helpers.h"
 
-#ifdef __XTOUCH_PLATFORM_S3__
+#ifdef __XPTOUCH_PLATFORM_S3__
 
 static const char *history_status_str(int s)
 {
@@ -52,23 +52,23 @@ static void update_one_row(int idx, lv_obj_t *row)
     if (!titleLabel || !printerLabel || !dateLabel || !statusLabel)
         return;
 
-    /* 行別: cover サムネイルを表示（xtouch_history_cover_dsc[idx] が設定されていれば） */
+    /* 行別: cover サムネイルを表示（xptouch_history_cover_dsc[idx] が設定されていれば） */
     if (leftBox)
     {
         lv_obj_t *coverImg = lv_obj_get_child(leftBox, 0);
         lv_obj_t *placeLabel = lv_obj_get_child(leftBox, 1);
         if (coverImg && placeLabel)
         {
-            if (xTouchConfig.xTouchHideAllThumbnails)
+            if (xPTouchConfig.xTouchHideAllThumbnails)
             {
                 lv_obj_add_flag(leftBox, LV_OBJ_FLAG_HIDDEN);
             }
             else
             {
                 lv_obj_clear_flag(leftBox, LV_OBJ_FLAG_HIDDEN);
-                if (idx < XTOUCH_HISTORY_COVER_SLOTS && xtouch_history_cover_dsc[idx] != NULL)
+                if (idx < XPTOUCH_HISTORY_COVER_SLOTS && xptouch_history_cover_dsc[idx] != NULL)
                 {
-                    lv_img_set_src(coverImg, (const void *)xtouch_history_cover_dsc[idx]);
+                    lv_img_set_src(coverImg, (const void *)xptouch_history_cover_dsc[idx]);
                     ui_img_zoom_to_fit_box(coverImg, lv_obj_get_width(leftBox), lv_obj_get_height(leftBox));
                     lv_obj_clear_flag(coverImg, LV_OBJ_FLAG_HIDDEN);
                     lv_obj_add_flag(placeLabel, LV_OBJ_FLAG_HIDDEN);
@@ -82,7 +82,7 @@ static void update_one_row(int idx, lv_obj_t *row)
         }
     }
 
-    if (idx >= xtouch_history_count || !xtouch_history_tasks[idx].valid)
+    if (idx >= xptouch_history_count || !xptouch_history_tasks[idx].valid)
     {
         lv_label_set_text(titleLabel, "-");
         lv_label_set_text(printerLabel, "");
@@ -92,10 +92,10 @@ static void update_one_row(int idx, lv_obj_t *row)
         return;
     }
 
-    const xtouch_history_task_t *t = &xtouch_history_tasks[idx];
+    const xptouch_history_task_t *t = &xptouch_history_tasks[idx];
     lv_label_set_text(titleLabel, t->title[0] ? t->title : "-");
     {
-        char pbuf[XTOUCH_HISTORY_DEVICE_NAME_LEN + XTOUCH_HISTORY_DEVICE_MODEL_LEN + 8];
+        char pbuf[XPTOUCH_HISTORY_DEVICE_NAME_LEN +XPTOUCH_HISTORY_DEVICE_MODEL_LEN + 8];
         if (t->device_name[0] && t->device_model[0] && strcmp(t->device_name, t->device_model) != 0)
             snprintf(pbuf, sizeof(pbuf), "%s (%s)", t->device_name, t->device_model);
         else if (t->device_name[0])
@@ -120,12 +120,12 @@ void ui_history_on_list_refresh(lv_msg_t *m, void *user_data)
 {
     (void)user_data;
     (void)m;
-    if (ui_historyListContainer == NULL || xTouchConfig.currentScreenIndex != 15)
+    if (ui_historyListContainer == NULL || xPTouchConfig.currentScreenIndex != 15)
         return;
-    int visible_count = xtouch_history_count;
-    if (visible_count > XTOUCH_HISTORY_UI_ROW_SLOTS)
-        visible_count = XTOUCH_HISTORY_UI_ROW_SLOTS;
-    for (int i = 0; i < XTOUCH_HISTORY_UI_ROW_SLOTS; i++)
+    int visible_count = xptouch_history_count;
+    if (visible_count > XPTOUCH_HISTORY_UI_ROW_SLOTS)
+        visible_count = XPTOUCH_HISTORY_UI_ROW_SLOTS;
+    for (int i = 0; i < XPTOUCH_HISTORY_UI_ROW_SLOTS; i++)
     {
         lv_obj_t *row = lv_obj_get_child(ui_historyListContainer, i);
         if (row == NULL)
@@ -162,7 +162,7 @@ static void ui_history_try_pull_refresh(void)
         (now - s_history_pull_last_fetch_ms) < HISTORY_PULL_REFRESH_COOLDOWN_MS)
         return;
     s_history_pull_last_fetch_ms = now;
-    ui_msg_send(XTOUCH_HISTORY_FETCH, 0, 0);
+    ui_msg_send(XPTOUCH_HISTORY_FETCH, 0, 0);
 }
 
 static void ui_event_history_list_pull_refresh(lv_event_t *e)
@@ -171,7 +171,7 @@ static void ui_event_history_list_pull_refresh(lv_event_t *e)
     lv_obj_t *list = lv_event_get_target(e);
     if (ui_historyListContainer == NULL || list != ui_historyListContainer)
         return;
-    if (xTouchConfig.currentScreenIndex != 15)
+    if (xPTouchConfig.currentScreenIndex != 15)
         return;
 
     if (c == LV_EVENT_SCROLL_BEGIN)
@@ -220,14 +220,14 @@ void ui_historyScreen_screen_init(void)
     lv_obj_set_y(ui_sidebarComponent, 178);
 
     ui_historyComponent_create(ui_historyScreen);
-    lv_msg_subsribe_obj(XTOUCH_HISTORY_LIST_REFRESH, ui_historyListContainer, NULL);
+    lv_msg_subsribe_obj(XPTOUCH_HISTORY_LIST_REFRESH, ui_historyListContainer, NULL);
     lv_obj_add_event_cb(ui_historyListContainer, ui_event_history_on_list_refresh, LV_EVENT_MSG_RECEIVED, NULL);
     lv_obj_add_event_cb(ui_historyListContainer, ui_event_history_list_pull_refresh, LV_EVENT_SCROLL_BEGIN, NULL);
     lv_obj_add_event_cb(ui_historyListContainer, ui_event_history_list_pull_refresh, LV_EVENT_SCROLL, NULL);
     lv_obj_add_event_cb(ui_historyListContainer, ui_event_history_list_pull_refresh, LV_EVENT_SCROLL_END, NULL);
     {
-        /* 一覧は常に xtouch_history_count に基づき全行描画。初回 count=0 なら空行のみ。 */
-        ui_msg_send(XTOUCH_HISTORY_LIST_REFRESH, 0, 0);
+        /* 一覧は常に xptouch_history_count に基づき全行描画。初回 count=0 なら空行のみ。 */
+        ui_msg_send(XPTOUCH_HISTORY_LIST_REFRESH, 0, 0);
     }
 }
 

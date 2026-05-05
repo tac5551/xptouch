@@ -1,12 +1,12 @@
-#ifndef _XTOUCH_THUMBNAIL_H
-#define _XTOUCH_THUMBNAIL_H
+#ifndef _XPTOUCH_THUMBNAIL_H
+#define _XPTOUCH_THUMBNAIL_H
 
 #include <stdio.h>
 #include <string.h>
 #include "ui/ui_msgs.h"
 #include "xtouch/types.h"
 #include "lvgl.h"
-#ifdef __XTOUCH_PLATFORM_S3__ 
+#ifdef __XPTOUCH_PLATFORM_S3__ 
 #include "xtouch/net.h"
 #include "xtouch/sdcard_status.h"
 #include "xtouch/sdcard.h"
@@ -17,124 +17,124 @@
 #include "freertos/semphr.h"
 #endif
 
-#define XTOUCH_THUMB_SLOT_MAX 5
+#define XPTOUCH_THUMB_SLOT_MAX 5
 /* サムネデコード解像度はホーム／Printers の lv_img 表示（75 または 150 の正方形）と一致させる（5" のみ 150） */
-#if defined(__XTOUCH_SCREEN_S3_050__)
-#define XTOUCH_THUMB_LGFX_W 150
-#define XTOUCH_THUMB_LGFX_H 150
+#if defined(__XPTOUCH_SCREEN_S3_050__)
+#define XPTOUCH_THUMB_LGFX_W 150
+#define XPTOUCH_THUMB_LGFX_H 150
 #else
-#define XTOUCH_THUMB_LGFX_W 75
-#define XTOUCH_THUMB_LGFX_H 75
+#define XPTOUCH_THUMB_LGFX_W 75
+#define XPTOUCH_THUMB_LGFX_H 75
 #endif
 /** DL 開始を遅らせる ms。この間は画面遷移など UI が応答する */
-#define XTOUCH_THUMB_FETCH_DELAY_MS 200
+#define XPTOUCH_THUMB_FETCH_DELAY_MS 200
 
-static bool xtouch_load_thumb_slot_with_lgfx(int slot, int out_w, int out_h);       /* 実装は本ヘッダ内（kikuchan/pngle） */
-static bool xtouch_load_logo_for_slot_with_lgfx(int slot, int out_w, int out_h);    /* /resource/logo.png 用（同じく pngle 経路） */
+static bool xptouch_load_thumb_slot_with_lgfx(int slot, int out_w, int out_h);       /* 実装は本ヘッダ内（kikuchan/pngle） */
+static bool xptouch_load_logo_for_slot_with_lgfx(int slot, int out_w, int out_h);    /* /resource/logo.png 用（同じく pngle 経路） */
 
-#ifdef __XTOUCH_PLATFORM_S3__ 
+#ifdef __XPTOUCH_PLATFORM_S3__ 
 /* 起動直後などで /resource/logo.png が無いと無限に open 失敗を繰り返すため、
  * "無ければ作ってDL" を 1 回だけ試し、結果をキャッシュする */
 static bool s_resource_logo_ensured = false;
 static bool s_resource_logo_ensure_success = false;
 
-static bool xtouch_ensure_resource_logo_exists(void)
+static bool xptouch_ensure_resource_logo_exists(void)
 {
     if (s_resource_logo_ensured)
         return s_resource_logo_ensure_success;
 
     const char *path = "/resource/logo.png";
-    if (!xtouch_sdcard_is_present_cached())
+    if (!xptouch_sdcard_is_present_cached())
     {
         s_resource_logo_ensure_success = false;
         return false;
     }
     s_resource_logo_ensured = true;
-    if (xtouch_sdcard_exists(path))
+    if (xptouch_sdcard_exists(path))
     {
         s_resource_logo_ensure_success = true;
         return true;
     }
 
     /* /resource フォルダが無い場合は作成 */
-    (void)xtouch_filesystem_mkdir(xtouch_sdcard_fs(), "/resource");
+    (void)xptouch_filesystem_mkdir(xptouch_sdcard_fs(), "/resource");
 
     const char *url = "https://tac-lab.tech/xptouch-bin/logo.png";
     int ok = downloadFileToSDCard(url, path);
-    s_resource_logo_ensure_success = (ok != 0) && xtouch_sdcard_exists(path);
+    s_resource_logo_ensure_success = (ok != 0) && xptouch_sdcard_exists(path);
     return s_resource_logo_ensure_success;
 }
-#endif /* __XTOUCH_PLATFORM_S3__  */
-/** History 画面 行別: SD 上の PNG をデコードして xtouch_history_cover_dsc[slot] に格納。path は "/tmp/history_cover_N.png" 等。 */
-bool xtouch_history_cover_load_path(int slot, const char *path);
+#endif /* __XPTOUCH_PLATFORM_S3__  */
+/** History 画面 行別: SD 上の PNG をデコードして xptouch_history_cover_dsc[slot] に格納。path は "/tmp/history_cover_N.png" 等。 */
+bool xptouch_history_cover_load_path(int slot, const char *path);
 /** History cover を全スロットクリア（表示をプレースホルダに戻す）。 */
-void xtouch_history_cover_clear(void);
+void xptouch_history_cover_clear(void);
 
-/** サムネイル用パスは types.h の xtouch_thumbnail_slot_path[] を UI が参照。本ヘッダではタイマー等のみ。 */
+/** サムネイル用パスは types.h の xptouch_thumbnail_slot_path[] を UI が参照。本ヘッダではタイマー等のみ。 */
 /** サムネイル用タイマーを開始（Printers 画面用）。 */
-void xtouch_thumbnail_timer_start(void);
+void xptouch_thumbnail_timer_start(void);
 /** サムネイル用タイマーを停止。 */
-void xtouch_thumbnail_timer_stop(void);
+void xptouch_thumbnail_timer_stop(void);
 /** 次回タイマーから全スロットを取得して上書きするようスケジュール（画面表示時に呼ぶ）。 */
-void xtouch_thumbnail_schedule_fetch_all(void);
+void xptouch_thumbnail_schedule_fetch_all(void);
 /** SD /tmp の .png キャッシュを削除し、サムネ用デコードバッファを無効化（Settings の Clear Cache から呼ぶ）。 */
-void xtouch_thumbnail_clear_sd_cache(void);
+void xptouch_thumbnail_clear_sd_cache(void);
 
-/** task_id に応じて xtouch_thumbnail_slot_path[slot] を更新（push_status 受信後などに呼ぶ）。
+/** task_id に応じて xptouch_thumbnail_slot_path[slot] を更新（push_status 受信後などに呼ぶ）。
  *  ファイルが SD に存在する場合のみ path を設定。未 DL の場合は空にして open エラーを防ぐ。 */
-inline void xtouch_thumbnail_update_path_for_slot(int slot)
+inline void xptouch_thumbnail_update_path_for_slot(int slot)
 {
     char path[64];
     getThumbPathForSlot(slot, path, sizeof(path));
-    if (slot >= 0 && slot < XTOUCH_THUMB_SLOT_MAX)
+    if (slot >= 0 && slot < XPTOUCH_THUMB_SLOT_MAX)
     {
-        if (xtouch_sdcard_exists(path))
-            snprintf(xtouch_thumbnail_slot_path[slot], XTOUCH_THUMB_PATH_LEN, "S:%s", path);
+        if (xptouch_sdcard_exists(path))
+            snprintf(xptouch_thumbnail_slot_path[slot], XPTOUCH_THUMB_PATH_LEN, "S:%s", path);
         else
-            xtouch_thumbnail_slot_path[slot][0] = '\0';
+            xptouch_thumbnail_slot_path[slot][0] = '\0';
     }
 }
 
 /* 以下は C++ のみ（main.cpp が include する想定）。実装は static 変数・コールバックのあとで extern "C" 定義 */
 static lv_timer_t *s_thumb_timer = nullptr;
 static int s_thumb_next_slot = 0;
-static int s_thumb_force_fetch_slot = XTOUCH_THUMB_SLOT_MAX;
-static bool s_thumb_exists[XTOUCH_THUMB_SLOT_MAX];
+static int s_thumb_force_fetch_slot = XPTOUCH_THUMB_SLOT_MAX;
+static bool s_thumb_exists[XPTOUCH_THUMB_SLOT_MAX];
 /** キャッシュから再描画を 1 回だけ行ったか（Home/Printers で SD に既にファイルがあるスロット用） */
-static bool s_thumb_cache_refresh_done[XTOUCH_THUMB_SLOT_MAX];
+static bool s_thumb_cache_refresh_done[XPTOUCH_THUMB_SLOT_MAX];
 /** 起動直後にロゴを先に全スロットへ投入したか */
 static bool s_thumb_boot_logo_seeded = false;
 
 /** pngle 出力先（フロント表示／ワーカー完了後にスワップするバック）。invalidate で参照するため宣言を早める */
-static lv_color_t *g_lgfx_thumb_buf_slot[XTOUCH_THUMB_SLOT_MAX] = { nullptr };
-static lv_color_t *g_lgfx_thumb_buf_slot_back[XTOUCH_THUMB_SLOT_MAX] = { nullptr };
+static lv_color_t *g_lgfx_thumb_buf_slot[XPTOUCH_THUMB_SLOT_MAX] = { nullptr };
+static lv_color_t *g_lgfx_thumb_buf_slot_back[XPTOUCH_THUMB_SLOT_MAX] = { nullptr };
 
-#ifdef __XTOUCH_PLATFORM_S3__ 
+#ifdef __XPTOUCH_PLATFORM_S3__ 
 /* Home/Printers と History で pngle が同時実行されると化ける場合があるためデコードを直列化 */
 static SemaphoreHandle_t s_thumb_png_decode_mutex = nullptr;
 /** デコード失敗時の task_id を2世代保持。同一 task_id で連続2回失敗したら /tmp のキャッシュ PNG を削除して再DL可能にする */
-static char s_thumb_decode_tid_gen0[XTOUCH_THUMB_SLOT_MAX][32];
-static char s_thumb_decode_tid_gen1[XTOUCH_THUMB_SLOT_MAX][32];
+static char s_thumb_decode_tid_gen0[XPTOUCH_THUMB_SLOT_MAX][32];
+static char s_thumb_decode_tid_gen1[XPTOUCH_THUMB_SLOT_MAX][32];
 /** DL 失敗後、同スロットで再キューするまでの最短時刻（SD エラー時の同一 URL 連打を抑える） */
-static uint32_t s_thumb_dl_retry_not_before_ms[XTOUCH_THUMB_SLOT_MAX];
+static uint32_t s_thumb_dl_retry_not_before_ms[XPTOUCH_THUMB_SLOT_MAX];
 /** 同一 slot の DL 多重実行を防ぐ */
-static bool s_thumb_dl_inflight[XTOUCH_THUMB_SLOT_MAX];
+static bool s_thumb_dl_inflight[XPTOUCH_THUMB_SLOT_MAX];
 /* invalidate_slot から参照するため先に宣言 */
-static bool s_thumb_decode_inflight[XTOUCH_THUMB_SLOT_MAX];
-static uint32_t s_thumb_decode_gen[XTOUCH_THUMB_SLOT_MAX];
-#define XTOUCH_THUMB_DL_FAIL_COOLDOWN_MS 15000u
+static bool s_thumb_decode_inflight[XPTOUCH_THUMB_SLOT_MAX];
+static uint32_t s_thumb_decode_gen[XPTOUCH_THUMB_SLOT_MAX];
+#define XPTOUCH_THUMB_DL_FAIL_COOLDOWN_MS 15000u
 #endif
 
 /** task / メイン接続先の変化時: デコード済み dsc と path・取得フラグを捨てる（古い Home サムネが残るのを防ぐ） */
-inline void xtouch_thumbnail_invalidate_slot(int slot)
+inline void xptouch_thumbnail_invalidate_slot(int slot)
 {
-    if (slot < 0 || slot >= XTOUCH_THUMB_SLOT_MAX)
+    if (slot < 0 || slot >= XPTOUCH_THUMB_SLOT_MAX)
         return;
     s_thumb_exists[slot] = false;
     s_thumb_cache_refresh_done[slot] = false;
-    xtouch_thumbnail_slot_dsc[slot] = nullptr;
-    xtouch_thumbnail_slot_path[slot][0] = '\0';
-#ifdef __XTOUCH_PLATFORM_S3__ 
+    xptouch_thumbnail_slot_dsc[slot] = nullptr;
+    xptouch_thumbnail_slot_path[slot][0] = '\0';
+#ifdef __XPTOUCH_PLATFORM_S3__ 
     s_thumb_decode_tid_gen0[slot][0] = '\0';
     s_thumb_decode_tid_gen1[slot][0] = '\0';
     s_thumb_dl_retry_not_before_ms[slot] = 0;
@@ -147,25 +147,25 @@ inline void xtouch_thumbnail_invalidate_slot(int slot)
 }
 
 /** メイン付け替えで otherPrinters の行対応が変わるとき: slot0〜 をまとめて捨てる（Printers だけ並びが変わりサムネがズレるのを防ぐ） */
-inline void xtouch_thumbnail_invalidate_all_slots(void)
+inline void xptouch_thumbnail_invalidate_all_slots(void)
 {
-    for (int s = 0; s < XTOUCH_THUMB_SLOT_MAX; s++)
-        xtouch_thumbnail_invalidate_slot(s);
+    for (int s = 0; s < XPTOUCH_THUMB_SLOT_MAX; s++)
+        xptouch_thumbnail_invalidate_slot(s);
 }
 
-inline void xtouch_thumbnail_update_path_all_slots(void)
+inline void xptouch_thumbnail_update_path_all_slots(void)
 {
-    for (int s = 0; s < XTOUCH_THUMB_SLOT_MAX; s++)
-        xtouch_thumbnail_update_path_for_slot(s);
+    for (int s = 0; s < XPTOUCH_THUMB_SLOT_MAX; s++)
+        xptouch_thumbnail_update_path_for_slot(s);
 }
 
-#ifdef __XTOUCH_PLATFORM_S3__ 
+#ifdef __XPTOUCH_PLATFORM_S3__ 
 /** pngle デコードはワーカーで実行し、LVGL ではバッファをスワップして dsc のみ更新する（UI ブロック回避） */
-#define XTOUCH_THUMB_DECODE_KIND_AFTER_DL 0
-#define XTOUCH_THUMB_DECODE_KIND_TICK_OR_LOGO 1
-#define XTOUCH_THUMB_DECODE_KIND_REFRESH_FILE 2
-#define XTOUCH_THUMB_DECODE_QUEUE_LEN 16
-#define XTOUCH_THUMB_DECODE_TASK_STACK_WORDS 8192
+#define XPTOUCH_THUMB_DECODE_KIND_AFTER_DL 0
+#define XPTOUCH_THUMB_DECODE_KIND_TICK_OR_LOGO 1
+#define XPTOUCH_THUMB_DECODE_KIND_REFRESH_FILE 2
+#define XPTOUCH_THUMB_DECODE_QUEUE_LEN 16
+#define XPTOUCH_THUMB_DECODE_TASK_STACK_WORDS 8192
 struct thumb_decode_job
 {
     uint8_t kind;
@@ -186,14 +186,14 @@ static bool thumb_decode_enqueue(uint8_t kind, int slot);
 static void thumb_decode_worker_task(void *pv);
 
 /** History 一覧カバーと Home/Printers サムネで同一ワーカーを共有（並列 HTTPS+SD を避ける） */
-#define XTOUCH_DL_KIND_THUMB 0
-#define XTOUCH_DL_KIND_HISTORY 1
-#define XTOUCH_THUMB_DL_QUEUE_LEN 14
-#define XTOUCH_THUMB_DL_TASK_STACK_WORDS 8192
+#define XPTOUCH_DL_KIND_THUMB 0
+#define XPTOUCH_DL_KIND_HISTORY 1
+#define XPTOUCH_THUMB_DL_QUEUE_LEN 14
+#define XPTOUCH_THUMB_DL_TASK_STACK_WORDS 8192
 struct thumb_dl_item
 {
     uint8_t kind;
-    int id; /* THUMB: slot 0..4; HISTORY: row 0..XTOUCH_HISTORY_COVER_SLOTS-1 */
+    int id; /* THUMB: slot 0..4; HISTORY: row 0..XPTOUCH_HISTORY_COVER_SLOTS-1 */
     char url[1024];
     char path[64];
 };
@@ -202,12 +202,12 @@ static QueueHandle_t s_thumb_done_queue = nullptr;
 /** History の cover done（行番号）。subscribe 時に history.h から登録 */
 static QueueHandle_t s_thumb_history_done_queue = nullptr;
 
-inline void xtouch_thumbnail_register_history_cover_done_queue(QueueHandle_t q)
+inline void xptouch_thumbnail_register_history_cover_done_queue(QueueHandle_t q)
 {
     s_thumb_history_done_queue = q;
 }
 
-static inline bool xtouch_thumbnail_enqueue_sd_download(uint8_t kind, int id, const char *url, const char *path)
+static inline bool xptouch_thumbnail_enqueue_sd_download(uint8_t kind, int id, const char *url, const char *path)
 {
     if (!s_thumb_download_queue || !url || !path || !url[0] || !path[0])
         return false;
@@ -231,29 +231,29 @@ static bool thumbnail_slot_has_url_or_task(int slot, int cloud_logged_in)
             return true;
         if (cloud_logged_in && bambuStatus.task_id[0] && strcmp(bambuStatus.task_id, "0") != 0)
             return true;
-#ifdef __XTOUCH_PLATFORM_S3__
+#ifdef __XPTOUCH_PLATFORM_S3__
         /* image_url を空にしたあとも /tmp/{task_id}.png があれば「取得済み」（LAN で task_id だけの判定が漏れるのを防ぐ） */
         {
             char path[64];
             getThumbPathForSlot(0, path, sizeof(path));
-            if (path[0] && xtouch_sdcard_exists(path))
+            if (path[0] && xptouch_sdcard_exists(path))
                 return true;
         }
 #endif
         return false;
     }
     int idx = slot - 1;
-    if (idx >= xtouch_other_printer_count || !otherPrinters[idx].valid)
+    if (idx >= xptouch_other_printer_count || !otherPrinters[idx].valid)
         return false;
     if (otherPrinters[idx].image_url[0])
         return true;
     if (cloud_logged_in && otherPrinters[idx].task_id[0] && strcmp(otherPrinters[idx].task_id, "0") != 0)
         return true;
-#ifdef __XTOUCH_PLATFORM_S3__
+#ifdef __XPTOUCH_PLATFORM_S3__
     {
         char path[64];
         getThumbPathForSlot(slot, path, sizeof(path));
-        if (path[0] && xtouch_sdcard_exists(path))
+        if (path[0] && xptouch_sdcard_exists(path))
             return true;
     }
 #endif
@@ -262,7 +262,7 @@ static bool thumbnail_slot_has_url_or_task(int slot, int cloud_logged_in)
 
 static bool thumbnail_needs_download(int slot)
 {
-    if (slot < 0 || slot >= XTOUCH_THUMB_SLOT_MAX)
+    if (slot < 0 || slot >= XPTOUCH_THUMB_SLOT_MAX)
         return false;
     if (!thumbnail_slot_has_url_or_task(slot, cloud.loggedIn ? 1 : 0))
         return false;
@@ -270,10 +270,10 @@ static bool thumbnail_needs_download(int slot)
     getThumbPathForSlot(slot, path, sizeof(path));
     if (!path[0])
         return false;
-    return !xtouch_sdcard_exists(path);
+    return !xptouch_sdcard_exists(path);
 }
 
-#ifdef __XTOUCH_PLATFORM_S3__ 
+#ifdef __XPTOUCH_PLATFORM_S3__ 
 /* ワーカータスク: DL キューから 1 件取り、downloadFileToSDCard のみ実行して done に投げる（メインをブロックしない） */
 static void thumb_dl_task(void *pv)
 {
@@ -284,13 +284,13 @@ static void thumb_dl_task(void *pv)
         if (xQueueReceive(s_thumb_download_queue, &item, portMAX_DELAY) != pdTRUE)
             continue;
 
-        if (item.kind == XTOUCH_DL_KIND_HISTORY)
+        if (item.kind == XPTOUCH_DL_KIND_HISTORY)
         {
-            if (xTouchConfig.xTouchHideAllThumbnails)
+            if (xPTouchConfig.xTouchHideAllThumbnails)
                 continue;
-            if (item.id < 0 || item.id >= XTOUCH_HISTORY_COVER_SLOTS)
+            if (item.id < 0 || item.id >= XPTOUCH_HISTORY_COVER_SLOTS)
                 continue;
-            if (xtouch_sdcard_exists(item.path))
+            if (xptouch_sdcard_exists(item.path))
             {
                 if (s_thumb_history_done_queue)
                     xQueueSend(s_thumb_history_done_queue, &item.id, 0);
@@ -304,9 +304,9 @@ static void thumb_dl_task(void *pv)
             continue;
         }
 
-        if (item.kind != XTOUCH_DL_KIND_THUMB)
+        if (item.kind != XPTOUCH_DL_KIND_THUMB)
             continue;
-        if (item.id < 0 || item.id >= XTOUCH_THUMB_SLOT_MAX)
+        if (item.id < 0 || item.id >= XPTOUCH_THUMB_SLOT_MAX)
             continue;
         s_thumb_dl_inflight[item.id] = true;
         /* 失敗後クールダウン中に先行キューされた同一slot要求は破棄する
@@ -318,7 +318,7 @@ static void thumb_dl_task(void *pv)
             continue;
         }
         /* History 等で同一 path が既にあれば HTTP しない（キュー滞留中にファイルができた場合も含む） */
-        if (xtouch_sdcard_exists(item.path))
+        if (xptouch_sdcard_exists(item.path))
         {
             s_thumb_dl_retry_not_before_ms[item.id] = 0;
             xQueueSend(s_thumb_done_queue, &item.id, 0);
@@ -337,10 +337,10 @@ static void thumb_dl_task(void *pv)
         }
         else
         {
-            ConsoleVerbose.printf("[xPTouch][V][THUMB] dl_ng slot=%d (cooldown %ums)\n", item.id, (unsigned)XTOUCH_THUMB_DL_FAIL_COOLDOWN_MS);
+            ConsoleVerbose.printf("[xPTouch][V][THUMB] dl_ng slot=%d (cooldown %ums)\n", item.id, (unsigned)XPTOUCH_THUMB_DL_FAIL_COOLDOWN_MS);
             /* task_id / image_url は消さない（Reprint 等で必要）。クールダウン後に thumbnail_do_slot が再キュー。 */
             uint32_t m = millis();
-            s_thumb_dl_retry_not_before_ms[item.id] = m + XTOUCH_THUMB_DL_FAIL_COOLDOWN_MS;
+            s_thumb_dl_retry_not_before_ms[item.id] = m + XPTOUCH_THUMB_DL_FAIL_COOLDOWN_MS;
             /* 失敗時に done を流すと decode 側が同パスを触って
              * 「corrupt cache x2 -> remove」を誘発し、DL中ファイルと競合する。 */
             s_thumb_dl_inflight[item.id] = false;
@@ -352,12 +352,12 @@ static void thumb_dl_task(void *pv)
 static void thumbnail_do_slot_cb(lv_timer_t *t)
 {
     int s = (int)(intptr_t)t->user_data;
-    if (xTouchConfig.xTouchHideAllThumbnails)
+    if (xPTouchConfig.xTouchHideAllThumbnails)
         return;
-    int idx = xTouchConfig.currentScreenIndex;
+    int idx = xPTouchConfig.currentScreenIndex;
     if (idx != 6 && idx != 0)
         return;
-    if (s < 0 || s >= XTOUCH_THUMB_SLOT_MAX || !s_thumb_download_queue || !s_thumb_done_queue)
+    if (s < 0 || s >= XPTOUCH_THUMB_SLOT_MAX || !s_thumb_download_queue || !s_thumb_done_queue)
         return;
     if (s_thumb_dl_inflight[s])
         return;
@@ -366,7 +366,7 @@ static void thumbnail_do_slot_cb(lv_timer_t *t)
     if (!thumbnail_needs_download(s))
         return;
     struct thumb_dl_item item;
-    item.kind = XTOUCH_DL_KIND_THUMB;
+    item.kind = XPTOUCH_DL_KIND_THUMB;
     item.id = s;
     if (!getThumbnailUrlAndPathForSlot(s, item.url, sizeof(item.url), item.path, sizeof(item.path)))
         return;
@@ -379,13 +379,13 @@ static void thumbnail_do_slot_cb(lv_timer_t *t) { (void)t; }
 #endif
 
 /** Home/Printers 共通: task 無しスロットは SD の /tmp/{task_id}.png があれば表示、なければロゴ。
- * max_slot_exclusive: Home は 1（メインのみ）。Printers は XTOUCH_THUMB_SLOT_MAX。 */
+ * max_slot_exclusive: Home は 1（メインのみ）。Printers は XPTOUCH_THUMB_SLOT_MAX。 */
 static void thumbnail_tick_logo_or_sd_cache_slots(int max_slot_exclusive)
 {
     if (max_slot_exclusive < 1)
         max_slot_exclusive = 1;
-    if (max_slot_exclusive > XTOUCH_THUMB_SLOT_MAX)
-        max_slot_exclusive = XTOUCH_THUMB_SLOT_MAX;
+    if (max_slot_exclusive > XPTOUCH_THUMB_SLOT_MAX)
+        max_slot_exclusive = XPTOUCH_THUMB_SLOT_MAX;
     for (int s = 0; s < max_slot_exclusive; s++)
     {
         if (!s_thumb_exists[s] && !thumbnail_slot_has_url_or_task(s, cloud.loggedIn ? 1 : 0))
@@ -393,18 +393,18 @@ static void thumbnail_tick_logo_or_sd_cache_slots(int max_slot_exclusive)
             char path[64];
             getThumbPathForSlot(s, path, sizeof(path));
             bool ok = false;
-            if (path[0] && xtouch_sdcard_exists(path))
+            if (path[0] && xptouch_sdcard_exists(path))
             {
-                ok = xtouch_load_thumb_slot_with_lgfx(s, XTOUCH_THUMB_LGFX_W, XTOUCH_THUMB_LGFX_H);
+                ok = xptouch_load_thumb_slot_with_lgfx(s, XPTOUCH_THUMB_LGFX_W, XPTOUCH_THUMB_LGFX_H);
             }
             if (!ok)
             {
-                ok = xtouch_load_logo_for_slot_with_lgfx(s, XTOUCH_THUMB_LGFX_W, XTOUCH_THUMB_LGFX_H);
+                ok = xptouch_load_logo_for_slot_with_lgfx(s, XPTOUCH_THUMB_LGFX_W, XPTOUCH_THUMB_LGFX_H);
             }
             if (ok)
             {
                 s_thumb_exists[s] = true;
-                lv_msg_send(XTOUCH_ON_OTHER_PRINTER_UPDATE, (void *)(intptr_t)(s + 1));
+                lv_msg_send(XPTOUCH_ON_OTHER_PRINTER_UPDATE, (void *)(intptr_t)(s + 1));
             }
         }
     }
@@ -415,8 +415,8 @@ static void thumbnail_tick_refresh_existing_files_once(int max_slot_exclusive)
 {
     if (max_slot_exclusive < 1)
         max_slot_exclusive = 1;
-    if (max_slot_exclusive > XTOUCH_THUMB_SLOT_MAX)
-        max_slot_exclusive = XTOUCH_THUMB_SLOT_MAX;
+    if (max_slot_exclusive > XPTOUCH_THUMB_SLOT_MAX)
+        max_slot_exclusive = XPTOUCH_THUMB_SLOT_MAX;
     for (int s = 0; s < max_slot_exclusive; s++)
     {
         if (s_thumb_cache_refresh_done[s])
@@ -425,14 +425,14 @@ static void thumbnail_tick_refresh_existing_files_once(int max_slot_exclusive)
             continue;
         char path[64];
         getThumbPathForSlot(s, path, sizeof(path));
-        if (!path[0] || !xtouch_sdcard_exists(path))
+        if (!path[0] || !xptouch_sdcard_exists(path))
             continue;
-        xtouch_thumbnail_update_path_for_slot(s);
-        if (xtouch_load_thumb_slot_with_lgfx(s, XTOUCH_THUMB_LGFX_W, XTOUCH_THUMB_LGFX_H))
+        xptouch_thumbnail_update_path_for_slot(s);
+        if (xptouch_load_thumb_slot_with_lgfx(s, XPTOUCH_THUMB_LGFX_W, XPTOUCH_THUMB_LGFX_H))
         {
             s_thumb_cache_refresh_done[s] = true;
             s_thumb_exists[s] = true;
-            lv_msg_send(XTOUCH_ON_OTHER_PRINTER_UPDATE, (void *)(intptr_t)(s + 1));
+            lv_msg_send(XPTOUCH_ON_OTHER_PRINTER_UPDATE, (void *)(intptr_t)(s + 1));
         }
     }
 }
@@ -444,8 +444,8 @@ static void thumbnail_try_schedule_one_download_round_robin(int max_slot_exclusi
 {
     if (max_slot_exclusive < 1)
         max_slot_exclusive = 1;
-    if (max_slot_exclusive > XTOUCH_THUMB_SLOT_MAX)
-        max_slot_exclusive = XTOUCH_THUMB_SLOT_MAX;
+    if (max_slot_exclusive > XPTOUCH_THUMB_SLOT_MAX)
+        max_slot_exclusive = XPTOUCH_THUMB_SLOT_MAX;
     uint32_t now = lv_tick_get();
     if (now - s_thumb_dl_rr_last_tick < 500u)
         return;
@@ -457,7 +457,7 @@ static void thumbnail_try_schedule_one_download_round_robin(int max_slot_exclusi
             continue;
         if (thumbnail_needs_download(s))
         {
-            lv_timer_t *once = lv_timer_create(thumbnail_do_slot_cb, XTOUCH_THUMB_FETCH_DELAY_MS, (void *)(intptr_t)s);
+            lv_timer_t *once = lv_timer_create(thumbnail_do_slot_cb, XPTOUCH_THUMB_FETCH_DELAY_MS, (void *)(intptr_t)s);
             lv_timer_set_repeat_count(once, 1);
             s_thumb_next_slot = (s + 1) % max_slot_exclusive;
             break;
@@ -468,42 +468,42 @@ static void thumbnail_try_schedule_one_download_round_robin(int max_slot_exclusi
 static void thumbnail_timer_cb(lv_timer_t *t)
 {
     (void)t;
-#ifdef __XTOUCH_PLATFORM_S3__ 
+#ifdef __XPTOUCH_PLATFORM_S3__ 
     if (s_thumb_done_queue)
     {
         int slot;
         /* History と同様に 1 tick で 1 件ずつ反映 */
         if (xQueueReceive(s_thumb_done_queue, &slot, 0) == pdTRUE)
         {
-            if (slot >= 0 && slot < XTOUCH_THUMB_SLOT_MAX)
+            if (slot >= 0 && slot < XPTOUCH_THUMB_SLOT_MAX)
             {
-                xtouch_thumbnail_update_path_for_slot(slot);
-                bool ok = xtouch_load_thumb_slot_with_lgfx(slot, XTOUCH_THUMB_LGFX_W, XTOUCH_THUMB_LGFX_H);
+                xptouch_thumbnail_update_path_for_slot(slot);
+                bool ok = xptouch_load_thumb_slot_with_lgfx(slot, XPTOUCH_THUMB_LGFX_W, XPTOUCH_THUMB_LGFX_H);
                 if (!ok)
-                    ok = xtouch_load_logo_for_slot_with_lgfx(slot, XTOUCH_THUMB_LGFX_W, XTOUCH_THUMB_LGFX_H);
+                    ok = xptouch_load_logo_for_slot_with_lgfx(slot, XPTOUCH_THUMB_LGFX_W, XPTOUCH_THUMB_LGFX_H);
                 s_thumb_exists[slot] = true;
                 if (ok)
                 {
-                    lv_msg_send(XTOUCH_ON_OTHER_PRINTER_UPDATE, (void *)(intptr_t)(slot + 1));
+                    lv_msg_send(XPTOUCH_ON_OTHER_PRINTER_UPDATE, (void *)(intptr_t)(slot + 1));
                 }
             }
         }
     }
 #endif
-    if (xTouchConfig.xTouchHideAllThumbnails)
+    if (xPTouchConfig.xTouchHideAllThumbnails)
         return;
     /* SD が無いときは、サムネイル（DL／ロゴ）処理を一切行わない。HTTP や SD エラーを防ぐため。 */
-    if (!xtouch_sdcard_is_present_cached())
+    if (!xptouch_sdcard_is_present_cached())
         return;
 
-    int idx = xTouchConfig.currentScreenIndex;
-#ifndef __XTOUCH_PLATFORM_S3__
-    /* esp32dev 等: __XTOUCH_PLATFORM_S3__ 無しでは SD 上の task サムネ PNG（pngle）経路は未使用のため何もしない */
+    int idx = xPTouchConfig.currentScreenIndex;
+#ifndef __XPTOUCH_PLATFORM_S3__
+    /* esp32dev 等: __XPTOUCH_PLATFORM_S3__ 無しでは SD 上の task サムネ PNG（pngle）経路は未使用のため何もしない */
     (void)idx;
     return;
 #endif
     /* Home はメインのサムネ（slot 0）だけ更新。他機は Printers で一覧表示するまで DL しない（SSL/ヒープを節約） */
-    const int thumb_slots = (idx == 0) ? 1 : XTOUCH_THUMB_SLOT_MAX;
+    const int thumb_slots = (idx == 0) ? 1 : XPTOUCH_THUMB_SLOT_MAX;
     /* Home(0) と Printers(6) で同じレート制限（Home は slot 範囲のみ縮小） */
     if (idx == 0 || idx == 6)
     {
@@ -519,7 +519,7 @@ static void thumbnail_timer_cb(lv_timer_t *t)
     if (idx != 6)
         return;
 
-    if (s_thumb_force_fetch_slot < XTOUCH_THUMB_SLOT_MAX)
+    if (s_thumb_force_fetch_slot < XPTOUCH_THUMB_SLOT_MAX)
     {
         int s = s_thumb_force_fetch_slot++;
         if (!thumbnail_slot_has_url_or_task(s, cloud.loggedIn ? 1 : 0))
@@ -527,15 +527,15 @@ static void thumbnail_timer_cb(lv_timer_t *t)
 
         ConsoleVerbose.printf("[xPTouch][V][THUMB] force fetch slot=%d\n", s);
 
-        lv_timer_t *once = lv_timer_create(thumbnail_do_slot_cb, XTOUCH_THUMB_FETCH_DELAY_MS, (void *)(intptr_t)s);
+        lv_timer_t *once = lv_timer_create(thumbnail_do_slot_cb, XPTOUCH_THUMB_FETCH_DELAY_MS, (void *)(intptr_t)s);
         lv_timer_set_repeat_count(once, 1);
         return;
     }
 
-    thumbnail_try_schedule_one_download_round_robin(XTOUCH_THUMB_SLOT_MAX);
+    thumbnail_try_schedule_one_download_round_robin(XPTOUCH_THUMB_SLOT_MAX);
 }
 
-void xtouch_thumbnail_timer_start(void)
+void xptouch_thumbnail_timer_start(void)
 {
     if (s_thumb_timer)
         return;
@@ -546,19 +546,19 @@ void xtouch_thumbnail_timer_start(void)
     lv_timer_set_repeat_count(s_thumb_timer, -1);
 }
 
-void xtouch_thumbnail_timer_stop(void)
+void xptouch_thumbnail_timer_stop(void)
 {
     if (s_thumb_timer)
     {
         lv_timer_del(s_thumb_timer);
         s_thumb_timer = nullptr;
     }
-    s_thumb_force_fetch_slot = XTOUCH_THUMB_SLOT_MAX;
-    for (int i = 0; i < XTOUCH_THUMB_SLOT_MAX; i++)
+    s_thumb_force_fetch_slot = XPTOUCH_THUMB_SLOT_MAX;
+    for (int i = 0; i < XPTOUCH_THUMB_SLOT_MAX; i++)
     {
         s_thumb_exists[i] = false;
         s_thumb_cache_refresh_done[i] = false;
-#ifdef __XTOUCH_PLATFORM_S3__ 
+#ifdef __XPTOUCH_PLATFORM_S3__ 
         s_thumb_decode_tid_gen0[i][0] = '\0';
         s_thumb_decode_tid_gen1[i][0] = '\0';
         s_thumb_dl_inflight[i] = false;
@@ -568,17 +568,17 @@ void xtouch_thumbnail_timer_stop(void)
     }
 }
 
-void xtouch_thumbnail_schedule_fetch_all(void)
+void xptouch_thumbnail_schedule_fetch_all(void)
 {
     s_thumb_force_fetch_slot = 0;
 }
 
-void xtouch_thumbnail_clear_sd_cache(void)
+void xptouch_thumbnail_clear_sd_cache(void)
 {
-#if defined(__XTOUCH_PLATFORM_S3__ )
-    if (!xtouch_sdcard_is_present_cached())
+#if defined(__XPTOUCH_PLATFORM_S3__ )
+    if (!xptouch_sdcard_is_present_cached())
         return;
-    File dir = xtouch_sdcard_open("/tmp");
+    File dir = xptouch_sdcard_open("/tmp");
     if (!dir)
         return;
     if (!dir.isDirectory())
@@ -603,7 +603,7 @@ void xtouch_thumbnail_clear_sd_cache(void)
                 else
                     snprintf(pathbuf, sizeof(pathbuf), "/tmp/%s", nm);
                 entry.close();
-                xtouch_sdcard_remove(pathbuf);
+                xptouch_sdcard_remove(pathbuf);
                 continue;
             }
             /* サムネ用 tmp JSON も一緒に削除（存在するとキャッシュを再利用してしまうため） */
@@ -615,135 +615,135 @@ void xtouch_thumbnail_clear_sd_cache(void)
                 else
                     snprintf(pathbuf, sizeof(pathbuf), "/tmp/%s", nm);
                 entry.close();
-                xtouch_sdcard_remove(pathbuf);
+                xptouch_sdcard_remove(pathbuf);
                 continue;
             }
         }
         entry.close();
     }
     dir.close();
-    xtouch_history_cover_clear();
-    xtouch_thumbnail_invalidate_all_slots();
-    xtouch_thumbnail_update_path_all_slots();
-    if (xTouchConfig.currentScreenIndex == 0 || xTouchConfig.currentScreenIndex == 6)
-        xtouch_thumbnail_schedule_fetch_all();
-    for (int s = 0; s < XTOUCH_THUMB_SLOT_MAX; s++)
-        lv_msg_send(XTOUCH_ON_OTHER_PRINTER_UPDATE, (void *)(intptr_t)(s + 1));
+    xptouch_history_cover_clear();
+    xptouch_thumbnail_invalidate_all_slots();
+    xptouch_thumbnail_update_path_all_slots();
+    if (xPTouchConfig.currentScreenIndex == 0 || xPTouchConfig.currentScreenIndex == 6)
+        xptouch_thumbnail_schedule_fetch_all();
+    for (int s = 0; s < XPTOUCH_THUMB_SLOT_MAX; s++)
+        lv_msg_send(XPTOUCH_ON_OTHER_PRINTER_UPDATE, (void *)(intptr_t)(s + 1));
     ConsoleVerbose.printf("[xPTouch][V][THUMB] clear_sd_cache done\n");
 #endif
 }
 
-/* UI が送るイベントを xtouch 側で購読（mqtt.h の xtouch_mqtt_subscribe_commands と同じパターン） */
+/* UI が送るイベントを xtouch 側で購読（mqtt.h の xptouch_mqtt_subscribe_commands と同じパターン） */
 #ifdef __cplusplus
-static void xtouch_thumbnail_on_schedule_fetch(lv_msg_t *m, void *user_data)
+static void xptouch_thumbnail_on_schedule_fetch(lv_msg_t *m, void *user_data)
 {
     (void)m;
     (void)user_data;
-    xtouch_thumbnail_schedule_fetch_all();
+    xptouch_thumbnail_schedule_fetch_all();
 }
 
 /** Printers 入室時: 並び替え後も slot のサムネバッファが前世代のまま残るのを防ぐ */
-static void xtouch_thumbnail_on_printers_rebind(void *s, lv_msg_t *m)
+static void xptouch_thumbnail_on_printers_rebind(void *s, lv_msg_t *m)
 {
     (void)s;
     (void)m;
     ConsoleVerbose.printf("[xPTouch][V][THUMB] printers_rebind\n");
-#ifdef __XTOUCH_PLATFORM_S3__
+#ifdef __XPTOUCH_PLATFORM_S3__
     thumb_lvgl_drain_decode_commits();
 #endif
-    xtouch_thumbnail_invalidate_all_slots();
-    xtouch_thumbnail_update_path_all_slots();
-    xtouch_thumbnail_schedule_fetch_all();
-#ifdef __XTOUCH_PLATFORM_S3__ 
-    if (xtouch_sdcard_is_present_cached())
+    xptouch_thumbnail_invalidate_all_slots();
+    xptouch_thumbnail_update_path_all_slots();
+    xptouch_thumbnail_schedule_fetch_all();
+#ifdef __XPTOUCH_PLATFORM_S3__ 
+    if (xptouch_sdcard_is_present_cached())
     {
         /* タイマー待ちなく SD にある現在 task の PNG をデコード（ワーカー／cache_refresh_done は完了コミットで立つ） */
-        for (int slot = 0; slot < XTOUCH_THUMB_SLOT_MAX; slot++)
+        for (int slot = 0; slot < XPTOUCH_THUMB_SLOT_MAX; slot++)
         {
             if (!thumbnail_slot_has_url_or_task(slot, cloud.loggedIn ? 1 : 0))
                 continue;
             char path[64];
             getThumbPathForSlot(slot, path, sizeof(path));
-            if (!path[0] || !xtouch_sdcard_exists(path))
+            if (!path[0] || !xptouch_sdcard_exists(path))
                 continue;
-            xtouch_thumbnail_update_path_for_slot(slot);
-            (void)thumb_decode_enqueue(XTOUCH_THUMB_DECODE_KIND_REFRESH_FILE, slot);
+            xptouch_thumbnail_update_path_for_slot(slot);
+            (void)thumb_decode_enqueue(XPTOUCH_THUMB_DECODE_KIND_REFRESH_FILE, slot);
         }
     }
 #endif
-    for (int slot = 0; slot < XTOUCH_THUMB_SLOT_MAX; slot++)
-        lv_msg_send(XTOUCH_ON_OTHER_PRINTER_UPDATE, (void *)(intptr_t)(slot + 1));
+    for (int slot = 0; slot < XPTOUCH_THUMB_SLOT_MAX; slot++)
+        lv_msg_send(XPTOUCH_ON_OTHER_PRINTER_UPDATE, (void *)(intptr_t)(slot + 1));
 }
-static void xtouch_thumbnail_on_timer_start(lv_msg_t *m, void *user_data)
+static void xptouch_thumbnail_on_timer_start(lv_msg_t *m, void *user_data)
 {
     (void)m;
     (void)user_data;
-    xtouch_thumbnail_timer_start();
+    xptouch_thumbnail_timer_start();
 }
-static void xtouch_thumbnail_on_timer_stop(lv_msg_t *m, void *user_data)
+static void xptouch_thumbnail_on_timer_stop(lv_msg_t *m, void *user_data)
 {
     (void)m;
     (void)user_data;
-    xtouch_thumbnail_timer_stop();
+    xptouch_thumbnail_timer_stop();
 }
 
-static void xtouch_thumbnail_on_hide_mode_changed(lv_msg_t *m, void *user_data)
+static void xptouch_thumbnail_on_hide_mode_changed(lv_msg_t *m, void *user_data)
 {
     (void)m;
     (void)user_data;
-    ConsoleVerbose.printf("[xPTouch][V][THUMB] hide_mode_changed hide=%d\n", xTouchConfig.xTouchHideAllThumbnails ? 1 : 0);
-    if (xTouchConfig.xTouchHideAllThumbnails)
+    ConsoleVerbose.printf("[xPTouch][V][THUMB] hide_mode_changed hide=%d\n", xPTouchConfig.xTouchHideAllThumbnails ? 1 : 0);
+    if (xPTouchConfig.xTouchHideAllThumbnails)
     {
-        xtouch_thumbnail_timer_stop();
+        xptouch_thumbnail_timer_stop();
         /* ロゴは載せずクリア。UI 側でサムネ枠（leftBox）ごと非表示にする。 */
-        xtouch_thumbnail_invalidate_all_slots();
+        xptouch_thumbnail_invalidate_all_slots();
     }
     else
     {
-        if (xTouchConfig.currentScreenIndex == 0 || xTouchConfig.currentScreenIndex == 6)
+        if (xPTouchConfig.currentScreenIndex == 0 || xPTouchConfig.currentScreenIndex == 6)
         {
-            xtouch_thumbnail_timer_start();
-            xtouch_thumbnail_schedule_fetch_all();
+            xptouch_thumbnail_timer_start();
+            xptouch_thumbnail_schedule_fetch_all();
         }
     }
-    for (int s = 0; s < XTOUCH_THUMB_SLOT_MAX; s++)
-        lv_msg_send(XTOUCH_ON_OTHER_PRINTER_UPDATE, (void *)(intptr_t)(s + 1));
+    for (int s = 0; s < XPTOUCH_THUMB_SLOT_MAX; s++)
+        lv_msg_send(XPTOUCH_ON_OTHER_PRINTER_UPDATE, (void *)(intptr_t)(s + 1));
 }
 
 /** Printers 画面用イベント購読を登録。main の setup で一度呼ぶ */
-static void xtouch_thumbnail_subscribe_events(void)
+static void xptouch_thumbnail_subscribe_events(void)
 {
-#ifdef __XTOUCH_PLATFORM_S3__ 
+#ifdef __XPTOUCH_PLATFORM_S3__ 
     if (s_thumb_download_queue == nullptr)
     {
-        s_thumb_download_queue = xQueueCreate(XTOUCH_THUMB_DL_QUEUE_LEN, sizeof(struct thumb_dl_item));
-        s_thumb_done_queue = xQueueCreate(XTOUCH_THUMB_DL_QUEUE_LEN, sizeof(int));
+        s_thumb_download_queue = xQueueCreate(XPTOUCH_THUMB_DL_QUEUE_LEN, sizeof(struct thumb_dl_item));
+        s_thumb_done_queue = xQueueCreate(XPTOUCH_THUMB_DL_QUEUE_LEN, sizeof(int));
         if (s_thumb_download_queue && s_thumb_done_queue)
-            xTaskCreate(thumb_dl_task, "thumb_dl", XTOUCH_THUMB_DL_TASK_STACK_WORDS, NULL, 1, NULL);
+            xTaskCreate(thumb_dl_task, "thumb_dl", XPTOUCH_THUMB_DL_TASK_STACK_WORDS, NULL, 1, NULL);
     }
     if (s_thumb_decode_queue == nullptr)
     {
-        s_thumb_decode_queue = xQueueCreate(XTOUCH_THUMB_DECODE_QUEUE_LEN, sizeof(struct thumb_decode_job));
-        s_thumb_decode_commit_queue = xQueueCreate(XTOUCH_THUMB_DECODE_QUEUE_LEN, sizeof(struct thumb_decode_commit));
+        s_thumb_decode_queue = xQueueCreate(XPTOUCH_THUMB_DECODE_QUEUE_LEN, sizeof(struct thumb_decode_job));
+        s_thumb_decode_commit_queue = xQueueCreate(XPTOUCH_THUMB_DECODE_QUEUE_LEN, sizeof(struct thumb_decode_commit));
         if (s_thumb_decode_queue && s_thumb_decode_commit_queue)
-            xTaskCreate(thumb_decode_worker_task, "thumb_dec", XTOUCH_THUMB_DECODE_TASK_STACK_WORDS, NULL, 1, NULL);
+            xTaskCreate(thumb_decode_worker_task, "thumb_dec", XPTOUCH_THUMB_DECODE_TASK_STACK_WORDS, NULL, 1, NULL);
     }
 #endif
-    lv_msg_subscribe(XTOUCH_PRINTERS_SCHEDULE_THUMB_FETCH, (lv_msg_subscribe_cb_t)xtouch_thumbnail_on_schedule_fetch, NULL);
-    lv_msg_subscribe(XTOUCH_PRINTERS_THUMB_REBIND, (lv_msg_subscribe_cb_t)xtouch_thumbnail_on_printers_rebind, NULL);
-    lv_msg_subscribe(XTOUCH_PRINTERS_THUMB_TIMER_START, (lv_msg_subscribe_cb_t)xtouch_thumbnail_on_timer_start, NULL);
-    lv_msg_subscribe(XTOUCH_PRINTERS_THUMB_TIMER_STOP, (lv_msg_subscribe_cb_t)xtouch_thumbnail_on_timer_stop, NULL);
-    lv_msg_subscribe(XTOUCH_THUMBNAILS_HIDE_MODE_CHANGED, (lv_msg_subscribe_cb_t)xtouch_thumbnail_on_hide_mode_changed, NULL);
-#ifdef __XTOUCH_PLATFORM_S3__
-    if (!s_thumb_boot_logo_seeded && xtouch_sdcard_is_present_cached())
+    lv_msg_subscribe(XPTOUCH_PRINTERS_SCHEDULE_THUMB_FETCH, (lv_msg_subscribe_cb_t)xptouch_thumbnail_on_schedule_fetch, NULL);
+    lv_msg_subscribe(XPTOUCH_PRINTERS_THUMB_REBIND, (lv_msg_subscribe_cb_t)xptouch_thumbnail_on_printers_rebind, NULL);
+    lv_msg_subscribe(XPTOUCH_PRINTERS_THUMB_TIMER_START, (lv_msg_subscribe_cb_t)xptouch_thumbnail_on_timer_start, NULL);
+    lv_msg_subscribe(XPTOUCH_PRINTERS_THUMB_TIMER_STOP, (lv_msg_subscribe_cb_t)xptouch_thumbnail_on_timer_stop, NULL);
+    lv_msg_subscribe(XPTOUCH_THUMBNAILS_HIDE_MODE_CHANGED, (lv_msg_subscribe_cb_t)xptouch_thumbnail_on_hide_mode_changed, NULL);
+#ifdef __XPTOUCH_PLATFORM_S3__
+    if (!s_thumb_boot_logo_seeded && xptouch_sdcard_is_present_cached())
     {
-        for (int s = 0; s < XTOUCH_THUMB_SLOT_MAX; s++)
+        for (int s = 0; s < XPTOUCH_THUMB_SLOT_MAX; s++)
         {
             ConsoleVerbose.printf("[xPTouch][V][THUMB] boot logo slot=%d\n", s);
-            if (xtouch_load_logo_for_slot_with_lgfx(s, XTOUCH_THUMB_LGFX_W, XTOUCH_THUMB_LGFX_H))
+            if (xptouch_load_logo_for_slot_with_lgfx(s, XPTOUCH_THUMB_LGFX_W, XPTOUCH_THUMB_LGFX_H))
             {
                 s_thumb_exists[s] = true;
-                lv_msg_send(XTOUCH_ON_OTHER_PRINTER_UPDATE, (void *)(intptr_t)(s + 1));
+                lv_msg_send(XPTOUCH_ON_OTHER_PRINTER_UPDATE, (void *)(intptr_t)(s + 1));
             }
         }
         s_thumb_boot_logo_seeded = true;
@@ -754,10 +754,10 @@ static void xtouch_thumbnail_subscribe_events(void)
 }
 #endif
 
-#ifdef __XTOUCH_PLATFORM_S3__
+#ifdef __XPTOUCH_PLATFORM_S3__
 static void thumb_decode_tid_generations_clear(int slot)
 {
-    if (slot < 0 || slot >= XTOUCH_THUMB_SLOT_MAX)
+    if (slot < 0 || slot >= XPTOUCH_THUMB_SLOT_MAX)
         return;
     s_thumb_decode_tid_gen0[slot][0] = '\0';
     s_thumb_decode_tid_gen1[slot][0] = '\0';
@@ -776,7 +776,7 @@ static void thumb_get_slot_task_id_str(int slot, char *buf, size_t len)
             buf[len - 1] = '\0';
         }
     }
-    else if (slot >= 1 && slot - 1 < xtouch_other_printer_count && otherPrinters[slot - 1].valid)
+    else if (slot >= 1 && slot - 1 < xptouch_other_printer_count && otherPrinters[slot - 1].valid)
     {
         if (otherPrinters[slot - 1].task_id[0] && strcmp(otherPrinters[slot - 1].task_id, "0") != 0)
         {
@@ -802,10 +802,10 @@ static void thumb_on_decode_failed_after_open(int slot, const char *path)
         strcmp(s_thumb_decode_tid_gen0[slot], s_thumb_decode_tid_gen1[slot]) == 0)
     {
         ConsoleVerbose.printf("[xPTouch][V][THUMB] corrupt cache x2 tid=%s remove %s\n", tid, path ? path : "");
-        if (path && path[0] && xtouch_sdcard_is_present_cached() && xtouch_sdcard_exists(path))
-            xtouch_sdcard_remove(path);
+        if (path && path[0] && xptouch_sdcard_is_present_cached() && xptouch_sdcard_exists(path))
+            xptouch_sdcard_remove(path);
         thumb_decode_tid_generations_clear(slot);
-        xtouch_thumbnail_slot_path[slot][0] = '\0';
+        xptouch_thumbnail_slot_path[slot][0] = '\0';
         s_thumb_cache_refresh_done[slot] = false;
     }
 }
@@ -821,14 +821,14 @@ static lv_color_t *g_lgfx_thumb_buf = nullptr;
 static int g_lgfx_thumb_buf_w = 0;
 static int g_lgfx_thumb_buf_h = 0;
 lv_img_dsc_t g_lgfx_thumb_dsc;
-static lv_img_dsc_t g_lgfx_thumb_dsc_slot[XTOUCH_THUMB_SLOT_MAX];
-static lv_color_t *g_history_cover_buf[XTOUCH_HISTORY_COVER_SLOTS] = { nullptr };
-static lv_img_dsc_t g_history_cover_dsc[XTOUCH_HISTORY_COVER_SLOTS];
+static lv_img_dsc_t g_lgfx_thumb_dsc_slot[XPTOUCH_THUMB_SLOT_MAX];
+static lv_color_t *g_history_cover_buf[XPTOUCH_HISTORY_COVER_SLOTS] = { nullptr };
+static lv_img_dsc_t g_history_cover_dsc[XPTOUCH_HISTORY_COVER_SLOTS];
 
 extern "C" {
-void *xtouch_thumbnail_slot_dsc[XTOUCH_THUMB_SLOT_MAX] = { nullptr, nullptr, nullptr, nullptr, nullptr };
-void *xtouch_history_cover_dsc[XTOUCH_HISTORY_COVER_SLOTS] = {};
-void *xtouch_history_reprint_cover_dsc = nullptr;
+void *xptouch_thumbnail_slot_dsc[XPTOUCH_THUMB_SLOT_MAX] = { nullptr, nullptr, nullptr, nullptr, nullptr };
+void *xptouch_history_cover_dsc[XPTOUCH_HISTORY_COVER_SLOTS] = {};
+void *xptouch_history_reprint_cover_dsc = nullptr;
 }
 
 static lv_color_t *g_history_reprint_cover_buf = nullptr;
@@ -836,7 +836,7 @@ static int g_history_reprint_cover_buf_w = 0;
 static int g_history_reprint_cover_buf_h = 0;
 static lv_img_dsc_t g_history_reprint_cover_dsc;
 
-struct xtouch_pngle_ctx_t
+struct xptouch_pngle_ctx_t
 {
     File *file;
     lv_color_t *buf;
@@ -846,9 +846,9 @@ struct xtouch_pngle_ctx_t
     uint32_t img_height;
 };
 
-static void xtouch_pngle_kikuchan_on_init(pngle_t *pngle, uint32_t w, uint32_t h)
+static void xptouch_pngle_kikuchan_on_init(pngle_t *pngle, uint32_t w, uint32_t h)
 {
-    xtouch_pngle_ctx_t *ctx = (xtouch_pngle_ctx_t *)pngle_get_user_data(pngle);
+    xptouch_pngle_ctx_t *ctx = (xptouch_pngle_ctx_t *)pngle_get_user_data(pngle);
     if (ctx)
     {
         ctx->img_width = w;
@@ -856,9 +856,9 @@ static void xtouch_pngle_kikuchan_on_init(pngle_t *pngle, uint32_t w, uint32_t h
     }
 }
 
-static void xtouch_pngle_kikuchan_draw_cb(pngle_t *pngle, uint32_t x, uint32_t y, uint32_t w, uint32_t h, const uint8_t rgba[4])
+static void xptouch_pngle_kikuchan_draw_cb(pngle_t *pngle, uint32_t x, uint32_t y, uint32_t w, uint32_t h, const uint8_t rgba[4])
 {
-    xtouch_pngle_ctx_t *ctx = (xtouch_pngle_ctx_t *)pngle_get_user_data(pngle);
+    xptouch_pngle_ctx_t *ctx = (xptouch_pngle_ctx_t *)pngle_get_user_data(pngle);
     (void)pngle;
     if (!ctx || !ctx->buf)
         return;
@@ -905,7 +905,7 @@ static void xtouch_pngle_kikuchan_draw_cb(pngle_t *pngle, uint32_t x, uint32_t y
     }
 }
 
-static bool xtouch_kikuchan_feed_file(pngle_t *pngle, File *file)
+static bool xptouch_kikuchan_feed_file(pngle_t *pngle, File *file)
 {
     uint8_t buf[4096];
     size_t remain = 0;
@@ -931,9 +931,9 @@ static bool xtouch_kikuchan_feed_file(pngle_t *pngle, File *file)
     return true;
 }
 
-static bool xtouch_decode_png_kikuchan(File *file, xtouch_pngle_ctx_t *ctx)
+static bool xptouch_decode_png_kikuchan(File *file, xptouch_pngle_ctx_t *ctx)
 {
-#ifdef __XTOUCH_PLATFORM_S3__
+#ifdef __XPTOUCH_PLATFORM_S3__
     if (s_thumb_png_decode_mutex == nullptr)
     {
         s_thumb_png_decode_mutex = xSemaphoreCreateMutex();
@@ -945,7 +945,7 @@ static bool xtouch_decode_png_kikuchan(File *file, xtouch_pngle_ctx_t *ctx)
 #endif
     pngle_t *pngle = pngle_new();
     if (!pngle)
-#ifdef __XTOUCH_PLATFORM_S3__
+#ifdef __XPTOUCH_PLATFORM_S3__
     {
         xSemaphoreGive(s_thumb_png_decode_mutex);
         return false;
@@ -954,15 +954,15 @@ static bool xtouch_decode_png_kikuchan(File *file, xtouch_pngle_ctx_t *ctx)
         return false;
 #endif
     pngle_set_user_data(pngle, ctx);
-    pngle_set_init_callback(pngle, xtouch_pngle_kikuchan_on_init);
-    pngle_set_draw_callback(pngle, xtouch_pngle_kikuchan_draw_cb);
+    pngle_set_init_callback(pngle, xptouch_pngle_kikuchan_on_init);
+    pngle_set_draw_callback(pngle, xptouch_pngle_kikuchan_draw_cb);
     ctx->img_width = 0;
     ctx->img_height = 0;
     file->seek(0);
-    if (!xtouch_kikuchan_feed_file(pngle, file))
+    if (!xptouch_kikuchan_feed_file(pngle, file))
     {
         pngle_destroy(pngle);
-#ifdef __XTOUCH_PLATFORM_S3__
+#ifdef __XPTOUCH_PLATFORM_S3__
         xSemaphoreGive(s_thumb_png_decode_mutex);
 #endif
         return false;
@@ -970,21 +970,21 @@ static bool xtouch_decode_png_kikuchan(File *file, xtouch_pngle_ctx_t *ctx)
     if (ctx->img_width == 0 || ctx->img_height == 0)
     {
         pngle_destroy(pngle);
-#ifdef __XTOUCH_PLATFORM_S3__
+#ifdef __XPTOUCH_PLATFORM_S3__
         xSemaphoreGive(s_thumb_png_decode_mutex);
 #endif
         return false;
     }
     pngle_destroy(pngle);
-#ifdef __XTOUCH_PLATFORM_S3__
+#ifdef __XPTOUCH_PLATFORM_S3__
     xSemaphoreGive(s_thumb_png_decode_mutex);
 #endif
     return true;
 }
 
-void xtouch_history_reprint_cover_clear(void)
+void xptouch_history_reprint_cover_clear(void)
 {
-    xtouch_history_reprint_cover_dsc = nullptr;
+    xptouch_history_reprint_cover_dsc = nullptr;
     if (g_history_reprint_cover_buf)
     {
         free(g_history_reprint_cover_buf);
@@ -994,16 +994,16 @@ void xtouch_history_reprint_cover_clear(void)
     memset(&g_history_reprint_cover_dsc, 0, sizeof(g_history_reprint_cover_dsc));
 }
 
-bool xtouch_history_reprint_cover_load_path(const char *path)
+bool xptouch_history_reprint_cover_load_path(const char *path)
 {
-    if (!path || !path[0] || !xtouch_sdcard_is_present_cached())
+    if (!path || !path[0] || !xptouch_sdcard_is_present_cached())
     {
-        xtouch_history_reprint_cover_clear();
+        xptouch_history_reprint_cover_clear();
         return false;
     }
 
-    const int out_w = XTOUCH_HISTORY_COVER_W;
-    const int out_h = XTOUCH_HISTORY_COVER_H;
+    const int out_w = XPTOUCH_HISTORY_COVER_W;
+    const int out_h = XPTOUCH_HISTORY_COVER_H;
     const size_t px_count = (size_t)out_w * (size_t)out_h;
 
     if (!g_history_reprint_cover_buf)
@@ -1011,7 +1011,7 @@ bool xtouch_history_reprint_cover_load_path(const char *path)
         g_history_reprint_cover_buf = (lv_color_t *)ps_malloc(sizeof(lv_color_t) * px_count);
         if (!g_history_reprint_cover_buf)
         {
-            xtouch_history_reprint_cover_clear();
+            xptouch_history_reprint_cover_clear();
             return false;
         }
     }
@@ -1024,31 +1024,31 @@ bool xtouch_history_reprint_cover_load_path(const char *path)
     g_history_reprint_cover_dsc.data = (const uint8_t *)g_history_reprint_cover_buf;
     g_history_reprint_cover_dsc.data_size = sizeof(lv_color_t) * px_count;
 
-    File file = xtouch_sdcard_open(path, "r");
+    File file = xptouch_sdcard_open(path, "r");
     if (!file)
     {
-        xtouch_history_reprint_cover_clear();
+        xptouch_history_reprint_cover_clear();
         return false;
     }
 
-    xtouch_pngle_ctx_t pngle_ctx;
+    xptouch_pngle_ctx_t pngle_ctx;
     pngle_ctx.file = &file;
     pngle_ctx.buf = g_history_reprint_cover_buf;
     pngle_ctx.width = out_w;
     pngle_ctx.height = out_h;
 
-    if (!xtouch_decode_png_kikuchan(&file, &pngle_ctx))
+    if (!xptouch_decode_png_kikuchan(&file, &pngle_ctx))
     {
         file.close();
-        xtouch_history_reprint_cover_clear();
+        xptouch_history_reprint_cover_clear();
         return false;
     }
     file.close();
-    xtouch_history_reprint_cover_dsc = (void *)&g_history_reprint_cover_dsc;
+    xptouch_history_reprint_cover_dsc = (void *)&g_history_reprint_cover_dsc;
     return true;
 }
 
-bool xtouch_load_thumb_with_lgfx(const char *path, int out_w, int out_h)
+bool xptouch_load_thumb_with_lgfx(const char *path, int out_w, int out_h)
 {
     if (out_w <= 0 || out_h <= 0)
         return false;
@@ -1077,20 +1077,20 @@ bool xtouch_load_thumb_with_lgfx(const char *path, int out_w, int out_h)
     g_lgfx_thumb_dsc.data = (const uint8_t *)g_lgfx_thumb_buf;
     g_lgfx_thumb_dsc.data_size = sizeof(lv_color_t) * px_count;
 
-    File file = xtouch_sdcard_open(path, "r");
+    File file = xptouch_sdcard_open(path, "r");
     if (!file)
     {
         Serial.println("[thumb] SD_MMC.open failed");
         return false;
     }
 
-    xtouch_pngle_ctx_t pngle_ctx;
+    xptouch_pngle_ctx_t pngle_ctx;
     pngle_ctx.file = &file;
     pngle_ctx.buf = g_lgfx_thumb_buf;
     pngle_ctx.width = out_w;
     pngle_ctx.height = out_h;
 
-    if (!xtouch_decode_png_kikuchan(&file, &pngle_ctx))
+    if (!xptouch_decode_png_kikuchan(&file, &pngle_ctx))
     {
         file.close();
         Serial.println("[thumb] pngle decode failed");
@@ -1100,16 +1100,16 @@ bool xtouch_load_thumb_with_lgfx(const char *path, int out_w, int out_h)
     return true;
 }
 
-lv_img_dsc_t *xtouch_thumb_get_lgfx_dsc(void)
+lv_img_dsc_t *xptouch_thumb_get_lgfx_dsc(void)
 {
     return &g_lgfx_thumb_dsc;
 }
 
-void xtouch_history_cover_clear(void)
+void xptouch_history_cover_clear(void)
 {
-    for (int i = 0; i < XTOUCH_HISTORY_COVER_SLOTS; i++)
+    for (int i = 0; i < XPTOUCH_HISTORY_COVER_SLOTS; i++)
     {
-        xtouch_history_cover_dsc[i] = nullptr;
+        xptouch_history_cover_dsc[i] = nullptr;
         if (g_history_cover_buf[i])
         {
             free(g_history_cover_buf[i]);
@@ -1119,16 +1119,16 @@ void xtouch_history_cover_clear(void)
     }
 }
 
-bool xtouch_history_cover_load_path(int slot, const char *path)
+bool xptouch_history_cover_load_path(int slot, const char *path)
 {
-    if (slot < 0 || slot >= XTOUCH_HISTORY_COVER_SLOTS || !path || !path[0] || !xtouch_sdcard_is_present_cached())
+    if (slot < 0 || slot >= XPTOUCH_HISTORY_COVER_SLOTS || !path || !path[0] || !xptouch_sdcard_is_present_cached())
     {
-        if (slot >= 0 && slot < XTOUCH_HISTORY_COVER_SLOTS)
-            xtouch_history_cover_dsc[slot] = nullptr;
+        if (slot >= 0 && slot < XPTOUCH_HISTORY_COVER_SLOTS)
+            xptouch_history_cover_dsc[slot] = nullptr;
         return false;
     }
-    const int out_w = XTOUCH_HISTORY_COVER_W;
-    const int out_h = XTOUCH_HISTORY_COVER_H;
+    const int out_w = XPTOUCH_HISTORY_COVER_W;
+    const int out_h = XPTOUCH_HISTORY_COVER_H;
     size_t px_count = (size_t)out_w * (size_t)out_h;
     lv_color_t *buf = g_history_cover_buf[slot];
     if (!buf || g_history_cover_dsc[slot].header.w != (lv_coord_t)out_w || g_history_cover_dsc[slot].header.h != (lv_coord_t)out_h)
@@ -1138,7 +1138,7 @@ bool xtouch_history_cover_load_path(int slot, const char *path)
         buf = (lv_color_t *)ps_malloc(sizeof(lv_color_t) * px_count);
         if (!buf)
         {
-            xtouch_history_cover_dsc[slot] = nullptr;
+            xptouch_history_cover_dsc[slot] = nullptr;
             return false;
         }
         g_history_cover_buf[slot] = buf;
@@ -1151,31 +1151,31 @@ bool xtouch_history_cover_load_path(int slot, const char *path)
     g_history_cover_dsc[slot].data = (const uint8_t *)buf;
     g_history_cover_dsc[slot].data_size = sizeof(lv_color_t) * px_count;
 
-    File file = xtouch_sdcard_open(path, "r");
+    File file = xptouch_sdcard_open(path, "r");
     if (!file)
     {
-        xtouch_history_cover_dsc[slot] = nullptr;
+        xptouch_history_cover_dsc[slot] = nullptr;
         return false;
     }
-    xtouch_pngle_ctx_t pngle_ctx;
+    xptouch_pngle_ctx_t pngle_ctx;
     pngle_ctx.file = &file;
     pngle_ctx.buf = buf;
     pngle_ctx.width = out_w;
     pngle_ctx.height = out_h;
-    if (!xtouch_decode_png_kikuchan(&file, &pngle_ctx))
+    if (!xptouch_decode_png_kikuchan(&file, &pngle_ctx))
     {
         file.close();
-        xtouch_history_cover_dsc[slot] = nullptr;
+        xptouch_history_cover_dsc[slot] = nullptr;
         return false;
     }
     file.close();
-    xtouch_history_cover_dsc[slot] = (void *)&g_history_cover_dsc[slot];
+    xptouch_history_cover_dsc[slot] = (void *)&g_history_cover_dsc[slot];
     return true;
 }
 
-static bool xtouch_thumb_decode_png_into_buf(lv_color_t *dst, int slot, int out_w, int out_h)
+static bool xptouch_thumb_decode_png_into_buf(lv_color_t *dst, int slot, int out_w, int out_h)
 {
-    if (!dst || slot < 0 || slot >= XTOUCH_THUMB_SLOT_MAX || out_w <= 0 || out_h <= 0)
+    if (!dst || slot < 0 || slot >= XPTOUCH_THUMB_SLOT_MAX || out_w <= 0 || out_h <= 0)
         return false;
     char path[64];
     getThumbPathForSlot(slot, path, sizeof(path));
@@ -1183,51 +1183,51 @@ static bool xtouch_thumb_decode_png_into_buf(lv_color_t *dst, int slot, int out_
         return false;
     size_t px_count = (size_t)out_w * (size_t)out_h;
     memset(dst, 0, sizeof(lv_color_t) * px_count);
-    File file = xtouch_sdcard_open(path, "r");
+    File file = xptouch_sdcard_open(path, "r");
     if (!file)
         return false;
-    xtouch_pngle_ctx_t pngle_ctx;
+    xptouch_pngle_ctx_t pngle_ctx;
     pngle_ctx.file = &file;
     pngle_ctx.buf = dst;
     pngle_ctx.width = out_w;
     pngle_ctx.height = out_h;
-    if (!xtouch_decode_png_kikuchan(&file, &pngle_ctx))
+    if (!xptouch_decode_png_kikuchan(&file, &pngle_ctx))
     {
         file.close();
-#ifdef __XTOUCH_PLATFORM_S3__
+#ifdef __XPTOUCH_PLATFORM_S3__
         thumb_on_decode_failed_after_open(slot, path);
 #endif
         return false;
     }
     file.close();
-#ifdef __XTOUCH_PLATFORM_S3__
+#ifdef __XPTOUCH_PLATFORM_S3__
     thumb_decode_tid_generations_clear(slot);
 #endif
     return true;
 }
 
-static bool xtouch_thumb_decode_logo_into_buf(lv_color_t *dst, int slot, int out_w, int out_h)
+static bool xptouch_thumb_decode_logo_into_buf(lv_color_t *dst, int slot, int out_w, int out_h)
 {
-    if (!dst || slot < 0 || slot >= XTOUCH_THUMB_SLOT_MAX || out_w <= 0 || out_h <= 0)
+    if (!dst || slot < 0 || slot >= XPTOUCH_THUMB_SLOT_MAX || out_w <= 0 || out_h <= 0)
         return false;
-    if (!xtouch_sdcard_is_present_cached())
+    if (!xptouch_sdcard_is_present_cached())
         return false;
-#ifdef __XTOUCH_PLATFORM_S3__
-    if (!xtouch_ensure_resource_logo_exists())
+#ifdef __XPTOUCH_PLATFORM_S3__
+    if (!xptouch_ensure_resource_logo_exists())
         return false;
 #endif
     size_t px_count = (size_t)out_w * (size_t)out_h;
     memset(dst, 0, sizeof(lv_color_t) * px_count);
     const char *path = "/resource/logo.png";
-    File file = xtouch_sdcard_open(path, "r");
+    File file = xptouch_sdcard_open(path, "r");
     if (!file)
         return false;
-    xtouch_pngle_ctx_t pngle_ctx;
+    xptouch_pngle_ctx_t pngle_ctx;
     pngle_ctx.file = &file;
     pngle_ctx.buf = dst;
     pngle_ctx.width = out_w;
     pngle_ctx.height = out_h;
-    if (!xtouch_decode_png_kikuchan(&file, &pngle_ctx))
+    if (!xptouch_decode_png_kikuchan(&file, &pngle_ctx))
     {
         file.close();
         return false;
@@ -1238,7 +1238,7 @@ static bool xtouch_thumb_decode_logo_into_buf(lv_color_t *dst, int slot, int out
 
 static bool thumb_ensure_slot_back_buf(int slot, int out_w, int out_h)
 {
-    if (slot < 0 || slot >= XTOUCH_THUMB_SLOT_MAX || out_w <= 0 || out_h <= 0)
+    if (slot < 0 || slot >= XPTOUCH_THUMB_SLOT_MAX || out_w <= 0 || out_h <= 0)
         return false;
     if (g_lgfx_thumb_buf_slot_back[slot])
         return true;
@@ -1256,10 +1256,10 @@ static void thumb_apply_dsc_for_slot_front(int slot, int out_w, int out_h)
     g_lgfx_thumb_dsc_slot[slot].header.cf = LV_IMG_CF_TRUE_COLOR;
     g_lgfx_thumb_dsc_slot[slot].data = (const uint8_t *)g_lgfx_thumb_buf_slot[slot];
     g_lgfx_thumb_dsc_slot[slot].data_size = sizeof(lv_color_t) * px_count;
-    xtouch_thumbnail_slot_dsc[slot] = (void *)&g_lgfx_thumb_dsc_slot[slot];
+    xptouch_thumbnail_slot_dsc[slot] = (void *)&g_lgfx_thumb_dsc_slot[slot];
 }
 
-#ifdef __XTOUCH_PLATFORM_S3__
+#ifdef __XPTOUCH_PLATFORM_S3__
 static void thumb_decode_worker_commit_send(int slot, uint8_t ok, uint8_t kind, uint32_t gen)
 {
     if (!s_thumb_decode_commit_queue)
@@ -1279,32 +1279,32 @@ static void thumb_decode_worker_commit_send(int slot, uint8_t ok, uint8_t kind, 
 static void thumb_decode_worker_task(void *pv)
 {
     (void)pv;
-    const int W = XTOUCH_THUMB_LGFX_W;
-    const int H = XTOUCH_THUMB_LGFX_H;
+    const int W = XPTOUCH_THUMB_LGFX_W;
+    const int H = XPTOUCH_THUMB_LGFX_H;
     struct thumb_decode_job job;
     for (;;)
     {
         if (xQueueReceive(s_thumb_decode_queue, &job, portMAX_DELAY) != pdTRUE)
             continue;
         int slot = job.slot;
-        if (slot < 0 || slot >= XTOUCH_THUMB_SLOT_MAX)
+        if (slot < 0 || slot >= XPTOUCH_THUMB_SLOT_MAX)
             continue;
         bool ok = false;
         switch (job.kind)
         {
-        case XTOUCH_THUMB_DECODE_KIND_AFTER_DL:
-            xtouch_thumbnail_update_path_for_slot(slot);
+        case XPTOUCH_THUMB_DECODE_KIND_AFTER_DL:
+            xptouch_thumbnail_update_path_for_slot(slot);
             if (!thumb_ensure_slot_back_buf(slot, W, H))
             {
                 thumb_decode_worker_commit_send(slot, 0, job.kind, job.gen);
                 continue;
             }
-            ok = xtouch_thumb_decode_png_into_buf(g_lgfx_thumb_buf_slot_back[slot], slot, W, H);
+            ok = xptouch_thumb_decode_png_into_buf(g_lgfx_thumb_buf_slot_back[slot], slot, W, H);
             if (!ok)
-                ok = xtouch_thumb_decode_logo_into_buf(g_lgfx_thumb_buf_slot_back[slot], slot, W, H);
+                ok = xptouch_thumb_decode_logo_into_buf(g_lgfx_thumb_buf_slot_back[slot], slot, W, H);
             thumb_decode_worker_commit_send(slot, ok ? 1u : 0u, job.kind, job.gen);
             break;
-        case XTOUCH_THUMB_DECODE_KIND_TICK_OR_LOGO:
+        case XPTOUCH_THUMB_DECODE_KIND_TICK_OR_LOGO:
             if (!thumb_ensure_slot_back_buf(slot, W, H))
             {
                 thumb_decode_worker_commit_send(slot, 0, job.kind, job.gen);
@@ -1313,21 +1313,21 @@ static void thumb_decode_worker_task(void *pv)
             {
                 char path[64];
                 getThumbPathForSlot(slot, path, sizeof(path));
-                if (path[0] && xtouch_sdcard_exists(path))
-                    ok = xtouch_thumb_decode_png_into_buf(g_lgfx_thumb_buf_slot_back[slot], slot, W, H);
+                if (path[0] && xptouch_sdcard_exists(path))
+                    ok = xptouch_thumb_decode_png_into_buf(g_lgfx_thumb_buf_slot_back[slot], slot, W, H);
                 if (!ok)
-                    ok = xtouch_thumb_decode_logo_into_buf(g_lgfx_thumb_buf_slot_back[slot], slot, W, H);
+                    ok = xptouch_thumb_decode_logo_into_buf(g_lgfx_thumb_buf_slot_back[slot], slot, W, H);
             }
             thumb_decode_worker_commit_send(slot, ok ? 1u : 0u, job.kind, job.gen);
             break;
-        case XTOUCH_THUMB_DECODE_KIND_REFRESH_FILE:
-            xtouch_thumbnail_update_path_for_slot(slot);
+        case XPTOUCH_THUMB_DECODE_KIND_REFRESH_FILE:
+            xptouch_thumbnail_update_path_for_slot(slot);
             if (!thumb_ensure_slot_back_buf(slot, W, H))
             {
                 thumb_decode_worker_commit_send(slot, 0, job.kind, job.gen);
                 continue;
             }
-            ok = xtouch_thumb_decode_png_into_buf(g_lgfx_thumb_buf_slot_back[slot], slot, W, H);
+            ok = xptouch_thumb_decode_png_into_buf(g_lgfx_thumb_buf_slot_back[slot], slot, W, H);
             thumb_decode_worker_commit_send(slot, ok ? 1u : 0u, job.kind, job.gen);
             break;
         default:
@@ -1339,7 +1339,7 @@ static void thumb_decode_worker_task(void *pv)
 
 static bool thumb_decode_enqueue(uint8_t kind, int slot)
 {
-    if (!s_thumb_decode_queue || slot < 0 || slot >= XTOUCH_THUMB_SLOT_MAX)
+    if (!s_thumb_decode_queue || slot < 0 || slot >= XPTOUCH_THUMB_SLOT_MAX)
         return false;
     if (s_thumb_decode_inflight[slot])
         return false;
@@ -1358,13 +1358,13 @@ static void thumb_lvgl_drain_decode_commits(void)
     if (!s_thumb_decode_commit_queue)
         return;
     struct thumb_decode_commit c;
-    const int W = XTOUCH_THUMB_LGFX_W;
-    const int H = XTOUCH_THUMB_LGFX_H;
+    const int W = XPTOUCH_THUMB_LGFX_W;
+    const int H = XPTOUCH_THUMB_LGFX_H;
     /* 1tick で 1 件だけ反映して LVGL 占有時間を平準化する */
     if (xQueueReceive(s_thumb_decode_commit_queue, &c, 0) != pdTRUE)
         return;
     int slot = c.slot;
-    if (slot < 0 || slot >= XTOUCH_THUMB_SLOT_MAX)
+    if (slot < 0 || slot >= XPTOUCH_THUMB_SLOT_MAX)
         return;
     if (c.gen != s_thumb_decode_gen[slot])
         return;
@@ -1381,10 +1381,10 @@ static void thumb_lvgl_drain_decode_commits(void)
         g_lgfx_thumb_buf_slot[slot] = back;
         g_lgfx_thumb_buf_slot_back[slot] = front;
         thumb_apply_dsc_for_slot_front(slot, W, H);
-        if (c.kind == XTOUCH_THUMB_DECODE_KIND_REFRESH_FILE)
+        if (c.kind == XPTOUCH_THUMB_DECODE_KIND_REFRESH_FILE)
             s_thumb_cache_refresh_done[slot] = true;
         s_thumb_exists[slot] = true;
-            lv_msg_send(XTOUCH_ON_OTHER_PRINTER_UPDATE, (void *)(intptr_t)(slot + 1));
+            lv_msg_send(XPTOUCH_ON_OTHER_PRINTER_UPDATE, (void *)(intptr_t)(slot + 1));
     }
     else
     {
@@ -1392,11 +1392,11 @@ static void thumb_lvgl_drain_decode_commits(void)
         s_thumb_exists[slot] = true;
     }
 }
-#endif /* __XTOUCH_PLATFORM_S3__ */
+#endif /* __XPTOUCH_PLATFORM_S3__ */
 
-static bool xtouch_load_thumb_slot_with_lgfx(int slot, int out_w, int out_h)
+static bool xptouch_load_thumb_slot_with_lgfx(int slot, int out_w, int out_h)
 {
-    if (slot < 0 || slot >= XTOUCH_THUMB_SLOT_MAX || out_w <= 0 || out_h <= 0)
+    if (slot < 0 || slot >= XPTOUCH_THUMB_SLOT_MAX || out_w <= 0 || out_h <= 0)
         return false;
     char path[64];
     getThumbPathForSlot(slot, path, sizeof(path));
@@ -1411,15 +1411,15 @@ static bool xtouch_load_thumb_slot_with_lgfx(int slot, int out_w, int out_h)
         buf = (lv_color_t *)ps_malloc(sizeof(lv_color_t) * px_count);
         if (!buf)
         {
-            xtouch_thumbnail_slot_dsc[slot] = nullptr;
+            xptouch_thumbnail_slot_dsc[slot] = nullptr;
             s_thumb_exists[slot] = true;
             return false;
         }
         g_lgfx_thumb_buf_slot[slot] = buf;
     }
-    if (!xtouch_thumb_decode_png_into_buf(buf, slot, out_w, out_h))
+    if (!xptouch_thumb_decode_png_into_buf(buf, slot, out_w, out_h))
     {
-        xtouch_thumbnail_slot_dsc[slot] = nullptr;
+        xptouch_thumbnail_slot_dsc[slot] = nullptr;
         return false;
     }
     g_lgfx_thumb_dsc_slot[slot].header.always_zero = 0;
@@ -1428,23 +1428,23 @@ static bool xtouch_load_thumb_slot_with_lgfx(int slot, int out_w, int out_h)
     g_lgfx_thumb_dsc_slot[slot].header.cf = LV_IMG_CF_TRUE_COLOR;
     g_lgfx_thumb_dsc_slot[slot].data = (const uint8_t *)buf;
     g_lgfx_thumb_dsc_slot[slot].data_size = sizeof(lv_color_t) * px_count;
-    xtouch_thumbnail_slot_dsc[slot] = (void *)&g_lgfx_thumb_dsc_slot[slot];
+    xptouch_thumbnail_slot_dsc[slot] = (void *)&g_lgfx_thumb_dsc_slot[slot];
     return true;
 }
 
-static bool xtouch_load_logo_for_slot_with_lgfx(int slot, int out_w, int out_h)
+static bool xptouch_load_logo_for_slot_with_lgfx(int slot, int out_w, int out_h)
 {
-    if (slot < 0 || slot >= XTOUCH_THUMB_SLOT_MAX || out_w <= 0 || out_h <= 0)
+    if (slot < 0 || slot >= XPTOUCH_THUMB_SLOT_MAX || out_w <= 0 || out_h <= 0)
         return false;
-    if (!xtouch_sdcard_is_present_cached())
+    if (!xptouch_sdcard_is_present_cached())
     {
         ConsoleVerbose.printf("[xPTouch][V][THUMB] logo: SD not present\n");
         s_thumb_exists[slot] = true;
         return false;
     }
 
-#ifdef __XTOUCH_PLATFORM_S3__
-    if (!xtouch_ensure_resource_logo_exists())
+#ifdef __XPTOUCH_PLATFORM_S3__
+    if (!xptouch_ensure_resource_logo_exists())
     {
         s_thumb_exists[slot] = true;
         return false;
@@ -1459,15 +1459,15 @@ static bool xtouch_load_logo_for_slot_with_lgfx(int slot, int out_w, int out_h)
         buf = (lv_color_t *)ps_malloc(sizeof(lv_color_t) * px_count);
         if (!buf)
         {
-            xtouch_thumbnail_slot_dsc[slot] = nullptr;
+            xptouch_thumbnail_slot_dsc[slot] = nullptr;
             return false;
         }
         g_lgfx_thumb_buf_slot[slot] = buf;
     }
-    if (!xtouch_thumb_decode_logo_into_buf(buf, slot, out_w, out_h))
+    if (!xptouch_thumb_decode_logo_into_buf(buf, slot, out_w, out_h))
     {
         ConsoleVerbose.printf("[xPTouch][V][THUMB] logo: decode failed slot=%d\n", slot);
-        xtouch_thumbnail_slot_dsc[slot] = nullptr;
+        xptouch_thumbnail_slot_dsc[slot] = nullptr;
         s_thumb_exists[slot] = true;
         return false;
     }
@@ -1477,9 +1477,9 @@ static bool xtouch_load_logo_for_slot_with_lgfx(int slot, int out_w, int out_h)
     g_lgfx_thumb_dsc_slot[slot].header.cf = LV_IMG_CF_TRUE_COLOR;
     g_lgfx_thumb_dsc_slot[slot].data = (const uint8_t *)buf;
     g_lgfx_thumb_dsc_slot[slot].data_size = sizeof(lv_color_t) * px_count;
-    xtouch_thumbnail_slot_dsc[slot] = (void *)&g_lgfx_thumb_dsc_slot[slot];
+    xptouch_thumbnail_slot_dsc[slot] = (void *)&g_lgfx_thumb_dsc_slot[slot];
     return true;
 }
 
 
-#endif /* _XTOUCH_THUMBNAIL_H */
+#endif /* _XPTOUCH_THUMBNAIL_H */

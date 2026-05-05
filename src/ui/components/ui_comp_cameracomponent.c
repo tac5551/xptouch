@@ -1,7 +1,7 @@
 #include "ui_comp_cameracomponent.h"
 #include "../ui_events.h"
 
-#ifdef __XTOUCH_PLATFORM_S3__
+#ifdef __XPTOUCH_PLATFORM_S3__
 
 lv_obj_t *ui_cameraComponent_create(lv_obj_t *comp_parent)
 {
