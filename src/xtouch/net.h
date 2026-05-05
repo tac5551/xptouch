@@ -5,6 +5,30 @@
 #include "xtouch/debug.h"
 #include <string.h>
 
+/** DHCP で割り当てられた DNS サーバアドレス。
+ *  xptouch_wifi_setup() 内でクラウドモード時に保存し、
+ *  WiFi.reconnect() 後の DNS 再設定で primary として再利用する。 */
+IPAddress xptouch_dhcp_dns(0, 0, 0, 0);
+
+ /** クラウドモードの DNS 設定を適用する（初回接続時・reconnect 後共用）。
+  *  DHCP で割り当てられた router DNS を primary に維持し、
+  *  router が us.mqtt.bambulab.com を解決できない場合のフォールバックとして
+  *  1.1.1.1 を secondary に追加する。
+  *  router が 1.1.1.1 をブロックしていても primary の router DNS が機能する。 */
+inline void xptouch_cloud_apply_dns()
+ {
+     IPAddress fallbackDns(1, 1, 1, 1);
+    if (xptouch_dhcp_dns != IPAddress(0, 0, 0, 0) && xptouch_dhcp_dns != fallbackDns)
+     {
+        WiFi.config(WiFi.localIP(), WiFi.gatewayIP(), WiFi.subnetMask(), xptouch_dhcp_dns, fallbackDns);
+     }
+     else
+     {
+         /* DHCP DNS が不明または既に 1.1.1.1 の場合は 1.1.1.1 のみ */
+         WiFi.config(WiFi.localIP(), WiFi.gatewayIP(), WiFi.subnetMask(), fallbackDns);
+     }
+ }
+ 
 void onWiFiEvent(arduino_event_id_t event, arduino_event_info_t info)
 {
     if (event == ARDUINO_EVENT_WIFI_STA_LOST_IP)
