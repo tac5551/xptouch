@@ -180,11 +180,13 @@ lv_obj_t *ui_printersComponent_create(lv_obj_t *comp_parent)
         lv_obj_set_style_bg_opa(progressBar, 0, LV_PART_KNOB | LV_STATE_DEFAULT);
 
         lv_obj_t *layerLabel = lv_label_create(rightCol);
-        lv_label_set_text(layerLabel, "Layer - | --");
+        lv_label_set_text(layerLabel, "- | --");
+        /* 幅を中央ペインに合わせないと 1 行がはみ出し、右端の残り時間がクリップされる */
+        lv_obj_set_width(layerLabel, lv_pct(100));
         lv_obj_set_style_text_color(layerLabel, lv_color_hex(0xCCCCCC), LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_text_font(layerLabel, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_height(layerLabel, LV_SIZE_CONTENT);
-        lv_label_set_long_mode(layerLabel, LV_LABEL_LONG_WRAP);
+        lv_label_set_long_mode(layerLabel, LV_LABEL_LONG_SCROLL_CIRCULAR);
 
         /* 右端: 上段=一時停止/停止, 下段=Select の2段レイアウト */
         lv_obj_t *btnArea = lv_obj_create(row);

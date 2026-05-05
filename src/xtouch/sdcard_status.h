@@ -37,5 +37,6 @@ static inline bool xtouch_sdcard_is_present_cached(uint32_t interval_ms = 1000)
     return s_sd_present_cached;
 }
 
+
 #endif
 

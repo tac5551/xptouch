@@ -80,7 +80,7 @@ lv_obj_t *ui_systemComponent_create(lv_obj_t *comp_parent)
     lv_obj_t *cui_deviceTitle = lv_label_create(cui_systemComponent);
     lv_obj_set_width(cui_deviceTitle, lv_pct(100));
     lv_obj_set_height(cui_deviceTitle, LV_SIZE_CONTENT);
-    lv_label_set_text_fmt(cui_deviceTitle, LV_SYMBOL_LIST " XTOUCH v%s", XTOUCH_FIRMWARE_VERSION);
+    lv_label_set_text_fmt(cui_deviceTitle, LV_SYMBOL_LIST " XPtouch v%s", XTOUCH_FIRMWARE_VERSION);
     lv_obj_set_scrollbar_mode(cui_deviceTitle, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_style_text_font(cui_deviceTitle, lv_font_small, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_left(cui_deviceTitle, 16, LV_PART_MAIN | LV_STATE_DEFAULT);

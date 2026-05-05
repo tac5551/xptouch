@@ -327,15 +327,20 @@ void ui_thumb_set_img_src_from_slot(lv_obj_t *img, int slot)
       return;
    }
    lv_obj_clear_flag(img, LV_OBJ_FLAG_HIDDEN);
-   /* 同一 descriptor ポインタで中身だけ差し替えた場合、LVGL が変更を検知しないため
-    * 一度 src をクリアしてから再設定し、必ず再描画させる。
-    * pngle でデコード済みの dsc を優先する（History と同様。path だけだと LVGL が PNG を decode できず Nodata になる）。 */
-   lv_img_set_src(img, NULL);
+   /* History と同じ方針: 既存表示を維持し、デコード済み dsc が来た時だけ差し替える。
+    * 毎回 NULL クリアすると黒/白フラッシュの原因になる。 */
+   const void *next_src = NULL;
    if (xtouch_thumbnail_slot_dsc[slot] != NULL)
-      lv_img_set_src(img, (const lv_img_dsc_t *)xtouch_thumbnail_slot_dsc[slot]);
-   else if (xtouch_thumbnail_slot_path[slot][0] != '\0')
-      lv_img_set_src(img, xtouch_thumbnail_slot_path[slot]);
-   ui_img_zoom_to_fit_box(img, lv_obj_get_width(img), lv_obj_get_height(img));
+      next_src = (const lv_img_dsc_t *)xtouch_thumbnail_slot_dsc[slot];
+   if (next_src != NULL)
+   {
+      const void *cur_src = lv_img_get_src(img);
+      if (cur_src != next_src)
+      {
+         lv_img_set_src(img, next_src);
+         ui_img_zoom_to_fit_box(img, lv_obj_get_width(img), lv_obj_get_height(img));
+      }
+   }
    lv_obj_invalidate(img);
 }
 #endif

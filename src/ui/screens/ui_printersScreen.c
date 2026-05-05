@@ -173,7 +173,7 @@ static void update_one_row(int slot, lv_obj_t *row)
     char timeBuf[48];
     _ui_seconds_to_timeleft((uint32_t)(left_time > 0 ? left_time : 0), timeBuf);
 
-    /* Home と同様のイメージで、印刷中だけ Layer + 残り時間、それ以外はステータス文字を表示 */
+    /* 印刷中: レイヤー比 + 残り時間、それ以外はステータス */
     if (row_offline)
     {
         snprintf(layerBuf, sizeof(layerBuf), "Offline");
@@ -183,9 +183,9 @@ static void update_one_row(int slot, lv_obj_t *row)
         status == XTOUCH_PRINT_STATUS_PREPARE)
     {
         if (tot_layers > 0)
-            snprintf(layerBuf, sizeof(layerBuf), "Layer %d/%d | %s", cur_layer, tot_layers, timeBuf);
+            snprintf(layerBuf, sizeof(layerBuf), "%d/%d | %s", cur_layer, tot_layers, timeBuf);
         else
-            snprintf(layerBuf, sizeof(layerBuf), "Layer - | %s", timeBuf);
+            snprintf(layerBuf, sizeof(layerBuf), "- | %s", timeBuf);
     }
     else
     {

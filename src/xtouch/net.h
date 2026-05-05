@@ -79,46 +79,75 @@ int downloadFileToSDCard(const char *url, const char *fileName, void (*onProgres
             return 0;
         }
 
-        (void)xtouch_sdcard_ensure_parent_dir(fileName);
+        const char *writePath = fileName;
+        char thumbPartPath[128];
+        bool useThumbPart = false;
+        /* サムネは書き込み途中ファイルを他処理に見せない（部分ファイルを decode して壊すのを防ぐ） */
+        if (isThumbnail && fileName)
+        {
+            size_t flen = strlen(fileName);
+            if (flen > 0 && flen + 6 < sizeof(thumbPartPath))
+            {
+                snprintf(thumbPartPath, sizeof(thumbPartPath), "%s.part", fileName);
+                writePath = thumbPartPath;
+                useThumbPart = true;
+            }
+        }
+
+        (void)xtouch_sdcard_ensure_parent_dir(writePath);
 
         bool wrote_ok = false;
-        File file = xtouch_sdcard_open(fileName, FILE_WRITE);
+        File file = xtouch_sdcard_open(writePath, FILE_WRITE);
         if (file)
         {
-            Stream *response = &http.getStream();
             int responseTotalSize = http.getSize();
             int responseSize = 0;
             int lastProgress = 0;
-
-            const int bufferSize = 512;
-            uint8_t buffer[bufferSize];
-            int bytesRead;
             bool stream_ok = true;
-
-            while ((bytesRead = response->readBytes(buffer, bufferSize)) > 0)
+            if (!onProgress)
             {
-                int progress = (responseTotalSize > 0) ? ((responseSize * 100) / responseTotalSize) : 0;
-                if (onProgress && progress != lastProgress)
+                /* HTTPClient 標準コピーを優先: readBytes ループより 0 バイト復帰に強い */
+                int written = http.writeToStream(&file);
+                if (written < 0)
                 {
-                    onProgress(progress);
-                }
-
-                size_t wr = file.write(buffer, (size_t)bytesRead);
-                if (wr != (size_t)bytesRead)
-                {
-                    ConsoleVerbose.println("[xPTouch][V][NET] SD write short, abort stream");
+                    ConsoleVerbose.printf("[xPTouch][V][NET] writeToStream failed: %d\n", written);
                     stream_ok = false;
-                    break;
                 }
-                responseSize += bytesRead;
-                lastProgress = progress;
+                else
+                {
+                    responseSize = written;
+                }
+            }
+            else
+            {
+                Stream *response = &http.getStream();
+                const int bufferSize = 512;
+                uint8_t buffer[bufferSize];
+                int bytesRead;
+
+                while ((bytesRead = response->readBytes(buffer, bufferSize)) > 0)
+                {
+                    int progress = (responseTotalSize > 0) ? ((responseSize * 100) / responseTotalSize) : 0;
+                    if (progress != lastProgress)
+                        onProgress(progress);
+
+                    size_t wr = file.write(buffer, (size_t)bytesRead);
+                    if (wr != (size_t)bytesRead)
+                    {
+                        ConsoleVerbose.println("[xPTouch][V][NET] SD write short, abort stream");
+                        stream_ok = false;
+                        break;
+                    }
+                    responseSize += bytesRead;
+                    lastProgress = progress;
+                }
             }
 
             file.close();
             wrote_ok = stream_ok;
 
             if (!stream_ok)
-                xtouch_sdcard_remove(fileName);
+                xtouch_sdcard_remove(writePath);
 
             if (wrote_ok && (otaMD5 == NULL || onMD5Check == NULL))
             {
@@ -127,22 +156,33 @@ int downloadFileToSDCard(const char *url, const char *fileName, void (*onProgres
                 {
                     ConsoleVerbose.printf("[xPTouch][V][NET] download incomplete %d/%d\n", responseSize, responseTotalSize);
                     success = false;
-                    xtouch_sdcard_remove(fileName);
+                    xtouch_sdcard_remove(writePath);
                 }
                 if (success && isThumbnail)
                 {
-                    File vf = xtouch_sdcard_open(fileName, FILE_READ);
+                    File vf = xtouch_sdcard_open(writePath, FILE_READ);
                     if (!vf || vf.size() < 64)
                     {
                         if (vf)
                             vf.close();
                         ConsoleVerbose.println("[xPTouch][V][NET] thumbnail verify failed after write");
                         success = false;
-                        xtouch_sdcard_remove(fileName);
+                        xtouch_sdcard_remove(writePath);
                     }
                     else
                     {
                         vf.close();
+                    }
+                }
+                if (success && useThumbPart)
+                {
+                    if (xtouch_sdcard_exists(fileName))
+                        (void)xtouch_sdcard_remove(fileName);
+                    if (!xtouch_sdcard_fs().rename(writePath, fileName))
+                    {
+                        ConsoleVerbose.printf("[xPTouch][V][NET] thumbnail rename failed: %s -> %s\n", writePath, fileName);
+                        success = false;
+                        xtouch_sdcard_remove(writePath);
                     }
                 }
             }

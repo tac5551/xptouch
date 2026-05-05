@@ -128,7 +128,7 @@ static inline bool xtouch_sdcard_ensure_parent_dir(const char *filePath)
 bool xtouch_sdcard_setup(int8_t sd_cs_pin, bool mode1bit = true)
 {
     (void)mode1bit;
-    const uint32_t sd_freq_hz = 10000000;
+    const uint32_t sd_freq_hz = 2000000;
     int8_t cs = sd_cs_pin;
     if (cs < 0) {
 #if defined(__XTOUCH_SCREEN_28__)
@@ -194,7 +194,7 @@ bool xtouch_sdcard_setup(int8_t sd_cs_pin, bool mode1bit = true)
 /** SD_MMC。SCK/CMD/D0/D1/D2 は sd_mmc_pins。D3 は 4bit かつ sd_cs_pin>=0 なら sd_cs_pin、それ以外は sd_mmc_pins。SD_MMC.begin(..., mode1bit, ...) は main の sd_mode_1bit。 */
 bool xtouch_sdcard_setup(int8_t sd_cs_pin, bool mode1bit = true)
 {
-    const uint32_t sd_freq_hz = 10000000; /* 10MHz */
+    const uint32_t sd_freq_hz = 2000000; /* 2MHz */
     int pin_d3 = XTOUCH_SD_D3;
     if (!mode1bit && sd_cs_pin >= 0)
         pin_d3 = (int)sd_cs_pin;

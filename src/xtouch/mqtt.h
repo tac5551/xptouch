@@ -837,7 +837,27 @@ void xtouch_mqtt_processPushStatus(JsonDocument &incomingJson)
 
         if (incomingJson["print"].containsKey("gcode_state"))
         {
-            xtouch_device_set_print_state(incomingJson["print"]["gcode_state"].as<String>());
+            String new_state_str = incomingJson["print"]["gcode_state"].as<String>();
+#ifdef __XTOUCH_PLATFORM_S3__
+            /* Finished/Failed から同じ task_id で再印刷すると task_id ブロックが動かない。
+             * その間 push_status の url も来ないことがあり、image_url 空のまま DL が始まらない。 */
+            static char s_prev_push_gcode[16];
+            const char *ns = new_state_str.c_str();
+            bool have_prev = (s_prev_push_gcode[0] != '\0');
+            bool was_terminal =
+                (strcmp(s_prev_push_gcode, "FINISH") == 0 || strcmp(s_prev_push_gcode, "FAILED") == 0);
+            bool now_active = (strcmp(ns, "PREPARE") == 0 || strcmp(ns, "RUNNING") == 0 ||
+                               strcmp(ns, "PAUSE") == 0 || strcmp(ns, "Pause") == 0);
+            if (have_prev && was_terminal && now_active)
+            {
+                xtouch_thumbnail_schedule_fetch_all();
+                if (xTouchConfig.currentScreenIndex == 0)
+                    xtouch_mqtt_schedule_home_thumb_fetch_deferred(220);
+            }
+            strncpy(s_prev_push_gcode, ns, sizeof(s_prev_push_gcode) - 1);
+            s_prev_push_gcode[sizeof(s_prev_push_gcode) - 1] = '\0';
+#endif
+            xtouch_device_set_print_state(new_state_str);
             ui_msg_send(XTOUCH_ON_PRINT_STATUS, 0, 0); /* ポーズ等の状態変更をすぐUIへ */
         }
 
@@ -960,6 +980,11 @@ void xtouch_mqtt_processPushStatus(JsonDocument &incomingJson)
                     strncmp(bambuStatus.image_url, url, sizeof(bambuStatus.image_url)) != 0)
                 {
                     xtouch_thumbnail_invalidate_slot(0);
+                    xtouch_thumbnail_schedule_fetch_all();
+                }
+                else if (!bambuStatus.image_url[0])
+                {
+                    /* 印刷完了後は url が空になりがち。再印刷で初めて届いたときに DL をキック */
                     xtouch_thumbnail_schedule_fetch_all();
                 }
 #endif
@@ -1561,16 +1586,23 @@ void xtouch_mqtt_parseMessage(char *topic, byte *payload, unsigned int length, b
                 xtouch_mqtt_processPushStatus(incomingJson);
 #ifdef __XTOUCH_PLATFORM_S3__
                 xtouch_thumbnail_update_path_for_slot(0);
-                /* ホーム表示中かつ task_id あり: サムネスケジュール。push_status は秒間複数回来るため連打を抑える */
-                if (xTouchConfig.currentScreenIndex == 0 && bambuStatus.task_id[0] && strcmp(bambuStatus.task_id, "0") != 0)
+                /* ホーム表示中かつ task_id または image_url あり: サムネスケジュール。
+                 * task_id がまだ 0 でも image_url 先行で届くケースを取りこぼさない。 */
+                if (xTouchConfig.currentScreenIndex == 0 &&
+                    ((bambuStatus.task_id[0] && strcmp(bambuStatus.task_id, "0") != 0) || bambuStatus.image_url[0]))
                 {
                     static uint32_t s_last_home_thumb_sched_ms;
                     static char s_last_home_thumb_sched_tid[32];
                     uint32_t ms = millis();
-                    bool tid_changed = (strcmp(s_last_home_thumb_sched_tid, bambuStatus.task_id) != 0);
+                    char key[32];
+                    if (bambuStatus.task_id[0] && strcmp(bambuStatus.task_id, "0") != 0)
+                        snprintf(key, sizeof(key), "%s", bambuStatus.task_id);
+                    else
+                        snprintf(key, sizeof(key), "img");
+                    bool tid_changed = (strcmp(s_last_home_thumb_sched_tid, key) != 0);
                     if (tid_changed)
                     {
-                        strncpy(s_last_home_thumb_sched_tid, bambuStatus.task_id, sizeof(s_last_home_thumb_sched_tid) - 1);
+                        strncpy(s_last_home_thumb_sched_tid, key, sizeof(s_last_home_thumb_sched_tid) - 1);
                         s_last_home_thumb_sched_tid[sizeof(s_last_home_thumb_sched_tid) - 1] = '\0';
                         s_last_home_thumb_sched_ms = ms;
                         /* push_status受信直後は先にHomeを描画し、サムネ取得は少し遅らせる */
