@@ -212,6 +212,28 @@ def prebuild():
                                 text=True, check=True, capture_output=True)
         print(result.stdout)
 
+        # Bambu cert extract (best effort): do not block firmware build
+        print("[pre-build] bambu_cloud_extract.py")
+        try:
+            cert_result = subprocess.run(
+                [sys.executable, "scripts/bambu_cloud_extract.py"],
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                check=True,
+                capture_output=True,
+            )
+            if cert_result.stdout:
+                print(cert_result.stdout)
+            if cert_result.stderr:
+                print(cert_result.stderr)
+        except subprocess.CalledProcessError as e:
+            print("[pre-build][WARN] bambu_cloud_extract.py failed (skip)")
+            if e.stdout:
+                print(e.stdout)
+            if e.stderr:
+                print(e.stderr)
+
         print(f"xptouch post_build_increment_semver")
         post_build_increment_semver("version.json", bump_type="patch")
 

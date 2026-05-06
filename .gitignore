@@ -7,3 +7,5 @@
 node_modules
 /.prebuild_executed
 desktop.ini
+/docs/certs_out
+/scripts/certs_out
