@@ -8,6 +8,12 @@
 #include "ams_edit_temp.h"
 #include "filesystem.h"
 #include "paths.h"
+#include "mbedtls/base64.h"
+#include "mbedtls/md.h"
+#include "mbedtls/pk.h"
+#include "mbedtls/ctr_drbg.h"
+#include "mbedtls/entropy.h"
+#include <time.h>
 
 #define XPTOUCH_DEVICE_CONTROL_MOVE_SPEED_XY 3000
 #define XPTOUCH_DEVICE_CONTROL_MOVE_SPEED_Z 1500
@@ -99,12 +105,175 @@ const char *ams_unload_gcode = "M620 S255\n"
                                "M621 S255\n";
 
 uint32_t xptouch_device_sequence_id = 0;
+static String s_xptouch_cloud_app_private_key_pem;
+static bool s_xptouch_cloud_app_private_key_loaded = false;
+static char s_xptouch_cloud_active_cert_id[160] = {0};
+
+static unsigned long long xptouch_device_epoch_ms()
+{
+    time_t now = time(nullptr);
+    if (now > 1700000000)
+        return (unsigned long long)now * 1000ULL;
+    return (unsigned long long)millis();
+}
 
 String xptouch_device_next_sequence()
 {
     xptouch_device_sequence_id++;
     xptouch_device_sequence_id %= (UINT32_MAX - 1);
     return String(xptouch_device_sequence_id);
+}
+
+static String xptouch_device_user_id()
+{
+    String u = cloud.getUsername();
+    if (u.startsWith("u_") && u.length() > 2)
+        return u.substring(2);
+    if (u.length() > 0)
+        return u;
+    return "0";
+}
+
+static bool xptouch_device_load_cloud_private_key_if_needed()
+{
+    if (s_xptouch_cloud_app_private_key_loaded)
+        return s_xptouch_cloud_app_private_key_pem.length() > 0;
+    s_xptouch_cloud_app_private_key_loaded = true;
+    static const char *k_paths[] = {
+        "/xtouch/app_private_key_candidate.pem",
+        "/xtouch/app_private_key.pem",
+        "/app_private_key_candidate.pem",
+        "/app_private_key.pem",
+    };
+    for (size_t i = 0; i < sizeof(k_paths) / sizeof(k_paths[0]); i++)
+    {
+        const char *k_path = k_paths[i];
+        if (!xptouch_sdcard_exists(k_path))
+            continue;
+        File f = xptouch_sdcard_open(k_path, FILE_READ);
+        if (!f)
+            continue;
+        s_xptouch_cloud_app_private_key_pem = "";
+        s_xptouch_cloud_app_private_key_pem.reserve((size_t)f.size() + 8);
+        while (f.available())
+            s_xptouch_cloud_app_private_key_pem += (char)f.read();
+        f.close();
+        if (s_xptouch_cloud_app_private_key_pem.length() > 0)
+        {
+            ConsoleInfo.printf("[xPTouch][I][MQTT] loaded app private key: %s\n", k_path);
+            return true;
+        }
+    }
+    ConsoleError.println(F("[xPTouch][E][MQTT] app private key file not found on SD"));
+    return false;
+}
+
+void xptouch_device_set_cloud_cert_id(const char *cert_id)
+{
+    if (!cert_id || !cert_id[0])
+        return;
+    strncpy(s_xptouch_cloud_active_cert_id, cert_id, sizeof(s_xptouch_cloud_active_cert_id) - 1);
+    s_xptouch_cloud_active_cert_id[sizeof(s_xptouch_cloud_active_cert_id) - 1] = '\0';
+}
+
+void xptouch_device_clear_cloud_cert_id()
+{
+    s_xptouch_cloud_active_cert_id[0] = '\0';
+}
+
+static bool xptouch_device_build_signature_b64(const String &payload_no_header, String &out_b64)
+{
+    out_b64 = "";
+    if (!xptouch_device_load_cloud_private_key_if_needed())
+    {
+        ConsoleError.println(F("[xPTouch][E][MQTT] sign failed: private key not loaded"));
+        return false;
+    }
+
+    mbedtls_pk_context pk;
+    mbedtls_pk_init(&pk);
+    int rc = mbedtls_pk_parse_key(&pk,
+                                  (const unsigned char *)s_xptouch_cloud_app_private_key_pem.c_str(),
+                                  s_xptouch_cloud_app_private_key_pem.length() + 1,
+                                  NULL,
+                                  0);
+    if (rc != 0)
+    {
+        ConsoleError.printf("[xPTouch][E][MQTT] sign failed: mbedtls_pk_parse_key rc=%d\n", rc);
+        mbedtls_pk_free(&pk);
+        return false;
+    }
+
+    unsigned char hash[32];
+    rc = mbedtls_md(mbedtls_md_info_from_type(MBEDTLS_MD_SHA256),
+                    (const unsigned char *)payload_no_header.c_str(),
+                    payload_no_header.length(),
+                    hash);
+    if (rc != 0)
+    {
+        ConsoleError.printf("[xPTouch][E][MQTT] sign failed: sha256 rc=%d\n", rc);
+        mbedtls_pk_free(&pk);
+        return false;
+    }
+
+    mbedtls_entropy_context entropy;
+    mbedtls_ctr_drbg_context ctr_drbg;
+    mbedtls_entropy_init(&entropy);
+    mbedtls_ctr_drbg_init(&ctr_drbg);
+    const char *pers = "xptouch-sign";
+    rc = mbedtls_ctr_drbg_seed(&ctr_drbg, mbedtls_entropy_func, &entropy,
+                               (const unsigned char *)pers, strlen(pers));
+    if (rc != 0)
+    {
+        ConsoleError.printf("[xPTouch][E][MQTT] sign failed: ctr_drbg_seed rc=%d\n", rc);
+        mbedtls_ctr_drbg_free(&ctr_drbg);
+        mbedtls_entropy_free(&entropy);
+        mbedtls_pk_free(&pk);
+        return false;
+    }
+
+    unsigned char sig[512];
+    size_t sig_len = 0;
+    rc = mbedtls_pk_sign(&pk, MBEDTLS_MD_SHA256, hash, 0, sig, &sig_len,
+                         mbedtls_ctr_drbg_random, &ctr_drbg);
+    if (rc != 0)
+    {
+        ConsoleError.printf("[xPTouch][E][MQTT] sign failed: pk_sign rc=%d\n", rc);
+        mbedtls_ctr_drbg_free(&ctr_drbg);
+        mbedtls_entropy_free(&entropy);
+        mbedtls_pk_free(&pk);
+        return false;
+    }
+
+    unsigned char b64[1024];
+    size_t b64_len = 0;
+    rc = mbedtls_base64_encode(b64, sizeof(b64), &b64_len, sig, sig_len);
+    mbedtls_ctr_drbg_free(&ctr_drbg);
+    mbedtls_entropy_free(&entropy);
+    mbedtls_pk_free(&pk);
+    if (rc != 0 || b64_len == 0)
+    {
+        ConsoleError.printf("[xPTouch][E][MQTT] sign failed: base64 rc=%d len=%u\n", rc, (unsigned)b64_len);
+        return false;
+    }
+
+    out_b64 = String((const char *)b64).substring(0, b64_len);
+    return out_b64.length() > 0;
+}
+
+void xptouch_device_request_app_cert_list()
+{
+    if (xPTouchConfig.xTouchLanOnlyMode)
+        return;
+    DynamicJsonDocument json(256);
+    json["security"]["sequence_id"] = xptouch_device_next_sequence();
+    json["security"]["command"] = "app_cert_list";
+    json["security"]["timestamp"] = xptouch_device_epoch_ms();
+    json["security"]["type"] = "app";
+    String result;
+    serializeJson(json, result);
+    xptouch_pubSubClient.publish(xptouch_mqtt_request_topic.c_str(), result.c_str());
+    delay(10);
 }
 
 String xptouch_device_print_action(char const *action)
@@ -145,17 +314,59 @@ void xptouch_device_set_print_state(String state)
 
 void xptouch_device_publish(String request)
 {
+    if (!xPTouchConfig.xTouchLanOnlyMode && cloud.isCloudX509ModeEnabled() && !s_xptouch_cloud_active_cert_id[0])
+    {
+        xptouch_device_request_app_cert_list();
+#ifdef XPTOUCH_DEBUG_VERBOSE
+        ConsoleVerbose.println(F("[xPTouch][V][MQTT] skip unsigned publish: cert_id not ready"));
+#endif
+        return;
+    }
+    String publish_request = request;
+    if (!xPTouchConfig.xTouchLanOnlyMode && cloud.isCloudX509ModeEnabled() && s_xptouch_cloud_active_cert_id[0])
+    {
+        DynamicJsonDocument doc(request.length() + 768);
+        if (deserializeJson(doc, request) == DeserializationError::Ok)
+        {
+            const bool target = doc.containsKey("print") || doc.containsKey("pushing");
+            if (target && !doc.containsKey("header"))
+            {
+                if (!doc.containsKey("user_id"))
+                    doc["user_id"] = xptouch_device_user_id();
+                String payload_no_header;
+                serializeJson(doc, payload_no_header);
+                String sign_string;
+                if (xptouch_device_build_signature_b64(payload_no_header, sign_string))
+                {
+                    JsonObject header = doc.createNestedObject("header");
+                    header["sign_ver"] = "v1.0";
+                    header["sign_alg"] = "RSA_SHA256";
+                    header["sign_string"] = sign_string;
+                    header["cert_id"] = s_xptouch_cloud_active_cert_id;
+                    header["payload_len"] = payload_no_header.length();
+                    publish_request = "";
+                    serializeJson(doc, publish_request);
+                }
+                else
+                {
+                    ConsoleError.println(F("[xPTouch][E][MQTT] skip unsigned publish: sign failed"));
+                    return;
+                }
+            }
+        }
+    }
+
 #ifdef XPTOUCH_DEBUG_DETAIL
     ConsoleDetail.println("[GCODE] MQTT publish request");
     ConsoleDetail.print("[xPTouch][D][MQTT] PUB topic=");
     ConsoleDetail.print(xptouch_mqtt_request_topic);
     ConsoleDetail.print(" len=");
-    ConsoleDetail.print(request.length());
+    ConsoleDetail.print(publish_request.length());
     ConsoleDetail.print(" payload=");
-    ConsoleDetail.println(request);
+    ConsoleDetail.println(publish_request);
 #endif
 
-    xptouch_pubSubClient.publish(xptouch_mqtt_request_topic.c_str(), request.c_str());
+    xptouch_pubSubClient.publish(xptouch_mqtt_request_topic.c_str(), publish_request.c_str());
     delay(10);
 }
 
@@ -163,8 +374,55 @@ void xptouch_device_publish_to_dev(const char *dev_id, String request)
 {
     if (!dev_id || !dev_id[0])
         return;
+    if (!xPTouchConfig.xTouchLanOnlyMode && cloud.isCloudX509ModeEnabled() && !s_xptouch_cloud_active_cert_id[0])
+    {
+        xptouch_device_request_app_cert_list();
+#ifdef XPTOUCH_DEBUG_VERBOSE
+        ConsoleVerbose.println(F("[xPTouch][V][MQTT] skip unsigned publish_to_dev: cert_id not ready"));
+#endif
+        return;
+    }
+    String publish_request = request;
+    if (!xPTouchConfig.xTouchLanOnlyMode && cloud.isCloudX509ModeEnabled() && s_xptouch_cloud_active_cert_id[0])
+    {
+        DynamicJsonDocument doc(request.length() + 768);
+        if (deserializeJson(doc, request) == DeserializationError::Ok)
+        {
+            const bool target = doc.containsKey("print") || doc.containsKey("pushing");
+            if (target && !doc.containsKey("header"))
+            {
+                if (!doc.containsKey("user_id"))
+                    doc["user_id"] = xptouch_device_user_id();
+                String payload_no_header;
+                serializeJson(doc, payload_no_header);
+                String sign_string;
+                if (xptouch_device_build_signature_b64(payload_no_header, sign_string))
+                {
+                    JsonObject header = doc.createNestedObject("header");
+                    header["sign_ver"] = "v1.0";
+                    header["sign_alg"] = "RSA_SHA256";
+                    header["sign_string"] = sign_string;
+                    header["cert_id"] = s_xptouch_cloud_active_cert_id;
+                    header["payload_len"] = payload_no_header.length();
+                    publish_request = "";
+                    serializeJson(doc, publish_request);
+                }
+                else
+                {
+                    ConsoleError.println(F("[xPTouch][E][MQTT] skip unsigned publish_to_dev: sign failed"));
+                    return;
+                }
+            }
+        }
+    }
     String topic = String("device/") + dev_id + "/request";
-    xptouch_pubSubClient.publish(topic.c_str(), request.c_str());
+#ifdef XPTOUCH_DEBUG_VERBOSE
+    ConsoleVerbose.print(F("[xPTouch][V][MQTT] PUB_TO_DEV topic="));
+    ConsoleVerbose.print(topic);
+    ConsoleVerbose.print(F(" payload="));
+    ConsoleVerbose.println(publish_request);
+#endif
+    xptouch_pubSubClient.publish(topic.c_str(), publish_request.c_str());
     delay(10);
 }
 
@@ -185,7 +443,7 @@ void xptouch_device_pushall()
     json["pushing"]["version"] = 1;
     json["pushing"]["push_target"] = 1;
     json["pushing"]["sequence_id"] = xptouch_device_next_sequence();
-    json["user_id"] = "123456789";
+    json["user_id"] = xptouch_device_user_id();
 
     String result;
     serializeJson(json, result);
@@ -215,8 +473,27 @@ void xptouch_device_gcode_line(String line)
     json["print"]["command"] = "gcode_line";
     json["print"]["sequence_id"] = xptouch_device_next_sequence();
     json["print"]["param"] = line.c_str();
-    json["user_id"] = "123456789";
+    json["user_id"] = xptouch_device_user_id();
 
+    String result;
+    serializeJson(json, result);
+    xptouch_device_publish(result);
+}
+
+void xptouch_device_set_bed_target_temp(int target_temp)
+{
+    if (xPTouchConfig.xTouchLanOnlyMode)
+    {
+        xptouch_device_gcode_line("M140 S" + String(target_temp) + "\n");
+        return;
+    }
+
+    DynamicJsonDocument json(256);
+    json["user_id"] = xptouch_device_user_id();
+    json["print"]["sequence_id"] = xptouch_device_next_sequence();
+    json["print"]["command"] = "set_bed_temper";
+    json["print"]["timestamp"] = xptouch_device_epoch_ms();
+    json["print"]["bed_target_temper"] = target_temp;
     String result;
     serializeJson(json, result);
     xptouch_device_publish(result);
@@ -355,7 +632,7 @@ void xptouch_device_onBedDownCommand(lv_msg_t *m)
 void xptouch_device_onBedTargetTempCommand(lv_msg_t *m)
 {
     bambuStatus.bed_target_temper = controlMode.target_bed_temper;
-    xptouch_device_gcode_line("M140 S" + String(controlMode.target_bed_temper) + "\n");
+    xptouch_device_set_bed_target_temp((int)controlMode.target_bed_temper);
     xptouch_device_pushall();
 }
 

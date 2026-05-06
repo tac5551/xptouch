@@ -9,3 +9,4 @@ node_modules
 desktop.ini
 /docs/certs_out
 /scripts/certs_out
+/scripts/provisioning.json

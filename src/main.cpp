@@ -204,15 +204,12 @@ void setup()
         else
         {
           cloud.loadAuthTokens();
-
-          if (!cloud.isPaired())
-          {
-            cloud.selectPrinter();
-          }
-          else
-          {
+          const bool paired = cloud.isPaired();
+          if (paired)
             cloud.loadPair();
-          }
+          /* pair ファイルが無い/空、または loadPair 後に serial が空なら bind 一覧へ進む */
+          if (!paired || xPTouchConfig.xTouchSerialNumber[0] == '\0')
+            cloud.selectPrinter();
           xptouch_cloud_mqtt_setup();
         }
 

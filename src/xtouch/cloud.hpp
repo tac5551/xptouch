@@ -943,9 +943,57 @@ class BambuCloud
 private:
   String _region;
   String _auth_token;
+  bool _use_x509_cloud = false;
+  String _x509_server_cert_pem;
+  String _x509_app_cert_pem;
+  String _x509_ca_cert_pem;
   /** getDeviceList / getSlicerSetting で共有。都度 new せずヒープを抑える。 */
   WiFiClientSecure *_ssl_client = nullptr;
   SemaphoreHandle_t _http_mutex = nullptr;
+  static constexpr const char *k_x509_server_cert_path = "/xtouch/server_cert.pem";
+  static constexpr const char *k_x509_app_cert_path = "/xtouch/app_cert_candidate.pem";
+  static constexpr const char *k_x509_ca_bundle_path = "/xtouch/ca_bundle.pem";
+
+  static bool readTextFileFromSd(const char *path, String &out)
+  {
+    out = "";
+    if (!path || !path[0] || !xptouch_sdcard_exists(path))
+      return false;
+    File f = xptouch_sdcard_open(path, FILE_READ);
+    if (!f)
+      return false;
+    out.reserve((size_t)f.size() + 8);
+    while (f.available())
+      out += (char)f.read();
+    f.close();
+    return out.length() > 0;
+  }
+
+  void refreshCloudX509Mode()
+  {
+    String server_pem;
+    String app_pem;
+    String ca_pem;
+    const bool has_server = readTextFileFromSd(k_x509_server_cert_path, server_pem);
+    const bool has_app = readTextFileFromSd(k_x509_app_cert_path, app_pem);
+    const bool has_ca = readTextFileFromSd(k_x509_ca_bundle_path, ca_pem);
+    const bool enable = has_server && has_app;
+    if (enable != _use_x509_cloud)
+    {
+      ConsoleInfo.printf("[xPTouch][I][CLOUD] X509 mode %s (server=%d app=%d ca=%d)\n", enable ? "ON" : "OFF", (int)has_server, (int)has_app, (int)has_ca);
+    }
+    _use_x509_cloud = enable;
+    _x509_server_cert_pem = server_pem;
+    _x509_app_cert_pem = app_pem;
+    _x509_ca_cert_pem = ca_pem;
+  }
+
+  void applyTlsModeToClient(WiFiClientSecure &client)
+  {
+    /* Cloud HTTP API (bind/task/slicer 等) は X509 フロー非依存。
+     * ここは常に insecure で接続し、証明書差異による -9984 を回避する。 */
+    client.setInsecure();
+  }
 
   void httpLock()
   {
@@ -1002,8 +1050,9 @@ public:
     WiFiClientSecure &client = sslClient();
     client.stop();
     client.setTimeout(500);
-    client.setInsecure();
-    static char response_buf[2048];
+    refreshCloudX509Mode();
+    applyTlsModeToClient(client);
+    static char response_buf[8192];
     size_t response_len = 0;
     if (!client.connect(host.c_str(), 443))
       Serial1.println("Connection failed!");
@@ -1046,12 +1095,21 @@ public:
       }
       Serial1.println("headers received");
 
-      while (client.available() && response_len < sizeof(response_buf) - 1)
+      /* ボディは close まで読む。available() 一瞬ゼロでも切らずに待つ。 */
+      unsigned long last_rx_ms = millis();
+      while (client.connected() || client.available())
       {
         int b = client.read();
         if (b < 0)
-          break;
-        response_buf[response_len++] = (char)b;
+        {
+          if (millis() - last_rx_ms > 12000)
+            break;
+          delay(1);
+          continue;
+        }
+        last_rx_ms = millis();
+        if (response_len < sizeof(response_buf) - 1)
+          response_buf[response_len++] = (char)b;
       }
       response_buf[response_len] = '\0';
       Serial1.println("\ndata received");
@@ -1060,11 +1118,14 @@ public:
     }
     Serial1.println("Connection closed");
 
-    doc = new DynamicJsonDocument(2048);
+    doc = new DynamicJsonDocument(8192);
     DeserializationError error = deserializeJson(*doc, response_buf);
     if (error)
     {
       Serial.print(F("deserializeJson() failed: "));
+      Serial.println(error.c_str());
+      Serial.print(F("bind raw body: "));
+      Serial.println(response_buf);
       return false;
     }
     return true;
@@ -1086,7 +1147,8 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
     WiFiClientSecure &c = sslClient();
     c.stop();
     c.setTimeout(8000);
-    c.setInsecure();
+    refreshCloudX509Mode();
+    applyTlsModeToClient(c);
 
     yield();
     HTTPClient http;
@@ -1146,6 +1208,28 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
     return _region;
   }
 
+  bool isCloudX509ModeEnabled() const
+  {
+    return _use_x509_cloud;
+  }
+
+  void refreshCloudX509State()
+  {
+    refreshCloudX509Mode();
+  }
+
+  const char *getCloudServerCertPem() const
+  {
+    return _x509_server_cert_pem.length() ? _x509_server_cert_pem.c_str() : nullptr;
+  }
+
+  const char *getMqttCaCertPem() const
+  {
+    /* MQTT はクラウド API 用の抽出 bundle とチェーンが異なる場合があるため、
+     * ここでは常に既存の安定 CA を使う。 */
+    return _region == "China" ? cn_mqtt_bambulab_com : us_mqtt_bambulab_com;
+  }
+
   /** 現在のデバイスの最新タスクが task_id と一致するか簡易チェックする。
    *  GET /v1/user-service/my/tasks?limit=1&deviceId=xxx を叩き、先頭要素の id と比較するだけで、
    *  xptouch_history_* などのグローバル状態は一切更新しない。
@@ -1166,7 +1250,8 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
     WiFiClientSecure &c = sslClient();
     c.stop();
     c.setTimeout(8000);
-    c.setInsecure();
+    refreshCloudX509Mode();
+    applyTlsModeToClient(c);
     yield();
     HTTPClient http;
     http.begin(c, url);
@@ -1246,7 +1331,8 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
     WiFiClientSecure &c = sslClient();
     c.stop();
     c.setTimeout(8000);
-    c.setInsecure();
+    refreshCloudX509Mode();
+    applyTlsModeToClient(c);
 
     yield();
     HTTPClient http;
@@ -1367,7 +1453,8 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
     WiFiClientSecure &c = sslClient();
     c.stop();
     c.setTimeout(12000);
-    c.setInsecure();
+    refreshCloudX509Mode();
+    applyTlsModeToClient(c);
     yield();
     HTTPClient http;
     http.begin(c, url);
@@ -1621,7 +1708,8 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
     /* 共有 sslClient() の再利用が不安定な環境があるため、このリクエストはローカル client で完結させる */
     WiFiClientSecure c;
     c.setTimeout(12000);
-    c.setInsecure();
+    refreshCloudX509Mode();
+    applyTlsModeToClient(c);
     yield();
     HTTPClient http;
     http.begin(c, url);
@@ -1682,7 +1770,8 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
 
     WiFiClientSecure c;
     c.setTimeout(12000);
-    c.setInsecure();
+    refreshCloudX509Mode();
+    applyTlsModeToClient(c);
     yield();
     HTTPClient http;
     http.begin(c, url);
@@ -1777,7 +1866,8 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
     WiFiClientSecure &c = sslClient();
     c.stop();
     c.setTimeout(15000);
-    c.setInsecure();
+    refreshCloudX509Mode();
+    applyTlsModeToClient(c);
     yield();
 
     /* TLS(esp-sha) の内部ヒープ確保と競合しやすいので、JSON は必要最小限の容量に抑える */
@@ -1950,7 +2040,8 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
     WiFiClientSecure &c = sslClient();
     c.stop();
     c.setTimeout(15000);
-    c.setInsecure();
+    refreshCloudX509Mode();
+    applyTlsModeToClient(c);
     yield();
 
     static StaticJsonDocument<2560> doc;
@@ -2089,20 +2180,11 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
       return;
     }
 
-    // H2C/H2D/H2S は Cloud 取得反映時・printer.json に保存しない（一覧・SD 上のデバイス一覧から除外）
-    auto isExcludedProduct = [](JsonVariant v) -> bool {
-      if (!v.containsKey("dev_product_name")) return false;
-      const char *product = v["dev_product_name"].as<const char *>();
-      return product && (strcmp(product, "H2C") == 0 || strcmp(product, "H2D") == 0 || strcmp(product, "H2S") == 0);
-    };
-
-    /* printer.json は SD 上の古い内容とマージしない。Cloud devices のみを正に書き込む（H2 系は上記で除外）。 */
+    /* printer.json は SD 上の古い内容とマージしない。Cloud devices のみを正に書き込む。 */
     DynamicJsonDocument printers_new(XPTOUCH_PRINTERS_JSON_DOC_CAP);
     JsonObject root_new = printers_new.to<JsonObject>();
     for (JsonVariant v : devices)
     {
-      if (isExcludedProduct(v))
-        continue;
       const char *dev_id = v["dev_id"].as<const char *>();
       if (!dev_id || !dev_id[0])
         continue;
@@ -2118,16 +2200,18 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
     serializeJsonPretty(printers_new, Serial);
     xptouch_filesystem_writeJson(xptouch_sdcard_fs(), xptouch_paths_printers, printers_new);
 
-    // 除外後件数を数える（filteredDoc を使わずメモリ節約）
+    // 件数を数える（有効 dev_id を持つデバイスのみ）
     size_t filteredCount = 0;
     for (JsonVariant v : devices)
     {
-      if (!isExcludedProduct(v)) filteredCount++;
+      const char *dev_id = v["dev_id"].as<const char *>();
+      if (dev_id && dev_id[0])
+        filteredCount++;
     }
 
     if (filteredCount == 0)
     {
-      Serial.println("No devices found in Bambu Cloud (or all excluded)");
+      Serial.println("No devices found in Bambu Cloud");
 
       lv_label_set_text(introScreenCaption, LV_SYMBOL_CHARGE " No Cloud Registered Devices");
       lv_timer_handler();
@@ -2137,40 +2221,30 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
       return;
     }
 
-    // n 番目（0-based）の非除外デバイスを返す
-    auto getNthNonExcluded = [&devices, &isExcludedProduct](size_t n) -> JsonVariant {
+    // n 番目（0-based）の有効デバイス（dev_id あり）を返す
+    auto getNthNonExcluded = [&devices](size_t n) -> JsonVariant {
       size_t idx = 0;
       for (JsonVariant v : devices)
       {
-        if (isExcludedProduct(v)) continue;
+        const char *dev_id = v["dev_id"].as<const char *>();
+        if (!dev_id || !dev_id[0])
+          continue;
         if (idx == n) return v;
         idx++;
       }
       return JsonVariant();
     };
 
-    if (filteredCount == 1)
-    {
-      JsonVariant single = getNthNonExcluded(0);
-      setCurrentDevice(single["dev_id"].as<String>());
-      setCurrentModel(single["dev_model_name"].as<String>());
-      setPrinterName(single["name"].as<String>());
-      setCurrentAccessCode(single["dev_access_code"].as<String>());
-
-      applyStoredPrinterJsonSettingsToConfig();
-
-      savePrinterPair(single["dev_id"].as<String>(), single["dev_model_name"].as<String>(), single["name"].as<String>(),
-                      single["dev_access_code"].as<String>());
-
-      return;
-    }
+    /* Unpair 後は bind 結果を常に明示選択させる（1件でも一覧を出す）。 */
 
     loadScreen(5);
 
     String output = "";
     for (JsonVariant v : devices)
     {
-      if (isExcludedProduct(v)) continue;
+      const char *dev_id = v["dev_id"].as<const char *>();
+      if (!dev_id || !dev_id[0])
+        continue;
       Serial.println("\n===========================================");
       serializeJsonPretty(v, Serial);
       output = output + LV_SYMBOL_CHARGE + " " + v["dev_id"].as<String>() + " (" + v["name"].as<String>() + ")\n";
@@ -2206,16 +2280,23 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
 
   void savePrinterPair(String usn, String modelName, String printerName, String accessCode = "")
   {
+    String id = usn;
+    id.trim();
+    if (id.length() == 0 || id == "null" || id == "undefined")
+    {
+      ConsoleError.println("[xPTouch][E][CLOUD] savePrinterPair skipped: empty paired id");
+      return;
+    }
 
     DynamicJsonDocument doc = xptouch_filesystem_readJson(xptouch_sdcard_fs(), xptouch_paths_pair, false);
 
-    doc["paired"] = usn.c_str();
+    doc["paired"] = id.c_str();
     doc["model"] = modelName.c_str();
     doc["printerName"] = printerName.c_str();
     doc["accessCode"] = accessCode.c_str();
 
     xptouch_filesystem_writeJson(xptouch_sdcard_fs(), xptouch_paths_pair, doc);
-    strncpy(xPTouchConfig.xTouchPairedSerialNumber, usn.c_str(), sizeof(xPTouchConfig.xTouchPairedSerialNumber) - 1);
+    strncpy(xPTouchConfig.xTouchPairedSerialNumber, id.c_str(), sizeof(xPTouchConfig.xTouchPairedSerialNumber) - 1);
     xPTouchConfig.xTouchPairedSerialNumber[sizeof(xPTouchConfig.xTouchPairedSerialNumber) - 1] = '\0';
   }
 
@@ -2226,13 +2307,26 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
       return false;
     }
     DynamicJsonDocument doc = xptouch_filesystem_readJson(xptouch_sdcard_fs(), xptouch_paths_pair, false);
-    return doc["paired"].as<String>() != "";
+    String paired = doc["paired"].as<String>();
+    paired.trim();
+    return paired.length() > 0 && paired != "null" && paired != "undefined";
   }
 
   void loadPair()
   {
     DynamicJsonDocument doc = xptouch_filesystem_readJson(xptouch_sdcard_fs(), xptouch_paths_pair, false);
-    setCurrentDevice(doc["paired"].as<String>());
+    String paired = doc["paired"].as<String>();
+    paired.trim();
+    if (paired.length() == 0 || paired == "null" || paired == "undefined")
+    {
+      setCurrentDevice("");
+      setCurrentModel("");
+      setPrinterName("");
+      setCurrentAccessCode("");
+      xPTouchConfig.xTouchPairedSerialNumber[0] = '\0';
+      return;
+    }
+    setCurrentDevice(paired);
     setCurrentModel(doc["model"].as<String>());
     setPrinterName(doc["printerName"].as<String>());
     setCurrentAccessCode(doc["accessCode"].as<String>());
@@ -2247,7 +2341,7 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
           setCurrentAccessCode(dev["dev_access_code"].as<String>());
       }
     }
-    strncpy(xPTouchConfig.xTouchPairedSerialNumber, xPTouchConfig.xTouchSerialNumber,
+    strncpy(xPTouchConfig.xTouchPairedSerialNumber, paired.c_str(),
             sizeof(xPTouchConfig.xTouchPairedSerialNumber) - 1);
     xPTouchConfig.xTouchPairedSerialNumber[sizeof(xPTouchConfig.xTouchPairedSerialNumber) - 1] = '\0';
   }
@@ -2318,9 +2412,10 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
   void unpair()
   {
     ConsoleInfo.println("[xPTouch][I][SSDP] Unpairing device");
-    DynamicJsonDocument pairFile = xptouch_filesystem_readJson(xptouch_sdcard_fs(), xptouch_paths_pair, false);
-    pairFile["paired"] = "";
-    xptouch_filesystem_writeJson(xptouch_sdcard_fs(), xptouch_paths_pair, pairFile);
+    /* Unpair 後は isPaired() 判定を確実に false にするため pair ファイル自体を消す。 */
+    xptouch_filesystem_deleteFile(xptouch_sdcard_fs(), xptouch_paths_pair);
+    xPTouchConfig.xTouchPairedSerialNumber[0] = '\0';
+    xPTouchConfig.xTouchSerialNumber[0] = '\0';
     ESP.restart();
   }
 
@@ -2340,6 +2435,7 @@ Serial.printf("[Cloud getSlicerSetting] setting_id=%d\n", setting_id);
     DynamicJsonDocument wifiConfig = xptouch_filesystem_readJson(xptouch_sdcard_fs(), xptouch_paths_provisioning);
     _region = wifiConfig["cloud-region"].as<const char *>();
     _email = wifiConfig["cloud-email"].as<String>();
+    refreshCloudX509Mode();
     loggedIn = true;
   }
 

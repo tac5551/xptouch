@@ -30,7 +30,11 @@ String xptouch_mqtt_report_topic;
 #endif
 #define XPTOUCH_MQTT_SERVER_TIMEOUT 20
 #define XPTOUCH_MQTT_SERVER_PUSH_STATUS_TIMEOUT 1800
+#ifdef __XPTOUCH_PLATFORM_S3__
+#define XPTOUCH_MQTT_SERVER_JSON_PARSE_SIZE 8192
+#else
 #define XPTOUCH_MQTT_SERVER_JSON_PARSE_SIZE 4192
+#endif
 
 /** vt_tray 等に nozzle 温度が無いとき、tray_type から ams_change_filament 用の代表温度（>=100） */
 static uint16_t xptouch_mqtt_infer_tar_temp_from_tray_type(const char *tt)
@@ -237,7 +241,12 @@ static void xptouch_mqtt_pushall_for_dev(const char *dev_id)
     json["pushing"]["version"] = 1;
     json["pushing"]["push_target"] = 1;
     json["pushing"]["sequence_id"] = xptouch_device_next_sequence();
-    json["user_id"] = "123456789";
+    String user_id = cloud.getUsername();
+    if (user_id.startsWith("u_") && user_id.length() > 2)
+        user_id = user_id.substring(2);
+    if (user_id.length() == 0)
+        user_id = "0";
+    json["user_id"] = user_id;
 
     String payload;
     serializeJson(json, payload);
@@ -245,15 +254,28 @@ static void xptouch_mqtt_pushall_for_dev(const char *dev_id)
     ConsoleVerbose.print(F("[xPTouch][V][MQTT] PUSHALL dev_id="));
     ConsoleVerbose.print(dev_id);
     ConsoleVerbose.print(F(" topic="));
-    ConsoleVerbose.print(topic);
-    ConsoleVerbose.print(F(" payload="));
-    ConsoleVerbose.println(payload);
-    xptouch_pubSubClient.publish(topic.c_str(), payload.c_str());
+    ConsoleVerbose.println(topic);
+    xptouch_device_publish_to_dev(dev_id, payload);
+}
+
+/** Printers 画面用: 他プリンタ report を購読する。 */
+static void xptouch_mqtt_subscribe_other_printer_reports(void)
+{
+#ifdef __XPTOUCH_PLATFORM_S3__
+    for (int i = 0; i < xptouch_other_printer_count; i++)
+    {
+        String other_report = String("device/") + xptouch_other_printer_dev_ids[i] + "/report";
+        ESP_LOGI("mqtt", "subscribe other report topic[%d]: %s", i, other_report.c_str());
+        xptouch_pubSubClient.subscribe(other_report.c_str());
+    }
+#endif
 }
 
 /** Printers 画面用: メイン＋他プリンタへ pushall を送る（毎回呼び出し可）。 */
 inline void xptouch_mqtt_pushall_all_printers_for_screen()
 {
+    /* 複数プリンタ監視は Printers 画面でのみ有効化する。 */
+    xptouch_mqtt_subscribe_other_printer_reports();
     xptouch_mqtt_pushall_for_dev(xPTouchConfig.xTouchSerialNumber);
     for (int i = 0; i < xptouch_other_printer_count; i++)
     {
@@ -1506,18 +1528,80 @@ void xptouch_mqtt_processPushStatus(JsonDocument &incomingJson)
     }
 }
 
+static String xptouch_mqtt_payload_preview(const byte *payload, unsigned int length, unsigned int max_len = 160)
+{
+    String out;
+    if (!payload || length == 0)
+        return out;
+    const unsigned int n = (length > max_len) ? max_len : length;
+    out.reserve(n * 4 + 8);
+    char hexbuf[5];
+    for (unsigned int i = 0; i < n; i++)
+    {
+        unsigned char c = payload[i];
+        if (c >= 32 && c <= 126 && c != '\\')
+        {
+            out += (char)c;
+        }
+        else if (c == '\\')
+        {
+            out += "\\\\";
+        }
+        else
+        {
+            snprintf(hexbuf, sizeof(hexbuf), "\\x%02X", c);
+            out += hexbuf;
+        }
+    }
+    if (length > n)
+        out += "...";
+    return out;
+}
+
 void xptouch_mqtt_parseMessage(char *topic, byte *payload, unsigned int length, byte type = 0)
 {
+    if (!payload || length == 0)
+        return;
+    unsigned int pos = 0;
+    while (pos < length)
+    {
+        char c = (char)payload[pos];
+        if (c == ' ' || c == '\t' || c == '\r' || c == '\n')
+            pos++;
+        else
+            break;
+    }
+    if (pos >= length)
+        return;
+    char first = (char)payload[pos];
+    if (first == '[')
+    {
+        ConsoleInfo.print(F("[xPTouch][I][MQTT] Non-object payload (possible auth reject): "));
+        ConsoleInfo.println(xptouch_mqtt_payload_preview(payload, length, 256));
+        return;
+    }
+    if (first != '{')
+    {
+        ConsoleError.print(F("[xPTouch][E][MQTT] non-JSON payload topic="));
+        ConsoleError.println(topic ? topic : "(null)");
+        ConsoleError.print(F("[xPTouch][E][MQTT] len="));
+        ConsoleError.println(length);
+        ConsoleError.print(F("[xPTouch][E][MQTT] raw="));
+        ConsoleError.println(xptouch_mqtt_payload_preview(payload, length, 256));
+        return;
+    }
 
     // ConsoleDebug.println(F("[xPTouch][D][MQTT] ParseMessage"));
     DynamicJsonDocument incomingJson(XPTOUCH_MQTT_SERVER_JSON_PARSE_SIZE);
 
     DynamicJsonDocument amsFilter(128);
     amsFilter["print"]["*"] = true;
+    amsFilter["security"]["*"] = true;
     // amsFilter["camera"]["*"] = true;
     amsFilter["print"]["ams"] = true;
 
-    auto deserializeError = deserializeJson(incomingJson, payload, length, DeserializationOption::Filter(amsFilter));
+    DeserializationError deserializeError =
+        deserializeJson(incomingJson, payload, length, DeserializationOption::Filter(amsFilter));
 
 #ifdef XPTOUCH_DEBUG_DETAIL
     ConsoleDetail.println("xptouch_mqtt_parseMessage");
@@ -1627,7 +1711,7 @@ void xptouch_mqtt_parseMessage(char *topic, byte *payload, unsigned int length, 
             else if (command == "gcode_line")
             {
                 ConsoleDebug.println(F("[xPTouch][D][MQTT] gcode_line ack"));
-                ConsoleDebug.println(String((char *)payload));
+                ConsoleDebug.println(xptouch_mqtt_payload_preview(payload, length, 256));
             }
 
             // project_file
@@ -1643,6 +1727,27 @@ void xptouch_mqtt_parseMessage(char *topic, byte *payload, unsigned int length, 
         }
 
         // info
+
+        if (incomingJson.containsKey("security") && incomingJson["security"].containsKey("command"))
+        {
+            String sec_command = incomingJson["security"]["command"].as<String>();
+            if (sec_command == "app_cert_list" && incomingJson["security"].containsKey("cert_ids") &&
+                incomingJson["security"]["cert_ids"].is<JsonArray>())
+            {
+                JsonArray cert_ids = incomingJson["security"]["cert_ids"].as<JsonArray>();
+                if (cert_ids.size() > 0)
+                {
+                    /* Python 実験で cert_ids の 2個目（末尾）が有効なケースがあるため、
+                     * 先頭固定ではなく末尾を優先する。 */
+                    const char *cid = cert_ids[cert_ids.size() - 1].as<const char *>();
+                    if (cid && cid[0])
+                    {
+                        xptouch_device_set_cloud_cert_id(cid);
+                        ConsoleInfo.printf("[xPTouch][I][MQTT] app_cert_list cert_id=%s\n", cid);
+                    }
+                }
+            }
+        }
 
         if (incomingJson.containsKey("camera"))
         {
@@ -1665,7 +1770,17 @@ void xptouch_mqtt_parseMessage(char *topic, byte *payload, unsigned int length, 
     }
     else
     {
+        /* 受信 JSON の破損/切断を追跡するため、失敗時は topic と raw payload を出す。 */
         ConsoleError.println(F("[xPTouch][E][MQTT] ParseMessage deserializeJson failed"));
+        ConsoleError.print(F("[xPTouch][E][MQTT] topic="));
+        ConsoleError.println(topic ? topic : "(null)");
+        ConsoleError.print(F("[xPTouch][E][MQTT] len="));
+        ConsoleError.println(length);
+        const unsigned int dump_len = (length > 512U) ? 512U : length;
+        String dump;
+        dump = xptouch_mqtt_payload_preview(payload, dump_len, dump_len);
+        ConsoleError.print(F("[xPTouch][E][MQTT] raw="));
+        ConsoleError.println(dump);
     }
 
     // if (firstParseMessage)
@@ -1681,12 +1796,9 @@ void xptouch_pubSubClient_streamCallback(char *topic, byte *payload, unsigned in
     ConsoleDetail.print(topic);
     ConsoleDetail.print(" len=");
     ConsoleDetail.println(length);
-    // xptouch_mqtt_parseMessage(topic, (byte *)stream.get_buffer(), stream.current_length(), 0);
-
-    // if (stream.includes("\"ams\""))
-    // {
-    xptouch_mqtt_parseMessage(topic, (byte *)stream.get_buffer(), stream.current_length(), 1);
-    // }
+    /* 受信解析は callback の payload/length を正とする。
+     * stream バッファは内部用途のため、こちらを優先すると破損データ扱いになることがある。 */
+    xptouch_mqtt_parseMessage(topic, payload, length, 0);
 
     stream.flush();
 }
@@ -1775,16 +1887,11 @@ static void xptouch_mqtt_connect(const char *username, const char *password, con
             /* メイン機の report は常に購読（1台のみのときもこれで push_status を受信） */
             ESP_LOGI("mqtt", "subscribe self report topic: %s", xptouch_mqtt_report_topic.c_str());
             xptouch_pubSubClient.subscribe(xptouch_mqtt_report_topic.c_str());
-#ifdef __XPTOUCH_PLATFORM_S3__
-            for (int i = 0; i < xptouch_other_printer_count; i++)
-            {
-                String other_report = String("device/") + xptouch_other_printer_dev_ids[i] + "/report";
-                ESP_LOGI("mqtt", "subscribe other report topic[%d]: %s", i, other_report.c_str());
-                xptouch_pubSubClient.subscribe(other_report.c_str());
-            }
-#endif
-            xptouch_device_pushall();
-            xptouch_device_get_version();
+            if (xPTouchConfig.currentScreenIndex == 6)
+                xptouch_mqtt_subscribe_other_printer_reports();
+            /* Python 実装寄せ: 接続直後は cert_id 取得を最優先（自動 pushall/get_version は送らない） */
+            xptouch_device_clear_cloud_cert_id();
+            xptouch_device_request_app_cert_list();
             xptouch_mqtt_onMqttReady();
             xptouch_mqtt_lastPushStatus = millis();
             break;
@@ -1857,8 +1964,11 @@ static void xptouch_mqtt_connect(const char *username, const char *password, con
 
 void xptouch_cloud_mqtt_connect()
 {
-    xptouch_mqtt_connect(cloud.getUsername().c_str(), cloud.getAuthToken().c_str(),
-                        LV_SYMBOL_CHARGE " Connecting to Cloud MQTT", true);
+    cloud.refreshCloudX509State();
+    const char *caption = cloud.isCloudX509ModeEnabled()
+                              ? LV_SYMBOL_CHARGE " Connecting to Cloud MQTT (X509)"
+                              : LV_SYMBOL_CHARGE " Connecting to Cloud MQTT";
+    xptouch_mqtt_connect(cloud.getUsername().c_str(), cloud.getAuthToken().c_str(), caption, true);
 }
 
 void xptouch_local_mqtt_connect()
@@ -1871,6 +1981,8 @@ static void xptouch_mqtt_configure_client(const char *host)
 {
     xptouch_wiFiClientSecure.flush();
     xptouch_wiFiClientSecure.stop();
+    /* Python 実装寄せ: MQTT TLS は常に insecure で接続し、
+     * 証明書検証エラー(-9984)によるリトライ分岐を避ける。 */
     xptouch_wiFiClientSecure.setInsecure();
 
     xptouch_pubSubClient.setServer(host, 8883);
@@ -1933,7 +2045,10 @@ static void xptouch_mqtt_subscribe_commands(void)
 
 void xptouch_cloud_mqtt_setup()
 {
-    xptouch_set_intro_caption_safe(LV_SYMBOL_CHARGE " Connecting BBL Cloud");
+    cloud.refreshCloudX509State();
+    xptouch_set_intro_caption_safe(cloud.isCloudX509ModeEnabled()
+                                       ? LV_SYMBOL_CHARGE " Connecting BBL Cloud (X509)"
+                                       : LV_SYMBOL_CHARGE " Connecting BBL Cloud");
     lv_timer_handler();
     lv_task_handler();
     delay(32);
