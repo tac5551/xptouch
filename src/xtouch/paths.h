@@ -25,6 +25,19 @@ const char *xptouch_paths_printers     = XPTOUCH_PATH_ROOT "/printer.json";
 #define XPTOUCH_PRINTERS_JSON_DOC_CAP 12288
 const char *xptouch_paths_pair         = XPTOUCH_PATH_ROOT "/printer-pair.json";
 
+/** デモモード: SD ルート /demo/pushall0.json …（push_status 本体） */
+const char *xptouch_paths_demo_dir = "/demo";
+#define XPTOUCH_DEMO_PUSHALL_SLOT_MAX 4
+/** pushall0.json は実機キャプチャで 8KB 超のことがある */
+#define XPTOUCH_DEMO_PUSHALL_JSON_CAP 12288
+const char *xptouch_paths_demo_history = "/demo/history.json";
+#define XPTOUCH_DEMO_HISTORY_JSON_CAP 8192
+/** デモ Camera 画面用の静止画 JPEG（プリンタ TCP ストリームの代替） */
+const char *xptouch_paths_demo_camera = "/demo/camera.jpg";
+#define XPTOUCH_DEMO_CAMERA_JPEG_MAX (512u * 1024u)
+/** Reprint 用 Cloud task ダンプ（`/demo/task_{id}.json` または `/tmp/task_{id}.json`） */
+#define XPTOUCH_DEMO_TASK_JSON_CAP 12288
+
 //for OTA Update
 #define XPTOUCH_OTA_HOST "tac-lab.tech"
 const char *xptouch_paths_firmware_ota_host = XPTOUCH_OTA_HOST;

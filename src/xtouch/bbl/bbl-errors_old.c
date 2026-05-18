@@ -1,7 +1,7 @@
 #include <pgmspace.h>
 
 // All HMS errors (no optimization)
-int hms_error_length = 3962;
+int hms_error_length = 3970;
 
 const char *hms_error_keys[] PROGMEM = {
   "0704220000020025",
@@ -460,6 +460,10 @@ const char *hms_error_keys[] PROGMEM = {
   "0703500000020002",
   "1804500000020002",
   "0704500000020002",
+  "0300400000020003",
+  "0300400000020004",
+  "1805010000010004",
+  "1802220000020005",
   "0707220000020013",
   "0706500000020001",
   "1803100000020004",
@@ -616,12 +620,14 @@ const char *hms_error_keys[] PROGMEM = {
   "0704310000010004",
   "1801200000020013",
   "1803350000010002",
+  "1804240000010007",
   "0706130000010001",
   "0704350000010001",
   "050005000001000F",
   "1806110000020004",
   "0702220000020013",
   "1806220000020016",
+  "1801240000010007",
   "0702200000020011",
   "0702310000010004",
   "1804200000010083",
@@ -656,6 +662,7 @@ const char *hms_error_keys[] PROGMEM = {
   "0707200000020010",
   "1800200000030002",
   "0700510000030001",
+  "1806240000010007",
   "0702200000020006",
   "0706230000020020",
   "0500020000020002",
@@ -816,6 +823,7 @@ const char *hms_error_keys[] PROGMEM = {
   "0702210000020024",
   "1807220000020001",
   "1807210000020002",
+  "1803240000010007",
   "0707210000020016",
   "0705210000030002",
   "1804010000020006",
@@ -943,6 +951,7 @@ const char *hms_error_keys[] PROGMEM = {
   "0500030000010023",
   "1807220000030001",
   "1803230000020021",
+  "1800240000010007",
   "0704220000020004",
   "1805210000020005",
   "1804230000020024",
@@ -1687,10 +1696,6 @@ const char *hms_error_keys[] PROGMEM = {
   "1804230000020004",
   "0701200000020019",
   "1803930000010001",
-  "0705200000020010",
-  "0707010000020007",
-  "0706230000020019",
-  "1806700000020008",
   "1800120000010001",
   "1803220000020024",
   "1801230000020017",
@@ -2591,7 +2596,6 @@ const char *hms_error_keys[] PROGMEM = {
   "0705010000010011",
   "0705120000020002",
   "0704800000010003",
-  "0300920000010002",
   "1805200000010085",
   "0705230000020013",
   "0707200000020013",
@@ -2954,6 +2958,7 @@ const char *hms_error_keys[] PROGMEM = {
   "1805220000010086",
   "1802700000020008",
   "1806210000030002",
+  "1802240000010007",
   "0707230000030001",
   "1802220000020017",
   "0701210000020004",
@@ -3035,6 +3040,7 @@ const char *hms_error_keys[] PROGMEM = {
   "1800230000020005",
   "03000C0000010002",
   "0706010000020011",
+  "1807240000010007",
   "1800700000020005",
   "0704700000020008",
   "0300200000010001",
@@ -3113,8 +3119,10 @@ const char *hms_error_keys[] PROGMEM = {
   "0500030000030007",
   "1807700000020004",
   "1804200000010081",
-  "1805010000010004",
-  "1802220000020005",
+  "0705200000020010",
+  "0707010000020007",
+  "0706230000020019",
+  "1806700000020008",
   "1800010000020008",
   "1803220000020022",
   "0706110000020002",
@@ -3478,6 +3486,7 @@ const char *hms_error_keys[] PROGMEM = {
   "1806220000010086",
   "0701220000010086",
   "1800010000020011",
+  "1805240000010007",
   "0703230000020017",
   "0700200000020009",
   "0701220000020002",
@@ -3660,7 +3669,6 @@ const char *hms_error_keys[] PROGMEM = {
   "1804220000020020",
   "1805930000020002",
   "1806210000020010",
-  "030091000001000C",
   "0703130000020002",
   "1801600000020001",
   "0701130000010003",
@@ -4425,6 +4433,10 @@ const char *hms_error_values[] PROGMEM = {
   "AMS used for the current print is disconnected. Check the connection. Printing will resume automatically after reconnection.",
   "AMS used for the current print is disconnected. Check the connection. Printing will resume automatically after reconnection.",
   "AMS used for the current print is disconnected. Check the connection. Printing will resume automatically after reconnection.",
+  "Sliced file abnormality detected multiple times. Task canceled. Please check the sliced file.",
+  "G-code verification error. The system has automatically reacquired the data and resumed printing.",
+  "The AMS-HT F assist motor speed control is malfunctioning. The speed sensor may be faulty.",
+  "AMS-HT C Slot 3 filament has run out, and purging the old filament went abnormally; please check whether the filament is stuck in the tool head.",
   "AMS H slot 3 feeder unit motor has no signal, which may be due to poor contact in the motor connector or a motor fault.",
   "AMS G communication is abnormal; please check the connection cable.",
   "AMS-HT D The brushed motor 1 has no signal, which may be due to poor contact in the motor connector or a motor fault.",
@@ -4581,12 +4593,14 @@ const char *hms_error_values[] PROGMEM = {
   "Encryption chip failure",
   "AMS-HT B slot 1 feeder unit motor has no signal, which may be due to poor contact in the motor connector or a motor fault.",
   "AMS-HT D The humidity sensor is disconnected, which may be due to poor connector contact.",
+  "AMS-HT E door detection is abnormal, the Hall sensor connection may be loose or disconnected.",
   "The AMS G slot 4 motor has slipped. The extrusion wheel may be malfunctioning, or the filament may be too thin.",
   "The temperature and humidity sensor has an error. The chip may be faulty.",
   "The accessory firmware does not match the printer. Please upgrade it on the \"Firmware\" page.",
   "AMS-HT G The brushed motor 2 has no signal, which may be due to poor contact in the motor connector or a motor fault.",
   "AMS C slot 3 feeder unit motor has no signal, which may be due to poor contact in the motor connector or a motor fault.",
   "AMS-HT G slot 3 assist motor has slipped. Please pull out the filament, cut off the worn part, and then try again.",
+  "AMS-HT B door detection is abnormal, the Hall sensor connection may be loose or disconnected.",
   "AMS C slot 1 pulls filament back to AMS timeout.",
   "Encryption chip failure",
   "Failed to read the filament information from AMS-HT E slot 1. The RFID tag may be damaged.",
@@ -4621,6 +4635,7 @@ const char *hms_error_values[] PROGMEM = {
   "AMS H slot 1 feeds filament out of AMS timeout.",
   "AMS-HT A Slot 1 filament has run out and automatically switched to the slot with the same filament.",
   "The AMS is disabled; please load filament from the spool holder.",
+  "AMS-HT G door detection is abnormal, the Hall sensor connection may be loose or disconnected.",
   "AMS C has detected a breakage of the PTFE tube during filament loading. Please check whether the PTFE tubes inside and outside the AMS have fallen off or been damaged.",
   "AMS G slot 4 assist motor is stalled，due to excessive resistance in the tube near the filament buffer。",
   "Device login failed; please check your account information.",
@@ -4781,6 +4796,7 @@ const char *hms_error_values[] PROGMEM = {
   "AMS C slot 2 failed to rotate the filament spool when pulling filament back to AMS.",
   "AMS-HT H Slot 3 filament has run out. Please insert a new filament.",
   "AMS-HT H Slot 2 is empty; please insert a new filament.",
+  "AMS-HT D door detection is abnormal, the Hall sensor connection may be loose or disconnected.",
   "AMS H slot 2 assist motor has slipped. Please pull out the filament, cut off the worn part, and then try again.",
   "AMS F Slot 2 filament has run out and automatically switched to the slot with the same filament.",
   "AMS-HT E The assist motor three-phase wires are not connected. The assist motor connector may have poor contact.",
@@ -4905,9 +4921,10 @@ const char *hms_error_values[] PROGMEM = {
   "Failed to read the filament information from AMS-HT C slot 2. The RFID tag may be damaged or positioned at the edge of the RFID detection device. Please remove 5cm filament and try again.",
   "The AMS G slot 1 motor has slipped. The extrusion wheel may be malfunctioning, or the filament may be too thin.",
   "AMS A slot 1 feeds filament out of AMS timeout.",
-  "The Chamber Temperature Control module is malfunctioning. Please restart the device.",
+  "The Chamber Temperature Controller module is malfunctioning. Please restart the device.",
   "AMS-HT H Slot 3 filament has run out. Please wait while old filament is purged.",
   "AMS-HT D slot 4 assist motor is stalled，due to excessive resistance in the tube between the filament buffer and the toolhead.",
+  "AMS-HT A door detection is abnormal, the Hall sensor connection may be loose or disconnected.",
   "AMS E Slot 3 filament may be broken in the tool head.",
   "AMS-HT F Slot 2 filament has run out, and purging the old filament went abnormally; please check whether the filament is stuck in the tool head.",
   "AMS-HT E slot 4 failed to rotate the filament spool when pulling filament back to AMS.",
@@ -5652,10 +5669,6 @@ const char *hms_error_values[] PROGMEM = {
   "AMS-HT E Slot 4 filament may be broken in the tool head.",
   "AMS B slot 1 assist motor is stalled，due to excessive resistance in the tube between AMS and the filament buffer.",
   "AMS-HT D The cooling fan of heater 2 is blocked, which may be due to the fan being stuck.",
-  "AMS F slot 1 feeds filament out of AMS timeout.",
-  "AMS H The assist motor encoder wires are not connected. The assist motor connector may have poor contact.",
-  "AMS G slot 4 assist motor is stalled，due to excessive resistance in the tube between AMS and the filament buffer.",
-  "Failed to get AMS mapping table; please select \"Resume\" to retry.",
   "The AMS-HT A slot 3 motor has slipped. The extrusion wheel may be malfunctioning, or the filament may be too thin.",
   "AMS-HT D slot 3 failed to rotate the filament spool when pulling filament back to AMS.",
   "AMS-HT B slot 4 assist motor is stalled，due to excessive resistance in the tube between AMS and the printer.",
@@ -6556,7 +6569,6 @@ const char *hms_error_values[] PROGMEM = {
   "AMS F The assist motor calibration parameter error. Please pull out the filament from the filament hub and then restart the AMS.",
   "The AMS F slot 3 motor is overloaded. The filament may be tangled or stuck.",
   "AMS E The heater 1 is short-circuited, which may be due to a wiring short or heater damage.",
-  "The temperature of chamber heater 2 is abnormal. The heater may have an open circuit or the thermal fuse may be in effect.",
   "Failed to read the filament information from AMS-HT F slot 1. RFID tag verification failed. You can try to use Bambu Lab filament.",
   "AMS F slot 4 feeder unit motor has no signal, which may be due to poor contact in the motor connector or a motor fault.",
   "AMS H slot 1 feeder unit motor has no signal, which may be due to poor contact in the motor connector or a motor fault.",
@@ -6919,6 +6931,7 @@ const char *hms_error_values[] PROGMEM = {
   "Failed to read the filament information from AMS-HT F slot 3. The RFID tag cannot rotate due to a jam during the filament loading or unloading. Please pull out the filament and try again.",
   "Failed to get AMS mapping table; please select \"Resume\" to retry.",
   "AMS-HT G Slot 2 filament has run out and automatically switched to the slot with the same filament.",
+  "AMS-HT C door detection is abnormal, the Hall sensor connection may be loose or disconnected.",
   "AMS H Slot 4 filament has run out. Please wait while old filament is purged.",
   "AMS-HT C slot 3 assist motor is stalled，due to excessive resistance in the tube between AMS and the printer.",
   "AMS B Slot 2 filament may be broken in the tool head.",
@@ -7000,6 +7013,7 @@ const char *hms_error_values[] PROGMEM = {
   "AMS-HT A Slot 4 filament has run out, and purging the old filament went abnormally; please check whether the filament is stuck in the tool head.",
   "The signal of heatbed force sensor 3 is weak. The force sensor may be broken or have poor electric connection.",
   "AMS G The motor assist parameter is lost. Please pull out the filament from the filament hub and then restart the AMS.",
+  "AMS-HT H door detection is abnormal, the Hall sensor connection may be loose or disconnected.",
   "Failed to feed the filament outside the AMS-HT. Please clip the end of the filament flat and check to see if the spool is stuck.",
   "Failed to get AMS mapping table; please select \"Resume\" to retry.",
   "X-axis homing abnormal: please check if the toolhead is stuck or the carbon rod resistance is too high.",
@@ -7078,8 +7092,10 @@ const char *hms_error_values[] PROGMEM = {
   "",
   "Failed to pull back the filament from the toolhead to AMS-HT. Possible cause: filament or spool stuck.",
   "Failed to read the filament information from AMS-HT E slot 1. The AMS main board may be malfunctioning.",
-  "The AMS-HT F assist motor speed control is malfunctioning. The speed sensor may be faulty.",
-  "AMS-HT C Slot 3 filament has run out, and purging the old filament went abnormally; please check whether the filament is stuck in the tool head.",
+  "AMS F slot 1 feeds filament out of AMS timeout.",
+  "AMS H The assist motor encoder wires are not connected. The assist motor connector may have poor contact.",
+  "AMS G slot 4 assist motor is stalled，due to excessive resistance in the tube between AMS and the filament buffer.",
+  "Failed to get AMS mapping table; please select \"Resume\" to retry.",
   "AMS-HT A The assist motor phase winding has an open circuit. The assist motor may be faulty.",
   "AMS-HT D slot 3 assist motor is stalled，due to excessive resistance in the tube near the toolhead.",
   "The AMS G slot 2 motor is overloaded. The filament may be tangled or stuck.",
@@ -7443,6 +7459,7 @@ const char *hms_error_values[] PROGMEM = {
   "Failed to read the filament information from AMS-HT G slot 3. The RFID tag cannot rotate due to a jam during the filament loading or unloading. Please pull out the filament and try again.",
   "Failed to read the filament information from AMS B slot 3. The RFID tag cannot rotate due to a jam during the filament loading or unloading. Please pull out the filament and try again.",
   "AMS-HT A The motor assist parameter is lost. Please pull out the filament from the filament hub and then restart the AMS.",
+  "AMS-HT F door detection is abnormal, the Hall sensor connection may be loose or disconnected.",
   "AMS D slot 4 assist motor is stalled，due to excessive resistance in the tube between AMS and the printer.",
   "Failed to extrude AMS A Slot 1 filament; the extruder may be clogged or the filament may be too thin, causing the extruder to slip.",
   "AMS B Slot 3 is empty; please insert a new filament.",
@@ -7625,7 +7642,6 @@ const char *hms_error_values[] PROGMEM = {
   "AMS-HT E slot 3 assist motor is stalled，due to excessive resistance in the tube near the filament buffer。",
   "AMS-HT F The cooling fan speed of heater 2 is too low, which could be due to excessive fan resistance.",
   "AMS-HT G slot 2 feeds filament out of AMS timeout.",
-  "The chamber heater 1 has worked at full load for a long time. The temperature control system may be abnormal.",
   "The AMS D slot 4 motor is overloaded. The filament may be tangled or stuck.",
   "The AMS-HT B Slot 1 is overloaded. The filament may be tangled or the filament buffer may be stuck.",
   "The AMS B slot 4 motor torque control is malfunctioning. The current sensor may be faulty.",
@@ -7934,7 +7950,7 @@ const char *hms_error_values[] PROGMEM = {
 };
 
 // All Device errors (no optimization)
-int device_error_length = 531;
+int device_error_length = 532;
 
 const char *device_error_keys[] PROGMEM = {
   "07038012",
@@ -8467,7 +8483,8 @@ const char *device_error_keys[] PROGMEM = {
   "1803C008",
   "1805C008",
   "1801C008",
-  "0701C008"
+  "0701C008",
+  "050040B4"
 };
 
 const char *device_error_values[] PROGMEM = {
@@ -9001,11 +9018,12 @@ const char *device_error_values[] PROGMEM = {
   "AMS used for the current print is disconnected. Check the connection. Printing will resume automatically after reconnection.",
   "AMS used for the current print is disconnected. Check the connection. Printing will resume automatically after reconnection.",
   "AMS used for the current print is disconnected. Check the connection. Printing will resume automatically after reconnection.",
-  "AMS used for the current print is disconnected. Check the connection. Printing will resume automatically after reconnection."
+  "AMS used for the current print is disconnected. Check the connection. Printing will resume automatically after reconnection.",
+  "Task execution error. Please restart the device. If the issue persists, contact technical support."
 };
 
 // Retry and Done message arrays
-int message_containing_retry_total = 429;
+int message_containing_retry_total = 430;
 
 const char *message_containing_retry[] PROGMEM = {
   "18FF700000020008",
@@ -9029,6 +9047,7 @@ const char *message_containing_retry[] PROGMEM = {
   "0703500000020002",
   "1804500000020002",
   "0704500000020002",
+  "0300400000020004",
   "1801210000010084",
   "0702210000010086",
   "1806200000010084",
@@ -9129,7 +9148,6 @@ const char *message_containing_retry[] PROGMEM = {
   "1805200000010086",
   "1807700000020007",
   "1802230000010086",
-  "1806700000020008",
   "0703700000020008",
   "1801700000020008",
   "1805960000010003",
@@ -9220,6 +9238,7 @@ const char *message_containing_retry[] PROGMEM = {
   "0706210000010086",
   "0705230000010084",
   "0702230000020016",
+  "1806700000020008",
   "0702200000010084",
   "1805210000010084",
   "0705220000010086",

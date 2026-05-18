@@ -85,6 +85,8 @@ extern "C"
         XPTOUCH_SETTINGS_UNPAIR,
         /** SD /tmp のサムネ・履歴カバー PNG を削除し LGFX キャッシュを無効化（購読は events.h / xtouch） */
         XPTOUCH_SETTINGS_CLEAR_CACHE,
+        /** provisioning.json の demo をトグルして再起動 */
+        XPTOUCH_SETTINGS_DEMO_MODE_TOGGLE,
         XPTOUCH_SETTINGS_BACKLIGHT,
         XPTOUCH_SETTINGS_BACKLIGHT_SET,
         XPTOUCH_SETTINGS_TFTOFF_SET,

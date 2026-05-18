@@ -15,6 +15,10 @@
 #include "xtouch/thumbnail.h"
 #include "xtouch/trays.h"
 #include "xtouch/sdcard.h"
+#include "demo.h"
+#include "paths.h"
+#include "filesystem.h"
+#include "sdcard.h"
 #include <cstdio>
 #include <cstring>
 #include <strings.h>
@@ -191,7 +195,7 @@ static void xptouch_history_cover_retry_work_body(void)
       continue;
     if (xptouch_sdcard_exists(path))
       xptouch_history_apply_cover_row(row);
-    else if (xptouch_history_tasks[row].cover_url[0])
+    else if (!xPTouchConfig.xTouchDemoMode && xptouch_history_tasks[row].cover_url[0])
       xptouch_history_enqueue_cover_row(row);
   }
 }
@@ -210,7 +214,7 @@ static void xptouch_history_thumbs_show_work_body(void)
       continue;
     if (xptouch_sdcard_exists(path))
       xptouch_history_apply_cover_row(row);
-    else if (xptouch_history_tasks[row].cover_url[0])
+    else if (!xPTouchConfig.xTouchDemoMode && xptouch_history_tasks[row].cover_url[0])
       xptouch_history_enqueue_cover_row(row);
   }
 }
@@ -220,6 +224,20 @@ static void xptouch_history_fetch_enqueue_first_work_body(void)
   if (xPTouchConfig.xTouchHideAllThumbnails)
     return;
   int lim = (xptouch_history_count < XPTOUCH_HISTORY_COVER_SLOTS) ? xptouch_history_count : XPTOUCH_HISTORY_COVER_SLOTS;
+  if (xPTouchConfig.xTouchDemoMode)
+  {
+    for (int row = 0; row < lim; row++)
+    {
+      if (!xptouch_history_tasks[row].valid)
+        continue;
+      char path[64];
+      if (xptouch_history_cover_path_for_task_id(xptouch_history_tasks[row].task_id, path, sizeof(path)) != 0)
+        continue;
+      if (xptouch_sdcard_exists(path))
+        xptouch_history_apply_cover_row(row);
+    }
+    return;
+  }
   for (int row = 0; row < lim; row++)
   {
     if (!xptouch_history_tasks[row].cover_url[0])
@@ -438,8 +456,33 @@ static int xptouch_history_cover_path_for_task_id(const char *task_id, char *pat
 {
   if (!task_id || !path || path_size < 16)
     return -1;
-  if (!getThumbPathForTaskId(task_id, path, path_size))
+
+  char tmp_path[64];
+  if (!getThumbPathForTaskId(task_id, tmp_path, sizeof(tmp_path)))
     return -1;
+
+  if (xptouch_sdcard_exists(tmp_path))
+  {
+    strncpy(path, tmp_path, path_size - 1);
+    path[path_size - 1] = '\0';
+    return 0;
+  }
+
+  /* デモバックアップ: R:\demo\*.png → SD /demo/{task_id}.png */
+  if (xPTouchConfig.xTouchDemoMode && strncmp(tmp_path, "/tmp/", 5) == 0)
+  {
+    char demo_path[64];
+    snprintf(demo_path, sizeof(demo_path), "%s/%s", xptouch_paths_demo_dir, tmp_path + 5);
+    if (xptouch_sdcard_exists(demo_path))
+    {
+      strncpy(path, demo_path, path_size - 1);
+      path[path_size - 1] = '\0';
+      return 0;
+    }
+  }
+
+  strncpy(path, tmp_path, path_size - 1);
+  path[path_size - 1] = '\0';
   return 0;
 }
 
@@ -662,11 +705,195 @@ static void xptouch_history_detail_done_timer_cb(lv_timer_t *t)
   lv_msg_send(XPTOUCH_HISTORY_REPRINT_DETAIL_READY, NULL);
 }
 
+static void xptouch_history_finish_demo_fetch_ui(void)
+{
+  xptouch_history_cover_clear();
+  xptouch_history_list_refresh_full();
+  lv_disp_t *disp = lv_disp_get_default();
+  if (disp)
+    lv_refr_now(disp);
+  xptouch_history_schedule_cover_work_deferred(XPTOUCH_HISTORY_DEFER_FETCH_ENQUEUE_FIRST);
+}
+
+/** デモ Reprint: /demo/task_{id}.json または /tmp/task_{id}.json を読む */
+static bool xptouch_demo_read_task_detail_json(const char *task_id, char *buf, size_t buf_len, size_t *out_len)
+{
+  if (!task_id || !task_id[0] || !buf || buf_len < 64 || !out_len)
+    return false;
+  *out_len = 0;
+
+  char path_my[56];
+  char path_demo[56];
+  char path_tmp[56];
+  snprintf(path_my, sizeof(path_my), "%s/my_task_%s.json", xptouch_paths_demo_dir, task_id);
+  snprintf(path_demo, sizeof(path_demo), "%s/task_%s.json", xptouch_paths_demo_dir, task_id);
+  snprintf(path_tmp, sizeof(path_tmp), "/tmp/task_%s.json", task_id);
+  const char *paths[3] = { path_my, path_demo, path_tmp };
+
+  for (int pi = 0; pi < 3; pi++)
+  {
+    if (!xptouch_filesystem_exist(xptouch_sdcard_fs(), paths[pi]))
+      continue;
+    File f = xptouch_filesystem_open(xptouch_sdcard_fs(), paths[pi]);
+    if (!f)
+      continue;
+    const size_t sz = f.size();
+    if (sz == 0 || sz >= buf_len)
+    {
+      f.close();
+      continue;
+    }
+    const size_t n = f.read((uint8_t *)buf, sz);
+    f.close();
+    if (n != sz)
+      continue;
+    buf[n] = '\0';
+    *out_len = n;
+    ConsoleInfo.printf("[xPTouch][I][DEMO] reprint detail json %s (%u bytes)\n", paths[pi], (unsigned)n);
+    return true;
+  }
+  return false;
+}
+
+static const xptouch_history_task_t *xptouch_demo_find_history_task(const char *task_id)
+{
+  if (!task_id || !task_id[0])
+    return nullptr;
+  for (int i = 0; i < xptouch_history_count; i++)
+  {
+    if (xptouch_history_tasks[i].valid && strcmp(xptouch_history_tasks[i].task_id, task_id) == 0)
+      return &xptouch_history_tasks[i];
+  }
+  return nullptr;
+}
+
+/** cloud_parse_json_str_key は未検出時に out を空にする。history マージ用に値があるときだけ上書き。 */
+static void xptouch_demo_merge_json_str(const char *json, size_t len, const char *key, char *dst, size_t dst_len)
+{
+  if (!json || !key || !dst || dst_len == 0)
+    return;
+  char tmp[128];
+  cloud_parse_json_str_key(json, len, key, tmp, sizeof(tmp));
+  if (tmp[0])
+  {
+    strncpy(dst, tmp, dst_len - 1);
+    dst[dst_len - 1] = '\0';
+  }
+}
+
+/** デモ Reprint 詳細（Cloud GET /my/task の代替） */
+static bool xptouch_demo_load_reprint_detail(const char *task_id)
+{
+  if (!task_id || !task_id[0])
+    return false;
+
+  if (xptouch_history_count <= 0)
+    (void)xptouch_demo_load_history_from_sd();
+
+  xptouch_history_reprint_cover_clear();
+  memset(xptouch_history_reprint_pick_ams, 0, sizeof(xptouch_history_reprint_pick_ams));
+  memset(xptouch_history_reprint_pick_tray, 0, sizeof(xptouch_history_reprint_pick_tray));
+  memset(&xptouch_history_reprint_task_basic, 0, sizeof(xptouch_history_reprint_task_basic));
+  xptouch_history_reprint_task_basic_valid = 0;
+  memset(xptouch_history_selected_ams_map, 0, sizeof(xptouch_history_selected_ams_map));
+  xptouch_history_selected_ams_map_count = 0;
+
+  const xptouch_history_task_t *hist = xptouch_demo_find_history_task(task_id);
+  if (hist)
+  {
+    memcpy(&xptouch_history_reprint_task_basic, hist, sizeof(xptouch_history_reprint_task_basic));
+    xptouch_history_reprint_task_basic_valid = 1;
+  }
+
+  xptouch_history_task_t *out = &xptouch_history_reprint_task_basic;
+  strncpy(out->task_id, task_id, sizeof(out->task_id) - 1);
+  out->task_id[sizeof(out->task_id) - 1] = '\0';
+
+  static char json_buf[XPTOUCH_DEMO_TASK_JSON_CAP];
+  size_t json_len = 0;
+  if (xptouch_demo_read_task_detail_json(task_id, json_buf, sizeof(json_buf), &json_len))
+  {
+    /* /tmp/task_*.json は getTaskThumbnailUrl（iot-service）のダンプが多い。my/task 形式とキーが異なる */
+    xptouch_demo_merge_json_str(json_buf, json_len, "modelId", out->model_id, sizeof(out->model_id));
+    cloud_parse_json_scalar_key_as_string(json_buf, json_len, "modelId", out->model_id, sizeof(out->model_id));
+    xptouch_demo_merge_json_str(json_buf, json_len, "title", out->title, sizeof(out->title));
+    xptouch_demo_merge_json_str(json_buf, json_len, "subtaskName", out->title, sizeof(out->title));
+    xptouch_demo_merge_json_str(json_buf, json_len, "subtask_name", out->title, sizeof(out->title));
+    xptouch_demo_merge_json_str(json_buf, json_len, "name", out->title, sizeof(out->title));
+    xptouch_demo_merge_json_str(json_buf, json_len, "projectName", out->title, sizeof(out->title));
+    xptouch_demo_merge_json_str(json_buf, json_len, "cover", out->cover_url, sizeof(out->cover_url));
+    xptouch_demo_merge_json_str(json_buf, json_len, "deviceName", out->device_name, sizeof(out->device_name));
+    xptouch_demo_merge_json_str(json_buf, json_len, "deviceModel", out->device_model, sizeof(out->device_model));
+    xptouch_demo_merge_json_str(json_buf, json_len, "startTime", out->start_time, sizeof(out->start_time));
+    xptouch_demo_merge_json_str(json_buf, json_len, "endTime", out->end_time, sizeof(out->end_time));
+    {
+      const int prof = cloud_parse_json_int_key(json_buf, json_len, "profileId");
+      if (prof != 0)
+        out->profile_id = prof;
+      const int plate = cloud_parse_json_int_key(json_buf, json_len, "plateIndex");
+      if (plate != 0)
+        out->plate_index = plate;
+      const int st = cloud_parse_json_int_key(json_buf, json_len, "status");
+      if (st != 0)
+        out->status = st;
+    }
+    if (cloud_parse_json_bool_key(json_buf, json_len, "isPrintable"))
+      out->is_printable = 1;
+    out->has_ams_mapping =
+        (strstr(json_buf, "\"amsDetailMapping\"") != nullptr || strstr(json_buf, "\"filaments\"") != nullptr) ? 1 : 0;
+    out->valid = 1;
+
+    int cnt = cloud_parse_ams_detail_mapping(json_buf, json_len, xptouch_history_selected_ams_map, XPTOUCH_HISTORY_AMS_MAP_MAX);
+    if (cnt <= 0)
+      cnt = cloud_parse_reprint_mapping_from_buffer(json_buf, json_len, xptouch_history_selected_ams_map, XPTOUCH_HISTORY_AMS_MAP_MAX);
+    if (cnt < 0)
+      cnt = 0;
+    if (cnt > XPTOUCH_HISTORY_AMS_MAP_MAX)
+      cnt = XPTOUCH_HISTORY_AMS_MAP_MAX;
+    xptouch_history_selected_ams_map_count = cnt;
+  }
+
+  if (!out->title[0] && bambuStatus.task_id[0] && strcmp(bambuStatus.task_id, task_id) == 0 && bambuStatus.subtask_name[0])
+  {
+    strncpy(out->title, bambuStatus.subtask_name, sizeof(out->title) - 1);
+    out->title[sizeof(out->title) - 1] = '\0';
+  }
+
+  if (out->title[0] || out->device_name[0] || out->model_id[0] || out->device_model[0])
+  {
+    out->valid = 1;
+    xptouch_history_reprint_task_basic_valid = 1;
+  }
+
+  if (!xPTouchConfig.xTouchHideAllThumbnails)
+  {
+    char thumb_path[64];
+    if (xptouch_history_cover_path_for_task_id(task_id, thumb_path, sizeof(thumb_path)) == 0 &&
+        xptouch_sdcard_exists(thumb_path))
+      (void)xptouch_history_reprint_cover_load_path(thumb_path);
+  }
+
+  if (xptouch_history_selected_ams_map_count > 0)
+    xptouch_history_reprint_recompute_default_picks();
+
+  ConsoleInfo.printf("[xPTouch][I][DEMO] reprint detail basic=%d maps=%d cover=%d\n",
+                     xptouch_history_reprint_task_basic_valid,
+                     xptouch_history_selected_ams_map_count,
+                     xptouch_history_reprint_cover_dsc != nullptr ? 1 : 0);
+  return xptouch_history_reprint_task_basic_valid != 0;
+}
+
 /* XPTOUCH_HISTORY_FETCH 受信時は即 getMyTasks せず、遅延タイマーで非同期実行（Printers 直後の SSL メモリ競合を避ける）。user_data はリトライ回数（初回は 0）。 */
 static void xptouch_history_on_fetch(lv_msg_t *m, void *user_data)
 {
   (void)m;
   (void)user_data;
+  if (xPTouchConfig.xTouchDemoMode)
+  {
+    if (xptouch_demo_load_history_from_sd())
+      xptouch_history_finish_demo_fetch_ui();
+    return;
+  }
   lv_timer_t *once =
       lv_timer_create(xptouch_history_enqueue_fetch_cb, XPTOUCH_HISTORY_FETCH_DELAY_MS, (void *)(intptr_t)0);
   lv_timer_set_repeat_count(once, 1);
@@ -697,6 +924,19 @@ static void xptouch_history_on_reprint_detail_fetch(void *user_data, lv_msg_t *m
       m ? (const struct XPTOUCH_MESSAGE_DATA *)lv_msg_get_payload(m) : NULL;
   if (!payload)
     return;
+
+  if (xPTouchConfig.xTouchDemoMode)
+  {
+    if (!xptouch_history_reprint_task_id_valid)
+      return;
+    xptouch_history_reprint_detail_fetch_inflight = 1;
+    xptouch_history_selected_ams_map_count = -1;
+    (void)xptouch_demo_load_reprint_detail(xptouch_history_reprint_task_id);
+    xptouch_history_reprint_detail_fetch_inflight = 0;
+    xptouch_history_reprint_detail_fetch_done = 1;
+    lv_msg_send(XPTOUCH_HISTORY_REPRINT_DETAIL_READY, NULL);
+    return;
+  }
 
   (void)payload; /* history_index ではなく task_id だけで detail を取得する */
   if (!xptouch_history_reprint_task_id_valid)
@@ -742,6 +982,12 @@ static void xptouch_history_on_reprint_with_options(void *user_data, lv_msg_t *m
   if (!payload)
     return;
   xptouch_history_reprint_printer_dd_slot = (int)payload->data2;
+  if (xPTouchConfig.xTouchDemoMode)
+  {
+    struct XPTOUCH_MESSAGE_DATA done = { 0, 0 };
+    lv_msg_send(XPTOUCH_HISTORY_REPRINT_DONE, &done);
+    return;
+  }
   bool ok = false;
   if (xptouch_history_reprint_task_id_valid)
     ok = cloud.submitReprintTaskByTaskId(xptouch_history_reprint_task_id);

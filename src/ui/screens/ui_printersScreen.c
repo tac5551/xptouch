@@ -299,7 +299,10 @@ void ui_printers_on_other_update(lv_msg_t *m, void *user_data)
                 requested = 0;
             if (requested > PRINTERS_ROW_MAX)
                 requested = PRINTERS_ROW_MAX;
-            s_printers_visible_count = requested;
+            /* data==0: 表示行数は変えずテキストのみ更新（デモ pushall 再読込・MQTT 同期）。
+             * 0 を代入すると全行 HIDDEN になりサムネ読込後に一覧が消える。 */
+            if (requested > 0)
+                s_printers_visible_count = requested;
         }
     }
 

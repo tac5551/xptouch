@@ -1,7 +1,7 @@
 #include <pgmspace.h>
 
 // Non-optimized HMS errors (legacy format)
-int hms_error_length = 124;
+int hms_error_length = 126;
 
 const char *hms_error_keys[] PROGMEM = {
   "0C00040000010025",
@@ -18,6 +18,8 @@ const char *hms_error_keys[] PROGMEM = {
   "0700520000030001",
   "0300010000010005",
   "0300400000020002",
+  "0300400000020003",
+  "0300400000020004",
   "0300900000010010",
   "030001000001000C",
   "050005000001000F",
@@ -145,6 +147,8 @@ const char *hms_error_values[] PROGMEM = {
   "Abnormal number or type of connected AMS units detected. Please refer to the Wiki for supported AMS combinations and adjust the current connection.",
   "A heatbed temperature control issue has been detected and the heating module may be damaged. Please power off the device immediately and follow the Wiki to replace the AC board.",
   "G-code data error detected. The system has automatically reloaded the G-code and resumed printing.",
+  "Sliced file abnormality detected multiple times. Task canceled. Please check the sliced file.",
+  "G-code verification error. The system has automatically reacquired the data and resumed printing.",
   "The communication of chamber temperature controller is abnormal.",
   "The heatbed has worked at full load for a long time. The temperature control system may be abnormal.",
   "The accessory firmware does not match the printer. Please upgrade it on the \"Firmware\" page.",
@@ -157,7 +161,7 @@ const char *hms_error_values[] PROGMEM = {
   "The MC module is malfunctioning; please restart the device or check device cable connection.",
   "First layer inspection is not supported for the current print job.",
   "Chamber heating failed. Possible causes: the chamber is not fully enclosed, ambient temperature is too low, or the power supply heat dissipation vent is blocked.",
-  "The Chamber Temperature Control module is malfunctioning. Please restart the device.",
+  "The Chamber Temperature Controller module is malfunctioning. Please restart the device.",
   "Internal service is malfunctioning. Please restart the device.",
   "Possible first layer defects have been detected. Please check the first layer quality and decide if the job should be stopped.",
   "The heatbed temperature control is abnormal; the AC board may be broken.",
@@ -258,7 +262,7 @@ const char *hms_error_values[] PROGMEM = {
 };
 
 // Non-optimized Device errors (legacy format)
-int device_error_length = 138;
+int device_error_length = 139;
 
 const char *device_error_keys[] PROGMEM = {
   "07004001",
@@ -398,7 +402,8 @@ const char *device_error_keys[] PROGMEM = {
   "0300806E",
   "0502C032",
   "0502C031",
-  "0300806F"
+  "0300806F",
+  "050040B4"
 };
 
 const char *device_error_values[] PROGMEM = {
@@ -539,5 +544,6 @@ const char *device_error_values[] PROGMEM = {
   "Abnormal nozzle temperature control detected; the heating module may be damaged. Please disconnect the power immediately and stop using the device.",
   "Please check and remove any printed parts or debris from the heatbed surface and underside before continuing the drying process.",
   "Please check and remove any printed parts or debris from the heatbed surface before continuing the cold pull.",
-  "Abnormal temperature rise detected on the heatbed. The heating module may be damaged. Please power off the device immediately and stop using it."
+  "Abnormal temperature rise detected on the heatbed. The heating module may be damaged. Please power off the device immediately and stop using it.",
+  "Task execution error. Please restart the device. If the issue persists, contact technical support."
 };

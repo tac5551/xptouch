@@ -234,6 +234,8 @@ extern "C"
         int xTouchUtilCalibrationBitmask;
         bool xTouchLanOnlyMode;
         bool xTouchProvisioningMode;
+        /** provisioning.json の demo:true。WiFi/MQTT なしで SD の push_status を表示 */
+        bool xTouchDemoMode;
     } xPTouchConfigParam;
 
     xPTouchConfigParam xPTouchConfig;

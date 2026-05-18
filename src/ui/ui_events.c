@@ -127,6 +127,7 @@ void onControlBedDown(lv_event_t *e) { lv_msg_send(XPTOUCH_COMMAND_BED_DOWN, NUL
 
 void onSettingsResetDeviceConfirm() { lv_msg_send(XPTOUCH_SETTINGS_RESET_DEVICE, NULL); }
 void onSettingsClearCacheConfirm() { lv_msg_send(XPTOUCH_SETTINGS_CLEAR_CACHE, NULL); }
+void onSettingsDemoModeToggleConfirm() { lv_msg_send(XPTOUCH_SETTINGS_DEMO_MODE_TOGGLE, NULL); }
 void onSettingsOtaUpdateNowOnYES()
 {
     xptouch_ota_update_flag = true;
@@ -302,6 +303,15 @@ void onSettingsClearCache(lv_event_t *e)
 {
     (void)e;
     ui_confirmPanel_show(LV_SYMBOL_WARNING " Clear Cache", onSettingsClearCacheConfirm);
+}
+
+void onSettingsDemoModeToggle(lv_event_t *e)
+{
+    (void)e;
+    if (xPTouchConfig.xTouchDemoMode)
+        ui_confirmPanel_show(LV_SYMBOL_WARNING " Demo Mode OFF", onSettingsDemoModeToggleConfirm);
+    else
+        ui_confirmPanel_show(LV_SYMBOL_WARNING " Demo Mode ON", onSettingsDemoModeToggleConfirm);
 }
 
 void onSettingsUnPairConfirm() { lv_msg_send(XPTOUCH_SETTINGS_UNPAIR, NULL); }

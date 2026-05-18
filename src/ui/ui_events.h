@@ -52,6 +52,7 @@ extern "C"
     void onSettingsOtaUpdateNow(lv_event_t *e);
     void onSettingsResetDevice(lv_event_t *e);
     void onSettingsClearCache(lv_event_t *e);
+    void onSettingsDemoModeToggle(lv_event_t *e);
     void onSettingsClearAccesCodeCache(lv_event_t *e);
     void onSettingsAuxFan(lv_event_t *e);
     void onSettingsChamberFan(lv_event_t *e);

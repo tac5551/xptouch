@@ -7,10 +7,23 @@
 #include "filesystem.h"
 #include "sdcard.h"
 #include "paths.h"
+#include "types.h"
 #include "net.h"
+#include "ui/ui.h"
 
 bool xptouch_wifi_setup()
 {
+    if (xPTouchConfig.xTouchDemoMode)
+    {
+        WiFi.mode(WIFI_OFF);
+        lv_label_set_text(introScreenCaption, LV_SYMBOL_IMAGE " Demo mode");
+        lv_obj_set_style_text_color(introScreenCaption, lv_color_hex(0x00AAFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_timer_handler();
+        lv_task_handler();
+        ConsoleInfo.println(F("[xPTouch][I][CONNECTION] Demo mode: WiFi skipped"));
+        return true;
+    }
+
     DynamicJsonDocument wifiConfig(1024);
     bool cloud_mode = false;
     if(xptouch_filesystem_exist(xptouch_sdcard_fs(), xptouch_paths_provisioning)){

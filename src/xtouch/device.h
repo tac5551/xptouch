@@ -8,6 +8,7 @@
 #include "ams_edit_temp.h"
 #include "filesystem.h"
 #include "paths.h"
+#include "types.h"
 
 #define XPTOUCH_DEVICE_CONTROL_MOVE_SPEED_XY 3000
 #define XPTOUCH_DEVICE_CONTROL_MOVE_SPEED_Z 1500
@@ -145,6 +146,8 @@ void xptouch_device_set_print_state(String state)
 
 void xptouch_device_publish(String request)
 {
+    if (xPTouchConfig.xTouchDemoMode)
+        return;
 #ifdef XPTOUCH_DEBUG_DETAIL
     ConsoleDetail.println("[GCODE] MQTT publish request");
     ConsoleDetail.print("[xPTouch][D][MQTT] PUB topic=");
@@ -161,6 +164,8 @@ void xptouch_device_publish(String request)
 
 void xptouch_device_publish_to_dev(const char *dev_id, String request)
 {
+    if (xPTouchConfig.xTouchDemoMode)
+        return;
     if (!dev_id || !dev_id[0])
         return;
     String topic = String("device/") + dev_id + "/request";

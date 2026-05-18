@@ -5,6 +5,7 @@
 #include "xtouch/firmware.h"
 #include "xtouch/sdcard.h"
 #include "xtouch/types.h"
+#include "xtouch/demo.h"
 #include "ui/ui_loaders.h"
 
 void xptouch_events_onResetDevice(lv_msg_t *m)
@@ -188,9 +189,16 @@ void xptouch_events_onClearCache(lv_msg_t *m)
 #endif
 }
 
+void xptouch_events_onDemoModeToggle(lv_msg_t *m)
+{
+    (void)m;
+    xptouch_demo_toggle_and_restart();
+}
+
 void xptouch_setupGlobalEvents()
 {
     lv_msg_subscribe(XPTOUCH_SETTINGS_RESET_DEVICE, (lv_msg_subscribe_cb_t)xptouch_events_onResetDevice, NULL);
+    lv_msg_subscribe(XPTOUCH_SETTINGS_DEMO_MODE_TOGGLE, (lv_msg_subscribe_cb_t)xptouch_events_onDemoModeToggle, NULL);
     lv_msg_subscribe(XPTOUCH_SETTINGS_OTA_UPDATE_NOW, (lv_msg_subscribe_cb_t)xptouch_events_onOtaUpdateNow, NULL);
     lv_msg_subscribe(XPTOUCH_SETTINGS_CLEAR_CACHE, (lv_msg_subscribe_cb_t)xptouch_events_onClearCache, NULL);
     lv_msg_subscribe(XPTOUCH_SETTINGS_UNPAIR, (lv_msg_subscribe_cb_t)xptouch_events_onUnPair, NULL);

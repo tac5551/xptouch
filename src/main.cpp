@@ -59,6 +59,7 @@ extern "C" void xptouch_screen_led_off_timer_resume_c(void)
 #include "xtouch/sensors/chamber.h"
 #include "xtouch/events.h"
 #include "xtouch/connection.h"
+#include "xtouch/demo.h"
 #include "xtouch/coldboot.h"
 #include "xtouch/webserver.h"
 #include "xtouch/globals.h"
@@ -182,15 +183,24 @@ void setup()
 
   xptouch_touch_setup();
 
+  xptouch_demo_detect_flag();
+
   while (!xptouch_wifi_setup())
     ;
 
-  xptouch_firmware_checkOnlineFirmwareUpdate();
+  if (!xPTouchConfig.xTouchDemoMode)
+    xptouch_firmware_checkOnlineFirmwareUpdate();
 
   xptouch_screen_setupScreenTimer();
   xptouch_screen_setupLEDOffTimer();
   xptouch_setupGlobalEvents();
-    if(xptouch_filesystem_exist(xptouch_sdcard_fs(), xptouch_paths_provisioning)){
+
+  if (xPTouchConfig.xTouchDemoMode)
+  {
+    xptouch_demo_setup();
+  }
+  else if (xptouch_filesystem_exist(xptouch_sdcard_fs(), xptouch_paths_provisioning))
+  {
         ConsoleDebug.println("Provisioning mode initialize");
         xPTouchConfig.xTouchProvisioningMode = true;
         if (!cloud.hasAuthTokens()) 
@@ -216,7 +226,9 @@ void setup()
           xptouch_cloud_mqtt_setup();
         }
 
-    }else if(xptouch_filesystem_exist(xptouch_sdcard_fs(), xptouch_paths_config)){
+  }
+  else if (xptouch_filesystem_exist(xptouch_sdcard_fs(), xptouch_paths_config))
+  {
         ConsoleDebug.println("Lan only mode initialize");
         xPTouchConfig.xTouchLanOnlyMode = true;
         xptouch_local_mqtt_setup();
@@ -276,7 +288,10 @@ static void xptouch_camera_render_latest_frame_if_any()
     return;
   const uint8_t *jpg = nullptr;
   size_t jpg_len = 0;
-  if (!xptouch_camera_stream::consume_latest_frame(&jpg, &jpg_len))
+  const bool got = xPTouchConfig.xTouchDemoMode
+                       ? xptouch_camera_stream::consume_demo_still_frame(&jpg, &jpg_len)
+                       : xptouch_camera_stream::consume_latest_frame(&jpg, &jpg_len);
+  if (!got)
     return;
 
   const int sidebar_w = (screenWidth >= 800) ? (screenWidth * 10 / 100) : (screenWidth * 13 / 100);
@@ -304,16 +319,26 @@ void loop()
   lv_task_handler();
 #if defined(__XPTOUCH_PLATFORM_S3__)
   if (xPTouchConfig.currentScreenIndex == 17 && xPTouchConfig.xTouchP1sCameraStreamEnabled)
-    xptouch_camera_stream::start_if_needed();
+  {
+    if (!xPTouchConfig.xTouchDemoMode)
+      xptouch_camera_stream::start_if_needed();
+  }
   else
+  {
     xptouch_camera_stream::stop_if_needed();
-  xptouch_camera_stream::loop_once();
+    if (xPTouchConfig.xTouchDemoMode)
+      xptouch_camera_stream::reset_demo_still_cache();
+  }
+  if (!xPTouchConfig.xTouchDemoMode)
+    xptouch_camera_stream::loop_once();
 #if !defined(__XPTOUCH_SCREEN_S3_3248__)
   xptouch_camera_render_latest_frame_if_any();
 #endif
 #endif
   /* Video画面(17)では負荷軽減のため MQTT ループを止める */
-  if ((xPTouchConfig.xTouchLanOnlyMode || cloud.loggedIn) && xPTouchConfig.currentScreenIndex != 17)
+  if (!xPTouchConfig.xTouchDemoMode &&
+      (xPTouchConfig.xTouchLanOnlyMode || cloud.loggedIn) &&
+      xPTouchConfig.currentScreenIndex != 17)
     xptouch_cloud_mqtt_loop();
 
   if (xptouch_ota_update_flag)

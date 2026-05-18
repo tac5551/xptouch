@@ -227,9 +227,14 @@ void xptouch_mqtt_load_other_printers()
     xptouch_other_printer_count = idx;
 }
 
+extern "C" void xptouch_demo_reload_all_pushall_c(void);
+extern "C" void xptouch_demo_reload_pushall_slot_c(int slot);
+
 /** Printers 画面用: 指定 dev_id に pushall 要求を送信（device/{dev_id}/request）。 */
 static void xptouch_mqtt_pushall_for_dev(const char *dev_id)
 {
+    if (xPTouchConfig.xTouchDemoMode)
+        return;
     if (!dev_id || !dev_id[0])
         return;
     DynamicJsonDocument json(256);
@@ -254,6 +259,11 @@ static void xptouch_mqtt_pushall_for_dev(const char *dev_id)
 /** Printers 画面用: メイン＋他プリンタへ pushall を送る（毎回呼び出し可）。 */
 inline void xptouch_mqtt_pushall_all_printers_for_screen()
 {
+    if (xPTouchConfig.xTouchDemoMode)
+    {
+        xptouch_demo_reload_all_pushall_c();
+        return;
+    }
     xptouch_mqtt_pushall_for_dev(xPTouchConfig.xTouchSerialNumber);
     for (int i = 0; i < xptouch_other_printer_count; i++)
     {
@@ -266,6 +276,11 @@ inline void xptouch_mqtt_pushall_all_printers_for_screen()
 /** Home 用: 表示はメインのみのため、pushall も自機 1 台分だけ。 */
 inline void xptouch_mqtt_pushall_main_printer_for_screen()
 {
+    if (xPTouchConfig.xTouchDemoMode)
+    {
+        xptouch_demo_reload_pushall_slot_c(0);
+        return;
+    }
     if (xPTouchConfig.xTouchSerialNumber[0])
         xptouch_mqtt_pushall_for_dev(xPTouchConfig.xTouchSerialNumber);
 }

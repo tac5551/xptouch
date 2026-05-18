@@ -25,6 +25,8 @@ static uint32_t s_last_connect_attempt_ms = 0;
 static uint32_t s_connect_backoff_ms = 1000;
 static uint32_t s_ok_frames = 0;
 static std::vector<uint8_t> s_frame_buf;
+static std::vector<uint8_t> s_demo_still_buf;
+static bool s_demo_still_loaded = false;
 static bool s_frame_ready = false;
 static uint8_t s_header_buf[16];
 static size_t s_header_off = 0;
@@ -232,6 +234,71 @@ inline bool consume_latest_frame(const uint8_t **data, size_t *len)
     *data = s_frame_buf.data();
     *len = s_frame_buf.size();
     s_frame_ready = false;
+    return true;
+}
+
+inline bool is_valid_jpeg(const uint8_t *data, size_t len)
+{
+    return data && len >= 4 && data[0] == 0xFF && data[1] == 0xD8 &&
+           data[len - 2] == 0xFF && data[len - 1] == 0xD9;
+}
+
+inline void reset_demo_still_cache()
+{
+    s_demo_still_loaded = false;
+    s_demo_still_buf.clear();
+}
+
+/** デモモード: /demo/camera.jpg を読み込み（1回のみキャッシュ） */
+inline bool ensure_demo_still_loaded()
+{
+    if (s_demo_still_loaded)
+        return !s_demo_still_buf.empty();
+    s_demo_still_loaded = true;
+    s_demo_still_buf.clear();
+
+    if (!xptouch_filesystem_exist(xptouch_sdcard_fs(), xptouch_paths_demo_camera))
+    {
+        ConsoleError.println(F("[xPTouch][E][CAM][DEMO] missing /demo/camera.jpg"));
+        return false;
+    }
+
+    File f = xptouch_filesystem_open(xptouch_sdcard_fs(), xptouch_paths_demo_camera);
+    if (!f)
+    {
+        ConsoleError.println(F("[xPTouch][E][CAM][DEMO] open failed"));
+        return false;
+    }
+
+    const size_t sz = f.size();
+    if (sz == 0 || sz > XPTOUCH_DEMO_CAMERA_JPEG_MAX)
+    {
+        f.close();
+        ConsoleError.printf("[xPTouch][E][CAM][DEMO] bad size=%u\n", (unsigned)sz);
+        return false;
+    }
+
+    s_demo_still_buf.resize(sz);
+    const size_t n = f.read(s_demo_still_buf.data(), sz);
+    f.close();
+    if (n != sz || !is_valid_jpeg(s_demo_still_buf.data(), n))
+    {
+        s_demo_still_buf.clear();
+        ConsoleError.println(F("[xPTouch][E][CAM][DEMO] invalid JPEG"));
+        return false;
+    }
+
+    ConsoleInfo.printf("[xPTouch][I][CAM][DEMO] loaded still %u bytes\n", (unsigned)n);
+    return true;
+}
+
+/** デモ用静止画。毎フレーム同じバッファを返す（consume では消費しない） */
+inline bool consume_demo_still_frame(const uint8_t **data, size_t *len)
+{
+    if (!data || !len || !ensure_demo_still_loaded())
+        return false;
+    *data = s_demo_still_buf.data();
+    *len = s_demo_still_buf.size();
     return true;
 }
 
