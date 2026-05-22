@@ -5,7 +5,8 @@
 #include "xtouch/firmware.h"
 #include "xtouch/sdcard.h"
 #include "xtouch/types.h"
-#include "xtouch/demo.h"
+#include "xtouch/paths.h"
+#include "xtouch/filesystem.h"
 #include "ui/ui_loaders.h"
 
 void xptouch_events_onResetDevice(lv_msg_t *m)
@@ -189,10 +190,29 @@ void xptouch_events_onClearCache(lv_msg_t *m)
 #endif
 }
 
+static void xptouch_events_demo_set_flag_and_restart(bool enabled)
+{
+    DynamicJsonDocument doc(2048);
+    if (xptouch_filesystem_exist(xptouch_sdcard_fs(), xptouch_paths_provisioning))
+    {
+        doc = xptouch_filesystem_readJson(xptouch_sdcard_fs(), xptouch_paths_provisioning, false, 2048);
+        if (doc.isNull())
+            doc.to<JsonObject>();
+    }
+    else
+    {
+        doc.to<JsonObject>();
+    }
+    doc["demo"] = enabled;
+    xptouch_filesystem_writeJson(xptouch_sdcard_fs(), xptouch_paths_provisioning, doc, false, 2048);
+    delay(200);
+    ESP.restart();
+}
+
 void xptouch_events_onDemoModeToggle(lv_msg_t *m)
 {
     (void)m;
-    xptouch_demo_toggle_and_restart();
+    xptouch_events_demo_set_flag_and_restart(!xPTouchConfig.xTouchDemoMode);
 }
 
 void xptouch_setupGlobalEvents()
