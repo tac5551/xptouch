@@ -550,7 +550,7 @@ XPTouchは、xptouchを源流とした日本語カスタマイズバージョン
 
 ### プロジェクト名称
 
-- **XPTouch** - 日本語コミュニティバージョン
+- **XPTouch** - [https://github.com/tac5551/xptouch/](https://github.com/tac5551/xptouch/)
 - **開発者**: tac-lab.tech
 - **ライセンス**: GPLv3
 
