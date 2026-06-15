@@ -571,18 +571,18 @@ XPTouchは、xptouchを源流とした日本語カスタマイズバージョン
 
 画面がうまく表示ができない場合はボードを提供いただけると対応するかも！
 
--[LovyanGFX](https://github.com/tac5551/LovyanGFX)
--[OpenBambuAPI](https://github.com/tac5551/OpenBambuAPI)
--[ha-bambulab](https://github.com/tac5551/ha-bambulab)
--[Bambu-Lab-Cloud-API](https://github.com/tac5551/Bambu-Lab-Cloud-API)
--[BambuP1Streamer](https://github.com/slynn1324/BambuP1Streamer)
--[HACKADAY](https://hackaday.com/2025/01/19/bambu-connects-authentication-x-509-certificate-and-private-key-extracted/)
--[homebridge-bambu-lab](https://github.com/trinityhades/homebridge-bambu-lab)
--[OpenBL](https://github.com/opensourcemanufacturing/OpenBL)
--[ha-bambu-lab-p1-spaghetti-detection](https://github.com/nberktumer/ha-bambu-lab-p1-spaghetti-detection)
--[Bambu_Lab_Utility_Scripts](https://github.com/raleighlittles/Bambu_Lab_Utility_Scripts)
--[A1SwapModPacker](https://github.com/hyyz17200/A1SwapModPacker)
--[bambuddy](https://github.com/maziggy/bambuddy)
+- [LovyanGFX](https://github.com/tac5551/LovyanGFX)
+- [OpenBambuAPI](https://github.com/tac5551/OpenBambuAPI)
+- [ha-bambulab](https://github.com/tac5551/ha-bambulab)
+- [Bambu-Lab-Cloud-API](https://github.com/tac5551/Bambu-Lab-Cloud-API)
+- [BambuP1Streamer](https://github.com/slynn1324/BambuP1Streamer)
+- [HACKADAY](https://hackaday.com/2025/01/19/bambu-connects-authentication-x-509-certificate-and-private-key-extracted/)
+- [homebridge-bambu-lab](https://github.com/trinityhades/homebridge-bambu-lab)
+- [OpenBL](https://github.com/opensourcemanufacturing/OpenBL)
+- [ha-bambu-lab-p1-spaghetti-detection](https://github.com/nberktumer/ha-bambu-lab-p1-spaghetti-detection)
+- [Bambu_Lab_Utility_Scripts](https://github.com/raleighlittles/Bambu_Lab_Utility_Scripts)
+- [A1SwapModPacker](https://github.com/hyyz17200/A1SwapModPacker)
+- [bambuddy](https://github.com/maziggy/bambuddy)
 ---
 
 **注意**: 本プロジェクトは教育・研究目的で開発されています。
