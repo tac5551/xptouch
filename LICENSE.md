@@ -190,15 +190,11 @@ IN WITNESS WHEREOF, the Parties hereto have executed this Logo Copyright and Usa
 - **開発者**: Pedro Casaubon Aguilar
 - **ライセンス**: GPLv3 / 商用ライセンス
 
-### 派生プロジェクト
-- **XPTouch** - 日本語コミュニティバージョン
-- **開発者**: 日本語コミュニティ
+### 本プロジェクト（XPTouch）
+- **XPTouch** - [https://github.com/tac5551/xptouch/](https://github.com/tac5551/xptouch/)
+- **開発者**: tac-lab.tech
 - **ライセンス**: GPLv3
-
-### 本プロジェクト（XP）
-- **開発者**: [あなたの名前/チーム名]
-- **ライセンス**: GPLv3
-- **派生元**: Xtouch → XPTouch → XP
+- **派生元**: Xtouch
 
 **法的免責事項:**
 - 本プロジェクトは教育・研究目的で開発されています
